@@ -1,0 +1,20 @@
+{
+  "name": "lifeos",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"pnpm --filter @lifeos/api dev\" \"pnpm --filter @lifeos/dashboard dev\"",
+    "dev:api": "pnpm --filter @lifeos/api dev",
+    "dev:dashboard": "pnpm --filter @lifeos/dashboard dev",
+    "build": "turbo build",
+    "check": "turbo check",
+    "test": "turbo test",
+    "db:generate": "turbo db:generate --filter=@lifeos/api",
+    "db:migrate": "turbo db:migrate --filter=@lifeos/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  }
+}
