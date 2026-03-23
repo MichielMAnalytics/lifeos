@@ -9,6 +9,7 @@ export type AuthUser = {
   email: string;
   name: string | null;
   timezone: string;
+  created_at: Date;
 };
 
 type AuthEnv = {
@@ -63,6 +64,7 @@ export const apiKeyAuth = createMiddleware<AuthEnv>(async (c, next) => {
       email: users.email,
       name: users.name,
       timezone: users.timezone,
+      created_at: users.created_at,
     })
     .from(users)
     .where(eq(users.id, matchedKey.user_id));

@@ -97,6 +97,34 @@ auth.get('/me', apiKeyAuth, async (c) => {
   return c.json({ data: user });
 });
 
+// PATCH /me — update profile
+auth.patch('/me', apiKeyAuth, async (c) => {
+  const user = c.get('user');
+  const body = await c.req.json() as { name?: string; timezone?: string };
+
+  const updates: Record<string, string> = {};
+  if (body.name !== undefined) updates.name = body.name;
+  if (body.timezone !== undefined) updates.timezone = body.timezone;
+
+  if (Object.keys(updates).length === 0) {
+    return c.json({ error: 'No fields to update' }, 400);
+  }
+
+  const [updated] = await db
+    .update(users)
+    .set(updates)
+    .where(eq(users.id, user.id))
+    .returning({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      timezone: users.timezone,
+      created_at: users.created_at,
+    });
+
+  return c.json({ data: updated });
+});
+
 // GET /api-keys
 auth.get('/api-keys', apiKeyAuth, async (c) => {
   const user = c.get('user');
