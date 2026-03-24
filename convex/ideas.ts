@@ -21,7 +21,7 @@ export const list = query({
       results = results.filter((i) => i.actionability === args.actionability);
     }
 
-    return { data: results, count: results.length };
+    return results;
   },
 });
 

@@ -5,13 +5,17 @@ import { v } from "convex/values";
 export default defineSchema({
   ...authTables,
 
-  // ── Users ──────────────────────────────────────────
+  // ── Users (extends authTables.users with our custom fields) ──
   users: defineTable({
-    email: v.string(),
-    password_hash: v.string(),
+    // Convex Auth fields
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.float64()),
+    image: v.optional(v.string()),
     name: v.optional(v.string()),
-    timezone: v.string(),
-  }).index("by_email", ["email"]),
+    isAnonymous: v.optional(v.boolean()),
+    // LifeOS custom fields
+    timezone: v.optional(v.string()),
+  }).index("email", ["email"]),
 
   // ── API Keys ───────────────────────────────────────
   apiKeys: defineTable({
@@ -160,34 +164,14 @@ export default defineSchema({
   }).index("by_userId", ["userId"])
     .index("by_userId_status", ["userId", "status"]),
 
-  // ── Finance Categories ─────────────────────────────
-  financeCategories: defineTable({
+  // ── Dashboard Config ───────────────────────────────
+  dashboardConfig: defineTable({
     userId: v.id("users"),
-    name: v.string(),
-    parentId: v.optional(v.id("financeCategories")),
-  }).index("by_userId", ["userId"]),
-
-  // ── Finance Transactions ───────────────────────────
-  financeTransactions: defineTable({
-    userId: v.id("users"),
-    date: v.string(), // "YYYY-MM-DD"
-    amount: v.float64(), // stored as cents for precision
-    currency: v.string(),
-    categoryId: v.optional(v.id("financeCategories")),
-    merchant: v.optional(v.string()),
-    notes: v.optional(v.string()),
-    source: v.optional(v.string()),
-    externalId: v.optional(v.string()),
-  }).index("by_userId", ["userId"])
-    .index("by_userId_date", ["userId", "date"]),
-
-  // ── Net Worth Snapshots ────────────────────────────
-  netWorthSnapshots: defineTable({
-    userId: v.id("users"),
-    date: v.string(),
-    breakdown: v.any(), // { crypto: number, stocks: number, ... }
-    total: v.float64(),
-    notes: v.optional(v.string()),
+    navMode: v.string(),           // "sidebar" | "header"
+    navOrder: v.array(v.string()),
+    navHidden: v.array(v.string()),
+    pagePresets: v.any(),          // { today: "solopreneur", ideas: "content-creator", ... }
+    customTheme: v.optional(v.any()), // custom color overrides
   }).index("by_userId", ["userId"]),
 
   // ── Mutation Log ───────────────────────────────────

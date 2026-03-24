@@ -20,16 +20,24 @@ function tomorrowStr(): string {
 }
 
 function printPlan(plan: DayPlan): void {
-  console.log(`Date:       ${plan.plan_date}`);
-  console.log(`Wake Time:  ${plan.wake_time ?? '-'}`);
+  console.log(`Date:       ${plan.planDate ?? plan.plan_date ?? '-'}`);
+  console.log(`Wake Time:  ${plan.wakeTime ?? plan.wake_time ?? '-'}`);
 
-  const mitStatus = plan.mit_done ? chalk.green('done') : chalk.yellow('pending');
-  const p1Status = plan.p1_done ? chalk.green('done') : chalk.yellow('pending');
-  const p2Status = plan.p2_done ? chalk.green('done') : chalk.yellow('pending');
+  const mitDone = plan.mitDone ?? plan.mit_done ?? false;
+  const p1Done = plan.p1Done ?? plan.p1_done ?? false;
+  const p2Done = plan.p2Done ?? plan.p2_done ?? false;
 
-  console.log(`MIT:        ${plan.mit_task_id?.slice(0, 8) ?? '-'}  [${mitStatus}]`);
-  console.log(`P1:         ${plan.p1_task_id?.slice(0, 8) ?? '-'}  [${p1Status}]`);
-  console.log(`P2:         ${plan.p2_task_id?.slice(0, 8) ?? '-'}  [${p2Status}]`);
+  const mitStatus = mitDone ? chalk.green('done') : chalk.yellow('pending');
+  const p1Status = p1Done ? chalk.green('done') : chalk.yellow('pending');
+  const p2Status = p2Done ? chalk.green('done') : chalk.yellow('pending');
+
+  const mitTaskId = plan.mitTaskId ?? plan.mit_task_id;
+  const p1TaskId = plan.p1TaskId ?? plan.p1_task_id;
+  const p2TaskId = plan.p2TaskId ?? plan.p2_task_id;
+
+  console.log(`MIT:        ${mitTaskId?.slice(0, 8) ?? '-'}  [${mitStatus}]`);
+  console.log(`P1:         ${p1TaskId?.slice(0, 8) ?? '-'}  [${p1Status}]`);
+  console.log(`P2:         ${p2TaskId?.slice(0, 8) ?? '-'}  [${p2Status}]`);
 
   if (plan.schedule.length > 0) {
     console.log('Schedule:');
@@ -97,10 +105,10 @@ planCommand
     try {
       const client = createClient();
       const body: Record<string, unknown> = {};
-      if (opts.wake) body.wake_time = opts.wake;
-      if (opts.mit) body.mit_task_id = opts.mit;
-      if (opts.p1) body.p1_task_id = opts.p1;
-      if (opts.p2) body.p2_task_id = opts.p2;
+      if (opts.wake) body.wakeTime = opts.wake;
+      if (opts.mit) body.mitTaskId = opts.mit;
+      if (opts.p1) body.p1TaskId = opts.p1;
+      if (opts.p2) body.p2TaskId = opts.p2;
 
       const res = await client.put<ApiResponse<DayPlan>>(`/api/v1/plans/${date}`, body);
 
@@ -122,7 +130,7 @@ planCommand
   .action(async () => {
     try {
       const client = createClient();
-      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/plans/${todayStr()}`, { mit_done: true });
+      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/plans/${todayStr()}`, { mitDone: true });
 
       if (isJsonMode()) {
         printJson(res);
@@ -142,7 +150,7 @@ planCommand
   .action(async () => {
     try {
       const client = createClient();
-      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/plans/${todayStr()}`, { p1_done: true });
+      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/plans/${todayStr()}`, { p1Done: true });
 
       if (isJsonMode()) {
         printJson(res);
@@ -162,7 +170,7 @@ planCommand
   .action(async () => {
     try {
       const client = createClient();
-      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/plans/${todayStr()}`, { p2_done: true });
+      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/plans/${todayStr()}`, { p2Done: true });
 
       if (isJsonMode()) {
         printJson(res);

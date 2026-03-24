@@ -18,9 +18,9 @@ function currentWeekStart(): string {
 }
 
 function printWeeklyPlan(plan: WeeklyPlan): void {
-  console.log(`Week:          ${plan.week_start}`);
+  console.log(`Week:          ${plan.weekStart ?? plan.week_start ?? '-'}`);
   console.log(`Theme:         ${plan.theme ?? '-'}`);
-  console.log(`Review Score:  ${plan.review_score ?? '-'}`);
+  console.log(`Review Score:  ${plan.reviewScore ?? plan.review_score ?? '-'}`);
 
   if (plan.goals.length > 0) {
     console.log('Goals:');
@@ -85,7 +85,7 @@ weekCommand
       const client = createClient();
       const ws = currentWeekStart();
       const res = await client.patch<ApiResponse<WeeklyPlan>>(`/api/v1/weekly-plans/${ws}`, {
-        review_score: parseInt(score, 10),
+        reviewScore: parseInt(score, 10),
       });
 
       if (isJsonMode()) {

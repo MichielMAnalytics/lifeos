@@ -9,10 +9,12 @@ import type {
 import { createClient } from '../api-client.js';
 import {
   formatDate,
+  getId,
   isJsonMode,
   printError,
   printJson,
   printTable,
+  shortId,
 } from '../output.js';
 
 export const reviewCommand = new Command('review')
@@ -26,7 +28,7 @@ reviewCommand
     try {
       const client = createClient();
       const params: Record<string, string> = {};
-      if (opts.type) params.review_type = opts.type;
+      if (opts.type) params.reviewType = opts.type;
 
       const res = await client.get<ApiListResponse<Review>>('/api/v1/reviews', params);
 
@@ -41,11 +43,11 @@ reviewCommand
       }
 
       const rows = res.data.map((r) => [
-        r.id.slice(0, 8),
-        r.review_type,
-        `${r.period_start} - ${r.period_end}`,
+        shortId(r),
+        r.reviewType ?? r.review_type ?? '-',
+        `${r.periodStart ?? r.period_start ?? '-'} - ${r.periodEnd ?? r.period_end ?? '-'}`,
         r.score !== null ? String(r.score) : '-',
-        formatDate(r.created_at),
+        formatDate(r.createdAt ?? r.created_at ?? null),
       ]);
       printTable(['ID', 'Type', 'Period', 'Score', 'Created'], rows);
     } catch (err) {
@@ -115,7 +117,7 @@ reviewCommand
 
       if (d.weekly_plan) {
         console.log(`Theme:  ${d.weekly_plan.theme ?? '-'}`);
-        console.log(`Score:  ${d.weekly_plan.review_score ?? '-'}`);
+        console.log(`Score:  ${d.weekly_plan.reviewScore ?? d.weekly_plan.review_score ?? '-'}`);
         console.log();
       }
 
@@ -143,11 +145,11 @@ reviewCommand
       }
 
       const r = res.data;
-      console.log(`ID:      ${r.id}`);
-      console.log(`Type:    ${r.review_type}`);
-      console.log(`Period:  ${r.period_start} - ${r.period_end}`);
+      console.log(`ID:      ${getId(r)}`);
+      console.log(`Type:    ${r.reviewType ?? r.review_type ?? '-'}`);
+      console.log(`Period:  ${r.periodStart ?? r.period_start ?? '-'} - ${r.periodEnd ?? r.period_end ?? '-'}`);
       console.log(`Score:   ${r.score ?? '-'}`);
-      console.log(`Created: ${formatDate(r.created_at)}`);
+      console.log(`Created: ${formatDate(r.createdAt ?? r.created_at ?? null)}`);
       console.log('Content:');
       console.log(JSON.stringify(r.content, null, 2));
     } catch (err) {

@@ -42,7 +42,7 @@ export const list = query({
       .order("desc")
       .take(limit);
 
-    return { data: results, count: results.length };
+    return results;
   },
 });
 
@@ -79,10 +79,7 @@ export const undo = mutation({
       | "wins"
       | "resources"
       | "reviews"
-      | "reminders"
-      | "financeTransactions"
-      | "financeCategories"
-      | "netWorthSnapshots";
+      | "reminders";
 
     const isCreate = action === "create" || action.startsWith("create_");
     const isUpdate =
@@ -177,27 +174,6 @@ export const undo = mutation({
         }
         case "reminders": {
           const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "reminders" });
-          if (record && record.userId === userId) {
-            await ctx.db.delete(record._id);
-          }
-          break;
-        }
-        case "financeTransactions": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "financeTransactions" });
-          if (record && record.userId === userId) {
-            await ctx.db.delete(record._id);
-          }
-          break;
-        }
-        case "financeCategories": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "financeCategories" });
-          if (record && record.userId === userId) {
-            await ctx.db.delete(record._id);
-          }
-          break;
-        }
-        case "netWorthSnapshots": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "netWorthSnapshots" });
           if (record && record.userId === userId) {
             await ctx.db.delete(record._id);
           }
@@ -300,27 +276,6 @@ export const undo = mutation({
           }
           break;
         }
-        case "financeTransactions": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "financeTransactions" });
-          if (record && record.userId === userId) {
-            await ctx.db.patch(record._id, restoreData);
-          }
-          break;
-        }
-        case "financeCategories": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "financeCategories" });
-          if (record && record.userId === userId) {
-            await ctx.db.patch(record._id, restoreData);
-          }
-          break;
-        }
-        case "netWorthSnapshots": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "netWorthSnapshots" });
-          if (record && record.userId === userId) {
-            await ctx.db.patch(record._id, restoreData);
-          }
-          break;
-        }
       }
     } else if (isDelete) {
       // Undo delete: re-insert beforeData
@@ -398,10 +353,7 @@ export const _undo = internalMutation({
       | "wins"
       | "resources"
       | "reviews"
-      | "reminders"
-      | "financeTransactions"
-      | "financeCategories"
-      | "netWorthSnapshots";
+      | "reminders";
 
     const isCreate = action === "create" || action.startsWith("create_");
     const isUpdate =
@@ -497,27 +449,6 @@ export const _undo = internalMutation({
           }
           break;
         }
-        case "financeTransactions": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "financeTransactions" });
-          if (record && record.userId === args.userId) {
-            await ctx.db.delete(record._id);
-          }
-          break;
-        }
-        case "financeCategories": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "financeCategories" });
-          if (record && record.userId === args.userId) {
-            await ctx.db.delete(record._id);
-          }
-          break;
-        }
-        case "netWorthSnapshots": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "netWorthSnapshots" });
-          if (record && record.userId === args.userId) {
-            await ctx.db.delete(record._id);
-          }
-          break;
-        }
       }
     } else if (isUpdate) {
       if (!entry.beforeData) {
@@ -608,27 +539,6 @@ export const _undo = internalMutation({
         }
         case "reminders": {
           const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "reminders" });
-          if (record && record.userId === args.userId) {
-            await ctx.db.patch(record._id, restoreData);
-          }
-          break;
-        }
-        case "financeTransactions": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "financeTransactions" });
-          if (record && record.userId === args.userId) {
-            await ctx.db.patch(record._id, restoreData);
-          }
-          break;
-        }
-        case "financeCategories": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "financeCategories" });
-          if (record && record.userId === args.userId) {
-            await ctx.db.patch(record._id, restoreData);
-          }
-          break;
-        }
-        case "netWorthSnapshots": {
-          const record = await ctx.db.get(recordId as typeof recordId & { __tableName: "netWorthSnapshots" });
           if (record && record.userId === args.userId) {
             await ctx.db.patch(record._id, restoreData);
           }

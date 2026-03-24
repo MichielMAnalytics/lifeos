@@ -86,7 +86,7 @@ export const list = query({
     // Sort: dueDate ASC nulls last, then position
     results.sort(sortTasks);
 
-    return { data: results, count: results.length };
+    return results;
   },
 });
 

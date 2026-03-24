@@ -33,7 +33,7 @@ export const list = query({
       results = results.filter((g) => g.quarter === args.quarter);
     }
 
-    return { data: results, count: results.length };
+    return results;
   },
 });
 

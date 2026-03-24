@@ -4,11 +4,13 @@ import { createClient } from '../api-client.js';
 import chalk from 'chalk';
 import {
   formatDate,
+  getId,
   isJsonMode,
   printError,
   printJson,
   printSuccess,
   printTable,
+  shortId,
 } from '../output.js';
 
 export const goalCommand = new Command('goal')
@@ -39,11 +41,11 @@ goalCommand
       }
 
       const rows = res.data.map((g) => [
-        g.id.slice(0, 8),
+        shortId(g),
         g.title,
         g.status,
         g.quarter ?? '-',
-        formatDate(g.target_date),
+        formatDate(g.targetDate ?? g.target_date ?? null),
       ]);
       printTable(['ID', 'Title', 'Status', 'Quarter', 'Target'], rows);
     } catch (err) {
@@ -62,7 +64,7 @@ goalCommand
     try {
       const client = createClient();
       const body: Record<string, unknown> = { title };
-      if (opts.targetDate) body.target_date = opts.targetDate;
+      if (opts.targetDate) body.targetDate = opts.targetDate;
       if (opts.quarter) body.quarter = opts.quarter;
       if (opts.description) body.description = opts.description;
 
@@ -73,7 +75,7 @@ goalCommand
         return;
       }
 
-      printSuccess(`Goal created: ${res.data.title} (${res.data.id.slice(0, 8)})`);
+      printSuccess(`Goal created: ${res.data.title} (${shortId(res.data)})`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;
@@ -94,15 +96,16 @@ goalCommand
       }
 
       const g = res.data;
-      console.log(`ID:           ${g.id}`);
+      console.log(`ID:           ${getId(g)}`);
       console.log(`Title:        ${g.title}`);
       console.log(`Description:  ${g.description ?? '-'}`);
       console.log(`Status:       ${g.status}`);
       console.log(`Quarter:      ${g.quarter ?? '-'}`);
-      console.log(`Target Date:  ${formatDate(g.target_date)}`);
-      console.log(`Created:      ${formatDate(g.created_at)}`);
-      if (g.completed_at) {
-        console.log(`Completed:    ${formatDate(g.completed_at)}`);
+      console.log(`Target Date:  ${formatDate(g.targetDate ?? g.target_date ?? null)}`);
+      console.log(`Created:      ${formatDate(g.createdAt ?? g.created_at ?? null)}`);
+      const completedAt = g.completedAt ?? g.completed_at;
+      if (completedAt) {
+        console.log(`Completed:    ${formatDate(completedAt)}`);
       }
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
@@ -135,9 +138,11 @@ goalCommand
         }
 
         const h = res.data;
+        const tasksDone = h.tasksDone ?? h.tasks_done ?? 0;
+        const tasksTotal = h.tasksTotal ?? h.tasks_total ?? 0;
         console.log(`Status:    ${colorHealth(h.status)}`);
         console.log(`Score:     ${h.score}`);
-        console.log(`Tasks:     ${h.tasks_done}/${h.tasks_total}`);
+        console.log(`Tasks:     ${tasksDone}/${tasksTotal}`);
         console.log(`Velocity:  ${h.velocity}`);
       } else {
         const goalsRes = await client.get<ApiListResponse<Goal>>('/api/v1/goals', { status: 'active' });
@@ -145,7 +150,7 @@ goalCommand
         if (isJsonMode()) {
           const healthData: Array<{ goal: Goal; health: GoalHealthInfo }> = [];
           for (const goal of goalsRes.data) {
-            const hRes = await client.get<ApiResponse<GoalHealthInfo>>(`/api/v1/goals/${goal.id}/health`);
+            const hRes = await client.get<ApiResponse<GoalHealthInfo>>(`/api/v1/goals/${getId(goal)}/health`);
             healthData.push({ goal, health: hRes.data });
           }
           printJson(healthData);
@@ -159,14 +164,16 @@ goalCommand
 
         const rows: string[][] = [];
         for (const goal of goalsRes.data) {
-          const hRes = await client.get<ApiResponse<GoalHealthInfo>>(`/api/v1/goals/${goal.id}/health`);
+          const hRes = await client.get<ApiResponse<GoalHealthInfo>>(`/api/v1/goals/${getId(goal)}/health`);
           const h = hRes.data;
+          const tasksDone = h.tasksDone ?? h.tasks_done ?? 0;
+          const tasksTotal = h.tasksTotal ?? h.tasks_total ?? 0;
           rows.push([
-            goal.id.slice(0, 8),
+            shortId(goal),
             goal.title,
             colorHealth(h.status),
             String(h.score),
-            `${h.tasks_done}/${h.tasks_total}`,
+            `${tasksDone}/${tasksTotal}`,
           ]);
         }
         printTable(['ID', 'Goal', 'Health', 'Score', 'Tasks'], rows);

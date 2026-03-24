@@ -8,6 +8,7 @@ import {
   printJson,
   printSuccess,
   printTable,
+  shortId,
 } from '../output.js';
 
 export const reminderCommand = new Command('reminder')
@@ -36,11 +37,11 @@ reminderCommand
       }
 
       const rows = res.data.map((r) => [
-        r.id.slice(0, 8),
+        shortId(r),
         r.title,
         r.status,
-        formatDate(r.scheduled_at),
-        String(r.snooze_count),
+        formatDate(r.scheduledAt ?? r.scheduled_at ?? null),
+        String(r.snoozeCount ?? r.snooze_count ?? 0),
       ]);
       printTable(['ID', 'Title', 'Status', 'Scheduled', 'Snoozed'], rows);
     } catch (err) {
@@ -58,7 +59,7 @@ reminderCommand
     try {
       const client = createClient();
       const body: Record<string, unknown> = { title };
-      if (opts.at) body.scheduled_at = opts.at;
+      if (opts.at) body.scheduledAt = opts.at;
       if (opts.body) body.body = opts.body;
 
       const res = await client.post<ApiResponse<Reminder>>('/api/v1/reminders', body);
@@ -68,7 +69,7 @@ reminderCommand
         return;
       }
 
-      printSuccess(`Reminder created: ${res.data.title} (${res.data.id.slice(0, 8)})`);
+      printSuccess(`Reminder created: ${res.data.title} (${shortId(res.data)})`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;

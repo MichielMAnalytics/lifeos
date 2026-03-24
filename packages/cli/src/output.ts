@@ -46,6 +46,16 @@ export function printError(msg: string): void {
   console.error(chalk.red('\u2717') + ' ' + msg);
 }
 
+/** Extract ID from a record that may have `id` or `_id`. */
+export function getId(obj: { _id?: string; id?: string }): string {
+  return String(obj._id ?? obj.id ?? '');
+}
+
+/** Short ID (first 8 chars). */
+export function shortId(obj: { _id?: string; id?: string }): string {
+  return getId(obj).slice(0, 8);
+}
+
 /**
  * Format a date string (YYYY-MM-DD or ISO) to a human-readable form.
  * Returns '-' for null/undefined/empty values.

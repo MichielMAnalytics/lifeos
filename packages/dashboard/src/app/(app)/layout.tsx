@@ -1,11 +1,41 @@
+'use client';
+
+import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Nav } from '@/components/nav';
 import { MainContent } from '@/components/main-content';
+import { DashboardConfigProvider } from '@/lib/dashboard-config';
+
+function RedirectToLogin() {
+  const router = useRouter();
+  useEffect(() => { router.replace('/login'); }, [router]);
+  return null;
+}
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex w-full min-h-screen">
-      <Nav />
-      <MainContent>{children}</MainContent>
-    </div>
+    <>
+      <AuthLoading>
+        <div className="min-h-screen bg-bg flex items-center justify-center">
+          <div className="text-text-muted text-sm tracking-wider uppercase animate-pulse">
+            Loading...
+          </div>
+        </div>
+      </AuthLoading>
+
+      <Unauthenticated>
+        <RedirectToLogin />
+      </Unauthenticated>
+
+      <Authenticated>
+        <DashboardConfigProvider>
+          <div className="flex w-full min-h-screen">
+            <Nav />
+            <MainContent>{children}</MainContent>
+          </div>
+        </DashboardConfigProvider>
+      </Authenticated>
+    </>
   );
 }

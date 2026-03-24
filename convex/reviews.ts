@@ -22,7 +22,7 @@ export const list = query({
       results = results.filter((r) => r.reviewType === args.reviewType);
     }
 
-    return { data: results, count: results.length };
+    return results;
   },
 });
 

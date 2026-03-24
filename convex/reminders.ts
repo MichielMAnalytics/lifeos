@@ -30,7 +30,7 @@ export const list = query({
     // Sort by scheduledAt ascending
     results.sort((a, b) => a.scheduledAt - b.scheduledAt);
 
-    return { data: results, count: results.length };
+    return results;
   },
 });
 

@@ -106,7 +106,7 @@ export const search = query({
         .slice(0, LIMIT);
     }
 
-    return { data: results };
+    return results;
   },
 });
 

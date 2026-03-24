@@ -2,18 +2,26 @@ import { Command } from 'commander';
 import { createClient } from '../api-client.js';
 import {
   formatDate,
+  getId,
   isJsonMode,
   printError,
   printJson,
   printTable,
+  shortId,
 } from '../output.js';
 
+interface SearchItem {
+  id: string;
+  _id?: string;
+  [key: string]: unknown;
+}
+
 interface SearchData {
-  tasks: Array<{ id: string; title: string; due_date: string | null; status: string }>;
-  goals: Array<{ id: string; title: string; quarter: string | null; status: string }>;
-  ideas: Array<{ id: string; content: string }>;
-  journal: Array<{ id: string; entry_date: string; notes: string | null }>;
-  resources: Array<{ id: string; title: string; type: string | null }>;
+  tasks: Array<SearchItem & { title: string; due_date?: string | null; dueDate?: string | null; status: string }>;
+  goals: Array<SearchItem & { title: string; quarter: string | null; status: string }>;
+  ideas: Array<SearchItem & { content: string }>;
+  journal: Array<SearchItem & { entry_date?: string; entryDate?: string; notes: string | null }>;
+  resources: Array<SearchItem & { title: string; type: string | null }>;
 }
 
 export const searchCommand = new Command('search')
@@ -41,7 +49,7 @@ export const searchCommand = new Command('search')
         console.log('\nTasks:');
         printTable(
           ['ID', 'Title', 'Status', 'Due'],
-          d.tasks.map((t) => [t.id.slice(0, 8), t.title, t.status, formatDate(t.due_date)]),
+          d.tasks.map((t) => [shortId(t), t.title, t.status, formatDate(t.dueDate ?? t.due_date ?? null)]),
         );
       }
 
@@ -50,7 +58,7 @@ export const searchCommand = new Command('search')
         console.log('\nGoals:');
         printTable(
           ['ID', 'Title', 'Status', 'Quarter'],
-          d.goals.map((g) => [g.id.slice(0, 8), g.title, g.status, g.quarter ?? '-']),
+          d.goals.map((g) => [shortId(g), g.title, g.status, g.quarter ?? '-']),
         );
       }
 
@@ -59,7 +67,7 @@ export const searchCommand = new Command('search')
         console.log('\nIdeas:');
         printTable(
           ['ID', 'Content'],
-          d.ideas.map((i) => [i.id.slice(0, 8), i.content.slice(0, 80)]),
+          d.ideas.map((i) => [shortId(i), i.content.slice(0, 80)]),
         );
       }
 
@@ -68,7 +76,7 @@ export const searchCommand = new Command('search')
         console.log('\nJournal:');
         printTable(
           ['ID', 'Date', 'Notes'],
-          d.journal.map((j) => [j.id.slice(0, 8), j.entry_date, (j.notes ?? '').slice(0, 60)]),
+          d.journal.map((j) => [shortId(j), (j.entryDate ?? j.entry_date) ?? '-', (j.notes ?? '').slice(0, 60)]),
         );
       }
 
@@ -77,7 +85,7 @@ export const searchCommand = new Command('search')
         console.log('\nResources:');
         printTable(
           ['ID', 'Title', 'Type'],
-          d.resources.map((r) => [r.id.slice(0, 8), r.title, r.type ?? '-']),
+          d.resources.map((r) => [shortId(r), r.title, r.type ?? '-']),
         );
       }
 

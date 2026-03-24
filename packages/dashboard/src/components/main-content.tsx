@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { useDashboardConfig } from '@/lib/dashboard-config';
 
 const STORAGE_KEY = 'lifeos-nav-expanded';
 
 export function MainContent({ children }: { children: React.ReactNode }) {
   const [expanded, setExpanded] = useState(false);
+  const { config } = useDashboardConfig();
+  const isHeader = config?.navMode === 'header';
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -34,7 +37,7 @@ export function MainContent({ children }: { children: React.ReactNode }) {
     <main
       className={cn(
         'w-full min-h-screen bg-bg overflow-y-auto transition-all duration-200',
-        expanded ? 'ml-52' : 'ml-14',
+        isHeader ? 'mt-14' : (expanded ? 'ml-52' : 'ml-14'),
       )}
     >
       <div className="px-8 py-8 lg:px-12 lg:py-10">{children}</div>

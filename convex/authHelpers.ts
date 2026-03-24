@@ -11,7 +11,7 @@ export const _findUserByEmail = internalQuery({
   handler: async (ctx, args) => {
     const users = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .withIndex("email", (q) => q.eq("email", args.email))
       .collect();
     return users[0] ?? null;
   },
@@ -20,16 +20,14 @@ export const _findUserByEmail = internalQuery({
 export const _insertUser = internalMutation({
   args: {
     email: v.string(),
-    password_hash: v.string(),
     name: v.optional(v.string()),
-    timezone: v.string(),
+    timezone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await ctx.db.insert("users", {
       email: args.email,
-      password_hash: args.password_hash,
       name: args.name,
-      timezone: args.timezone,
+      timezone: args.timezone ?? "UTC",
     });
     const user = await ctx.db.get(userId);
     return user;
@@ -92,7 +90,7 @@ export const getMe = query({
 
     const user = await ctx.db.get(userId);
     if (!user) return null;
-    const { password_hash: _, ...safeUser } = user;
+    const safeUser = user;
     return safeUser;
   },
 });
@@ -124,7 +122,7 @@ export const updateMe = mutation({
     await ctx.db.patch(userId, updates);
     const updated = await ctx.db.get(userId);
     if (!updated) throw new Error("User not found after update");
-    const { password_hash: _, ...safeUser } = updated;
+    const safeUser = updated;
     return safeUser;
   },
 });
@@ -182,7 +180,7 @@ export const _getMe = internalQuery({
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) return null;
-    const { password_hash: _, ...safeUser } = user;
+    const safeUser = user;
     return safeUser;
   },
 });
@@ -210,7 +208,7 @@ export const _updateMe = internalMutation({
     await ctx.db.patch(args.userId, updates);
     const updated = await ctx.db.get(args.userId);
     if (!updated) throw new Error("User not found after update");
-    const { password_hash: _, ...safeUser } = updated;
+    const safeUser = updated;
     return safeUser;
   },
 });

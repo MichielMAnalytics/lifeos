@@ -3,11 +3,13 @@ import type { ApiListResponse, ApiResponse, Task } from '@lifeos/shared';
 import { createClient } from '../api-client.js';
 import {
   formatDate,
+  getId,
   isJsonMode,
   printError,
   printJson,
   printSuccess,
   printTable,
+  shortId,
 } from '../output.js';
 
 export const taskCommand = new Command('task')
@@ -38,11 +40,11 @@ taskCommand
       }
 
       const rows = res.data.map((t) => [
-        t.id.slice(0, 8),
+        shortId(t),
         t.title,
         t.status,
-        formatDate(t.due_date),
-        t.goal_id?.slice(0, 8) ?? '-',
+        formatDate(t.dueDate ?? t.due_date ?? null),
+        (t.goalId ?? t.goal_id)?.slice(0, 8) ?? '-',
       ]);
       printTable(['ID', 'Title', 'Status', 'Due', 'Goal'], rows);
     } catch (err) {
@@ -62,9 +64,9 @@ taskCommand
     try {
       const client = createClient();
       const body: Record<string, unknown> = { title };
-      if (opts.due) body.due_date = opts.due;
-      if (opts.project) body.project_id = opts.project;
-      if (opts.goal) body.goal_id = opts.goal;
+      if (opts.due) body.dueDate = opts.due;
+      if (opts.project) body.projectId = opts.project;
+      if (opts.goal) body.goalId = opts.goal;
       if (opts.notes) body.notes = opts.notes;
 
       const res = await client.post<ApiResponse<Task>>('/api/v1/tasks', body);
@@ -74,7 +76,7 @@ taskCommand
         return;
       }
 
-      printSuccess(`Task created: ${res.data.title} (${res.data.id.slice(0, 8)})`);
+      printSuccess(`Task created: ${res.data.title} (${shortId(res.data)})`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;
@@ -95,16 +97,17 @@ taskCommand
       }
 
       const t = res.data;
-      console.log(`ID:          ${t.id}`);
+      console.log(`ID:          ${getId(t)}`);
       console.log(`Title:       ${t.title}`);
       console.log(`Status:      ${t.status}`);
-      console.log(`Due:         ${formatDate(t.due_date)}`);
+      console.log(`Due:         ${formatDate(t.dueDate ?? t.due_date ?? null)}`);
       console.log(`Notes:       ${t.notes ?? '-'}`);
-      console.log(`Project ID:  ${t.project_id ?? '-'}`);
-      console.log(`Goal ID:     ${t.goal_id ?? '-'}`);
-      console.log(`Created:     ${formatDate(t.created_at)}`);
-      if (t.completed_at) {
-        console.log(`Completed:   ${formatDate(t.completed_at)}`);
+      console.log(`Project ID:  ${t.projectId ?? t.project_id ?? '-'}`);
+      console.log(`Goal ID:     ${t.goalId ?? t.goal_id ?? '-'}`);
+      console.log(`Created:     ${formatDate(t.createdAt ?? t.created_at ?? null)}`);
+      const completedAt = t.completedAt ?? t.completed_at;
+      if (completedAt) {
+        console.log(`Completed:   ${formatDate(completedAt)}`);
       }
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
@@ -144,9 +147,9 @@ taskCommand
       const client = createClient();
       const body: Record<string, unknown> = {};
       if (opts.title) body.title = opts.title;
-      if (opts.due) body.due_date = opts.due;
+      if (opts.due) body.dueDate = opts.due;
       if (opts.notes) body.notes = opts.notes;
-      if (opts.goal) body.goal_id = opts.goal;
+      if (opts.goal) body.goalId = opts.goal;
 
       const res = await client.patch<ApiResponse<Task>>(`/api/v1/tasks/${id}`, body);
 

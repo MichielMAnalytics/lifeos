@@ -13,11 +13,11 @@ import { planCommand } from './commands/plan.js';
 import { weekCommand } from './commands/week.js';
 import { ideaCommand, thoughtCommand, winCommand, resourceCommand } from './commands/capture.js';
 import { reviewCommand } from './commands/review.js';
-import { financeCommand } from './commands/finance.js';
 import { reminderCommand } from './commands/reminder.js';
 import { searchCommand } from './commands/search.js';
 import { undoCommand } from './commands/undo.js';
 import { triggerCommand } from './commands/trigger.js';
+import { dashboardCommand } from './commands/dashboard.js';
 
 const program = new Command();
 
@@ -65,10 +65,10 @@ program.addCommand(thoughtCommand);
 program.addCommand(winCommand);
 program.addCommand(resourceCommand);
 program.addCommand(reviewCommand);
-program.addCommand(financeCommand);
 program.addCommand(reminderCommand);
 program.addCommand(searchCommand);
 program.addCommand(undoCommand);
 program.addCommand(triggerCommand);
+program.addCommand(dashboardCommand);
 
 program.parseAsync(process.argv);

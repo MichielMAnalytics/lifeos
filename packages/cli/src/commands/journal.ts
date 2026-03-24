@@ -28,7 +28,7 @@ export const journalCommand = new Command('journal')
       }
 
       const j = res.data;
-      console.log(`Date:   ${j.entry_date}`);
+      console.log(`Date:   ${j.entryDate ?? j.entry_date ?? '-'}`);
       console.log(`MIT:    ${j.mit ?? '-'}`);
       console.log(`P1:     ${j.p1 ?? '-'}`);
       console.log(`P2:     ${j.p2 ?? '-'}`);
@@ -69,7 +69,7 @@ journalCommand
         return;
       }
 
-      printSuccess(`Journal entry saved for ${res.data.entry_date}.`);
+      printSuccess(`Journal entry saved for ${res.data.entryDate ?? res.data.entry_date ?? d}.`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;
@@ -83,7 +83,7 @@ journalCommand
     try {
       const client = createClient();
       const d = date ?? todayStr();
-      const res = await client.get<ApiListResponse<Win>>(`/api/v1/wins`, { entry_date: d });
+      const res = await client.get<ApiListResponse<Win>>(`/api/v1/wins`, { entryDate: d });
 
       if (isJsonMode()) {
         printJson(res);
@@ -97,7 +97,7 @@ journalCommand
 
       console.log(`Wins for ${d}:`);
       for (const w of res.data) {
-        console.log(`  - ${w.content} (${formatDate(w.created_at)})`);
+        console.log(`  - ${w.content} (${formatDate(w.createdAt ?? w.created_at ?? null)})`);
       }
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));

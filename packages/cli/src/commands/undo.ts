@@ -13,7 +13,7 @@ export const undoCommand = new Command('undo')
   .action(async () => {
     try {
       const client = createClient();
-      const res = await client.post<{ data: { undone: string; table: string; record_id: string } }>('/api/v1/mutations/undo');
+      const res = await client.post<{ data: { undone: string; table?: string; tableName?: string; record_id?: string; recordId?: string } }>('/api/v1/mutations/undo');
 
       if (isJsonMode()) {
         printJson(res);
@@ -21,7 +21,9 @@ export const undoCommand = new Command('undo')
       }
 
       const entry = res.data;
-      printSuccess(`Undid ${entry.undone} on ${entry.table} (record ${entry.record_id.slice(0, 8)}).`);
+      const table = entry.tableName ?? entry.table ?? 'unknown';
+      const recordId = entry.recordId ?? entry.record_id ?? '';
+      printSuccess(`Undid ${entry.undone} on ${table} (record ${recordId.slice(0, 8)}).`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;

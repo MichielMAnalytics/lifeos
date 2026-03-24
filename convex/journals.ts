@@ -29,7 +29,7 @@ export const list = query({
     // Sort by entryDate descending
     results.sort((a, b) => (a.entryDate > b.entryDate ? -1 : 1));
 
-    return { data: results, count: results.length };
+    return results;
   },
 });
 

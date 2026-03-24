@@ -102,12 +102,10 @@ export const morningBriefing = query({
     }
 
     return {
-      data: {
-        overdueTasks,
-        todayTasks,
-        todayPlan,
-        atRiskGoals,
-      },
+      overdueTasks,
+      todayTasks,
+      todayPlan,
+      atRiskGoals,
     };
   },
 });
@@ -167,12 +165,10 @@ export const dailyReview = query({
       .collect();
 
     return {
-      data: {
-        todayPlan,
-        completedToday,
-        todayJournal,
-        todayWins: wins,
-      },
+      todayPlan,
+      completedToday,
+      todayJournal,
+      todayWins: wins,
     };
   },
 });
@@ -239,13 +235,11 @@ export const weeklyReview = query({
     );
 
     return {
-      data: {
-        weeklyPlan: currentWeeklyPlan,
-        completedThisWeek,
-        activeGoals,
-        weekJournals,
-        weekWins,
-      },
+      weeklyPlan: currentWeeklyPlan,
+      completedThisWeek,
+      activeGoals,
+      weekJournals,
+      weekWins,
     };
   },
 });
@@ -281,7 +275,7 @@ export const overdueTriage = query({
       enriched.push({ task, project, goal });
     }
 
-    return { data: { overdueTasks: enriched } };
+    return { overdueTasks: enriched };
   },
 });
 
@@ -306,7 +300,7 @@ export const reminderCheck = query({
       (r) => r.scheduledAt <= now,
     );
 
-    return { data: { dueReminders } };
+    return { dueReminders };
   },
 });
 
@@ -331,7 +325,7 @@ export const goalHealth = query({
       goalsWithHealth.push({ ...goal, health });
     }
 
-    return { data: { goals: goalsWithHealth } };
+    return { goals: goalsWithHealth };
   },
 });
 

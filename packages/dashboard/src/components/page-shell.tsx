@@ -1,0 +1,46 @@
+'use client';
+
+import { useDashboardConfig } from '@/lib/dashboard-config';
+import { type PageKey, getPresetsForPage } from '@/lib/presets';
+import { SectionRenderer } from './section-renderer';
+import { PresetSelector } from './preset-selector';
+import { ConfigureToolbar } from './configure-toolbar';
+
+interface PageShellProps {
+  page: PageKey;
+  title: string;
+  subtitle?: string;
+  children?: React.ReactNode;
+}
+
+export function PageShell({ page, title, subtitle, children }: PageShellProps) {
+  const { getActivePreset, isConfigMode } = useDashboardConfig();
+  const preset = getActivePreset(page);
+  const allPresets = getPresetsForPage(page);
+
+  return (
+    <div className="max-w-none animate-fade-in">
+      {/* Configure mode toolbar */}
+      <ConfigureToolbar />
+
+      {/* Config mode: preset selector */}
+      {isConfigMode && (
+        <PresetSelector page={page} presets={allPresets} activePreset={preset} />
+      )}
+
+      {/* Sections grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {preset.sections.map((section) => (
+          <div
+            key={section.id}
+            className={section.span === 'full' ? 'lg:col-span-2' : ''}
+          >
+            <SectionRenderer section={section} />
+          </div>
+        ))}
+      </div>
+
+      {children}
+    </div>
+  );
+}

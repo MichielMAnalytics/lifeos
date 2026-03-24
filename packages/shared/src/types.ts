@@ -2,71 +2,96 @@
 
 export interface User {
   id: string;
+  _id?: string;
   email: string;
   name: string | null;
   timezone: string;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface ApiKey {
   id: string;
+  _id?: string;
   name: string | null;
-  key_prefix: string;
-  last_used_at: string | null;
-  created_at: string;
+  key_prefix?: string;
+  keyPrefix?: string;
+  last_used_at?: string | null;
+  lastUsedAt?: string | null;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface Task {
   id: string;
+  _id?: string;
   title: string;
   notes: string | null;
   status: string;
-  due_date: string | null;
-  project_id: string | null;
-  goal_id: string | null;
+  due_date?: string | null;
+  dueDate?: string | null;
+  project_id?: string | null;
+  projectId?: string | null;
+  goal_id?: string | null;
+  goalId?: string | null;
   position: number;
-  completed_at: string | null;
-  created_at: string;
-  updated_at: string;
+  completed_at?: string | null;
+  completedAt?: string | null;
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
 }
 
 export interface Project {
   id: string;
+  _id?: string;
   title: string;
   description: string | null;
   status: string;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface Goal {
   id: string;
+  _id?: string;
   title: string;
   description: string | null;
   status: string;
-  target_date: string | null;
+  target_date?: string | null;
+  targetDate?: string | null;
   quarter: string | null;
-  completed_at: string | null;
-  created_at: string;
+  completed_at?: string | null;
+  completedAt?: string | null;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface GoalHealthInfo {
   status: string;
   score: number;
-  tasks_total: number;
-  tasks_done: number;
+  tasks_total?: number;
+  tasksTotal?: number;
+  tasks_done?: number;
+  tasksDone?: number;
   velocity: number;
 }
 
 export interface Journal {
   id: string;
-  entry_date: string;
+  _id?: string;
+  entry_date?: string;
+  entryDate?: string;
   mit: string | null;
   p1: string | null;
   p2: string | null;
   notes: string | null;
   wins: string[];
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
 }
 
 export interface ScheduleBlock {
@@ -75,125 +100,184 @@ export interface ScheduleBlock {
   label: string;
   type: string;
   task_id?: string;
+  taskId?: string;
 }
 
 export interface DayPlan {
   id: string;
-  plan_date: string;
-  wake_time: string | null;
+  _id?: string;
+  plan_date?: string;
+  planDate?: string;
+  wake_time?: string | null;
+  wakeTime?: string | null;
   schedule: ScheduleBlock[];
   overflow: string[];
-  mit_task_id: string | null;
-  p1_task_id: string | null;
-  p2_task_id: string | null;
-  mit_done: boolean;
-  p1_done: boolean;
-  p2_done: boolean;
-  created_at: string;
+  mit_task_id?: string | null;
+  mitTaskId?: string | null;
+  p1_task_id?: string | null;
+  p1TaskId?: string | null;
+  p2_task_id?: string | null;
+  p2TaskId?: string | null;
+  mit_done?: boolean;
+  mitDone?: boolean;
+  p1_done?: boolean;
+  p1Done?: boolean;
+  p2_done?: boolean;
+  p2Done?: boolean;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface WeeklyGoal {
   title: string;
   status?: string;
   goal_id?: string;
+  goalId?: string;
 }
 
 export interface WeeklyPlan {
   id: string;
-  week_start: string;
+  _id?: string;
+  week_start?: string;
+  weekStart?: string;
   theme: string | null;
   goals: WeeklyGoal[];
-  review_score: number | null;
-  created_at: string;
+  review_score?: number | null;
+  reviewScore?: number | null;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface Idea {
   id: string;
+  _id?: string;
   content: string;
   actionability: string | null;
-  next_step: string | null;
-  project_id: string | null;
-  created_at: string;
+  next_step?: string | null;
+  nextStep?: string | null;
+  project_id?: string | null;
+  projectId?: string | null;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface Thought {
   id: string;
+  _id?: string;
   content: string;
   title: string | null;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface Win {
   id: string;
+  _id?: string;
   content: string;
-  entry_date: string;
-  created_at: string;
+  entry_date?: string;
+  entryDate?: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface Resource {
   id: string;
+  _id?: string;
   title: string;
   url: string | null;
   content: string | null;
   type: string | null;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface Review {
   id: string;
-  review_type: string;
-  period_start: string;
-  period_end: string;
+  _id?: string;
+  review_type?: string;
+  reviewType?: string;
+  period_start?: string;
+  periodStart?: string;
+  period_end?: string;
+  periodEnd?: string;
   content: Record<string, unknown>;
   score: number | null;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface Reminder {
   id: string;
+  _id?: string;
   title: string;
   body: string | null;
-  scheduled_at: string;
+  scheduled_at?: string;
+  scheduledAt?: string;
   status: string;
-  snooze_count: number;
-  created_at: string;
+  snooze_count?: number;
+  snoozeCount?: number;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface FinanceCategory {
   id: string;
+  _id?: string;
   name: string;
-  parent_id: string | null;
+  parent_id?: string | null;
+  parentId?: string | null;
 }
 
 export interface FinanceTransaction {
   id: string;
+  _id?: string;
   date: string;
   amount: number;
   currency: string;
-  category_id: string | null;
+  category_id?: string | null;
+  categoryId?: string | null;
   merchant: string | null;
   notes: string | null;
   source: string | null;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface NetWorthSnapshot {
   id: string;
+  _id?: string;
   date: string;
   breakdown: Record<string, number>;
   total: number;
   notes: string | null;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface MutationLogEntry {
   id: string;
+  _id?: string;
   action: string;
-  table_name: string;
-  record_id: string;
-  before_data: Record<string, unknown> | null;
-  after_data: Record<string, unknown> | null;
-  created_at: string;
+  table_name?: string;
+  tableName?: string;
+  record_id?: string;
+  recordId?: string;
+  before_data?: Record<string, unknown> | null;
+  beforeData?: Record<string, unknown> | null;
+  after_data?: Record<string, unknown> | null;
+  afterData?: Record<string, unknown> | null;
+  created_at?: string;
+  createdAt?: string;
+}
+
+export interface DashboardConfig {
+  _id: string | null;
+  userId: string;
+  navMode: string;
+  navOrder: string[];
+  navHidden: string[];
+  pagePresets: Record<string, string>;
+  customTheme?: Record<string, unknown>;
 }
 
 // ── API Response Wrappers ──

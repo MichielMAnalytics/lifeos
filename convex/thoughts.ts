@@ -16,7 +16,7 @@ export const list = query({
       .order("desc")
       .collect();
 
-    return { data: results, count: results.length };
+    return results;
   },
 });
 

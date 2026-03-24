@@ -86,58 +86,9 @@ http.route({
 });
 
 // ════════════════════════════════════════════════════════
-// AUTH routes (no API key needed for register/login)
+// AUTH routes (Google OAuth handles sign-in/sign-up)
+// CLI uses API key auth for all other endpoints
 // ════════════════════════════════════════════════════════
-
-http.route({
-  path: "/api/v1/auth/register",
-  method: "OPTIONS",
-  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
-});
-
-http.route({
-  path: "/api/v1/auth/register",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    try {
-      const body = await parseBody<{ email: string; password: string; name?: string; timezone?: string }>(request);
-      const user = await ctx.runAction(api.apiKeyAuth.register, {
-        email: body.email,
-        password: body.password,
-        name: body.name,
-        timezone: body.timezone,
-      });
-      return json({ data: user }, 201);
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Registration failed";
-      if (message.includes("already registered")) return err(message, 409);
-      return err(message, 400);
-    }
-  }),
-});
-
-http.route({
-  path: "/api/v1/auth/login",
-  method: "OPTIONS",
-  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
-});
-
-http.route({
-  path: "/api/v1/auth/login",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    try {
-      const body = await parseBody<{ email: string; password: string }>(request);
-      const user = await ctx.runAction(api.apiKeyAuth.login, {
-        email: body.email,
-        password: body.password,
-      });
-      return json({ data: user });
-    } catch {
-      return err("Invalid email or password", 401);
-    }
-  }),
-});
 
 http.route({
   path: "/api/v1/auth/me",
@@ -1358,133 +1309,189 @@ http.route({
 });
 
 // ════════════════════════════════════════════════════════
-// FINANCE
+// DASHBOARD CONFIG
 // ════════════════════════════════════════════════════════
 
-// ── Transactions ─────────────────────────────────────
-
 http.route({
-  path: "/api/v1/finance/transactions",
+  path: "/api/v1/dashboard/config",
   method: "OPTIONS",
   handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
 });
 
 http.route({
-  path: "/api/v1/finance/transactions",
+  path: "/api/v1/dashboard/config",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
-    const url = new URL(request.url);
-    const result = await ctx.runQuery(internal.finance._listTransactions, {
-      userId,
-      from: url.searchParams.get("from") ?? undefined,
-      to: url.searchParams.get("to") ?? undefined,
-      categoryId: (url.searchParams.get("category_id") ??
-        url.searchParams.get("categoryId") ?? undefined) as Id<"financeCategories"> | undefined,
-    });
+    const result = await ctx.runQuery(internal.dashboardConfig._get, { userId });
     return json(result);
   }),
 });
 
 http.route({
-  path: "/api/v1/finance/transactions",
-  method: "POST",
+  path: "/api/v1/dashboard/config",
+  method: "PATCH",
   handler: httpAction(async (ctx, request) => {
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
-    const body = await parseBody(request);
-    const tx = await ctx.runMutation(internal.finance._createTransaction, {
-      userId,
-      date: body.date as string,
-      amount: body.amount as number,
-      currency: (body.currency ?? undefined) as string | undefined,
-      categoryId: ((body.categoryId ?? body.category_id) ?? undefined) as Id<"financeCategories"> | undefined,
-      merchant: (body.merchant ?? undefined) as string | undefined,
-      notes: (body.notes ?? undefined) as string | undefined,
-      source: (body.source ?? undefined) as string | undefined,
-      externalId: ((body.externalId ?? body.external_id) ?? undefined) as string | undefined,
-    });
-    return json({ data: tx }, 201);
+    const body = await parseBody<{
+      navMode?: string;
+      navOrder?: string[];
+      navHidden?: string[];
+      pagePresets?: Record<string, string>;
+      customTheme?: unknown;
+    }>(request);
+    try {
+      const result = await ctx.runMutation(internal.dashboardConfig._update, {
+        userId,
+        navMode: (body.navMode ?? undefined) as string | undefined,
+        navOrder: (body.navOrder ?? undefined) as string[] | undefined,
+        navHidden: (body.navHidden ?? undefined) as string[] | undefined,
+        pagePresets: body.pagePresets ?? undefined,
+        customTheme: body.customTheme ?? undefined,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 400);
+    }
   }),
 });
 
-// ── Categories ───────────────────────────────────────
-
 http.route({
-  path: "/api/v1/finance/categories",
+  path: "/api/v1/dashboard/nav-mode",
   method: "OPTIONS",
   handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
 });
 
 http.route({
-  path: "/api/v1/finance/categories",
-  method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    const userId = await authenticate(ctx, request);
-    if (!userId) return err("Unauthorized", 401);
-    const result = await ctx.runQuery(internal.finance._listCategories, { userId });
-    return json(result);
-  }),
-});
-
-http.route({
-  path: "/api/v1/finance/categories",
+  path: "/api/v1/dashboard/nav-mode",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
-    const body = await parseBody(request);
-    const category = await ctx.runMutation(internal.finance._createCategory, {
-      userId,
-      name: body.name as string,
-      parentId: ((body.parentId ?? body.parent_id) ?? undefined) as Id<"financeCategories"> | undefined,
-    });
-    return json({ data: category }, 201);
+    const body = await parseBody<{ mode: string }>(request);
+    if (!body.mode) return err("mode is required", 400);
+    try {
+      const result = await ctx.runMutation(internal.dashboardConfig._setNavMode, {
+        userId,
+        mode: body.mode,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 400);
+    }
   }),
 });
 
-// ── Net Worth ────────────────────────────────────────
-
 http.route({
-  path: "/api/v1/finance/net-worth",
+  path: "/api/v1/dashboard/nav-order",
   method: "OPTIONS",
   handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
 });
 
 http.route({
-  path: "/api/v1/finance/net-worth",
-  method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    const userId = await authenticate(ctx, request);
-    if (!userId) return err("Unauthorized", 401);
-    const url = new URL(request.url);
-    const result = await ctx.runQuery(internal.finance._listNetWorth, {
-      userId,
-      latest: url.searchParams.get("latest") === "true" ? true : undefined,
-    });
-    return json(result);
-  }),
-});
-
-http.route({
-  path: "/api/v1/finance/net-worth",
+  path: "/api/v1/dashboard/nav-order",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
-    const body = await parseBody(request);
-    const snapshot = await ctx.runMutation(internal.finance._createNetWorthSnapshot, {
-      userId,
-      date: body.date as string,
-      breakdown: body.breakdown,
-      total: body.total as number,
-      notes: (body.notes ?? undefined) as string | undefined,
-    });
-    return json({ data: snapshot }, 201);
+    const body = await parseBody<{ order: string[] }>(request);
+    if (!body.order || !Array.isArray(body.order)) return err("order is required (array of strings)", 400);
+    try {
+      const result = await ctx.runMutation(internal.dashboardConfig._setNavOrder, {
+        userId,
+        order: body.order,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 400);
+    }
   }),
 });
 
+http.route({
+  path: "/api/v1/dashboard/preset",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/dashboard/preset",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody<{ page: string; preset: string }>(request);
+    if (!body.page || !body.preset) return err("page and preset are required", 400);
+    try {
+      const result = await ctx.runMutation(internal.dashboardConfig._setPagePreset, {
+        userId,
+        page: body.page,
+        preset: body.preset,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+http.route({
+  path: "/api/v1/dashboard/visibility",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/dashboard/visibility",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody<{ page: string; visible: boolean }>(request);
+    if (!body.page || body.visible === undefined) return err("page and visible are required", 400);
+    try {
+      const result = await ctx.runMutation(internal.dashboardConfig._toggleVisibility, {
+        userId,
+        page: body.page,
+        visible: body.visible,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+http.route({
+  path: "/api/v1/dashboard/reset",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/dashboard/reset",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    try {
+      const result = await ctx.runMutation(internal.dashboardConfig._reset, { userId });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Reset failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+// ════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════
 // SEARCH
 // ════════════════════════════════════════════════════════

@@ -21,7 +21,7 @@ export const list = query({
       results = results.filter((r) => r.type === args.type);
     }
 
-    return { data: results, count: results.length };
+    return results;
   },
 });
 

@@ -6,6 +6,7 @@ import {
   printError,
   printJson,
   printSuccess,
+  shortId,
 } from '../output.js';
 
 export const ideaCommand = new Command('idea')
@@ -25,7 +26,7 @@ export const ideaCommand = new Command('idea')
         return;
       }
 
-      printSuccess(`Idea captured (${res.data.id.slice(0, 8)}).`);
+      printSuccess(`Idea captured (${shortId(res.data)}).`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;
@@ -49,7 +50,7 @@ export const thoughtCommand = new Command('thought')
         return;
       }
 
-      printSuccess(`Thought captured (${res.data.id.slice(0, 8)}).`);
+      printSuccess(`Thought captured (${shortId(res.data)}).`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;
@@ -69,7 +70,7 @@ export const winCommand = new Command('win')
         return;
       }
 
-      printSuccess(`Win recorded (${res.data.id.slice(0, 8)}).`);
+      printSuccess(`Win recorded (${shortId(res.data)}).`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;
@@ -95,7 +96,7 @@ export const resourceCommand = new Command('resource')
         return;
       }
 
-      printSuccess(`Resource saved: ${res.data.title} (${res.data.id.slice(0, 8)}).`);
+      printSuccess(`Resource saved: ${res.data.title} (${shortId(res.data)}).`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;

@@ -3,11 +3,13 @@ import type { ApiListResponse, ApiResponse, Project } from '@lifeos/shared';
 import { createClient } from '../api-client.js';
 import {
   formatDate,
+  getId,
   isJsonMode,
   printError,
   printJson,
   printSuccess,
   printTable,
+  shortId,
 } from '../output.js';
 
 export const projectCommand = new Command('project')
@@ -36,10 +38,10 @@ projectCommand
       }
 
       const rows = res.data.map((p) => [
-        p.id.slice(0, 8),
+        shortId(p),
         p.title,
         p.status,
-        formatDate(p.created_at),
+        formatDate(p.createdAt ?? p.created_at ?? null),
       ]);
       printTable(['ID', 'Title', 'Status', 'Created'], rows);
     } catch (err) {
@@ -65,7 +67,7 @@ projectCommand
         return;
       }
 
-      printSuccess(`Project created: ${res.data.title} (${res.data.id.slice(0, 8)})`);
+      printSuccess(`Project created: ${res.data.title} (${shortId(res.data)})`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;
@@ -86,11 +88,11 @@ projectCommand
       }
 
       const p = res.data;
-      console.log(`ID:           ${p.id}`);
+      console.log(`ID:           ${getId(p)}`);
       console.log(`Title:        ${p.title}`);
       console.log(`Description:  ${p.description ?? '-'}`);
       console.log(`Status:       ${p.status}`);
-      console.log(`Created:      ${formatDate(p.created_at)}`);
+      console.log(`Created:      ${formatDate(p.createdAt ?? p.created_at ?? null)}`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;

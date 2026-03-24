@@ -27,7 +27,7 @@ export const list = query({
         .collect();
     }
 
-    return { data: results, count: results.length };
+    return results;
   },
 });
 
