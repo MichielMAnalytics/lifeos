@@ -15,6 +15,7 @@ const allPages: Record<string, { label: string }> = {
   goals: { label: 'Goals' },
   journal: { label: 'Journal' },
   ideas: { label: 'Ideas' },
+  thoughts: { label: 'Thoughts' },
   plan: { label: 'Plan' },
   reviews: { label: 'Reviews' },
 };

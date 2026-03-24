@@ -121,6 +121,17 @@ export function MarkReviews({ className }: { className?: string }) {
   );
 }
 
+// Thoughts — a brain/cloud: curved shape
+export function MarkThoughts({ className }: { className?: string }) {
+  return (
+    <M className={className}>
+      <path d="M4 11 C4 7 7 4 10 4 C12 4 14 5 14 7 C14 5 16 5 16 7 C16 9 14 11 12 11 L4 11Z" />
+      <line x1="6" y1="11" x2="6" y2="14" />
+      <line x1="10" y1="11" x2="10" y2="14" />
+    </M>
+  );
+}
+
 // Settings — single diagonal line through a dot
 export function MarkSettings({ className }: { className?: string }) {
   return (
@@ -138,6 +149,7 @@ export const NAV_MARKS: Record<string, React.ComponentType<{ className?: string 
   goals: MarkGoals,
   journal: MarkJournal,
   ideas: MarkIdeas,
+  thoughts: MarkThoughts,
   plan: MarkPlan,
   reviews: MarkReviews,
   settings: MarkSettings,

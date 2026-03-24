@@ -17,6 +17,7 @@ import { DayNav } from './sections/day-nav';
 import { PrioritiesChecklist } from './sections/priorities-checklist';
 import { DayTimeline } from './sections/day-timeline';
 import { Quotes } from './sections/quotes';
+import { TaskStatusBar } from './sections/task-status-bar';
 
 // Page-level section components
 import { TasksBucketed } from './sections/tasks-bucketed';
@@ -35,6 +36,7 @@ import { IdeasPriority } from './sections/ideas-priority';
 import { DayPlan } from './sections/day-plan';
 import { WeeklyPlan } from './sections/weekly-plan';
 import { ReviewsTimeline } from './sections/reviews-timeline';
+import { ThoughtsList } from './sections/thoughts-list';
 
 const SECTION_MAP: Record<string, React.ComponentType> = {
   // Today page sections
@@ -52,6 +54,7 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'priorities-checklist': PrioritiesChecklist,
   'day-timeline': DayTimeline,
   'quotes': Quotes,
+  'task-status-bar': TaskStatusBar,
 
   // Tasks page sections
   'tasks-bucketed': TasksBucketed,
@@ -71,6 +74,9 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'journal-timeline': JournalTimeline,
   'journal-editor': JournalEditor,
   'journal-list': JournalList,
+
+  // Thoughts page sections
+  'thoughts-list': ThoughtsList,
 
   // Ideas page sections
   'ideas-grid': IdeasGrid,

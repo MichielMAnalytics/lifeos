@@ -13,7 +13,7 @@ export interface PagePreset {
 }
 
 export type PresetKey = string;
-export type PageKey = "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "plan" | "reviews";
+export type PageKey = "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews";
 
 // ═══════════════════════════════════════════════════════════
 // Every persona appears on every page.
@@ -29,6 +29,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       description: "Balanced overview of your day",
       sections: [
         { id: "day-nav", label: "Date Navigation", span: "full" },
+        { id: "task-status-bar", label: "Task Status", span: "full" },
         { id: "priorities-checklist", label: "Priorities", span: "full" },
         { id: "day-timeline", label: "Timeline", span: "half" },
         { id: "quotes", label: "Daily Quote", span: "half" },
@@ -40,6 +41,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       description: "Execution-focused for founders",
       sections: [
         { id: "day-nav", label: "Date Navigation", span: "full" },
+        { id: "task-status-bar", label: "Task Status", span: "full" },
         { id: "priorities-checklist", label: "Priorities", span: "full" },
         { id: "day-timeline", label: "Timeline", span: "half" },
         { id: "goals-at-risk", label: "Goals at Risk", span: "half" },
@@ -51,6 +53,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       description: "Ideas pipeline and content focus",
       sections: [
         { id: "day-nav", label: "Date Navigation", span: "full" },
+        { id: "task-status-bar", label: "Task Status", span: "full" },
         { id: "priorities-checklist", label: "Priorities", span: "full" },
         { id: "ideas-pipeline", label: "Ideas Pipeline", span: "half" },
         { id: "day-timeline", label: "Timeline", span: "half" },
@@ -61,6 +64,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       description: "Compact, data-dense, no fluff",
       sections: [
         { id: "day-nav", label: "Date Navigation", span: "full" },
+        { id: "task-status-bar", label: "Task Status", span: "full" },
         { id: "priorities-checklist", label: "Priorities", span: "full" },
         { id: "day-timeline", label: "Timeline", span: "full" },
       ],
@@ -70,6 +74,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       description: "High-level metrics and weekly themes",
       sections: [
         { id: "day-nav", label: "Date Navigation", span: "full" },
+        { id: "task-status-bar", label: "Task Status", span: "full" },
         { id: "priorities-checklist", label: "Priorities", span: "full" },
         { id: "weekly-theme", label: "Weekly Theme", span: "half" },
         { id: "day-timeline", label: "Timeline", span: "half" },
@@ -88,6 +93,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       description: "Reflection-first daily view",
       sections: [
         { id: "day-nav", label: "Date Navigation", span: "full" },
+        { id: "task-status-bar", label: "Task Status", span: "full" },
         { id: "priorities-checklist", label: "Priorities", span: "full" },
         { id: "journal-today", label: "Journal", span: "half" },
         { id: "quotes", label: "Daily Quote", span: "half" },
@@ -287,6 +293,57 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
     },
   },
 
+  // ── THOUGHTS ────────────────────────────────────────────
+  thoughts: {
+    default: {
+      name: "Default",
+      description: "Expandable thought journal",
+      sections: [{ id: "thoughts-list", label: "Thoughts", span: "full" }],
+    },
+    solopreneur: {
+      name: "Solopreneur",
+      description: "Thoughts with goals context",
+      sections: [
+        { id: "thoughts-list", label: "Thoughts", span: "half" },
+        { id: "goals-at-risk", label: "Goals", span: "half" },
+      ],
+    },
+    "content-creator": {
+      name: "Content Creator",
+      description: "Thoughts with ideas pipeline",
+      sections: [
+        { id: "thoughts-list", label: "Thoughts", span: "half" },
+        { id: "ideas-pipeline", label: "Ideas", span: "half" },
+      ],
+    },
+    developer: {
+      name: "Developer",
+      description: "Compact thought list",
+      sections: [{ id: "thoughts-list", label: "Thoughts", span: "full" }],
+    },
+    executive: {
+      name: "Executive",
+      description: "Thoughts with weekly theme",
+      sections: [
+        { id: "thoughts-list", label: "Thoughts", span: "half" },
+        { id: "weekly-theme", label: "Weekly Theme", span: "half" },
+      ],
+    },
+    minimalist: {
+      name: "Minimalist",
+      description: "Just thoughts",
+      sections: [{ id: "thoughts-list", label: "Thoughts", span: "full" }],
+    },
+    journaler: {
+      name: "Journaler",
+      description: "Thoughts with journal context",
+      sections: [
+        { id: "thoughts-list", label: "Thoughts", span: "half" },
+        { id: "journal-today", label: "Journal", span: "half" },
+      ],
+    },
+  },
+
   // ── IDEAS ─────────────────────────────────────────────
   ideas: {
     default: {
@@ -448,7 +505,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
 export const ALL_PRESET_KEYS = ["default", "solopreneur", "content-creator", "developer", "executive", "minimalist", "journaler"];
 
 export const DEFAULT_NAV_ORDER: PageKey[] = [
-  "today", "tasks", "projects", "goals", "journal", "ideas", "plan", "reviews",
+  "today", "tasks", "projects", "goals", "journal", "ideas", "thoughts", "plan", "reviews",
 ];
 
 export function getPreset(page: PageKey, presetKey: string): PagePreset {
