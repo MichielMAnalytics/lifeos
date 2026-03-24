@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" width="520" height="160">
+  <!-- Tree mark centered at 80,80 radius 70 -->
+  <path d="M78 10 C98 9,118 17,130 33 C142 49,143 70,137 89 C131 107,118 120,100 126 C82 132,58 132,41 122 C24 112,13 94,13 75 C13 55,22 38,37 27 C52 16,57 11,78 10Z" fill="none" stroke="#111111" stroke-width="5.5"/>
+  <g stroke="#111111" fill="none" stroke-linecap="round">
+    <line x1="80" y1="124" x2="80" y2="40" stroke-width="3.5"/>
+    <path d="M80 110 Q57 90 31 81" stroke-width="3"/>
+    <path d="M80 110 Q103 90 129 81" stroke-width="3"/>
+    <path d="M80 88 Q63 68 50 54" stroke-width="2.3"/>
+    <path d="M80 88 Q97 68 110 54" stroke-width="2.3"/>
+    <path d="M80 67 Q71 49 64 38" stroke-width="1.9"/>
+    <path d="M80 67 Q89 49 96 38" stroke-width="1.9"/>
+  </g>
+  <g fill="#111111">
+    <circle cx="27" cy="79" r="7"/>
+    <circle cx="133" cy="79" r="7"/>
+    <circle cx="46" cy="52" r="6"/>
+    <circle cx="114" cy="52" r="6"/>
+    <circle cx="61" cy="36" r="5.5"/>
+    <circle cx="99" cy="36" r="5.5"/>
+    <circle cx="80" cy="37" r="6"/>
+  </g>
+  <!-- Life -->
+  <text x="168" y="118" font-family="Georgia,'Times New Roman',serif" font-size="90" font-weight="400" fill="#111111">Life</text>
+  <!-- os — bottom-aligned with Life -->
+  <text x="338" y="118" font-family="Georgia,'Times New Roman',serif" font-size="56" font-weight="400" fill="#bbbbbb">os</text>
+</svg>

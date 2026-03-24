@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
 import { HeaderNav } from './header-nav';
+import { LogoMark, LogoHorizontal } from './theme-logo';
+import { NAV_MARKS } from './nav-marks';
 
 const allPages: Record<string, { label: string; abbr: string }> = {
   today: { label: 'Today', abbr: 'To' },
@@ -28,7 +30,9 @@ export function Nav() {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { config, isConfigMode, toggleConfigMode, togglePageVisibility } = useDashboardConfig();
+  const { config, isConfigMode, toggleConfigMode, togglePageVisibility, setNavOrder } = useDashboardConfig();
+  const [dragKey, setDragKey] = useState<string | null>(null);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -78,9 +82,7 @@ export function Nav() {
       >
         {expanded ? (
           <>
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-text animate-fade-in">
-              LIFEOS
-            </span>
+            <LogoHorizontal height={38} className="animate-fade-in" />
             <button
               onClick={toggle}
               className="flex h-7 w-7 shrink-0 items-center justify-center text-text-muted transition-colors hover:text-text font-mono text-xs"
@@ -92,10 +94,10 @@ export function Nav() {
         ) : (
           <button
             onClick={toggle}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-text text-xs font-bold transition-colors hover:border-text-muted"
+            className="flex shrink-0 items-center justify-center transition-colors hover:opacity-70"
             title="Expand sidebar"
           >
-            L
+            <LogoMark size={38} />
           </button>
         )}
       </div>
@@ -106,33 +108,82 @@ export function Nav() {
           const isActive = pathname === href || pathname.startsWith(href + '/');
 
           return (
-            <div key={key} className="relative flex items-center">
+            <div
+              key={key}
+              className={cn(
+                'relative flex items-center',
+                isConfigMode && dragOverKey === key && 'border-t-2 border-text',
+              )}
+              draggable={isConfigMode}
+              onDragStart={(e) => {
+                setDragKey(key);
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                setDragOverKey(key);
+              }}
+              onDragLeave={() => setDragOverKey(null)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOverKey(null);
+                if (!dragKey || dragKey === key) return;
+                const order = [...config.navOrder];
+                const fromIdx = order.indexOf(dragKey);
+                const toIdx = order.indexOf(key);
+                if (fromIdx === -1 || toIdx === -1) return;
+                order.splice(fromIdx, 1);
+                order.splice(toIdx, 0, dragKey);
+                setNavOrder(order);
+                setDragKey(null);
+              }}
+              onDragEnd={() => { setDragKey(null); setDragOverKey(null); }}
+            >
+              {/* Drag grip in config mode */}
+              {isConfigMode && expanded && (
+                <span className="flex items-center justify-center w-5 shrink-0 cursor-grab text-text-muted/40 hover:text-text-muted">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                    <circle cx="3" cy="2" r="1" /><circle cx="7" cy="2" r="1" />
+                    <circle cx="3" cy="5" r="1" /><circle cx="7" cy="5" r="1" />
+                    <circle cx="3" cy="8" r="1" /><circle cx="7" cy="8" r="1" />
+                  </svg>
+                </span>
+              )}
               <Link
                 href={href}
                 title={expanded ? undefined : label}
                 className={cn(
                   'group relative flex h-9 items-center transition-all duration-150 flex-1',
-                  expanded ? 'px-3 gap-3 rounded-lg' : 'justify-center w-10 mx-auto rounded-md',
+                  expanded ? (isConfigMode ? 'px-1 gap-2 rounded-lg' : 'px-3 gap-3 rounded-lg') : 'justify-center w-10 mx-auto rounded-md',
                   hidden && 'opacity-40',
                   isActive
                     ? 'text-text'
                     : 'text-text-muted hover:text-text',
+                  isConfigMode && dragKey === key && 'opacity-30',
                 )}
                 style={
-                  expanded && mounted
+                  expanded && mounted && !isConfigMode
                     ? { animationDelay: `${index * 30}ms` }
                     : undefined
                 }
+                onClick={isConfigMode ? (e) => e.preventDefault() : undefined}
               >
                 {/* Active dot indicator */}
                 {isActive && (
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-text" />
                 )}
-                {expanded ? (
-                  <span className="text-sm font-medium animate-slide-in">{label}</span>
-                ) : (
-                  <span className="font-mono text-[11px] font-medium tracking-tight">{abbr}</span>
-                )}
+                {(() => {
+                  const Mark = NAV_MARKS[key];
+                  return expanded ? (
+                    <span className="flex items-center gap-2.5 text-sm font-medium animate-slide-in">
+                      {Mark && <Mark className="shrink-0 opacity-70" />}
+                      {label}
+                    </span>
+                  ) : (
+                    Mark ? <Mark className="shrink-0" /> : <span className="font-mono text-[11px] font-medium tracking-tight">{abbr}</span>
+                  );
+                })()}
               </Link>
 
               {/* Config mode: visibility toggle */}
@@ -165,21 +216,6 @@ export function Nav() {
                 </button>
               )}
 
-              {/* Config mode: compact visibility toggle (collapsed sidebar) */}
-              {isConfigMode && !expanded && (
-                <button
-                  onClick={() => togglePageVisibility(key, hidden)}
-                  className={cn(
-                    'absolute -right-0.5 top-1/2 -translate-y-1/2 flex h-4 w-4 items-center justify-center rounded-full text-[8px] transition-colors',
-                    hidden
-                      ? 'bg-border text-text-muted'
-                      : 'bg-text text-bg',
-                  )}
-                  title={hidden ? `Show ${label}` : `Hide ${label}`}
-                >
-                  {hidden ? '\u2013' : '\u2713'}
-                </button>
-              )}
             </div>
           );
         })}
@@ -200,20 +236,13 @@ export function Nav() {
           )}
         >
           {expanded ? (
-            <span className="text-sm font-medium animate-slide-in flex items-center gap-2">
-              {/* Gear icon */}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
+            <span className="text-sm font-medium animate-slide-in">
               {isConfigMode ? 'Done' : 'Configure'}
             </span>
           ) : (
-            // Gear icon (collapsed)
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
+            <span className="font-mono text-[11px] font-medium tracking-tight">
+              {isConfigMode ? '×' : 'Cf'}
+            </span>
           )}
         </button>
 
@@ -236,11 +265,18 @@ export function Nav() {
               {isActive && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-text" />
               )}
-              {expanded ? (
-                <span className="text-sm font-medium animate-slide-in">{label}</span>
-              ) : (
-                <span className="font-mono text-[11px] font-medium tracking-tight">{abbr}</span>
-              )}
+              {(() => {
+                const key = href.slice(1); // "/settings" -> "settings"
+                const Mark = NAV_MARKS[key];
+                return expanded ? (
+                  <span className="flex items-center gap-2.5 text-sm font-medium animate-slide-in">
+                    {Mark && <Mark className="shrink-0 opacity-70" />}
+                    {label}
+                  </span>
+                ) : (
+                  Mark ? <Mark className="shrink-0" /> : <span className="font-mono text-[11px] font-medium tracking-tight">{abbr}</span>
+                );
+              })()}
             </Link>
           );
         })}

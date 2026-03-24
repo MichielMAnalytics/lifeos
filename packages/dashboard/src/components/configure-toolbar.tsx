@@ -7,6 +7,7 @@ import { themes, themeKeys } from '@/lib/themes';
 import { cn } from '@/lib/utils';
 
 const FONT_OPTIONS = [
+  { key: 'kefa', name: 'Kefa', family: '"Kefa", ui-sans-serif, system-ui, sans-serif', href: '' },
   { key: 'satoshi', name: 'Satoshi', family: '"Satoshi", ui-sans-serif, system-ui, sans-serif', href: 'https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap' },
   { key: 'inter', name: 'Inter', family: '"Inter", ui-sans-serif, system-ui, sans-serif', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' },
   { key: 'jetbrains', name: 'JetBrains Mono', family: '"JetBrains Mono", ui-monospace, monospace', href: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap' },
@@ -38,7 +39,7 @@ function applyFont(family: string) {
 export function ConfigureToolbar() {
   const { isConfigMode, toggleConfigMode, config, setNavMode } = useDashboardConfig();
   const { theme, setTheme } = useTheme();
-  const [activeFont, setActiveFont] = useState('satoshi');
+  const [activeFont, setActiveFont] = useState('kefa');
 
   useEffect(() => {
     const stored = localStorage.getItem(FONT_STORAGE_KEY);

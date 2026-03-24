@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
+import { LogoHorizontal } from './theme-logo';
+import { NAV_MARKS } from './nav-marks';
 
 const allPages: Record<string, { label: string }> = {
   today: { label: 'Today' },
@@ -129,12 +131,12 @@ export function HeaderNav() {
       {/* ── Primary row: logo + nav + actions ─────────────── */}
       <div className="flex h-14 items-center px-6 gap-1">
         {/* Logo */}
-        <Link href="/today" className="text-sm font-bold tracking-widest text-text mr-6 uppercase shrink-0">
-          LifeOS
+        <Link href="/today" className="mr-6 shrink-0 flex items-center">
+          <LogoHorizontal height={38} />
         </Link>
 
         {/* Nav links */}
-        <nav className="flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto">
+        <nav className="flex items-center justify-center gap-0.5 flex-1 min-w-0 overflow-x-auto">
           {displayPages.map((key, index) => {
             const page = allPages[key];
             if (!page) return null;
@@ -172,7 +174,15 @@ export function HeaderNav() {
                       : 'text-text-muted hover:text-text',
                   )}
                 >
-                  {page.label}
+                  {(() => {
+                    const Mark = NAV_MARKS[key];
+                    return (
+                      <span className="flex items-center gap-1.5">
+                        {Mark && <Mark className="shrink-0 opacity-60" />}
+                        {page.label}
+                      </span>
+                    );
+                  })()}
                 </Link>
 
                 {/* Visibility toggle (config mode only) */}

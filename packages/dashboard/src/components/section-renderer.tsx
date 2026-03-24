@@ -13,6 +13,10 @@ import { GoalsAtRisk } from './sections/goals-at-risk';
 import { IdeasPipeline } from './sections/ideas-pipeline';
 import { WeeklyTheme } from './sections/weekly-theme';
 import { WinsToday } from './sections/wins-today';
+import { DayNav } from './sections/day-nav';
+import { PrioritiesChecklist } from './sections/priorities-checklist';
+import { DayTimeline } from './sections/day-timeline';
+import { Quotes } from './sections/quotes';
 
 // Page-level section components
 import { TasksBucketed } from './sections/tasks-bucketed';
@@ -44,6 +48,10 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'ideas-pipeline': IdeasPipeline,
   'weekly-theme': WeeklyTheme,
   'wins-today': WinsToday,
+  'day-nav': DayNav,
+  'priorities-checklist': PrioritiesChecklist,
+  'day-timeline': DayTimeline,
+  'quotes': Quotes,
 
   // Tasks page sections
   'tasks-bucketed': TasksBucketed,
