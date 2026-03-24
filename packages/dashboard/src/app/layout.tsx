@@ -24,7 +24,7 @@ export default function RootLayout({
       <body>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{document.documentElement.setAttribute('data-theme',localStorage.getItem('lifeos-theme')||'midnight')}catch(e){}`,
+            __html: `try{document.documentElement.setAttribute('data-theme',localStorage.getItem('lifeos-theme')||'midnight');var f=localStorage.getItem('lifeos-font');if(f){var m={satoshi:'"Satoshi"',inter:'"Inter"','jetbrains':'"JetBrains Mono", ui-monospace, monospace','space-grotesk':'"Space Grotesk"','dm-sans':'"DM Sans"',outfit:'"Outfit"',geist:'"Geist"','ibm-plex':'"IBM Plex Sans"','source-serif':'"Source Serif 4", Georgia, serif',system:'ui-sans-serif, system-ui, -apple-system, sans-serif'};if(m[f])document.documentElement.style.setProperty('--font-sans',m[f]+', ui-sans-serif, system-ui, sans-serif')}}catch(e){}`,
           }}
         />
         <ConvexClientProvider>
