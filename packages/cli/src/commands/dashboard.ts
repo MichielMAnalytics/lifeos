@@ -3,16 +3,17 @@ import type { ApiResponse, DashboardConfig } from '@lifeos/shared';
 import { createClient } from '../api-client.js';
 import { isJsonMode, printError, printJson, printSuccess, printTable } from '../output.js';
 
-// Known presets per page — must match packages/dashboard/src/lib/presets.ts
+// All 7 personas available on every page — must match packages/dashboard/src/lib/presets.ts
+const ALL_PRESETS = ['default', 'solopreneur', 'content-creator', 'developer', 'executive', 'minimalist', 'journaler'];
 const PAGE_PRESETS: Record<string, string[]> = {
-  today: ['default', 'solopreneur', 'content-creator', 'developer', 'executive', 'minimalist', 'journaler'],
-  tasks: ['default', 'solopreneur', 'developer', 'minimalist'],
-  projects: ['default'],
-  goals: ['default', 'solopreneur', 'executive'],
-  journal: ['default', 'journaler', 'minimalist'],
-  ideas: ['default', 'content-creator', 'solopreneur'],
-  plan: ['default'],
-  reviews: ['default'],
+  today: ALL_PRESETS,
+  tasks: ALL_PRESETS,
+  projects: ALL_PRESETS,
+  goals: ALL_PRESETS,
+  journal: ALL_PRESETS,
+  ideas: ALL_PRESETS,
+  plan: ALL_PRESETS,
+  reviews: ALL_PRESETS,
 };
 
 export const dashboardCommand = new Command('dashboard')

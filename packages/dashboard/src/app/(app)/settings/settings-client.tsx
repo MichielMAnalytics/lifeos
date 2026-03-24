@@ -3,8 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
-import { useTheme } from '@/components/theme-provider';
-import { themes, themeKeys, type ThemeKey } from '@/lib/themes';
+import { ConfigureToolbar } from '@/components/configure-toolbar';
 import type { Id } from '../../../../../../convex/_generated/dataModel';
 
 interface User {
@@ -62,7 +61,7 @@ export function SettingsClient({
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { theme, setTheme } = useTheme();
+
 
   // Profile picture from localStorage
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -139,6 +138,7 @@ export function SettingsClient({
 
   return (
     <div className="max-w-none space-y-12 animate-fade-in">
+      <ConfigureToolbar />
       <h1 className="text-3xl font-bold tracking-tight text-text">Settings</h1>
 
       {/* -- Profile ---------------------------------------- */}
@@ -267,28 +267,6 @@ export function SettingsClient({
         )}
       </section>
 
-      {/* -- Theme ------------------------------------------ */}
-      <section>
-        <SectionHeader label="Theme" />
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {themeKeys.map((key) => {
-            const t = themes[key];
-            const isActive = theme === key;
-            return (
-              <ThemeCard
-                key={key}
-                themeKey={key}
-                name={t.name}
-                description={t.description}
-                colors={t.colors}
-                isActive={isActive}
-                onClick={() => setTheme(key)}
-              />
-            );
-          })}
-        </div>
-      </section>
-
       {/* -- API Keys --------------------------------------- */}
       <section>
         <SectionHeader label="API Keys" />
@@ -393,67 +371,3 @@ function Stat({ label, value, mono }: { label: string; value: string; mono?: boo
   );
 }
 
-/* -- Theme Card --------------------------------------------- */
-
-function ThemeCard({
-  themeKey,
-  name,
-  description,
-  colors,
-  isActive,
-  onClick,
-}: {
-  themeKey: ThemeKey;
-  name: string;
-  description: string;
-  colors: (typeof themes)[ThemeKey]['colors'];
-  isActive: boolean;
-  onClick: () => void;
-}) {
-  const paletteColors = [
-    { key: 'bg', color: colors.bg },
-    { key: 'surface', color: colors.surface },
-    { key: 'accent', color: colors.accent },
-    { key: 'success', color: colors.success },
-    { key: 'danger', color: colors.danger },
-  ];
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={`Switch to ${name} theme`}
-      aria-pressed={isActive}
-      className={`
-        group relative flex flex-col gap-3 border p-4 text-left
-        transition-all duration-200 cursor-pointer
-        ${isActive ? 'border-text ring-1 ring-text/20' : 'border-border hover:border-text/30'}
-      `}
-      style={{ backgroundColor: colors.bg }}
-    >
-      {isActive && (
-        <div className="absolute right-3 top-3 h-2 w-2 rounded-full" style={{ backgroundColor: colors.accent }} />
-      )}
-
-      <div className="flex gap-1.5">
-        {paletteColors.map((p) => (
-          <div
-            key={p.key}
-            className="h-4 w-4 rounded-full border border-white/10"
-            style={{ backgroundColor: p.color }}
-            title={p.key}
-          />
-        ))}
-      </div>
-
-      <div>
-        <p className="text-sm font-medium" style={{ color: colors.text }}>{name}</p>
-        <p className="mt-0.5 text-xs leading-snug" style={{ color: colors['text-muted'] }}>{description}</p>
-      </div>
-
-      <div className="flex h-px w-full overflow-hidden" style={{ backgroundColor: colors.surface }}>
-        <div className="h-full w-2/5" style={{ backgroundColor: colors.accent }} />
-      </div>
-    </button>
-  );
-}
