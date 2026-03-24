@@ -1,9 +1,13 @@
-import Link from 'next/link';
-import type { Project, Task } from '@lifeos/shared';
-import { api } from '@/lib/api';
+'use client';
+
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { cn, formatDate, shortId } from '@/lib/utils';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import type { Doc, Id } from '../../../../../../convex/_generated/dataModel';
 
 const statusVariant = (status: string) => {
   switch (status) {
@@ -29,20 +33,31 @@ const taskStatusVariant = (status: string) => {
   }
 };
 
-export default async function ProjectDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const { data: project } = await api.get<{
-    data: Project & { tasks: Task[] };
-  }>(`/api/v1/projects/${id}`);
+export default function ProjectDetailPage() {
+  const params = useParams<{ id: string }>();
+  const id = params.id as Id<"projects">;
 
-  const tasks = project.tasks ?? [];
+  const project = useQuery(api.projects.get, { id });
+
+  if (project === undefined) return <div className="text-text-muted">Loading...</div>;
+  if (project === null) {
+    return (
+      <div className="space-y-6">
+        <Link href="/projects" className="text-xs text-text-muted hover:text-text">
+          &larr; Projects
+        </Link>
+        <p className="text-text-muted">Project not found.</p>
+      </div>
+    );
+  }
+
+  const tasks: Doc<"tasks">[] = project.tasks ?? [];
   const todoTasks = tasks.filter((t) => t.status === 'todo');
   const doneTasks = tasks.filter((t) => t.status === 'done');
   const droppedTasks = tasks.filter((t) => t.status === 'dropped');
+  const createdDate = project._creationTime
+    ? new Date(project._creationTime).toISOString().slice(0, 10)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -71,9 +86,9 @@ export default async function ProjectDetailPage({
 
       <div className="flex gap-4 text-xs text-text-muted">
         <span>
-          ID: <span className="font-mono">{shortId(project.id)}</span>
+          ID: <span className="font-mono">{shortId(String(project._id))}</span>
         </span>
-        <span>Created: {formatDate(project.created_at.split('T')[0])}</span>
+        <span>Created: {formatDate(createdDate)}</span>
       </div>
 
       <Card>
@@ -95,7 +110,7 @@ export default async function ProjectDetailPage({
                   To Do ({todoTasks.length})
                 </p>
                 {todoTasks.map((task) => (
-                  <TaskRow key={task.id} task={task} />
+                  <TaskRow key={task._id} task={task} />
                 ))}
               </div>
             )}
@@ -106,7 +121,7 @@ export default async function ProjectDetailPage({
                   Done ({doneTasks.length})
                 </p>
                 {doneTasks.map((task) => (
-                  <TaskRow key={task.id} task={task} />
+                  <TaskRow key={task._id} task={task} />
                 ))}
               </div>
             )}
@@ -117,7 +132,7 @@ export default async function ProjectDetailPage({
                   Dropped ({droppedTasks.length})
                 </p>
                 {droppedTasks.map((task) => (
-                  <TaskRow key={task.id} task={task} />
+                  <TaskRow key={task._id} task={task} />
                 ))}
               </div>
             )}
@@ -128,10 +143,11 @@ export default async function ProjectDetailPage({
   );
 }
 
-function TaskRow({ task }: { task: Task }) {
+function TaskRow({ task }: { task: Doc<"tasks"> }) {
+  const dueDate = task.dueDate ?? null;
   return (
     <Link
-      href={`/tasks/${task.id}`}
+      href={`/tasks/${task._id}`}
       className={cn(
         'flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors hover:bg-surface-hover',
         task.status === 'done' && 'line-through opacity-60',
@@ -139,9 +155,9 @@ function TaskRow({ task }: { task: Task }) {
     >
       <span className="flex-1 truncate text-text">{task.title}</span>
       <div className="flex items-center gap-2">
-        {task.due_date && (
+        {dueDate && (
           <span className="text-xs text-text-muted">
-            {formatDate(task.due_date)}
+            {formatDate(dueDate)}
           </span>
         )}
         <Badge variant={taskStatusVariant(task.status)}>{task.status}</Badge>

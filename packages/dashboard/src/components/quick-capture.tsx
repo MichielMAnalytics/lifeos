@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMutation } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 
 type CaptureType = 'task' | 'idea' | 'thought' | 'win';
@@ -9,37 +10,42 @@ type CaptureType = 'task' | 'idea' | 'thought' | 'win';
 const captureTypes: {
   type: CaptureType;
   label: string;
-  endpoint: string;
-  field: string;
 }[] = [
-  { type: 'task', label: 'Task', endpoint: '/api/v1/tasks', field: 'title' },
-  { type: 'idea', label: 'Idea', endpoint: '/api/v1/ideas', field: 'content' },
-  { type: 'thought', label: 'Thought', endpoint: '/api/v1/thoughts', field: 'content' },
-  { type: 'win', label: 'Win', endpoint: '/api/v1/wins', field: 'content' },
+  { type: 'task', label: 'Task' },
+  { type: 'idea', label: 'Idea' },
+  { type: 'thought', label: 'Thought' },
+  { type: 'win', label: 'Win' },
 ];
 
 export function QuickCapture() {
   const [value, setValue] = useState('');
   const [type, setType] = useState<CaptureType>('task');
   const [saving, setSaving] = useState(false);
-  const router = useRouter();
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4100';
+
+  const createTask = useMutation(api.tasks.create);
+  const createIdea = useMutation(api.ideas.create);
+  const createThought = useMutation(api.thoughts.create);
+  const createWin = useMutation(api.wins.create);
 
   const submit = async () => {
     if (!value.trim() || saving) return;
     setSaving(true);
-    const ct = captureTypes.find((c) => c.type === type)!;
     try {
-      await fetch(`${apiUrl}${ct.endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('lifeos_api_key') || ''}`,
-        },
-        body: JSON.stringify({ [ct.field]: value.trim() }),
-      });
+      switch (type) {
+        case 'task':
+          await createTask({ title: value.trim() });
+          break;
+        case 'idea':
+          await createIdea({ content: value.trim() });
+          break;
+        case 'thought':
+          await createThought({ content: value.trim() });
+          break;
+        case 'win':
+          await createWin({ content: value.trim() });
+          break;
+      }
       setValue('');
-      router.refresh();
     } finally {
       setSaving(false);
     }

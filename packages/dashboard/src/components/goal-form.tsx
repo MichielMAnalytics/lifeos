@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMutation } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { Button } from '@/components/ui/button';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 export function GoalForm({ onDone }: { onDone?: () => void }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
@@ -15,31 +13,28 @@ export function GoalForm({ onDone }: { onDone?: () => void }) {
   const [targetDate, setTargetDate] = useState('');
   const [quarter, setQuarter] = useState('');
 
+  const createGoal = useMutation(api.goals.create);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
 
     setLoading(true);
     try {
-      const body: Record<string, string> = { title: title.trim() };
-      if (description.trim()) body.description = description.trim();
-      if (targetDate) body.target_date = targetDate;
-      if (quarter) body.quarter = quarter;
+      const args: { title: string; description?: string; targetDate?: string; quarter?: string } = {
+        title: title.trim(),
+      };
+      if (description.trim()) args.description = description.trim();
+      if (targetDate) args.targetDate = targetDate;
+      if (quarter) args.quarter = quarter;
 
-      const res = await fetch(`${API_URL}/api/v1/goals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) throw new Error('Failed to create goal');
+      await createGoal(args);
 
       setTitle('');
       setDescription('');
       setTargetDate('');
       setQuarter('');
       setOpen(false);
-      router.refresh();
       onDone?.();
     } catch (err) {
       console.error('Failed to create goal:', err);

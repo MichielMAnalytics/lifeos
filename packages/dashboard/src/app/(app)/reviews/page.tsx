@@ -1,5 +1,7 @@
-import type { Review } from '@lifeos/shared';
-import { api } from '@/lib/api';
+'use client';
+
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
 
 const reviewTypeLabel: Record<string, string> = {
@@ -22,10 +24,10 @@ function extractHighlights(content: Record<string, unknown>): string | null {
   return null;
 }
 
-export default async function ReviewsPage() {
-  const { data: reviews } = await api.get<{ data: Review[] }>(
-    '/api/v1/reviews',
-  );
+export default function ReviewsPage() {
+  const reviews = useQuery(api.reviews.list, {});
+
+  if (!reviews) return <div className="text-text-muted">Loading...</div>;
 
   return (
     <div className="max-w-none space-y-8">
@@ -41,12 +43,15 @@ export default async function ReviewsPage() {
         </div>
       ) : (
         <div className="border border-border divide-y divide-border">
-          {reviews.map((review, idx) => {
-            const typeLabel = reviewTypeLabel[review.review_type] ?? review.review_type;
-            const highlights = extractHighlights(review.content);
+          {reviews.map((review, idx: number) => {
+            const reviewType = review.reviewType;
+            const typeLabel = reviewTypeLabel[reviewType] ?? reviewType;
+            const highlights = review.content ? extractHighlights(review.content as Record<string, unknown>) : null;
+            const periodStart = review.periodStart;
+            const periodEnd = review.periodEnd;
 
             return (
-              <div key={review.id} className="px-6 py-5 hover:bg-surface-hover transition-colors">
+              <div key={review._id} className="px-6 py-5 hover:bg-surface-hover transition-colors">
                 {/* Top row */}
                 <div className="flex items-center justify-between gap-4 mb-2">
                   <div className="flex items-center gap-4">
@@ -57,10 +62,10 @@ export default async function ReviewsPage() {
                       {typeLabel}
                     </span>
                     <span className="text-sm text-text">
-                      {formatDate(review.period_start)} &mdash; {formatDate(review.period_end)}
+                      {formatDate(periodStart)} &mdash; {formatDate(periodEnd)}
                     </span>
                   </div>
-                  {review.score !== null && (
+                  {review.score !== null && review.score !== undefined && (
                     <div className="flex items-baseline gap-1">
                       <span className="text-xl font-bold text-text">{review.score}</span>
                       <span className="text-xs text-text-muted">/10</span>

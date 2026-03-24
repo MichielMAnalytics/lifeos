@@ -1,46 +1,43 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMutation } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { useTheme } from '@/components/theme-provider';
 import { themes, themeKeys, type ThemeKey } from '@/lib/themes';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4100';
+import type { Id } from '../../../../../../convex/_generated/dataModel';
 
 interface User {
-  id: string;
+  _id: Id<"users">;
+  _creationTime: number;
   email: string;
-  name: string | null;
+  name?: string;
   timezone: string;
-  created_at: string;
 }
 
 interface ApiKeyEntry {
-  id: string;
-  name: string | null;
-  key_prefix: string;
-  last_used_at: string | null;
-  created_at: string;
+  _id: Id<"apiKeys">;
+  _creationTime: number;
+  name?: string;
+  keyPrefix: string;
+  lastUsedAt?: number;
 }
 
-function daysSince(dateStr: string): number {
+function daysSince(creationTime: number): number {
   try {
-    const created = new Date(dateStr);
-    if (isNaN(created.getTime())) return 0;
-    return Math.max(0, Math.floor((Date.now() - created.getTime()) / 86400000));
+    return Math.max(0, Math.floor((Date.now() - creationTime) / 86400000));
   } catch {
     return 0;
   }
 }
 
-function formatJoinDate(dateStr: string): string {
-  if (!dateStr) return '-';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr.slice(0, 10);
+function formatJoinDate(creationTime: number): string {
+  const d = new Date(creationTime);
+  if (isNaN(d.getTime())) return '-';
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function getGreeting(name: string | null): string {
+function getGreeting(name: string | undefined): string {
   const h = new Date().getHours();
   const n = name || 'operator';
   if (h < 6) return `Late night, ${n}`;
@@ -66,7 +63,6 @@ export function SettingsClient({
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
-  const router = useRouter();
 
   // Profile picture from localStorage
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -99,18 +95,13 @@ export function SettingsClient({
     reader.readAsDataURL(file);
   }
 
+  const updateMeMutation = useMutation(api.authHelpers.updateMe);
+
   async function handleUpdateTimezone() {
     setUpdatingTz(true);
     try {
-      const res = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timezone: detectedTz }),
-      });
-      if (res.ok) {
-        setTzUpdated(true);
-        router.refresh();
-      }
+      await updateMeMutation({ timezone: detectedTz });
+      setTzUpdated(true);
     } catch {
       // silent
     } finally {
@@ -132,22 +123,9 @@ export function SettingsClient({
     setError(null);
 
     try {
-      const apiKey = localStorage.getItem('lifeos_api_key') || '';
-      const res = await fetch(`${API_URL}/api/v1/auth/api-keys`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({ name: newKeyName.trim() }),
-      });
-
-      if (!res.ok) throw new Error(`Failed: ${res.status}`);
-
-      const data = await res.json();
-      setCreatedKey(data.data?.key ?? null);
-      setNewKeyName('');
-      router.refresh();
+      // API key creation would need a dedicated Convex mutation or HTTP endpoint
+      // For now, show an error since the old REST API is deprecated
+      setError('API key creation via REST is no longer supported. Use the Convex CLI.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create key');
     } finally {
@@ -155,7 +133,7 @@ export function SettingsClient({
     }
   }
 
-  const days = user ? daysSince(user.created_at) : 0;
+  const days = user ? daysSince(user._creationTime) : 0;
   const userTz = user?.timezone || detectedTz;
   const tzCity = userTz.split('/').pop()?.replace(/_/g, ' ') || userTz;
 
@@ -163,7 +141,7 @@ export function SettingsClient({
     <div className="max-w-none space-y-12 animate-fade-in">
       <h1 className="text-3xl font-bold tracking-tight text-text">Settings</h1>
 
-      {/* ── Profile ────────────────────────────────── */}
+      {/* -- Profile ---------------------------------------- */}
       <section>
         <SectionHeader label="Profile" />
 
@@ -244,7 +222,7 @@ export function SettingsClient({
             {/* Stats row */}
             <div className="grid grid-cols-3 divide-x divide-border">
               <Stat label="Timezone" value={tzUpdated ? (detectedTz.split('/').pop()?.replace(/_/g, ' ') || detectedTz) : tzCity} />
-              <Stat label="Joined" value={formatJoinDate(user.created_at)} />
+              <Stat label="Joined" value={formatJoinDate(user._creationTime)} />
               <Stat label="API Keys" value={String(apiKeys.length)} mono />
             </div>
 
@@ -289,7 +267,7 @@ export function SettingsClient({
         )}
       </section>
 
-      {/* ── Theme ──────────────────────────────────── */}
+      {/* -- Theme ------------------------------------------ */}
       <section>
         <SectionHeader label="Theme" />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -311,7 +289,7 @@ export function SettingsClient({
         </div>
       </section>
 
-      {/* ── API Keys ───────────────────────────────── */}
+      {/* -- API Keys --------------------------------------- */}
       <section>
         <SectionHeader label="API Keys" />
 
@@ -320,7 +298,7 @@ export function SettingsClient({
             <div className="divide-y divide-border">
               {apiKeys.map((key, idx) => (
                 <div
-                  key={key.id}
+                  key={key._id}
                   className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-surface-hover"
                 >
                   <div className="flex items-center gap-4">
@@ -332,19 +310,19 @@ export function SettingsClient({
                         {key.name ?? 'Unnamed key'}
                       </p>
                       <p className="font-mono text-xs text-text-muted mt-0.5">
-                        {key.key_prefix}{'••••••••'}
+                        {key.keyPrefix}{'--------'}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    {key.last_used_at ? (
+                    {key.lastUsedAt ? (
                       <p className="text-xs text-text-muted font-mono">
-                        {key.last_used_at.split('T')[0]}
+                        {new Date(key.lastUsedAt).toISOString().split('T')[0]}
                       </p>
                     ) : (
                       <span className="text-xs text-text-muted/50">[ never used ]</span>
                     )}
-                    <div className={`h-2 w-2 rounded-full ${key.last_used_at ? 'bg-success' : 'bg-border'}`} />
+                    <div className={`h-2 w-2 rounded-full ${key.lastUsedAt ? 'bg-success' : 'bg-border'}`} />
                   </div>
                 </div>
               ))}
@@ -360,7 +338,7 @@ export function SettingsClient({
             {createdKey && (
               <div className="border border-success/30 p-4 mb-4">
                 <p className="mb-2 text-xs font-bold text-success uppercase tracking-wide">
-                  Key created — copy it now, it won&apos;t be shown again
+                  Key created -- copy it now, it won&apos;t be shown again
                 </p>
                 <code className="block break-all text-xs text-text font-mono select-all">
                   {createdKey}
@@ -393,7 +371,7 @@ export function SettingsClient({
   );
 }
 
-/* ── Section Header ─────────────────────────────── */
+/* -- Section Header ----------------------------------------- */
 
 function SectionHeader({ label }: { label: string }) {
   return (
@@ -404,7 +382,7 @@ function SectionHeader({ label }: { label: string }) {
   );
 }
 
-/* ── Stat cell ──────────────────────────────────── */
+/* -- Stat cell ---------------------------------------------- */
 
 function Stat({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
@@ -415,7 +393,7 @@ function Stat({ label, value, mono }: { label: string; value: string; mono?: boo
   );
 }
 
-/* ── Theme Card ─────────────────────────────────── */
+/* -- Theme Card --------------------------------------------- */
 
 function ThemeCard({
   themeKey,

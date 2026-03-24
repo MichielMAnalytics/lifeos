@@ -1,18 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMutation } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { Button } from '@/components/ui/button';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 export function TaskForm({ onDone }: { onDone?: () => void }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
+
+  const createTask = useMutation(api.tasks.create);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,23 +20,18 @@ export function TaskForm({ onDone }: { onDone?: () => void }) {
 
     setLoading(true);
     try {
-      const body: Record<string, string> = { title: title.trim() };
-      if (dueDate) body.due_date = dueDate;
-      if (notes.trim()) body.notes = notes.trim();
+      const args: { title: string; dueDate?: string; notes?: string } = {
+        title: title.trim(),
+      };
+      if (dueDate) args.dueDate = dueDate;
+      if (notes.trim()) args.notes = notes.trim();
 
-      const res = await fetch(`${API_URL}/api/v1/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) throw new Error('Failed to create task');
+      await createTask(args);
 
       setTitle('');
       setDueDate('');
       setNotes('');
       setOpen(false);
-      router.refresh();
       onDone?.();
     } catch (err) {
       console.error('Failed to create task:', err);

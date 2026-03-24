@@ -10,22 +10,24 @@
     "check": "next lint && tsc --noEmit"
   },
   "dependencies": {
+    "@convex-dev/auth": "^0.0.91",
     "@lifeos/shared": "workspace:*",
+    "clsx": "^2.1.0",
+    "convex": "^1.34.0",
+    "lucide-react": "^0.475.0",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.6.0",
-    "lucide-react": "^0.475.0",
-    "recharts": "^2.15.0"
+    "recharts": "^2.15.0",
+    "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "postcss": "^8.5.0",
     "tailwindcss": "^4.0.0",
-    "@tailwindcss/postcss": "^4.0.0",
     "typescript": "^5.7.0"
   }
 }

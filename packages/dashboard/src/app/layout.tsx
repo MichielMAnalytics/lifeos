@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ConvexClientProvider } from '@/lib/convex';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -26,9 +27,11 @@ export default function RootLayout({
             __html: `try{document.documentElement.setAttribute('data-theme',localStorage.getItem('lifeos-theme')||'midnight')}catch(e){}`,
           }}
         />
-        <ThemeProvider>
-          <div>{children}</div>
-        </ThemeProvider>
+        <ConvexClientProvider>
+          <ThemeProvider>
+            <div>{children}</div>
+          </ThemeProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );

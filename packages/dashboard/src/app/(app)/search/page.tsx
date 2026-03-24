@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface SearchResult {
   type: string;
@@ -12,11 +12,6 @@ interface SearchResult {
   title: string;
   snippet?: string;
   date?: string;
-}
-
-interface SearchResponse {
-  data: SearchResult[];
-  count: number;
 }
 
 const typeBadgeVariant: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'muted'> = {
@@ -30,46 +25,30 @@ const typeBadgeVariant: Record<string, 'default' | 'success' | 'warning' | 'dang
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [count, setCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const performSearch = useCallback(async (q: string) => {
-    if (!q.trim()) {
-      setResults([]);
-      setCount(0);
-      setSearched(false);
-      return;
-    }
-
-    setLoading(true);
-    setSearched(true);
-
-    try {
-      const res = await fetch(
-        `${API_URL}/api/v1/search?q=${encodeURIComponent(q.trim())}`,
-      );
-      if (!res.ok) throw new Error(`Search failed: ${res.status}`);
-      const data: SearchResponse = await res.json();
-      setResults(data.data);
-      setCount(data.count);
-    } catch {
-      setResults([]);
-      setCount(0);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => performSearch(query), 350);
+    debounceRef.current = setTimeout(() => setDebouncedQuery(query), 350);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, performSearch]);
+  }, [query]);
+
+  const searchResults = useQuery(
+    api.search.search,
+    debouncedQuery.trim()
+      ? { q: debouncedQuery.trim() }
+      : "skip",
+  );
+
+  const loading = debouncedQuery.trim() !== '' && searchResults === undefined;
+  const searched = debouncedQuery.trim() !== '';
+
+  // Normalize results - Convex search may return grouped or flat results
+  const results: SearchResult[] = Array.isArray(searchResults) ? searchResults : [];
+  const count = results.length;
 
   // Group results by type
   const grouped = results.reduce<Record<string, SearchResult[]>>(

@@ -1,7 +1,9 @@
-import Link from 'next/link';
-import type { Project } from '@lifeos/shared';
-import { api } from '@/lib/api';
+'use client';
+
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
+import Link from 'next/link';
 
 const statusColor = (status: string) => {
   switch (status) {
@@ -29,10 +31,10 @@ const statusLabel = (status: string) => {
   }
 };
 
-export default async function ProjectsPage() {
-  const { data: projects } = await api.get<{ data: Project[] }>(
-    '/api/v1/projects?status=active',
-  );
+export default function ProjectsPage() {
+  const projects = useQuery(api.projects.list, { status: "active" });
+
+  if (!projects) return <div className="text-text-muted">Loading...</div>;
 
   return (
     <div className="max-w-none space-y-8">
@@ -56,41 +58,46 @@ export default async function ProjectsPage() {
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project, idx) => (
-            <Link key={project.id} href={`/projects/${project.id}`}>
-              <div className="border border-border p-6 transition-colors hover:border-text/30 group h-full flex flex-col">
-                {/* Index + Status */}
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-mono text-text-muted">
-                    [{String(idx + 1).padStart(2, '0')}]
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${statusColor(project.status)}`} />
-                    <span className="text-xs text-text-muted">{statusLabel(project.status)}</span>
+          {projects.map((project, idx: number) => {
+            const createdDate = project._creationTime
+              ? new Date(project._creationTime).toISOString().slice(0, 10)
+              : null;
+            return (
+              <Link key={project._id} href={`/projects/${project._id}`}>
+                <div className="border border-border p-6 transition-colors hover:border-text/30 group h-full flex flex-col">
+                  {/* Index + Status */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-mono text-text-muted">
+                      [{String(idx + 1).padStart(2, '0')}]
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2 w-2 rounded-full ${statusColor(project.status)}`} />
+                      <span className="text-xs text-text-muted">{statusLabel(project.status)}</span>
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-base font-bold text-text group-hover:text-accent transition-colors leading-snug mb-2">
+                    {project.title}
+                  </h3>
+
+                  {/* Description */}
+                  {project.description && (
+                    <p className="text-sm text-text-muted line-clamp-2 leading-relaxed mb-4">
+                      {project.description}
+                    </p>
+                  )}
+
+                  {/* Footer */}
+                  <div className="mt-auto pt-4 border-t border-border">
+                    <span className="text-xs font-mono text-text-muted">
+                      {formatDate(createdDate)}
+                    </span>
                   </div>
                 </div>
-
-                {/* Title */}
-                <h3 className="text-base font-bold text-text group-hover:text-accent transition-colors leading-snug mb-2">
-                  {project.title}
-                </h3>
-
-                {/* Description */}
-                {project.description && (
-                  <p className="text-sm text-text-muted line-clamp-2 leading-relaxed mb-4">
-                    {project.description}
-                  </p>
-                )}
-
-                {/* Footer */}
-                <div className="mt-auto pt-4 border-t border-border">
-                  <span className="text-xs font-mono text-text-muted">
-                    {formatDate(project.created_at.split('T')[0])}
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

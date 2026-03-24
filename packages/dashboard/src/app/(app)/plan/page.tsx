@@ -1,5 +1,7 @@
-import type { DayPlan, WeeklyPlan } from '@lifeos/shared';
-import { api } from '@/lib/api';
+'use client';
+
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { cn, formatDate } from '@/lib/utils';
 
 const blockBorder: Record<string, string> = {
@@ -18,27 +20,16 @@ function today(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-export default async function PlanPage() {
-  let dayPlan: DayPlan | null = null;
-  let weeklyPlan: WeeklyPlan | null = null;
+export default function PlanPage() {
+  const dayPlan = useQuery(api.dayPlans.getByDate, { date: today() });
+  const weeklyPlans = useQuery(api.weeklyPlans.list, { current: true });
 
-  try {
-    const res = await api.get<{ data: DayPlan }>(
-      `/api/v1/day-plans/${today()}`,
-    );
-    dayPlan = res.data;
-  } catch {
-    // No plan for today
+  // Both queries loading
+  if (dayPlan === undefined && weeklyPlans === undefined) {
+    return <div className="text-text-muted">Loading...</div>;
   }
 
-  try {
-    const res = await api.get<{ data: WeeklyPlan[] }>(
-      '/api/v1/weekly-plans?current=true',
-    );
-    weeklyPlan = res.data?.[0] ?? null;
-  } catch {
-    // No weekly plan
-  }
+  const weeklyPlan = weeklyPlans?.[0] ?? null;
 
   return (
     <div className="max-w-none space-y-8">
@@ -56,24 +47,24 @@ export default async function PlanPage() {
           {dayPlan ? (
             <div className="p-6 space-y-6">
               {/* Wake time */}
-              {dayPlan.wake_time && (
+              {dayPlan.wakeTime && (
                 <div className="flex items-center gap-3 text-sm">
                   <span className="text-xs font-bold text-text-muted uppercase tracking-wide">Wake</span>
-                  <span className="font-bold text-text font-mono">{dayPlan.wake_time}</span>
+                  <span className="font-bold text-text font-mono">{dayPlan.wakeTime}</span>
                 </div>
               )}
 
               {/* Priority Completion */}
               <div className="flex gap-4">
-                <PriorityPill label="MIT" done={dayPlan.mit_done} />
-                <PriorityPill label="P1" done={dayPlan.p1_done} />
-                <PriorityPill label="P2" done={dayPlan.p2_done} />
+                <PriorityPill label="MIT" done={dayPlan.mitDone} />
+                <PriorityPill label="P1" done={dayPlan.p1Done} />
+                <PriorityPill label="P2" done={dayPlan.p2Done} />
               </div>
 
               {/* Schedule */}
-              {dayPlan.schedule.length > 0 ? (
+              {dayPlan.schedule && dayPlan.schedule.length > 0 ? (
                 <div className="space-y-1">
-                  {dayPlan.schedule.map((block, i) => (
+                  {dayPlan.schedule.map((block, i: number) => (
                     <div
                       key={i}
                       className={cn(
@@ -98,7 +89,7 @@ export default async function PlanPage() {
               )}
 
               {/* Overflow */}
-              {dayPlan.overflow.length > 0 && (
+              {dayPlan.overflow && dayPlan.overflow.length > 0 && (
                 <div className="border border-warning/30 px-4 py-3">
                   <p className="text-xs font-bold text-warning uppercase tracking-wide">Overflow</p>
                   <p className="text-xs text-text-muted mt-1">
@@ -123,7 +114,7 @@ export default async function PlanPage() {
             <h2 className="text-sm font-bold text-text uppercase tracking-wide">Weekly Plan</h2>
             {weeklyPlan && (
               <span className="text-xs font-mono text-text-muted">
-                Week of {formatDate(weeklyPlan.week_start)}
+                Week of {formatDate(weeklyPlan.weekStart)}
               </span>
             )}
           </div>
@@ -138,9 +129,9 @@ export default async function PlanPage() {
               )}
 
               {/* Goals checklist */}
-              {weeklyPlan.goals.length > 0 ? (
+              {weeklyPlan.goals && weeklyPlan.goals.length > 0 ? (
                 <div className="divide-y divide-border">
-                  {weeklyPlan.goals.map((goal, i) => (
+                  {weeklyPlan.goals.map((goal, i: number) => (
                     <div
                       key={i}
                       className="flex items-center justify-between py-3 transition-colors hover:bg-surface-hover px-2"
@@ -164,11 +155,11 @@ export default async function PlanPage() {
               )}
 
               {/* Review score */}
-              {weeklyPlan.review_score !== null && (
+              {weeklyPlan.reviewScore !== null && weeklyPlan.reviewScore !== undefined && (
                 <div className="flex items-center justify-between border-t border-border pt-4">
                   <span className="text-xs font-bold text-text-muted uppercase tracking-wide">Review Score</span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-text">{weeklyPlan.review_score}</span>
+                    <span className="text-3xl font-bold text-text">{weeklyPlan.reviewScore}</span>
                     <span className="text-sm text-text-muted">/10</span>
                   </div>
                 </div>
@@ -208,4 +199,3 @@ function PriorityPill({ label, done }: { label: string; done: boolean }) {
     </span>
   );
 }
-

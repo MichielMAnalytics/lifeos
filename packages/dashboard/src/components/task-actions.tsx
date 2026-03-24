@@ -2,30 +2,28 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useMutation } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { Button } from '@/components/ui/button';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import type { Id } from '../../../../convex/_generated/dataModel';
 
 export function TaskActions({
   taskId,
   currentStatus,
 }: {
-  taskId: string;
+  taskId: Id<"tasks">;
   currentStatus: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
+  const completeTask = useMutation(api.tasks.complete);
+  const removeTask = useMutation(api.tasks.remove);
+
   async function handleComplete() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'done' }),
-      });
-      if (!res.ok) throw new Error('Failed to complete task');
-      router.refresh();
+      await completeTask({ id: taskId });
     } catch (err) {
       console.error('Failed to complete task:', err);
     } finally {
@@ -37,12 +35,8 @@ export function TaskActions({
     if (!confirm('Delete this task?')) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/tasks/${taskId}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete task');
+      await removeTask({ id: taskId });
       router.push('/tasks');
-      router.refresh();
     } catch (err) {
       console.error('Failed to delete task:', err);
     } finally {

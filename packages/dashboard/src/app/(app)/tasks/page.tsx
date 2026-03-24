@@ -1,8 +1,11 @@
-import { api } from '@/lib/api';
+'use client';
+
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
 import { TaskForm } from '@/components/task-form';
-import type { Task, ApiListResponse } from '@lifeos/shared';
 import Link from 'next/link';
+import type { Doc } from '../../../../../convex/_generated/dataModel';
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -21,6 +24,8 @@ function endOfWeekISO(): string {
   d.setDate(d.getDate() + diff);
   return d.toISOString().slice(0, 10);
 }
+
+type Task = Doc<"tasks">;
 
 interface TaskBucket {
   label: string;
@@ -41,15 +46,16 @@ function bucketTasks(tasks: Task[]): TaskBucket[] {
   const noDate: Task[] = [];
 
   for (const task of tasks) {
-    if (!task.due_date) {
+    const dueDate = task.dueDate ?? null;
+    if (!dueDate) {
       noDate.push(task);
-    } else if (task.due_date < today) {
+    } else if (dueDate < today) {
       overdue.push(task);
-    } else if (task.due_date === today) {
+    } else if (dueDate === today) {
       todayBucket.push(task);
-    } else if (task.due_date === tomorrow) {
+    } else if (dueDate === tomorrow) {
       tomorrowBucket.push(task);
-    } else if (task.due_date <= endOfWeek) {
+    } else if (dueDate <= endOfWeek) {
       thisWeek.push(task);
     } else {
       later.push(task);
@@ -67,9 +73,11 @@ function bucketTasks(tasks: Task[]): TaskBucket[] {
   return buckets;
 }
 
-export default async function TasksPage() {
-  const res = await api.get<ApiListResponse<Task>>('/api/v1/tasks?status=todo');
-  const tasks = res.data;
+export default function TasksPage() {
+  const tasks = useQuery(api.tasks.list, { status: "todo" });
+
+  if (!tasks) return <div className="text-text-muted">Loading...</div>;
+
   const buckets = bucketTasks(tasks);
 
   // Running index across all buckets
@@ -81,7 +89,7 @@ export default async function TasksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-text">
-            Tasks <span className="text-text-muted font-normal">[ {res.count} ]</span>
+            Tasks <span className="text-text-muted font-normal">[ {tasks.length} ]</span>
           </h1>
         </div>
         <TaskForm />
@@ -116,12 +124,13 @@ export default async function TasksPage() {
 
                 {/* Task rows */}
                 <div className="border border-border divide-y divide-border">
-                  {bucket.tasks.map((task, i) => {
+                  {bucket.tasks.map((task, i: number) => {
                     const idx = bucketStartIndex + i + 1;
+                    const dueDate = task.dueDate ?? null;
                     return (
                       <Link
-                        key={task.id}
-                        href={`/tasks/${task.id}`}
+                        key={task._id}
+                        href={`/tasks/${task._id}`}
                         className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-surface-hover group"
                       >
                         {/* Numbered index */}
@@ -146,14 +155,14 @@ export default async function TasksPage() {
                         </span>
 
                         {/* Goal tag */}
-                        {task.goal_id && (
+                        {task.goalId && (
                           <span className="text-xs text-text-muted">[ goal ]</span>
                         )}
 
                         {/* Due date */}
-                        {task.due_date && (
+                        {dueDate && (
                           <span className="text-xs text-text-muted shrink-0 font-mono">
-                            {formatDate(task.due_date)}
+                            {formatDate(dueDate)}
                           </span>
                         )}
                       </Link>

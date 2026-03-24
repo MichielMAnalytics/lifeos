@@ -6,8 +6,8 @@ export const createTaskSchema = z.object({
   title: z.string().min(1).max(500),
   notes: z.string().optional(),
   due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  project_id: z.string().uuid().optional(),
-  goal_id: z.string().uuid().optional(),
+  project_id: z.string()().optional(),
+  goal_id: z.string()().optional(),
 });
 
 export const updateTaskSchema = z.object({
@@ -15,13 +15,13 @@ export const updateTaskSchema = z.object({
   notes: z.string().optional(),
   due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   status: z.enum(['todo', 'done', 'dropped']).optional(),
-  project_id: z.string().uuid().nullable().optional(),
-  goal_id: z.string().uuid().nullable().optional(),
+  project_id: z.string()().nullable().optional(),
+  goal_id: z.string()().nullable().optional(),
   position: z.number().int().optional(),
 });
 
 export const bulkCompleteSchema = z.object({
-  ids: z.array(z.string().uuid()).min(1).max(100),
+  ids: z.array(z.string()()).min(1).max(100),
 });
 
 // ── Projects ───────────────────────────────────────────
@@ -71,16 +71,16 @@ export const scheduleBlockSchema = z.object({
   end: z.string(),   // "08:30"
   label: z.string(),
   type: z.enum(['wake', 'mit', 'p1', 'p2', 'task', 'event', 'break', 'lunch', 'other']),
-  task_id: z.string().uuid().optional(),
+  task_id: z.string()().optional(),
 });
 
 export const upsertDayPlanSchema = z.object({
   wake_time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
   schedule: z.array(scheduleBlockSchema).optional(),
-  overflow: z.array(z.string().uuid()).optional(),
-  mit_task_id: z.string().uuid().nullable().optional(),
-  p1_task_id: z.string().uuid().nullable().optional(),
-  p2_task_id: z.string().uuid().nullable().optional(),
+  overflow: z.array(z.string()()).optional(),
+  mit_task_id: z.string()().nullable().optional(),
+  p1_task_id: z.string()().nullable().optional(),
+  p2_task_id: z.string()().nullable().optional(),
   mit_done: z.boolean().optional(),
   p1_done: z.boolean().optional(),
   p2_done: z.boolean().optional(),
@@ -91,7 +91,7 @@ export const upsertDayPlanSchema = z.object({
 export const weeklyGoalSchema = z.object({
   title: z.string(),
   status: z.enum(['not_started', 'in_progress', 'done', 'dropped']).optional(),
-  goal_id: z.string().uuid().optional(),
+  goal_id: z.string()().optional(),
 });
 
 export const upsertWeeklyPlanSchema = z.object({
@@ -183,7 +183,7 @@ export const createTransactionSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   amount: z.number(),
   currency: z.string().length(3).default('USD'),
-  category_id: z.string().uuid().optional(),
+  category_id: z.string()().optional(),
   merchant: z.string().max(255).optional(),
   notes: z.string().optional(),
   source: z.string().max(50).optional(),
@@ -191,7 +191,7 @@ export const createTransactionSchema = z.object({
 
 export const createCategorySchema = z.object({
   name: z.string().min(1).max(100),
-  parent_id: z.string().uuid().optional(),
+  parent_id: z.string()().optional(),
 });
 
 export const createNetWorthSnapshotSchema = z.object({

@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMutation } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { Button } from '@/components/ui/button';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 export function IdeaForm() {
-  const router = useRouter();
   const [content, setContent] = useState('');
   const [actionability, setActionability] = useState<string>('medium');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const createIdea = useMutation(api.ideas.create);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,19 +21,13 @@ export function IdeaForm() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_URL}/api/v1/ideas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: content.trim(), actionability }),
+      await createIdea({
+        content: content.trim(),
+        actionability,
       });
-
-      if (!res.ok) {
-        throw new Error(`Failed to create idea: ${res.status}`);
-      }
 
       setContent('');
       setActionability('medium');
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

@@ -1,8 +1,9 @@
-import { api } from '@/lib/api';
-import { formatDate } from '@/lib/utils';
+'use client';
+
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { ProgressRing } from '@/components/progress-ring';
 import { QuickCapture } from '@/components/quick-capture';
-import type { Task, Journal, DayPlan, ApiResponse, ApiListResponse } from '@lifeos/shared';
 import Link from 'next/link';
 
 function todayISO(): string {
@@ -16,24 +17,17 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
-export default async function TodayPage() {
+export default function TodayPage() {
   const todayStr = todayISO();
 
-  const [todayTasksRes, overdueTasksRes, journal, dayPlan] = await Promise.all([
-    api.get<ApiListResponse<Task>>('/api/v1/tasks?status=todo&due=today'),
-    api.get<ApiListResponse<Task>>('/api/v1/tasks?status=todo&due=overdue'),
-    api
-      .get<ApiResponse<Journal>>(`/api/v1/journal/${todayStr}`)
-      .then((res) => res.data)
-      .catch(() => null),
-    api
-      .get<ApiResponse<DayPlan>>(`/api/v1/day-plans/${todayStr}`)
-      .then((res) => res.data)
-      .catch(() => null),
-  ]);
+  const todayTasks = useQuery(api.tasks.list, { status: "todo", due: "today" });
+  const overdueTasks = useQuery(api.tasks.list, { status: "todo", due: "overdue" });
+  const journal = useQuery(api.journals.getByDate, { date: todayStr });
+  const dayPlan = useQuery(api.dayPlans.getByDate, { date: todayStr });
 
-  const todayTasks = todayTasksRes.data;
-  const overdueTasks = overdueTasksRes.data;
+  if (todayTasks === undefined || overdueTasks === undefined) {
+    return <div className="text-text-muted">Loading...</div>;
+  }
 
   const dateLabel = new Date(todayStr + 'T00:00:00').toLocaleDateString('en-US', {
     weekday: 'long',
@@ -43,14 +37,14 @@ export default async function TodayPage() {
   });
 
   // Compute focus progress
-  const mitDone = dayPlan?.mit_done ?? false;
-  const p1Done = dayPlan?.p1_done ?? false;
-  const p2Done = dayPlan?.p2_done ?? false;
+  const mitDone = dayPlan?.mitDone ?? false;
+  const p1Done = dayPlan?.p1Done ?? false;
+  const p2Done = dayPlan?.p2Done ?? false;
 
   const focusItems = [
-    { label: 'MIT', done: mitDone, taskId: dayPlan?.mit_task_id ?? null },
-    { label: 'P1', done: p1Done, taskId: dayPlan?.p1_task_id ?? null },
-    { label: 'P2', done: p2Done, taskId: dayPlan?.p2_task_id ?? null },
+    { label: 'MIT', done: mitDone, taskId: dayPlan?.mitTaskId ?? null },
+    { label: 'P1', done: p1Done, taskId: dayPlan?.p1TaskId ?? null },
+    { label: 'P2', done: p2Done, taskId: dayPlan?.p2TaskId ?? null },
   ];
 
   const focusCompleted = [mitDone, p1Done, p2Done].filter(Boolean).length;
@@ -90,7 +84,7 @@ export default async function TodayPage() {
         </div>
       )}
 
-      {/* Focus section — three columns */}
+      {/* Focus section -- three columns */}
       <div>
         <div className="flex items-baseline justify-between mb-6">
           <h2 className="text-lg font-bold text-text uppercase tracking-wide">Focus</h2>
@@ -115,14 +109,14 @@ export default async function TodayPage() {
                 strokeWidth={4}
               />
               <span className="text-xs text-text-muted truncate max-w-full">
-                {item.taskId ? `${item.taskId.slice(0, 8)}...` : 'Not set'}
+                {item.taskId ? `${String(item.taskId).slice(0, 8)}...` : 'Not set'}
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Two column grid: Tasks left, Journal right — FULL WIDTH */}
+      {/* Two column grid: Tasks left, Journal right -- FULL WIDTH */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left: Today's Tasks */}
         <div className="border border-border flex flex-col">
@@ -139,10 +133,10 @@ export default async function TodayPage() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {todayTasks.map((task, i) => (
+              {todayTasks.map((task, i: number) => (
                 <Link
-                  key={task.id}
-                  href={`/tasks/${task.id}`}
+                  key={task._id}
+                  href={`/tasks/${task._id}`}
                   className="group flex items-center gap-4 px-6 py-4 transition-colors hover:bg-surface-hover"
                 >
                   <span className="text-xs font-mono text-text-muted w-6 shrink-0">
@@ -152,7 +146,7 @@ export default async function TodayPage() {
                   <span className="flex-1 text-sm text-text truncate group-hover:text-accent transition-colors">
                     {task.title}
                   </span>
-                  {task.goal_id && (
+                  {task.goalId && (
                     <span className="text-xs text-text-muted">[ goal ]</span>
                   )}
                 </Link>
@@ -204,11 +198,11 @@ export default async function TodayPage() {
               )}
 
               {/* Wins */}
-              {journal.wins.length > 0 && (
+              {journal.wins && journal.wins.length > 0 && (
                 <div className="border-t border-border pt-4">
                   <span className="text-xs font-medium text-text-muted uppercase tracking-wide">Wins</span>
                   <ul className="space-y-2 mt-2">
-                    {journal.wins.map((win, i) => (
+                    {journal.wins.map((win: string, i: number) => (
                       <li
                         key={i}
                         className="flex items-start gap-3 text-sm text-success/80"

@@ -1,10 +1,14 @@
-import { api } from '@/lib/api';
+'use client';
+
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Goal, Task, GoalHealthInfo, ApiResponse } from '@lifeos/shared';
 import Link from 'next/link';
-import { Circle, Check, ArrowLeft, TrendingUp, BarChart3, CheckCircle2 } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { Check, ArrowLeft, TrendingUp, BarChart3, CheckCircle2 } from 'lucide-react';
+import type { Doc, Id } from '../../../../../../convex/_generated/dataModel';
 
 const healthVariant: Record<string, 'success' | 'warning' | 'danger' | 'muted'> = {
   on_track: 'success',
@@ -13,7 +17,7 @@ const healthVariant: Record<string, 'success' | 'warning' | 'danger' | 'muted'> 
   unknown: 'muted',
 };
 
-const healthLabel: Record<string, string> = {
+const healthLabelMap: Record<string, string> = {
   on_track: 'On Track',
   at_risk: 'At Risk',
   off_track: 'Off Track',
@@ -27,27 +31,30 @@ const ringColor: Record<string, string> = {
   unknown: 'stroke-text-muted',
 };
 
-export default async function GoalDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+export default function GoalDetailPage() {
+  const params = useParams<{ id: string }>();
+  const id = params.id as Id<"goals">;
 
-  const [goalRes, healthRes] = await Promise.all([
-    api.get<ApiResponse<Goal & { tasks: Task[] }>>(`/api/v1/goals/${id}`),
-    api
-      .get<ApiResponse<GoalHealthInfo>>(`/api/v1/goals/${id}/health`)
-      .catch(() => null),
-  ]);
+  const goal = useQuery(api.goals.get, { id });
+  const health = useQuery(api.goals.health, { id });
 
-  const goal = goalRes.data;
-  const health = healthRes?.data ?? null;
-  const tasks = goal.tasks ?? [];
+  if (goal === undefined) return <div className="text-text-muted">Loading...</div>;
+  if (goal === null) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-6">
+        <Link href="/goals" className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors">
+          <ArrowLeft size={14} />
+          Back to Goals
+        </Link>
+        <p className="text-text-muted">Goal not found.</p>
+      </div>
+    );
+  }
 
+  const tasks: Doc<"tasks">[] = goal.tasks ?? [];
   const status = health?.status || 'unknown';
   const variant = healthVariant[status] || 'muted';
-  const label = healthLabel[status] || 'Unknown';
+  const label = healthLabelMap[status] || 'Unknown';
 
   const doneTasks = tasks.filter((t) => t.status === 'done');
   const openTasks = tasks.filter((t) => t.status === 'todo');
@@ -62,6 +69,11 @@ export default async function GoalDetailPage({
   const radius = (ringSize - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  const targetDate = goal.targetDate ?? null;
+  const createdDate = goal._creationTime
+    ? new Date(goal._creationTime).toISOString().slice(0, 10)
+    : null;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 animate-fade-in">
@@ -169,13 +181,13 @@ export default async function GoalDetailPage({
             Quarter: <span className="font-medium text-text">{goal.quarter}</span>
           </span>
         )}
-        {goal.target_date && (
+        {targetDate && (
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-text-muted">
-            Target: <span className="font-medium text-text">{formatDate(goal.target_date)}</span>
+            Target: <span className="font-medium text-text">{formatDate(targetDate)}</span>
           </span>
         )}
         <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-text-muted">
-          Created: <span className="font-medium text-text">{formatDate(goal.created_at.slice(0, 10))}</span>
+          Created: <span className="font-medium text-text">{formatDate(createdDate)}</span>
         </span>
       </div>
 
@@ -194,23 +206,26 @@ export default async function GoalDetailPage({
         ) : (
           <Card className="rounded-xl p-0 overflow-hidden divide-y divide-border/50">
             <div className="stagger-children">
-              {openTasks.map((task) => (
-                <Link
-                  key={task.id}
-                  href={`/tasks/${task.id}`}
-                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-hover group"
-                >
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-text-muted/40 group-hover:border-accent transition-colors" />
-                  <span className="flex-1 text-sm font-medium text-text group-hover:text-accent transition-colors truncate">
-                    {task.title}
-                  </span>
-                  {task.due_date && (
-                    <span className="text-xs text-text-muted shrink-0">
-                      {formatDate(task.due_date)}
+              {openTasks.map((task) => {
+                const taskDueDate = task.dueDate ?? null;
+                return (
+                  <Link
+                    key={task._id}
+                    href={`/tasks/${task._id}`}
+                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-hover group"
+                  >
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-text-muted/40 group-hover:border-accent transition-colors" />
+                    <span className="flex-1 text-sm font-medium text-text group-hover:text-accent transition-colors truncate">
+                      {task.title}
                     </span>
-                  )}
-                </Link>
-              ))}
+                    {taskDueDate && (
+                      <span className="text-xs text-text-muted shrink-0">
+                        {formatDate(taskDueDate)}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           </Card>
         )}
@@ -229,8 +244,8 @@ export default async function GoalDetailPage({
             <div className="stagger-children">
               {doneTasks.map((task) => (
                 <Link
-                  key={task.id}
-                  href={`/tasks/${task.id}`}
+                  key={task._id}
+                  href={`/tasks/${task._id}`}
                   className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-hover group"
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success">

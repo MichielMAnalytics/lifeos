@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMutation } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { Button } from '@/components/ui/button';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 function todayISO(): string {
   const d = new Date();
@@ -12,7 +11,6 @@ function todayISO(): string {
 }
 
 export function JournalForm({ onDone }: { onDone?: () => void }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mit, setMit] = useState('');
@@ -20,31 +18,28 @@ export function JournalForm({ onDone }: { onDone?: () => void }) {
   const [p2, setP2] = useState('');
   const [notes, setNotes] = useState('');
 
+  const upsertJournal = useMutation(api.journals.upsert);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const body: Record<string, string> = {};
-      if (mit.trim()) body.mit = mit.trim();
-      if (p1.trim()) body.p1 = p1.trim();
-      if (p2.trim()) body.p2 = p2.trim();
-      if (notes.trim()) body.notes = notes.trim();
+      const args: { date: string; mit?: string; p1?: string; p2?: string; notes?: string } = {
+        date: todayISO(),
+      };
+      if (mit.trim()) args.mit = mit.trim();
+      if (p1.trim()) args.p1 = p1.trim();
+      if (p2.trim()) args.p2 = p2.trim();
+      if (notes.trim()) args.notes = notes.trim();
 
-      const res = await fetch(`${API_URL}/api/v1/journal/${todayISO()}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) throw new Error('Failed to save journal');
+      await upsertJournal(args);
 
       setMit('');
       setP1('');
       setP2('');
       setNotes('');
       setOpen(false);
-      router.refresh();
       onDone?.();
     } catch (err) {
       console.error('Failed to save journal:', err);

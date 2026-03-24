@@ -1,5 +1,7 @@
-import type { FinanceTransaction, NetWorthSnapshot } from '@lifeos/shared';
-import { api } from '@/lib/api';
+'use client';
+
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { cn, formatDate } from '@/lib/utils';
 
 function formatCurrency(amount: number, currency = 'USD'): string {
@@ -11,34 +13,23 @@ function formatCurrency(amount: number, currency = 'USD'): string {
   }).format(amount);
 }
 
-export default async function FinancePage() {
-  let transactions: FinanceTransaction[] = [];
-  let netWorth: NetWorthSnapshot | null = null;
+export default function FinancePage() {
+  const transactions = useQuery(api.finance.listTransactions, {});
+  const netWorthData = useQuery(api.finance.listNetWorth, { latest: true });
 
-  try {
-    const res = await api.get<{ data: FinanceTransaction[] }>(
-      '/api/v1/finance/transactions',
-    );
-    transactions = res.data;
-  } catch {
-    // No transactions available
+  if (transactions === undefined && netWorthData === undefined) {
+    return <div className="text-text-muted">Loading...</div>;
   }
 
-  try {
-    const res = await api.get<{ data: NetWorthSnapshot[] }>(
-      '/api/v1/finance/net-worth?latest=true',
-    );
-    netWorth = res.data?.[0] ?? null;
-  } catch {
-    // No net worth data
-  }
+  const txList = transactions ?? [];
+  const netWorth = netWorthData?.[0] ?? null;
 
   // Compute max absolute value for breakdown bar scaling
   const breakdownEntries = netWorth
-    ? Object.entries(netWorth.breakdown).sort(([, a], [, b]) => b - a)
+    ? Object.entries(netWorth.breakdown ?? {}).sort(([, a], [, b]) => (b as number) - (a as number))
     : [];
   const maxAbsValue = breakdownEntries.reduce(
-    (max, [, v]) => Math.max(max, Math.abs(v)),
+    (max, [, v]) => Math.max(max, Math.abs(v as number)),
     1,
   );
 
@@ -64,8 +55,8 @@ export default async function FinancePage() {
           {breakdownEntries.length > 0 && (
             <div className="space-y-4">
               {breakdownEntries.map(([label, amount]) => {
-                const barWidth = Math.max((Math.abs(amount) / maxAbsValue) * 100, 2);
-                const isPositive = amount >= 0;
+                const barWidth = Math.max((Math.abs(amount as number) / maxAbsValue) * 100, 2);
+                const isPositive = (amount as number) >= 0;
                 return (
                   <div key={label}>
                     <div className="flex items-center justify-between text-sm mb-1.5">
@@ -76,7 +67,7 @@ export default async function FinancePage() {
                           isPositive ? 'text-success' : 'text-danger',
                         )}
                       >
-                        {formatCurrency(amount)}
+                        {formatCurrency(amount as number)}
                       </span>
                     </div>
                     <div className="h-px w-full bg-border overflow-hidden">
@@ -114,7 +105,7 @@ export default async function FinancePage() {
           <h2 className="text-sm font-bold text-text uppercase tracking-wide">Recent Transactions</h2>
         </div>
 
-        {transactions.length === 0 ? (
+        {txList.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <p className="text-sm text-text-muted">No transactions recorded.</p>
           </div>
@@ -130,9 +121,9 @@ export default async function FinancePage() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((tx) => (
+                {txList.map((tx) => (
                   <tr
-                    key={tx.id}
+                    key={tx._id}
                     className="border-b border-border last:border-0 transition-colors hover:bg-surface-hover"
                   >
                     <td className="px-6 py-4 text-text-muted whitespace-nowrap font-mono text-xs">

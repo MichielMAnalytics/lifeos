@@ -1,35 +1,16 @@
-import { api } from '@/lib/api';
+'use client';
+
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { SettingsClient } from './settings-client';
 
-interface User {
-  id: string;
-  email: string;
-  name: string | null;
-  timezone: string;
-  created_at: string;
-}
+export default function SettingsPage() {
+  const user = useQuery(api.authHelpers.getMe, {});
+  const apiKeys = useQuery(api.authHelpers.listApiKeys, {});
 
-interface ApiKeyEntry {
-  id: string;
-  name: string | null;
-  key_prefix: string;
-  last_used_at: string | null;
-  created_at: string;
-}
+  // While loading, pass null/empty so SettingsClient can handle gracefully
+  const resolvedUser = user === undefined ? null : user;
+  const resolvedApiKeys = apiKeys === undefined ? [] : apiKeys ?? [];
 
-export default async function SettingsPage() {
-  let user: User | null = null;
-  let apiKeys: ApiKeyEntry[] = [];
-
-  try {
-    const userData = await api.get<{ data: User }>('/api/v1/auth/me');
-    user = userData.data;
-  } catch {}
-
-  try {
-    const keysData = await api.get<{ data: ApiKeyEntry[] }>('/api/v1/auth/api-keys');
-    apiKeys = keysData.data ?? [];
-  } catch {}
-
-  return <SettingsClient user={user} initialApiKeys={apiKeys} />;
+  return <SettingsClient user={resolvedUser} initialApiKeys={resolvedApiKeys} />;
 }

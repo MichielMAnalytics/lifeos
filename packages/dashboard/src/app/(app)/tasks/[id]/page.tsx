@@ -1,19 +1,32 @@
-import { api } from '@/lib/api';
+'use client';
+
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TaskActions } from '@/components/task-actions';
-import type { Task, ApiResponse } from '@lifeos/shared';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import type { Id } from '../../../../../../convex/_generated/dataModel';
 
-export default async function TaskDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const res = await api.get<ApiResponse<Task>>(`/api/v1/tasks/${id}`);
-  const task = res.data;
+export default function TaskDetailPage() {
+  const params = useParams<{ id: string }>();
+  const id = params.id as Id<"tasks">;
+
+  const task = useQuery(api.tasks.get, { id });
+
+  if (task === undefined) return <div className="text-text-muted">Loading...</div>;
+  if (task === null) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <Link href="/tasks" className="text-sm text-text-muted hover:text-text transition-colors">
+          &larr; Back to Tasks
+        </Link>
+        <p className="text-text-muted">Task not found.</p>
+      </div>
+    );
+  }
 
   const statusVariant =
     task.status === 'done'
@@ -21,6 +34,14 @@ export default async function TaskDetailPage({
       : task.status === 'dropped'
         ? 'danger'
         : 'default';
+
+  const dueDate = task.dueDate ?? null;
+  const goalId = task.goalId ?? null;
+  const projectId = task.projectId ?? null;
+  const completedAt = task.completedAt ?? null;
+  const createdDate = task._creationTime
+    ? new Date(task._creationTime).toISOString().slice(0, 10)
+    : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -39,12 +60,12 @@ export default async function TaskDetailPage({
               <h1 className="text-xl font-semibold text-text">{task.title}</h1>
               <div className="mt-2 flex items-center gap-2">
                 <Badge variant={statusVariant}>{task.status}</Badge>
-                {task.due_date && (
-                  <Badge variant="muted">{formatDate(task.due_date)}</Badge>
+                {dueDate && (
+                  <Badge variant="muted">{formatDate(dueDate)}</Badge>
                 )}
               </div>
             </div>
-            <TaskActions taskId={task.id} currentStatus={task.status} />
+            <TaskActions taskId={task._id} currentStatus={task.status} />
           </div>
         </CardHeader>
 
@@ -63,7 +84,7 @@ export default async function TaskDetailPage({
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
             <div>
               <span className="text-text-muted">Due Date</span>
-              <p className="text-text">{formatDate(task.due_date)}</p>
+              <p className="text-text">{formatDate(dueDate)}</p>
             </div>
             <div>
               <span className="text-text-muted">Status</span>
@@ -71,22 +92,22 @@ export default async function TaskDetailPage({
             </div>
             <div>
               <span className="text-text-muted">Created</span>
-              <p className="text-text">{formatDate(task.created_at.slice(0, 10))}</p>
+              <p className="text-text">{formatDate(createdDate)}</p>
             </div>
-            {task.completed_at && (
+            {completedAt && (
               <div>
                 <span className="text-text-muted">Completed</span>
                 <p className="text-text">
-                  {formatDate(task.completed_at.slice(0, 10))}
+                  {formatDate(new Date(completedAt).toISOString().slice(0, 10))}
                 </p>
               </div>
             )}
-            {task.goal_id && (
+            {goalId && (
               <div>
                 <span className="text-text-muted">Goal</span>
                 <p>
                   <Link
-                    href={`/goals/${task.goal_id}`}
+                    href={`/goals/${goalId}`}
                     className="text-accent hover:underline"
                   >
                     View Goal
@@ -94,12 +115,12 @@ export default async function TaskDetailPage({
                 </p>
               </div>
             )}
-            {task.project_id && (
+            {projectId && (
               <div>
                 <span className="text-text-muted">Project</span>
                 <p>
                   <Link
-                    href={`/projects/${task.project_id}`}
+                    href={`/projects/${projectId}`}
                     className="text-accent hover:underline"
                   >
                     View Project
