@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Check, ArrowLeft, TrendingUp, BarChart3, CheckCircle2 } from 'lucide-react';
-import type { Doc, Id } from '../../../../../../convex/_generated/dataModel';
+import type { Doc, Id } from '@/lib/convex-api';
 
 const healthVariant: Record<string, 'success' | 'warning' | 'danger' | 'muted'> = {
   on_track: 'success',
@@ -59,8 +59,8 @@ export default function GoalDetailPage() {
   const doneTasks = tasks.filter((t) => t.status === 'done');
   const openTasks = tasks.filter((t) => t.status === 'todo');
 
-  const progress = health && health.tasks_total > 0
-    ? (health.tasks_done / health.tasks_total) * 100
+  const progress = health && health.totalTasks > 0
+    ? (health.doneTasks / health.totalTasks) * 100
     : 0;
 
   // SVG progress ring values
@@ -148,7 +148,7 @@ export default function GoalDetailPage() {
                   <BarChart3 size={13} />
                   <span className="text-xs font-medium uppercase tracking-wide">Score</span>
                 </div>
-                <p className="text-xl font-bold text-text">{health.score}%</p>
+                <p className="text-xl font-bold text-text">{health.velocity}%</p>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-text-muted">
@@ -163,7 +163,7 @@ export default function GoalDetailPage() {
                   <span className="text-xs font-medium uppercase tracking-wide">Done</span>
                 </div>
                 <p className="text-xl font-bold text-text">
-                  {health.tasks_done}<span className="text-sm font-normal text-text-muted">/{health.tasks_total}</span>
+                  {health.doneTasks}<span className="text-sm font-normal text-text-muted">/{health.totalTasks}</span>
                 </p>
               </div>
             </div>

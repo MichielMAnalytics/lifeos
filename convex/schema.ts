@@ -199,4 +199,110 @@ export default defineSchema({
     beforeData: v.optional(v.any()),
     afterData: v.optional(v.any()),
   }).index("by_userId", ["userId"]),
+
+  // ═══════════════════════════════════════════════════════
+  // Hosted deployment tables (ported from ClawNow)
+  // ═══════════════════════════════════════════════════════
+
+  // ── Balances ─────────────────────────────────────────
+  balances: defineTable({
+    userId: v.id("users"),
+    amount: v.number(), // cents
+  }).index("by_userId", ["userId"]),
+
+  // ── Subscriptions ────────────────────────────────────
+  subscriptions: defineTable({
+    userId: v.id("users"),
+    stripeSubscriptionId: v.string(),
+    stripePriceId: v.string(),
+    planType: v.union(
+      v.literal("byok"),
+      v.literal("basic"),
+      v.literal("standard"),
+      v.literal("premium"),
+    ),
+    status: v.union(
+      v.literal("active"),
+      v.literal("past_due"),
+      v.literal("canceled"),
+      v.literal("unpaid"),
+    ),
+    currentPeriodEnd: v.number(),
+    cancelAtPeriodEnd: v.boolean(),
+    includedCreditsCents: v.number(),
+    createdAt: v.number(),
+    lastUpdatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_stripeSubscriptionId", ["stripeSubscriptionId"]),
+
+  // ── Deployment Settings (ClawNow's "userSettings") ───
+  deploymentSettings: defineTable({
+    userId: v.id("users"),
+    apiKeySource: v.union(v.literal("ours"), v.literal("byok")),
+    anthropicAuthMethod: v.optional(
+      v.union(v.literal("api_key"), v.literal("setup_token")),
+    ),
+    anthropicKeyLength: v.optional(v.number()),
+    openaiKeyLength: v.optional(v.number()),
+    googleKeyLength: v.optional(v.number()),
+    moonshotKeyLength: v.optional(v.number()),
+    minimaxKeyLength: v.optional(v.number()),
+    telegramBotTokenLength: v.optional(v.number()),
+    discordBotTokenLength: v.optional(v.number()),
+    selectedModel: v.optional(v.string()),
+    pendingDeploy: v.optional(v.boolean()),
+    customEnvKeys: v.optional(v.array(v.object({ name: v.string(), valueLength: v.number() }))),
+  }).index("by_userId", ["userId"]),
+
+  // ── Deployments ──────────────────────────────────────
+  deployments: defineTable({
+    userId: v.id("users"),
+    subdomain: v.string(),
+    gatewayToken: v.string(),
+    podSecret: v.string(),
+    callbackJwt: v.string(),
+    status: v.union(
+      v.literal("provisioning"),
+      v.literal("starting"),
+      v.literal("running"),
+      v.literal("error"),
+      v.literal("deactivating"),
+      v.literal("deactivated"),
+      v.literal("suspended"),
+    ),
+    configHash: v.string(),
+    targetImageTag: v.string(),
+    podIp: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+    deactivatedAt: v.optional(v.number()),
+    pvcRetainUntil: v.optional(v.number()),
+    createdAt: v.number(),
+    lastUpdatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_subdomain", ["subdomain"])
+    .index("by_podSecret", ["podSecret"])
+    .index("by_status", ["status"]),
+
+  // ── Coupons ──────────────────────────────────────────
+  coupons: defineTable({
+    code: v.string(),
+    creditAmountCents: v.number(),
+    maxUses: v.number(),
+    currentUses: v.number(),
+    expiresAt: v.optional(v.number()),
+    description: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_code", ["code"]),
+
+  // ── Coupon Redemptions ───────────────────────────────
+  couponRedemptions: defineTable({
+    couponId: v.id("coupons"),
+    userId: v.id("users"),
+    creditAmountCents: v.number(),
+    redeemedAt: v.number(),
+  })
+    .index("by_couponId_userId", ["couponId", "userId"])
+    .index("by_userId", ["userId"]),
 });

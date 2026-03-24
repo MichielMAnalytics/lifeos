@@ -1,0 +1,21 @@
+{
+  "name": "lifeos-infra",
+  "version": "0.0.1",
+  "description": "Pulumi infrastructure for Claw Now",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "preview": "pulumi preview",
+    "up": "pulumi up",
+    "destroy": "pulumi destroy"
+  },
+  "dependencies": {
+    "@pulumi/pulumi": "^3.100.0",
+    "@pulumi/gcp": "^7.0.0",
+    "@pulumi/kubernetes": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "@types/node": "^24.10.11"
+  }
+}

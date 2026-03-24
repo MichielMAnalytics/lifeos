@@ -7,24 +7,24 @@ Personal Life Operating System -- a single-user productivity platform for managi
 ## Quick Start
 
 ```bash
-pnpm install              # Install all dependencies
-pnpm run dev              # Start Convex dev server + Next.js dashboard concurrently
-pnpm run cli <cmd>        # Run a CLI command (via bun)
+bun install              # Install all dependencies
+bun run dev              # Start Convex dev server + Next.js dashboard concurrently
+bun run cli <cmd>        # Run a CLI command (via bun)
 ```
 
 Individual services:
 
 ```bash
-pnpm run dev:convex       # Convex dev server only
-pnpm run dev:dashboard    # Next.js dashboard only (port 3000)
+bun run dev:convex       # Convex dev server only
+bun run dev:dashboard    # Next.js dashboard only (port 3000)
 ```
 
 Build and check:
 
 ```bash
-pnpm run build            # Build all packages (via Turbo)
-pnpm run check            # Type-check all packages
-pnpm run test             # Run tests across all packages
+bun run build            # Build all packages (via Turbo)
+bun run check            # Type-check all packages
+bun run test             # Run tests across all packages
 ```
 
 ---
@@ -32,7 +32,7 @@ pnpm run test             # Run tests across all packages
 ## Architecture
 
 ```
-lifeos/                          # pnpm monorepo (pnpm-workspace.yaml)
+lifeos/                          # bun monorepo (pnpm-workspace.yaml)
   convex/                        # Convex backend -- schema, queries, mutations, HTTP API
     schema.ts                    # Data model (all tables)
     http.ts                      # HTTP router -- REST API for CLI and external integrations
@@ -109,7 +109,7 @@ All tables are defined in `convex/schema.ts`. Every user-owned table has a `user
 
 ## CLI Reference
 
-The CLI binary is `lifeos`. Run via `pnpm run cli <command>` or after global install. All commands support `--json` for machine-readable output.
+The CLI binary is `lifeos`. Run via `bun run cli <command>` or after global install. All commands support `--json` for machine-readable output.
 
 ### Authentication and Configuration
 
@@ -467,8 +467,8 @@ POST   /api/v1/triggers/goal-health             # Goal health check across all g
 ```bash
 # Tests directory exists at /tests/ -- add E2E scripts here
 bash tests/cli-e2e.sh     # CLI end-to-end tests (when available)
-pnpm run test             # Run tests across all packages via Turbo
-pnpm run check            # Type-check all packages
+bun run test             # Run tests across all packages via Turbo
+bun run check            # Type-check all packages
 ```
 
 ---
@@ -641,7 +641,7 @@ packages/dashboard/
 
 ### General
 
-- Package manager is **pnpm** (v9.15.4). Do not use npm or yarn.
+- Package manager is **bun**. Do not use npm, yarn, or pnpm.
 - Build orchestration via **Turborepo** (`turbo.json`).
 - The dashboard uses **Satoshi** as the default font, loaded from Fontshare CDN.
 - Theme is applied immediately via an inline script in `layout.tsx` to avoid FOUC.

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { TaskActions } from '@/components/task-actions';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { Id } from '../../../../../../convex/_generated/dataModel';
+import type { Id } from '@/lib/convex-api';
 
 export default function TaskDetailPage() {
   const params = useParams<{ id: string }>();

@@ -1,0 +1,6 @@
+name: lifeos
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: LifeOS hosted deployment infrastructure

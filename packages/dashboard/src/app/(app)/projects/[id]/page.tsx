@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { Doc, Id } from '../../../../../../convex/_generated/dataModel';
+import type { Doc, Id } from '@/lib/convex-api';
 
 const statusVariant = (status: string) => {
   switch (status) {

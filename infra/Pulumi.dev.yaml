@@ -1,0 +1,28 @@
+config:
+  gcp:project: claw-now-dev
+  gcp:region: europe-west3
+  lifeos:dnsProvider: cloudDns
+  lifeos:domain: openclaw.dev.azin.run
+  lifeos:openclawImageTag: latest
+  lifeos:jwtSigningKey: 78a1710deae11f3c62c25e907ab15bd4
+  lifeos:convexSiteUrl: https://glad-rooster-482.convex.site
+  lifeos:gatewaySystemKey: 78a1710deae11f3c62c25e907ab15bd4
+  lifeos:gatewayImageName: europe-west3-docker.pkg.dev/claw-now-dev/lifeos-dev/ai-gateway:latest
+  lifeos:backends:
+    - id: "michiel"
+      convexSiteUrl: "https://glad-rooster-482.convex.site"
+    - id: "laurci"
+      convexSiteUrl: "https://dapper-chickadee-994.convex.site"
+  lifeos:oauth2ProxyClientId:
+    secure: v1:NZry6NfkaS5BQ8/8:/l50YfAQ3P/WeKacU0LEWHmPTYNBT6plqcdPFw7HXAkWF9s7QYM0YWq5uMF2J7qXpqDaTXFgHVKZChUTD/TEs9KdvP8IGr+lxcqEgBUrbXM+P8VajOe0HQ==
+  lifeos:oauth2ProxyClientSecret:
+    secure: v1:u0bMtEJoQ04alu+X:yHCUAV5f9BzGD7vYcmXJIzATDxy1+CoVUhk20nW6QKghMYg+VtvDlfNqTz2u9Y8m+ZoX
+  lifeos:oauth2ProxyCookieSecret:
+    secure: v1:roUWex40p+sSwzjE:1SnQd/UvX+7vBtS8m2yCaG/+Jr5f0xceE381I0xVBEAw61NBVRvSYa8dG+0l3BOHJasKDDaDzJ1mW77w
+  lifeos:anthropicApiKey:
+    secure: v1:TopoI1jvtX/YiH0N:biuDNi1v3f5yw1GdDzaQIZuSADDgvqfeJ7UIXgpB47BZR7OOSk1k1F3ErGLA5xK+JkZ3JM6UUaWGM8AXFKiaN/cRmLk+Hj0z9ivZHiQvw/XbCcYPHJm3mt//ZFimgrAHiZB8TF9TARRTLGsR+xWOMhuYcycr1KCApWf3Kw==
+  lifeos:openaiApiKey:
+    secure: v1:uk/NQnbUZ12FFabT:gbVrr9mCv8d+Tvxb710KdgWaL/Q2Jq25SOc8TA6jYqjCEaH+S6OWLkA54IedJLIoXbi1a/LP/01weayCw0QmE6LUQEHHeb5gy6xGe6kO6IGnHykspnB2RI7ndqNJi995ovy4YnkLuehAE3J/Ip5kcZYZJRz5Ma8RVBnRyUHi6iW1KeoDRIoiKmpRMcRKI/6tl3l2eeRojKKgF20kVMZiU4z+NzwFRNxj7X5XdiVrCSRChoaA
+  lifeos:googleApiKey:
+    secure: v1:J1eD2ywIfmFXP10R:Gq7AElETHKSqHnwYlv8tvIqMTpmYrYPq7PRoshfUsy5rvXm0OE87Eg7/p+EBqxVNW7ulDqNTNw==
+encryptionsalt: v1:9VsSxOzeEdU=:v1:Ii5X0J21C5P5s3Sc:OYFuNbc6K/Bhy7HWatIWmX7OjJF+hQ==

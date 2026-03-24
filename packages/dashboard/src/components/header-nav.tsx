@@ -136,7 +136,7 @@ export function HeaderNav() {
       <div className="flex h-14 items-center px-6 gap-1">
         {/* Logo */}
         <Link href="/today" className="mr-6 shrink-0 flex items-center">
-          <LogoHorizontal height={38} />
+          <LogoHorizontal height={48} />
         </Link>
 
         {/* Nav links */}

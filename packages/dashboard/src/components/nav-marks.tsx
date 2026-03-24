@@ -156,6 +156,20 @@ export function MarkCalendar({ className }: { className?: string }) {
   );
 }
 
+// AI Agent — neural network / brain node pattern
+export function MarkAiAgent({ className }: { className?: string }) {
+  return (
+    <M className={className}>
+      <circle cx="8" cy="4" r="2" />
+      <circle cx="4" cy="12" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <line x1="8" y1="6" x2="4" y2="10" />
+      <line x1="8" y1="6" x2="12" y2="10" />
+      <line x1="4" y1="12" x2="12" y2="12" />
+    </M>
+  );
+}
+
 // Settings — single diagonal line through a dot
 export function MarkSettings({ className }: { className?: string }) {
   return (
@@ -178,5 +192,6 @@ export const NAV_MARKS: Record<string, React.ComponentType<{ className?: string 
   reviews: MarkReviews,
   resources: MarkResources,
   calendar: MarkCalendar,
+  'ai-agent': MarkAiAgent,
   settings: MarkSettings,
 };

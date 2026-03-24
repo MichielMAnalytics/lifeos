@@ -1,0 +1,25 @@
+{
+  "name": "clawnow-ai-gateway",
+  "version": "0.0.1",
+  "description": "AI Gateway for Claw Now - proxies LLM requests with balance management",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.0",
+    "hono": "^4.4.0",
+    "ioredis": "^5.4.0",
+    "ws": "^8.18.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.0",
+    "typescript": "~5.9.3",
+    "@types/node": "^24.10.11",
+    "tsx": "^4.19.0"
+  }
+}

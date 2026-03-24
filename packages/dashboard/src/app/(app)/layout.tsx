@@ -6,6 +6,8 @@ import { useEffect } from "react";
 import { Nav } from '@/components/nav';
 import { MainContent } from '@/components/main-content';
 import { DashboardConfigProvider } from '@/lib/dashboard-config';
+import { GatewayProvider } from '@/lib/gateway';
+import { ChatWidget } from '@/components/ai-agent/chat-widget';
 
 function RedirectToLogin() {
   const router = useRouter();
@@ -30,10 +32,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <Authenticated>
         <DashboardConfigProvider>
-          <div className="flex w-full min-h-screen">
-            <Nav />
-            <MainContent>{children}</MainContent>
-          </div>
+          <GatewayProvider>
+            <div className="flex w-full min-h-screen">
+              <Nav />
+              <MainContent>{children}</MainContent>
+            </div>
+            <ChatWidget />
+          </GatewayProvider>
         </DashboardConfigProvider>
       </Authenticated>
     </>

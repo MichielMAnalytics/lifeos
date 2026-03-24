@@ -1,0 +1,9 @@
+**/node_modules
+.git
+**/.next
+**/dist
+tests
+*.md
+.env*
+.DS_Store
+Logos*

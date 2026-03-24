@@ -58,10 +58,19 @@ export function DashboardConfigProvider({ children }: { children: React.ReactNod
 
   const isLoading = rawConfig === undefined;
 
+  // Ensure new pages from DEFAULT_NAV_ORDER are appended to existing configs
+  const savedOrder = rawConfig?.navOrder ?? [...DEFAULT_NAV_ORDER];
+  const mergedOrder = [...savedOrder];
+  for (const page of DEFAULT_NAV_ORDER) {
+    if (!mergedOrder.includes(page)) {
+      mergedOrder.push(page);
+    }
+  }
+
   const config: DashboardConfig = rawConfig
     ? {
         navMode: (rawConfig.navMode as "sidebar" | "header") ?? "sidebar",
-        navOrder: rawConfig.navOrder ?? [...DEFAULT_NAV_ORDER],
+        navOrder: mergedOrder,
         navHidden: rawConfig.navHidden ?? [],
         pagePresets: (rawConfig.pagePresets ?? {}) as Record<string, string>,
         customTheme: rawConfig.customTheme as Record<string, string> | undefined,

@@ -1,8 +1,11 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api, internal } from "./_generated/api";
+import { api, internal, components } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { auth } from "./auth";
+import { registerRoutes } from "@convex-dev/stripe";
+import type Stripe from "stripe";
+import { getCreditTiers, getSubscriptionPlans, serverEnv } from "./deploymentEnv";
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -1714,5 +1717,205 @@ http.route({
 
 // ── Convex Auth routes ───────────────────────────────
 auth.addHttpRoutes(http);
+
+// ═══════════════════════════════════════════════════════════
+// Hosted deployment routes (ported from ClawNow)
+// ═══════════════════════════════════════════════════════════
+
+async function notifySlack(text: string) {
+  const url = serverEnv.SLACK_WEBHOOK_URL;
+  if (!url) return;
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+  } catch (e) {
+    console.error("[slack] Failed to send notification:", e);
+  }
+}
+
+// ── Stripe Webhook ───────────────────────────────────
+registerRoutes(http, components.stripe, {
+  webhookPath: "/stripe/webhook",
+  events: {
+    "payment_intent.succeeded": async (ctx, event) => {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const metadata = paymentIntent.metadata;
+      const userSubject = metadata?.userId;
+      const priceId = metadata?.priceId;
+      if (!userSubject || !priceId) return;
+      const docId = userSubject.split("|")[0] as Id<"users">;
+      const tiers = getCreditTiers();
+      const creditAmount = tiers[priceId];
+      if (!creditAmount) {
+        const amount = paymentIntent.amount_received;
+        if (amount > 0) {
+          await ctx.runMutation(internal.stripe.creditBalance, { userId: docId, amount });
+        }
+        return;
+      }
+      await ctx.runMutation(internal.stripe.creditBalance, { userId: docId, amount: creditAmount });
+      const euros = (creditAmount / 100).toFixed(0);
+      const email = await ctx.runQuery(internal.deploymentQueries.getUserEmail, { userId: docId });
+      await notifySlack(`*New credit purchase* — EUR ${euros} top-up (${email ?? docId})`);
+    },
+
+    "customer.subscription.created": async (ctx, event) => {
+      const subscription = event.data.object as Stripe.Subscription;
+      const metadata = subscription.metadata;
+      const userSubject = metadata?.userId;
+      const planType = metadata?.planType as "byok" | "basic" | "standard" | "premium" | undefined;
+      if (!userSubject || !planType) return;
+      const docId = userSubject.split("|")[0] as Id<"users">;
+      const priceId = subscription.items.data[0]?.price?.id ?? "";
+      const allPlans = getSubscriptionPlans();
+      const plan = allPlans[priceId];
+      const componentSub = await ctx.runQuery(components.stripe.public.getSubscription, { stripeSubscriptionId: subscription.id });
+      const currentPeriodEnd = componentSub?.currentPeriodEnd ? componentSub.currentPeriodEnd * 1000 : Date.now();
+      await ctx.runMutation(internal.stripe.upsertSubscription, {
+        userId: docId, stripeSubscriptionId: subscription.id, stripePriceId: priceId,
+        planType, status: "active", currentPeriodEnd,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        includedCreditsCents: plan?.includedCreditsCents ?? 0,
+      });
+      const credits = plan?.includedCreditsCents ?? 0;
+      if (credits > 0) {
+        await ctx.runMutation(internal.stripe.creditBalance, { userId: docId, amount: credits });
+      }
+      const planLabel = plan?.label ?? planType ?? "unknown";
+      const priceEur = plan ? (plan.priceEuroCents / 100).toFixed(0) : "?";
+      const email = await ctx.runQuery(internal.deploymentQueries.getUserEmail, { userId: docId });
+      await notifySlack(`*New subscription* — ${planLabel} plan (EUR ${priceEur}/mo, ${email ?? docId})`);
+    },
+
+    "customer.subscription.updated": async (ctx, event) => {
+      const subscription = event.data.object as Stripe.Subscription;
+      const existing = await ctx.runQuery(internal.stripe.getSubscriptionByStripeId, { stripeSubscriptionId: subscription.id });
+      if (!existing) return;
+      const statusMap: Record<string, "active" | "past_due" | "canceled" | "unpaid"> = {
+        active: "active", past_due: "past_due", canceled: "canceled", unpaid: "unpaid",
+      };
+      const componentSub = await ctx.runQuery(components.stripe.public.getSubscription, { stripeSubscriptionId: subscription.id });
+      const currentPeriodEnd = componentSub?.currentPeriodEnd ? componentSub.currentPeriodEnd * 1000 : Date.now();
+      await ctx.runMutation(internal.stripe.upsertSubscription, {
+        userId: existing.userId, stripeSubscriptionId: subscription.id,
+        stripePriceId: existing.stripePriceId, planType: existing.planType,
+        status: statusMap[subscription.status] ?? "active", currentPeriodEnd,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        includedCreditsCents: existing.includedCreditsCents,
+      });
+    },
+
+    "customer.subscription.deleted": async (ctx, event) => {
+      const subscription = event.data.object as Stripe.Subscription;
+      const userSubject = subscription.metadata?.userId;
+      const planType = subscription.metadata?.planType ?? "unknown";
+      await ctx.runMutation(internal.stripe.handleSubscriptionDeleted, { stripeSubscriptionId: subscription.id });
+      let email: string | null = null;
+      if (userSubject) {
+        const uid = userSubject.split("|")[0] as Id<"users">;
+        email = await ctx.runQuery(internal.deploymentQueries.getUserEmail, { userId: uid });
+      }
+      await notifySlack(`*Churn* — ${planType} subscription canceled (${email ?? userSubject ?? "unknown"})`);
+    },
+
+    "invoice.paid": async (ctx, event) => {
+      const invoice = event.data.object as Stripe.Invoice;
+      const billingReason = (invoice as unknown as Record<string, unknown>).billing_reason as string | undefined;
+      if (billingReason === "subscription_create") return;
+      const subRef = invoice.parent?.subscription_details?.subscription;
+      if (!subRef) return;
+      const stripeSubId = typeof subRef === "string" ? subRef : subRef.id;
+      const sub = await ctx.runQuery(internal.stripe.getSubscriptionByStripeId, { stripeSubscriptionId: stripeSubId });
+      if (!sub || sub.includedCreditsCents <= 0) return;
+      await ctx.runMutation(internal.stripe.creditBalance, { userId: sub.userId, amount: sub.includedCreditsCents });
+    },
+
+    "invoice.payment_failed": async (_ctx, event) => {
+      const invoice = event.data.object as Stripe.Invoice;
+      console.warn(`[stripe] Invoice payment failed: ${invoice.id}`);
+    },
+  },
+});
+
+// ── Pod Registration (init container callback) ───────
+http.route({
+  path: "/api/registerPod",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) return new Response("Unauthorized", { status: 401 });
+    const token = authHeader.slice(7);
+    const jwtSecret = serverEnv.JWT_SIGNING_KEY;
+    if (!jwtSecret) return new Response("JWT not configured", { status: 500 });
+    const parts = token.split(".");
+    if (parts.length !== 3) return new Response("Invalid JWT", { status: 401 });
+    const [headerB64, payloadB64, signatureB64] = parts;
+    const data = `${headerB64}.${payloadB64}`;
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey("raw", encoder.encode(jwtSecret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+    const sigStr = signatureB64.replace(/-/g, "+").replace(/_/g, "/");
+    const sigBuf = Uint8Array.from(atob(sigStr), (c) => c.charCodeAt(0));
+    const valid = await crypto.subtle.verify("HMAC", key, sigBuf, encoder.encode(data));
+    if (!valid) return new Response("Invalid JWT signature", { status: 401 });
+    const payloadStr = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
+    const payload = JSON.parse(payloadStr) as { sub: string; sid: string };
+    const body = (await request.json()) as { podIp: string };
+    const dep = await ctx.runQuery(internal.deploymentQueries.getDeploymentBySubdomain, { subdomain: payload.sid });
+    if (!dep) return new Response("Deployment not found", { status: 404 });
+    await ctx.runMutation(internal.deploymentQueries.updateDeploymentStatus, { deploymentId: dep._id, status: "starting", podIp: body.podIp });
+    await ctx.scheduler.runAfter(0, internal.deploymentHealthCheck.checkDeploymentHealth, { deploymentId: dep._id, subdomain: dep.subdomain, attempt: 0 });
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }),
+});
+
+// ── Balance Sync (AI Gateway -> Convex) ──────────────
+http.route({
+  path: "/api/syncBalances",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const systemKey = request.headers.get("X-System-Key");
+    if (!systemKey || systemKey !== serverEnv.GATEWAY_SYSTEM_KEY) return new Response("Unauthorized", { status: 401 });
+    const entries = (await request.json()) as Array<{ podSecret: string; currentBalance: number }>;
+    for (const { podSecret, currentBalance } of entries) {
+      const dep = await ctx.runQuery(internal.deploymentQueries.getDeploymentByPodSecret, { podSecret });
+      if (dep) await ctx.runMutation(internal.stripe.setBalance, { userId: dep.userId, amount: currentBalance });
+    }
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }),
+});
+
+// ── Suspend Deployment (AI Gateway -> Convex) ────────
+http.route({
+  path: "/api/suspendDeployment",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const systemKey = request.headers.get("X-System-Key");
+    if (!systemKey || systemKey !== serverEnv.GATEWAY_SYSTEM_KEY) return new Response("Unauthorized", { status: 401 });
+    const { podSecret } = (await request.json()) as { podSecret: string };
+    if (!podSecret) return new Response("Missing podSecret", { status: 400 });
+    const dep = await ctx.runQuery(internal.deploymentQueries.getDeploymentByPodSecret, { podSecret });
+    if (!dep) return new Response("Deployment not found", { status: 404 });
+    if (["deactivated", "deactivating", "suspended"].includes(dep.status)) {
+      return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    await ctx.scheduler.runAfter(0, internal.deploymentActions.suspendForInsufficientBalance, { deploymentId: dep._id });
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }),
+});
+
+// ── Desired State (Reconciler) ───────────────────────
+http.route({
+  path: "/api/getDesiredState",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const systemKey = req.headers.get("X-System-Key");
+    if (!systemKey || systemKey !== serverEnv.GATEWAY_SYSTEM_KEY) return new Response("Unauthorized", { status: 401 });
+    const state = await ctx.runQuery(internal.deploymentQueries.getDesiredState, {});
+    return new Response(JSON.stringify(state), { status: 200, headers: { "Content-Type": "application/json" } });
+  }),
+});
 
 export default http;

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { ConfigureToolbar } from '@/components/configure-toolbar';
-import type { Id } from '../../../../../../convex/_generated/dataModel';
+import type { Id } from '@/lib/convex-api';
+import Link from 'next/link';
 
 interface User {
   _id: Id<"users">;
@@ -345,6 +346,9 @@ export function SettingsClient({
           </div>
         </div>
       </section>
+
+      {/* -- AI Agent ---------------------------------------- */}
+      <AiAgentSection />
     </div>
   );
 }
@@ -368,6 +372,82 @@ function Stat({ label, value, mono }: { label: string; value: string; mono?: boo
       <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">{label}</p>
       <p className={`text-sm font-medium text-text ${mono ? 'font-mono' : ''}`}>{value}</p>
     </div>
+  );
+}
+
+/* -- AI Agent Section --------------------------------------- */
+
+const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
+  running: { dot: 'bg-success', label: 'Running' },
+  provisioning: { dot: 'bg-warning animate-pulse', label: 'Provisioning' },
+  starting: { dot: 'bg-warning animate-pulse', label: 'Starting' },
+  error: { dot: 'bg-danger', label: 'Error' },
+  deactivating: { dot: 'bg-warning', label: 'Deactivating' },
+  suspended: { dot: 'bg-danger', label: 'Suspended' },
+};
+
+function AiAgentSection() {
+  const deployment = useQuery(api.deploymentQueries.getMyDeployment);
+
+  return (
+    <section>
+      <SectionHeader label="AI Agent" />
+
+      <div className="border border-border">
+        {deployment === undefined ? (
+          // Loading state
+          <div className="px-6 py-8 text-center">
+            <p className="text-sm text-text-muted animate-pulse">Loading deployment status...</p>
+          </div>
+        ) : deployment === null ? (
+          // No deployment
+          <div className="px-6 py-8 text-center">
+            <div className="h-16 w-16 rounded-full border-2 border-dashed border-border mx-auto mb-4 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-text-muted">
+                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.17A7 7 0 0 1 14 23h-4a7 7 0 0 1-6.83-4H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 12 2z" />
+                <circle cx="9" cy="15" r="1" />
+                <circle cx="15" cy="15" r="1" />
+              </svg>
+            </div>
+            <p className="text-text font-medium">Not deployed</p>
+            <p className="text-sm text-text-muted mt-1 max-w-md mx-auto">
+              Deploy your personal AI agent to automate tasks, manage channels, and more.
+            </p>
+            <Link
+              href="/ai-agent"
+              className="inline-block mt-4 bg-text text-bg px-5 py-2.5 text-xs font-medium uppercase tracking-wider hover:opacity-90 transition-opacity"
+            >
+              Get Started
+            </Link>
+          </div>
+        ) : (
+          // Deployment exists
+          <div className="flex items-center justify-between px-6 py-5">
+            <div className="flex items-center gap-4">
+              <div
+                className={`h-3 w-3 rounded-full shrink-0 ${
+                  STATUS_STYLES[deployment.status]?.dot ?? 'bg-text-muted/30'
+                }`}
+              />
+              <div>
+                <p className="text-sm font-medium text-text">
+                  {STATUS_STYLES[deployment.status]?.label ?? deployment.status}
+                </p>
+                <p className="text-xs text-text-muted font-mono mt-0.5">
+                  {deployment.subdomain}.lifeos.app
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/ai-agent"
+              className="text-xs font-mono text-text underline underline-offset-2 hover:opacity-70 transition-opacity"
+            >
+              Manage
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

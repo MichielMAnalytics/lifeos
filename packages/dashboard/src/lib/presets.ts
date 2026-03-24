@@ -648,7 +648,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
 export const ALL_PRESET_KEYS = ["default", "solopreneur", "content-creator", "developer", "executive", "minimalist", "journaler"];
 
 export const DEFAULT_NAV_ORDER: PageKey[] = [
-  "today", "tasks", "projects", "goals", "journal", "ideas", "thoughts", "plan", "reviews", "resources", "calendar",
+  "today", "tasks", "projects", "goals", "journal", "ideas", "thoughts", "plan", "reviews", "resources", "calendar", "ai-agent",
 ];
 
 export function getPreset(page: PageKey, presetKey: string): PagePreset {

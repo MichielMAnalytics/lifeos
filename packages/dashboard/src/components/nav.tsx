@@ -9,6 +9,7 @@ import { HeaderNav } from './header-nav';
 import { LogoMark, LogoHorizontal } from './theme-logo';
 import { NAV_MARKS } from './nav-marks';
 import { SearchTrigger } from './search-modal';
+import { GatewayStatusIndicator } from './ai-agent/gateway-status-indicator';
 
 const allPages: Record<string, { label: string; abbr: string }> = {
   today: { label: 'Today', abbr: 'To' },
@@ -22,6 +23,7 @@ const allPages: Record<string, { label: string; abbr: string }> = {
   reviews: { label: 'Reviews', abbr: 'Re' },
   resources: { label: 'Resources', abbr: 'Rs' },
   calendar: { label: 'Calendar', abbr: 'Ca' },
+  'ai-agent': { label: 'AI Agent', abbr: 'Ai' },
 };
 
 const bottomLinks = [
@@ -86,7 +88,7 @@ export function Nav() {
       >
         {expanded ? (
           <>
-            <LogoHorizontal height={38} className="animate-fade-in" />
+            <LogoHorizontal height={48} className="animate-fade-in" />
             <button
               onClick={toggle}
               className="flex h-7 w-7 shrink-0 items-center justify-center text-text-muted transition-colors hover:text-text font-mono text-xs"
@@ -101,7 +103,7 @@ export function Nav() {
             className="flex shrink-0 items-center justify-center transition-colors hover:opacity-70"
             title="Expand sidebar"
           >
-            <LogoMark size={38} />
+            <LogoMark size={46} />
           </button>
         )}
       </div>
@@ -263,6 +265,8 @@ export function Nav() {
             </span>
           )}
         </button>
+
+        {expanded && <GatewayStatusIndicator />}
 
         {bottomLinks.map(({ href, label, abbr }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/');
