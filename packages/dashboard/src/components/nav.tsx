@@ -20,6 +20,8 @@ const allPages: Record<string, { label: string; abbr: string }> = {
   thoughts: { label: 'Thoughts', abbr: 'Th' },
   plan: { label: 'Plan', abbr: 'Pl' },
   reviews: { label: 'Reviews', abbr: 'Re' },
+  resources: { label: 'Resources', abbr: 'Rs' },
+  calendar: { label: 'Calendar', abbr: 'Ca' },
 };
 
 const bottomLinks = [

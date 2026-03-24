@@ -156,6 +156,7 @@ export default defineSchema({
     url: v.optional(v.string()),
     content: v.optional(v.string()),
     type: v.optional(v.string()), // "article" | "tool" | "book" | "video" | "other"
+    tags: v.optional(v.array(v.string())),
   }).index("by_userId", ["userId"]),
 
   // ── Reviews ────────────────────────────────────────

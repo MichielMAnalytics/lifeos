@@ -43,6 +43,9 @@ import { ReviewsSchedule } from './sections/reviews-schedule';
 import { WeeklyReviewForm } from './sections/weekly-review-form';
 import { QuarterlyReviewForm } from './sections/quarterly-review-form';
 import { ThoughtsList } from './sections/thoughts-list';
+import { ResourcesGrid } from './sections/resources-grid';
+import { CalendarWeekly } from './sections/calendar-weekly';
+import { RemindersUpcoming } from './sections/reminders-upcoming';
 
 const SECTION_MAP: Record<string, React.ComponentType> = {
   // Today page sections
@@ -100,6 +103,14 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'reviews-schedule': ReviewsSchedule,
   'weekly-review-form': WeeklyReviewForm,
   'quarterly-review-form': QuarterlyReviewForm,
+
+  // Resources page sections
+  'resources-database': ResourcesGrid,
+  'resources-grid': ResourcesGrid,
+
+  // Calendar page sections
+  'calendar-weekly': CalendarWeekly,
+  'reminders-upcoming': RemindersUpcoming,
 };
 
 export function SectionRenderer({ section }: { section: SectionDef }) {

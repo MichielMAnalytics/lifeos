@@ -33,6 +33,7 @@ export const create = mutation({
     url: v.optional(v.string()),
     content: v.optional(v.string()),
     type: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -44,6 +45,7 @@ export const create = mutation({
       url: args.url,
       content: args.content,
       type: args.type,
+      tags: args.tags,
     });
 
     const resource = await ctx.db.get(resourceId);
@@ -70,6 +72,7 @@ export const update = mutation({
     url: v.optional(v.string()),
     content: v.optional(v.string()),
     type: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -85,6 +88,7 @@ export const update = mutation({
     if (args.url !== undefined) updates.url = args.url;
     if (args.content !== undefined) updates.content = args.content;
     if (args.type !== undefined) updates.type = args.type;
+    if (args.tags !== undefined) updates.tags = args.tags;
 
     await ctx.db.patch(args.id, updates);
     const updated = await ctx.db.get(args.id);
@@ -160,6 +164,7 @@ export const _create = internalMutation({
     url: v.optional(v.string()),
     content: v.optional(v.string()),
     type: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const resourceId = await ctx.db.insert("resources", {
@@ -168,6 +173,7 @@ export const _create = internalMutation({
       url: args.url,
       content: args.content,
       type: args.type,
+      tags: args.tags,
     });
 
     const resource = await ctx.db.get(resourceId);
@@ -193,6 +199,7 @@ export const _update = internalMutation({
     url: v.optional(v.string()),
     content: v.optional(v.string()),
     type: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db.get(args.id);
@@ -205,6 +212,7 @@ export const _update = internalMutation({
     if (args.url !== undefined) updates.url = args.url;
     if (args.content !== undefined) updates.content = args.content;
     if (args.type !== undefined) updates.type = args.type;
+    if (args.tags !== undefined) updates.tags = args.tags;
 
     await ctx.db.patch(args.id, updates);
     const updated = await ctx.db.get(args.id);

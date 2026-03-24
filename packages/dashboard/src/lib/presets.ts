@@ -13,7 +13,7 @@ export interface PagePreset {
 }
 
 export type PresetKey = string;
-export type PageKey = "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews";
+export type PageKey = "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "calendar";
 
 // ═══════════════════════════════════════════════════════════
 // Every persona appears on every page.
@@ -535,12 +535,120 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       ],
     },
   },
+
+  // ── RESOURCES ──────────────────────────────────────
+  resources: {
+    default: {
+      name: "Default",
+      description: "Database view of resources",
+      sections: [{ id: "resources-database", label: "Resources", span: "full" }],
+    },
+    solopreneur: {
+      name: "Solopreneur",
+      description: "Resources database for founders",
+      sections: [{ id: "resources-database", label: "Resources", span: "full" }],
+    },
+    "content-creator": {
+      name: "Content Creator",
+      description: "Resources with ideas pipeline",
+      sections: [
+        { id: "resources-database", label: "Resources", span: "half" },
+        { id: "ideas-pipeline", label: "Ideas", span: "half" },
+      ],
+    },
+    developer: {
+      name: "Developer",
+      description: "Compact resource database",
+      sections: [{ id: "resources-database", label: "Resources", span: "full" }],
+    },
+    executive: {
+      name: "Executive",
+      description: "Resources library",
+      sections: [{ id: "resources-database", label: "Resources", span: "full" }],
+    },
+    minimalist: {
+      name: "Minimalist",
+      description: "Just resources",
+      sections: [{ id: "resources-database", label: "Resources", span: "full" }],
+    },
+    journaler: {
+      name: "Journaler",
+      description: "Resources with journal reflection",
+      sections: [
+        { id: "resources-database", label: "Resources", span: "half" },
+        { id: "journal-today", label: "Journal", span: "half" },
+      ],
+    },
+  },
+
+  // ── CALENDAR ──────────────────────────────────────
+  calendar: {
+    default: {
+      name: "Default",
+      description: "Weekly calendar with reminders",
+      sections: [
+        { id: "calendar-weekly", label: "Weekly View", span: "full" },
+        { id: "reminders-upcoming", label: "Reminders", span: "full" },
+      ],
+    },
+    solopreneur: {
+      name: "Solopreneur",
+      description: "Calendar with goals context",
+      sections: [
+        { id: "calendar-weekly", label: "Weekly View", span: "full" },
+        { id: "reminders-upcoming", label: "Reminders", span: "half" },
+        { id: "goals-at-risk", label: "Goals at Risk", span: "half" },
+      ],
+    },
+    "content-creator": {
+      name: "Content Creator",
+      description: "Calendar with ideas pipeline",
+      sections: [
+        { id: "calendar-weekly", label: "Weekly View", span: "full" },
+        { id: "reminders-upcoming", label: "Reminders", span: "half" },
+        { id: "ideas-pipeline", label: "Ideas", span: "half" },
+      ],
+    },
+    developer: {
+      name: "Developer",
+      description: "Compact calendar view",
+      sections: [
+        { id: "calendar-weekly", label: "Weekly View", span: "full" },
+        { id: "reminders-upcoming", label: "Reminders", span: "full" },
+      ],
+    },
+    executive: {
+      name: "Executive",
+      description: "Calendar with weekly theme",
+      sections: [
+        { id: "calendar-weekly", label: "Weekly View", span: "full" },
+        { id: "reminders-upcoming", label: "Reminders", span: "half" },
+        { id: "weekly-theme", label: "Weekly Theme", span: "half" },
+      ],
+    },
+    minimalist: {
+      name: "Minimalist",
+      description: "Calendar only",
+      sections: [
+        { id: "calendar-weekly", label: "Weekly View", span: "full" },
+      ],
+    },
+    journaler: {
+      name: "Journaler",
+      description: "Calendar with journal context",
+      sections: [
+        { id: "calendar-weekly", label: "Weekly View", span: "full" },
+        { id: "reminders-upcoming", label: "Reminders", span: "half" },
+        { id: "journal-today", label: "Journal", span: "half" },
+      ],
+    },
+  },
 };
 
 export const ALL_PRESET_KEYS = ["default", "solopreneur", "content-creator", "developer", "executive", "minimalist", "journaler"];
 
 export const DEFAULT_NAV_ORDER: PageKey[] = [
-  "today", "tasks", "projects", "goals", "journal", "ideas", "thoughts", "plan", "reviews",
+  "today", "tasks", "projects", "goals", "journal", "ideas", "thoughts", "plan", "reviews", "resources", "calendar",
 ];
 
 export function getPreset(page: PageKey, presetKey: string): PagePreset {

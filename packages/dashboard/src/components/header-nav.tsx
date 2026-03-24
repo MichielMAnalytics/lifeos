@@ -19,6 +19,8 @@ const allPages: Record<string, { label: string }> = {
   thoughts: { label: 'Thoughts' },
   plan: { label: 'Plan' },
   reviews: { label: 'Reviews' },
+  resources: { label: 'Resources' },
+  calendar: { label: 'Calendar' },
 };
 
 /* ── SVG icon components ─────────────────────────────────── */

@@ -31,6 +31,28 @@ export const getByDate = query({
   },
 });
 
+// ── listByDateRange ──────────────────────────────────
+
+export const listByDateRange = query({
+  args: {
+    startDate: v.string(), // "YYYY-MM-DD"
+    endDate: v.string(),   // "YYYY-MM-DD"
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const results = await ctx.db
+      .query("dayPlans")
+      .withIndex("by_userId_planDate", (q) => q.eq("userId", userId))
+      .collect();
+
+    return results.filter(
+      (p) => p.planDate >= args.startDate && p.planDate <= args.endDate,
+    );
+  },
+});
+
 // ── upsert ────────────────────────────────────────────
 
 export const upsert = mutation({

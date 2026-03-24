@@ -132,6 +132,30 @@ export function MarkThoughts({ className }: { className?: string }) {
   );
 }
 
+// Resources — stacked file/document shape
+export function MarkResources({ className }: { className?: string }) {
+  return (
+    <M className={className}>
+      <rect x="3" y="2" width="10" height="12" rx="1" />
+      <line x1="6" y1="5" x2="10" y2="5" />
+      <line x1="6" y1="8" x2="10" y2="8" />
+      <line x1="6" y1="11" x2="9" y2="11" />
+    </M>
+  );
+}
+
+// Calendar — calendar outline with date pins
+export function MarkCalendar({ className }: { className?: string }) {
+  return (
+    <M className={className}>
+      <rect x="2" y="3" width="12" height="11" rx="1" />
+      <line x1="2" y1="7" x2="14" y2="7" />
+      <line x1="5" y1="1" x2="5" y2="4" />
+      <line x1="11" y1="1" x2="11" y2="4" />
+    </M>
+  );
+}
+
 // Settings — single diagonal line through a dot
 export function MarkSettings({ className }: { className?: string }) {
   return (
@@ -152,5 +176,7 @@ export const NAV_MARKS: Record<string, React.ComponentType<{ className?: string 
   thoughts: MarkThoughts,
   plan: MarkPlan,
   reviews: MarkReviews,
+  resources: MarkResources,
+  calendar: MarkCalendar,
   settings: MarkSettings,
 };
