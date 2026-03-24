@@ -7,12 +7,13 @@ import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
 import { LogoHorizontal } from './theme-logo';
 import { NAV_MARKS } from './nav-marks';
+import { SearchTrigger } from './search-modal';
 
 const allPages: Record<string, { label: string }> = {
   today: { label: 'Today' },
   tasks: { label: 'Tasks' },
   projects: { label: 'Projects' },
-  goals: { label: 'Goals' },
+  goals: { label: 'Compass' },
   journal: { label: 'Journal' },
   ideas: { label: 'Ideas' },
   thoughts: { label: 'Thoughts' },
@@ -206,8 +207,12 @@ export function HeaderNav() {
           })}
         </nav>
 
-        {/* Right side: configure + settings */}
+        {/* Right side: search + configure + settings */}
         <div className="flex items-center gap-1 shrink-0 ml-2">
+          <SearchTrigger
+            variant="icon"
+            className="px-2 py-1.5"
+          />
           <button
             onClick={toggleConfigMode}
             className={cn(

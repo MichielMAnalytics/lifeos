@@ -8,12 +8,13 @@ import { useDashboardConfig } from '@/lib/dashboard-config';
 import { HeaderNav } from './header-nav';
 import { LogoMark, LogoHorizontal } from './theme-logo';
 import { NAV_MARKS } from './nav-marks';
+import { SearchTrigger } from './search-modal';
 
 const allPages: Record<string, { label: string; abbr: string }> = {
   today: { label: 'Today', abbr: 'To' },
   tasks: { label: 'Tasks', abbr: 'Ta' },
   projects: { label: 'Projects', abbr: 'Pr' },
-  goals: { label: 'Goals', abbr: 'Go' },
+  goals: { label: 'Compass', abbr: 'Co' },
   journal: { label: 'Journal', abbr: 'Jo' },
   ideas: { label: 'Ideas', abbr: 'Id' },
   thoughts: { label: 'Thoughts', abbr: 'Th' },
@@ -224,6 +225,20 @@ export function Nav() {
 
       {/* Bottom links */}
       <div className="shrink-0 border-t border-border px-2 py-3">
+        {/* Search trigger */}
+        <div
+          className={cn(
+            'group relative flex h-9 items-center transition-all duration-150 w-full',
+            expanded ? 'px-3 gap-3 rounded-lg' : 'justify-center w-10 mx-auto rounded-md',
+          )}
+        >
+          {expanded ? (
+            <SearchTrigger variant="expanded" />
+          ) : (
+            <SearchTrigger variant="icon" />
+          )}
+        </div>
+
         {/* Configure mode toggle */}
         <button
           onClick={toggleConfigMode}

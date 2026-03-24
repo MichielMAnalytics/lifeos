@@ -28,6 +28,9 @@ import { ProjectsGrid } from './sections/projects-grid';
 import { GoalsGrid } from './sections/goals-grid';
 import { GoalsTimeline } from './sections/goals-timeline';
 import { GoalsOkr } from './sections/goals-okr';
+import { IdentityStatement } from './sections/identity-statement';
+import { VisionBoard } from './sections/vision-board';
+import { QuarterlyGoals } from './sections/quarterly-goals';
 import { JournalTimeline } from './sections/journal-timeline';
 import { JournalEditor } from './sections/journal-editor';
 import { JournalList } from './sections/journal-list';
@@ -36,6 +39,9 @@ import { IdeasPriority } from './sections/ideas-priority';
 import { DayPlan } from './sections/day-plan';
 import { WeeklyPlan } from './sections/weekly-plan';
 import { ReviewsTimeline } from './sections/reviews-timeline';
+import { ReviewsSchedule } from './sections/reviews-schedule';
+import { WeeklyReviewForm } from './sections/weekly-review-form';
+import { QuarterlyReviewForm } from './sections/quarterly-review-form';
 import { ThoughtsList } from './sections/thoughts-list';
 
 const SECTION_MAP: Record<string, React.ComponentType> = {
@@ -65,10 +71,13 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   // Projects page sections
   'projects-grid': ProjectsGrid,
 
-  // Goals page sections
+  // Goals / Compass page sections
   'goals-grid': GoalsGrid,
   'goals-timeline': GoalsTimeline,
   'goals-okr': GoalsOkr,
+  'identity-statement': IdentityStatement,
+  'vision-board': VisionBoard,
+  'quarterly-goals': QuarterlyGoals,
 
   // Journal page sections
   'journal-timeline': JournalTimeline,
@@ -88,6 +97,9 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
 
   // Reviews page sections
   'reviews-timeline': ReviewsTimeline,
+  'reviews-schedule': ReviewsSchedule,
+  'weekly-review-form': WeeklyReviewForm,
+  'quarterly-review-form': QuarterlyReviewForm,
 };
 
 export function SectionRenderer({ section }: { section: SectionDef }) {

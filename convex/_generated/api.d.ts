@@ -17,6 +17,7 @@ import type * as dayPlans from "../dayPlans.js";
 import type * as goals from "../goals.js";
 import type * as http from "../http.js";
 import type * as ideas from "../ideas.js";
+import type * as identity from "../identity.js";
 import type * as journals from "../journals.js";
 import type * as lib_helpers from "../lib/helpers.js";
 import type * as mutationLog from "../mutationLog.js";
@@ -28,6 +29,7 @@ import type * as search from "../search.js";
 import type * as tasks from "../tasks.js";
 import type * as thoughts from "../thoughts.js";
 import type * as triggers from "../triggers.js";
+import type * as visionBoard from "../visionBoard.js";
 import type * as weeklyPlans from "../weeklyPlans.js";
 import type * as wins from "../wins.js";
 
@@ -47,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   goals: typeof goals;
   http: typeof http;
   ideas: typeof ideas;
+  identity: typeof identity;
   journals: typeof journals;
   "lib/helpers": typeof lib_helpers;
   mutationLog: typeof mutationLog;
@@ -58,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   tasks: typeof tasks;
   thoughts: typeof thoughts;
   triggers: typeof triggers;
+  visionBoard: typeof visionBoard;
   weeklyPlans: typeof weeklyPlans;
   wins: typeof wins;
 }>;

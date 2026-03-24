@@ -9,7 +9,7 @@ function matches(text: string | undefined | null, query: string): boolean {
   return text.toLowerCase().includes(query);
 }
 
-const validTypes = ["tasks", "goals", "ideas", "journal", "resources"] as const;
+const validTypes = ["tasks", "goals", "ideas", "thoughts", "journal", "resources"] as const;
 type SearchType = (typeof validTypes)[number];
 
 function parseTypes(types: string | undefined): SearchType[] {
@@ -75,6 +75,17 @@ export const search = query({
 
       results.ideas = allIdeas
         .filter((i) => matches(i.content, q))
+        .slice(0, LIMIT);
+    }
+
+    if (typesToSearch.includes("thoughts")) {
+      const allThoughts = await ctx.db
+        .query("thoughts")
+        .withIndex("by_userId", (qb) => qb.eq("userId", userId))
+        .collect();
+
+      results.thoughts = allThoughts
+        .filter((t) => matches(t.content, q) || matches(t.title, q))
         .slice(0, LIMIT);
     }
 
@@ -158,6 +169,17 @@ export const _search = internalQuery({
 
       results.ideas = allIdeas
         .filter((i) => matches(i.content, q))
+        .slice(0, LIMIT);
+    }
+
+    if (typesToSearch.includes("thoughts")) {
+      const allThoughts = await ctx.db
+        .query("thoughts")
+        .withIndex("by_userId", (qb) => qb.eq("userId", args.userId))
+        .collect();
+
+      results.thoughts = allThoughts
+        .filter((t) => matches(t.content, q) || matches(t.title, q))
         .slice(0, LIMIT);
     }
 

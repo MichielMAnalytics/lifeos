@@ -57,13 +57,13 @@ export function MarkProjects({ className }: { className?: string }) {
   );
 }
 
-// Goals — concentric arcs (target without the full circles)
-export function MarkGoals({ className }: { className?: string }) {
+// Compass — compass rose
+export function MarkCompass({ className }: { className?: string }) {
   return (
     <M className={className}>
-      <path d="M8 2 A6 6 0 1 1 2 8" />
-      <path d="M8 5 A3 3 0 1 1 5 8" />
-      <circle cx="8" cy="8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="8" cy="8" r="6" />
+      <polygon points="8,3 9.5,7 8,6 6.5,7" fill="currentColor" stroke="none" />
+      <polygon points="8,13 6.5,9 8,10 9.5,9" fill="currentColor" stroke="none" opacity="0.4" />
     </M>
   );
 }
@@ -146,7 +146,7 @@ export const NAV_MARKS: Record<string, React.ComponentType<{ className?: string 
   today: MarkToday,
   tasks: MarkTasks,
   projects: MarkProjects,
-  goals: MarkGoals,
+  goals: MarkCompass,
   journal: MarkJournal,
   ideas: MarkIdeas,
   thoughts: MarkThoughts,

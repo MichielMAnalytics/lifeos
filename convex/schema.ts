@@ -64,6 +64,21 @@ export default defineSchema({
   }).index("by_userId", ["userId"])
     .index("by_userId_status", ["userId", "status"]),
 
+  // ── Identity (one per user) ────────────────────────
+  identity: defineTable({
+    userId: v.id("users"),
+    statement: v.string(),     // "I am a builder who ships fast..."
+    updatedAt: v.float64(),
+  }).index("by_userId", ["userId"]),
+
+  // ── Vision Board ─────────────────────────────────
+  visionBoard: defineTable({
+    userId: v.id("users"),
+    imageUrl: v.string(),      // URL or Convex storage ID
+    caption: v.optional(v.string()),
+    position: v.float64(),     // for ordering
+  }).index("by_userId", ["userId"]),
+
   // ── Journals ───────────────────────────────────────
   journals: defineTable({
     userId: v.id("users"),

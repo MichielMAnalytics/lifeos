@@ -200,46 +200,68 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
     },
   },
 
-  // ── GOALS ─────────────────────────────────────────────
+  // ── GOALS (Compass) ─────────────────────────────────
   goals: {
     default: {
       name: "Default",
-      description: "Card grid with health indicators",
-      sections: [{ id: "goals-grid", label: "Goals", span: "full" }],
+      description: "Identity, vision, and quarterly goals",
+      sections: [
+        { id: "identity-statement", label: "Identity", span: "full" },
+        { id: "vision-board", label: "Vision Board", span: "full" },
+        { id: "quarterly-goals", label: "Goals", span: "full" },
+      ],
     },
     solopreneur: {
       name: "Solopreneur",
-      description: "Quarterly timeline view",
-      sections: [{ id: "goals-timeline", label: "Timeline", span: "full" }],
+      description: "Goals with execution focus",
+      sections: [
+        { id: "identity-statement", label: "Identity", span: "full" },
+        { id: "quarterly-goals", label: "Goals", span: "half" },
+        { id: "goals-at-risk", label: "At Risk", span: "half" },
+      ],
     },
     "content-creator": {
       name: "Content Creator",
       description: "Goals with ideas alignment",
       sections: [
-        { id: "goals-grid", label: "Goals", span: "half" },
+        { id: "identity-statement", label: "Identity", span: "full" },
+        { id: "vision-board", label: "Vision Board", span: "full" },
+        { id: "quarterly-goals", label: "Goals", span: "half" },
         { id: "ideas-pipeline", label: "Ideas", span: "half" },
       ],
     },
     developer: {
       name: "Developer",
-      description: "Compact goals with task counts",
-      sections: [{ id: "goals-grid", label: "Goals", span: "full" }],
+      description: "Compact goals with identity",
+      sections: [
+        { id: "identity-statement", label: "Identity", span: "full" },
+        { id: "quarterly-goals", label: "Goals", span: "full" },
+      ],
     },
     executive: {
       name: "Executive",
-      description: "OKR-style nested view",
-      sections: [{ id: "goals-okr", label: "OKRs", span: "full" }],
+      description: "Vision-driven OKR view",
+      sections: [
+        { id: "identity-statement", label: "Identity", span: "full" },
+        { id: "quarterly-goals", label: "Goals", span: "half" },
+        { id: "goals-okr", label: "OKRs", span: "half" },
+      ],
     },
     minimalist: {
       name: "Minimalist",
-      description: "Active goals only",
-      sections: [{ id: "goals-grid", label: "Goals", span: "full" }],
+      description: "Identity and goals only",
+      sections: [
+        { id: "identity-statement", label: "Identity", span: "full" },
+        { id: "quarterly-goals", label: "Goals", span: "full" },
+      ],
     },
     journaler: {
       name: "Journaler",
-      description: "Goals with reflection context",
+      description: "Vision with reflection",
       sections: [
-        { id: "goals-grid", label: "Goals", span: "half" },
+        { id: "identity-statement", label: "Identity", span: "full" },
+        { id: "vision-board", label: "Vision Board", span: "full" },
+        { id: "quarterly-goals", label: "Goals", span: "half" },
         { id: "wins-today", label: "Today's Wins", span: "half" },
       ],
     },
@@ -454,49 +476,62 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
   reviews: {
     default: {
       name: "Default",
-      description: "Review timeline",
-      sections: [{ id: "reviews-timeline", label: "Reviews", span: "full" }],
+      description: "Review schedule and completed reviews",
+      sections: [
+        { id: "reviews-schedule", label: "Schedule", span: "full" },
+        { id: "reviews-timeline", label: "Past Reviews", span: "full" },
+      ],
     },
     solopreneur: {
       name: "Solopreneur",
-      description: "Reviews with goal progress",
+      description: "Reviews with goal tracking",
       sections: [
-        { id: "reviews-timeline", label: "Reviews", span: "half" },
+        { id: "reviews-schedule", label: "Schedule", span: "half" },
         { id: "goals-at-risk", label: "Goals", span: "half" },
+        { id: "reviews-timeline", label: "Past Reviews", span: "full" },
       ],
     },
     "content-creator": {
       name: "Content Creator",
       description: "Reviews with ideas retrospective",
       sections: [
-        { id: "reviews-timeline", label: "Reviews", span: "half" },
+        { id: "reviews-schedule", label: "Schedule", span: "half" },
         { id: "ideas-pipeline", label: "Ideas", span: "half" },
+        { id: "reviews-timeline", label: "Past Reviews", span: "full" },
       ],
     },
     developer: {
       name: "Developer",
-      description: "Compact review list",
-      sections: [{ id: "reviews-timeline", label: "Reviews", span: "full" }],
+      description: "Compact schedule and review log",
+      sections: [
+        { id: "reviews-schedule", label: "Schedule", span: "full" },
+        { id: "reviews-timeline", label: "Past Reviews", span: "full" },
+      ],
     },
     executive: {
       name: "Executive",
-      description: "Reviews with weekly theme",
+      description: "Reviews with weekly theme context",
       sections: [
-        { id: "reviews-timeline", label: "Reviews", span: "half" },
+        { id: "reviews-schedule", label: "Schedule", span: "half" },
         { id: "weekly-theme", label: "Weekly Theme", span: "half" },
+        { id: "reviews-timeline", label: "Past Reviews", span: "full" },
       ],
     },
     minimalist: {
       name: "Minimalist",
-      description: "Just reviews",
-      sections: [{ id: "reviews-timeline", label: "Reviews", span: "full" }],
+      description: "Schedule and reviews only",
+      sections: [
+        { id: "reviews-schedule", label: "Schedule", span: "full" },
+        { id: "reviews-timeline", label: "Past Reviews", span: "full" },
+      ],
     },
     journaler: {
       name: "Journaler",
-      description: "Reviews with journal context",
+      description: "Reviews with journal reflection",
       sections: [
-        { id: "reviews-timeline", label: "Reviews", span: "half" },
+        { id: "reviews-schedule", label: "Schedule", span: "half" },
         { id: "journal-today", label: "Journal", span: "half" },
+        { id: "reviews-timeline", label: "Past Reviews", span: "full" },
       ],
     },
   },
