@@ -115,6 +115,12 @@ export const themes = {
   },
 } as const;
 
-export type ThemeKey = keyof typeof themes;
-export const defaultTheme: ThemeKey = 'midnight';
-export const themeKeys = Object.keys(themes) as ThemeKey[];
+export type ThemeKey = keyof typeof themes | 'system';
+export const defaultTheme: ThemeKey = 'system';
+export const themeKeys: ThemeKey[] = ['system', ...Object.keys(themes) as (keyof typeof themes)[]];
+
+export const systemThemeEntry = {
+  name: 'System',
+  description: 'Follows your OS dark/light preference',
+  colors: themes.midnight.colors, // preview uses midnight colors
+};

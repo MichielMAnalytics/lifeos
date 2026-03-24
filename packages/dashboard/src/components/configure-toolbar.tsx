@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useDashboardConfig } from '@/lib/dashboard-config';
 import { useTheme } from '@/components/theme-provider';
-import { themes, themeKeys } from '@/lib/themes';
+import { themes, themeKeys, systemThemeEntry } from '@/lib/themes';
 import { cn } from '@/lib/utils';
 
 const FONT_OPTIONS = [
@@ -122,7 +122,8 @@ export function ConfigureToolbar() {
           Theme
         </span>
         {themeKeys.map((key) => {
-          const t = themes[key];
+          const isSystem = key === 'system';
+          const t = isSystem ? systemThemeEntry : themes[key as keyof typeof themes];
           const isActive = theme === key;
           return (
             <button
@@ -131,16 +132,26 @@ export function ConfigureToolbar() {
               className={cn(
                 'shrink-0 flex items-center gap-2 px-3 py-1.5 border transition-all duration-150',
                 isActive ? 'border-text' : 'border-border hover:border-text/30',
+                isSystem && 'bg-gradient-to-r from-black to-white',
               )}
-              style={{ backgroundColor: t.colors.bg }}
+              style={isSystem ? undefined : { backgroundColor: t.colors.bg }}
             >
-              <div
-                className="h-3 w-3 rounded-full border border-white/10"
-                style={{ backgroundColor: t.colors.accent }}
-              />
-              <span className="text-xs font-medium" style={{ color: t.colors.text }}>
-                {t.name}
-              </span>
+              {isSystem ? (
+                <>
+                  <div className="h-3 w-3 rounded-full border border-white/20" style={{ background: 'linear-gradient(135deg, #000 50%, #fff 50%)' }} />
+                  <span className="text-xs font-medium text-text">System</span>
+                </>
+              ) : (
+                <>
+                  <div
+                    className="h-3 w-3 rounded-full border border-white/10"
+                    style={{ backgroundColor: t.colors.accent }}
+                  />
+                  <span className="text-xs font-medium" style={{ color: t.colors.text }}>
+                    {t.name}
+                  </span>
+                </>
+              )}
             </button>
           );
         })}
