@@ -1,6 +1,6 @@
 {
   "name": "lifeos-cli",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "LifeOS CLI — manage your life operating system from the terminal",
   "type": "module",
   "license": "MIT",
@@ -10,19 +10,23 @@
     "productivity",
     "tasks",
     "goals",
-    "journal"
+    "journal",
+    "ai",
+    "skills"
   ],
   "bin": {
     "lifeos": "./dist/lifeos.mjs"
   },
   "files": [
-    "dist/lifeos.mjs"
+    "dist/lifeos.mjs",
+    "scripts/postinstall.mjs"
   ],
   "scripts": {
     "build": "bun run scripts/build.ts",
     "dev": "bun run src/index.ts",
     "check": "tsc --noEmit",
-    "start": "node dist/lifeos.mjs"
+    "start": "node dist/lifeos.mjs",
+    "postinstall": "node scripts/postinstall.mjs"
   },
   "dependencies": {
     "commander": "^13.0.0",
