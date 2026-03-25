@@ -641,6 +641,26 @@ export default function LifeCoachPage() {
         </div>
       </div>
       <div className="shrink-0 pb-4 pt-2 px-4">
+        {messages.length <= 2 && (
+          <div className="max-w-[650px] mx-auto mb-2">
+            <button
+              onClick={async () => {
+                if (!client || !isConnected) return;
+                const prompt = '/lifeos-init';
+                const msg: ChatMessage = { id: nextId(), role: 'user', content: prompt, timestamp: Date.now() };
+                setMessages((prev) => [...prev, msg]);
+                setIsStreaming(true);
+                streamBufferRef.current = '';
+                streamMessageIdRef.current = null;
+                try { await client.call('chat.send', { sessionKey: 'agent:main:main', message: prompt, idempotencyKey: crypto.randomUUID() }); } catch { setIsStreaming(false); }
+              }}
+              disabled={!canSend}
+              className="w-full text-left px-4 py-2.5 text-xs text-text-muted/60 bg-surface/50 border border-border/30 rounded-xl hover:border-border/50 hover:text-text-muted transition-colors disabled:opacity-30"
+            >
+              Try <span className="font-mono text-text/70 bg-surface px-1.5 py-0.5 rounded">/lifeos-init</span> to begin your journey with your coach
+            </button>
+          </div>
+        )}
         {inputBox}
       </div>
     </div>
