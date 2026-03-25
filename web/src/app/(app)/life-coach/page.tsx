@@ -552,29 +552,41 @@ export default function LifeCoachPage() {
 
   // ---- Deployment not running ----
   if (deployment.status !== 'running') {
-    const statusLabels: Record<string, string> = {
-      provisioning: 'Your Life Coach is being set up...',
-      starting: 'Your Life Coach is starting up...',
-      error: 'Your Life Coach encountered an error.',
-      deactivating: 'Your Life Coach is shutting down...',
-      suspended: 'Your Life Coach is suspended.',
-    };
+    const isStarting = deployment.status === 'provisioning' || deployment.status === 'starting';
+    const isError = deployment.status === 'error';
+    const statusText = isStarting
+      ? 'Your Life Coach is getting ready...'
+      : isError
+        ? 'Something went wrong. Try restarting from Settings.'
+        : deployment.status === 'suspended'
+          ? 'Your Life Coach is paused.'
+          : 'Your Life Coach is offline.';
+
     return (
       <div className="flex flex-col items-center justify-center h-full px-6 text-center animate-fade-in">
-        {(deployment.status === 'provisioning' || deployment.status === 'starting') && (
-          <div className="mb-6">
-            <div className="h-8 w-8 rounded-full border-2 border-text-muted/20 border-t-accent animate-spin" />
-          </div>
-        )}
-        <p className="text-sm text-text-muted">
-          {statusLabels[deployment.status] ?? `Status: ${deployment.status}`}
+        <Image
+          src="/openclaw-icon.png"
+          alt=""
+          width={40}
+          height={40}
+          className={cn('rounded-full mb-6', isStarting && 'animate-pulse')}
+        />
+        <p className="text-sm text-text-muted mb-2">
+          {statusText}
         </p>
-        <Link
-          href="/settings"
-          className="mt-4 text-xs font-mono text-text-muted underline underline-offset-2 hover:text-text transition-colors"
-        >
-          Manage in Settings
-        </Link>
+        {isStarting && (
+          <p className="text-xs text-text-muted/40">
+            This usually takes a minute or two.
+          </p>
+        )}
+        {!isStarting && (
+          <Link
+            href="/settings"
+            className="mt-3 text-xs text-text-muted/50 hover:text-text-muted transition-colors"
+          >
+            Go to Settings
+          </Link>
+        )}
       </div>
     );
   }
