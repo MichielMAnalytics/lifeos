@@ -79,7 +79,7 @@ lifeos/                          # bun monorepo (pnpm-workspace.yaml)
   packages/
     shared/                      # @lifeos/shared -- types, schemas, constants
     cli/                         # @lifeos/cli -- Commander.js CLI over HTTP API
-    dashboard/                   # @lifeos/dashboard -- Next.js 15 app with Convex React hooks
+    dashboard/                   # @lifeos/web -- Next.js 15 app with Convex React hooks
 ```
 
 ### How the pieces connect
@@ -521,7 +521,7 @@ packages/cli/
   src/config.ts           # Local config file management
   src/output.ts           # Output formatting (tables, JSON, colors)
 
-packages/dashboard/
+web/
   src/app/                # Next.js 15 App Router
     layout.tsx            # Root layout (theme, fonts, providers)
     page.tsx              # Root page (redirects to dashboard)
@@ -549,25 +549,25 @@ packages/dashboard/
 
 ### How to Add a New Section Component
 
-1. Create `packages/dashboard/src/components/sections/<name>.tsx` -- export a component:
+1. Create `web/src/components/sections/<name>.tsx` -- export a component:
    ```tsx
    'use client';
    export function MySection() { return <div>...</div>; }
    ```
-2. Register it in `packages/dashboard/src/components/section-renderer.tsx`:
+2. Register it in `web/src/components/section-renderer.tsx`:
    ```tsx
    import { MySection } from './sections/my-section';
    // Add to SECTION_MAP:
    'my-section': MySection,
    ```
-3. Add the section ID to relevant presets in `packages/dashboard/src/lib/presets.ts`:
+3. Add the section ID to relevant presets in `web/src/lib/presets.ts`:
    ```ts
    { id: "my-section", label: "My Section", span: "full" }
    ```
 
 ### How to Add a New Page Preset
 
-1. Open `packages/dashboard/src/lib/presets.ts`.
+1. Open `web/src/lib/presets.ts`.
 2. Add your preset key to every page in the `PAGE_PRESETS` record.
 3. Add the key to `ALL_PRESET_KEYS`.
 4. Update `packages/cli/src/commands/dashboard.ts` if the CLI validates preset names.

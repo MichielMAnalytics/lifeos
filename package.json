@@ -1,11 +1,11 @@
 {
   "name": "lifeos",
   "private": true,
-  "workspaces": ["packages/*", "infra", "ai-gateway"],
+  "workspaces": ["packages/*", "web", "infra", "ai-gateway"],
   "scripts": {
-    "dev": "concurrently -n convex,web -c blue,green \"npx convex dev\" \"bun --filter @lifeos/dashboard dev\"",
+    "dev": "concurrently -n convex,web -c blue,green \"npx convex dev\" \"bun --filter @lifeos/web dev\"",
     "dev:convex": "npx convex dev",
-    "dev:dashboard": "bun --filter @lifeos/dashboard dev",
+    "dev:web": "bun --filter @lifeos/web dev",
     "cli": "bun run packages/cli/src/index.ts",
     "build": "turbo build",
     "check": "turbo check",

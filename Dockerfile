@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Copy package manifests first for layer caching
 COPY package.json bun.lock pnpm-workspace.yaml turbo.json ./
-COPY packages/dashboard/package.json packages/dashboard/
+COPY web/package.json web/
 COPY packages/shared/package.json packages/shared/
 COPY packages/cli/package.json packages/cli/
 COPY convex/tsconfig.json convex/
@@ -16,9 +16,9 @@ COPY ai-gateway/package.json ai-gateway/
 
 RUN bun install --frozen-lockfile
 
-# Copy source (only what the dashboard build needs)
+# Copy source (only what the web app build needs)
 COPY packages/shared/ packages/shared/
-COPY packages/dashboard/ packages/dashboard/
+COPY web/ web/
 COPY convex/ convex/
 
 # Build args for public env vars baked into the client bundle
@@ -28,8 +28,7 @@ ENV NEXT_PUBLIC_CONVEX_URL=$NEXT_PUBLIC_CONVEX_URL
 ENV NEXT_PUBLIC_LIFEOS_DOMAIN=$NEXT_PUBLIC_LIFEOS_DOMAIN
 
 # Build Next.js — next is hoisted to root node_modules by bun
-# Skip type checking in Docker (handled in CI separately)
-WORKDIR /app/packages/dashboard
+WORKDIR /app/web
 ENV PATH="/app/node_modules/.bin:${PATH}"
 RUN next build
 
@@ -42,10 +41,10 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 # Copy standalone output
-COPY --from=builder /app/packages/dashboard/.next/standalone ./
-COPY --from=builder /app/packages/dashboard/.next/static ./packages/dashboard/.next/static
-COPY --from=builder /app/packages/dashboard/public ./packages/dashboard/public
+COPY --from=builder /app/web/.next/standalone ./
+COPY --from=builder /app/web/.next/static ./web/.next/static
+COPY --from=builder /app/web/public ./web/public
 
 EXPOSE 3000
 
-CMD ["node", "packages/dashboard/server.js"]
+CMD ["node", "web/server.js"]

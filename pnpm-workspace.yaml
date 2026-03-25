@@ -1,4 +1,5 @@
 packages:
   - "packages/*"
+  - "web"
   - "infra"
   - "ai-gateway"

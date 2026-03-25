@@ -65,8 +65,18 @@
         "typescript": "^5.7.0",
       },
     },
-    "packages/dashboard": {
-      "name": "@lifeos/dashboard",
+    "packages/shared": {
+      "name": "@lifeos/shared",
+      "version": "0.1.0",
+      "dependencies": {
+        "zod": "^3.24.0",
+      },
+      "devDependencies": {
+        "typescript": "^5.7.0",
+      },
+    },
+    "web": {
+      "name": "@lifeos/web",
       "version": "0.1.0",
       "dependencies": {
         "@convex-dev/auth": "^0.0.91",
@@ -93,16 +103,6 @@
         "@types/react-dom": "^19.0.0",
         "postcss": "^8.5.0",
         "tailwindcss": "^4.0.0",
-        "typescript": "^5.7.0",
-      },
-    },
-    "packages/shared": {
-      "name": "@lifeos/shared",
-      "version": "0.1.0",
-      "dependencies": {
-        "zod": "^3.24.0",
-      },
-      "devDependencies": {
         "typescript": "^5.7.0",
       },
     },
@@ -250,9 +250,9 @@
 
     "@js-sdsl/ordered-map": ["@js-sdsl/ordered-map@4.4.2", "", {}, "sha512-iUKgm52T8HOE/makSxjqoWhe95ZJA1/G1sYsGev2JDKUSS14KAgg1LHb+Ba+IPow0xflbnSkOsZcO08C7w1gYw=="],
 
-    "@lifeos/dashboard": ["@lifeos/dashboard@workspace:packages/dashboard"],
-
     "@lifeos/shared": ["@lifeos/shared@workspace:packages/shared"],
+
+    "@lifeos/web": ["@lifeos/web@workspace:web"],
 
     "@logdna/tail-file": ["@logdna/tail-file@2.2.0", "", {}, "sha512-XGSsWDweP80Fks16lwkAUIr54ICyBs6PsI4mpfTLQaWgEJRtY9xEV+PeyDpJ+sJEGZxqINlpmAwe/6tS1pP8Ng=="],
 

@@ -3,7 +3,7 @@ import type { ApiResponse, DashboardConfig } from '@lifeos/shared';
 import { createClient } from '../api-client.js';
 import { isJsonMode, printError, printJson, printSuccess, printTable } from '../output.js';
 
-// All 7 personas available on every page — must match packages/dashboard/src/lib/presets.ts
+// All 7 personas available on every page — must match web/src/lib/presets.ts
 const ALL_PRESETS = ['default', 'solopreneur', 'content-creator', 'developer', 'executive', 'minimalist', 'journaler'];
 const PAGE_PRESETS: Record<string, string[]> = {
   today: ALL_PRESETS,
