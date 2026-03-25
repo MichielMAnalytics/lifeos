@@ -736,7 +736,7 @@ export default function LifeCoachPage() {
         </div>
       </div>
       <div className="shrink-0 pb-4 pt-2 px-4">
-        {messages.length <= 2 && (
+        {!messages.some((m) => m.content.includes('/lifeos-init')) && (
           <div className="max-w-3xl mx-auto mb-2">
             <button
               onClick={async () => {
