@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.91",
-    "@lifeos/shared": "workspace:*",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-web-links": "^0.12.0",
     "@xterm/xterm": "^6.0.0",

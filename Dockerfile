@@ -5,21 +5,18 @@ RUN npm install -g bun
 
 WORKDIR /app
 
-# Copy package manifests first for layer caching
-COPY package.json bun.lock turbo.json ./
-COPY web/package.json web/
-COPY packages/shared/package.json packages/shared/
-COPY packages/cli/package.json packages/cli/
-COPY convex/tsconfig.json convex/
-COPY infra/package.json infra/
-COPY ai-gateway/package.json ai-gateway/
+# Copy web app package manifest + lockfile
+COPY web/package.json web/bun.lock web/
 
+# Copy convex types (needed for build)
+COPY convex/ convex/
+
+# Install web deps independently
+WORKDIR /app/web
 RUN bun install --frozen-lockfile
 
-# Copy source (only what the web app build needs)
-COPY packages/shared/ packages/shared/
-COPY web/ web/
-COPY convex/ convex/
+# Copy web source
+COPY web/ .
 
 # Build args for public env vars baked into the client bundle
 ARG NEXT_PUBLIC_CONVEX_URL
@@ -27,10 +24,7 @@ ARG NEXT_PUBLIC_LIFEOS_DOMAIN
 ENV NEXT_PUBLIC_CONVEX_URL=$NEXT_PUBLIC_CONVEX_URL
 ENV NEXT_PUBLIC_LIFEOS_DOMAIN=$NEXT_PUBLIC_LIFEOS_DOMAIN
 
-# Build Next.js — next is hoisted to root node_modules by bun
-WORKDIR /app/web
-ENV PATH="/app/node_modules/.bin:${PATH}"
-RUN next build
+RUN npx next build
 
 # ── Stage 2: Runtime ──────────────────────────────────
 FROM node:22-bookworm-slim AS runner
