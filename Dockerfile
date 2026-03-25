@@ -6,7 +6,7 @@ RUN npm install -g bun
 WORKDIR /app
 
 # Copy package manifests first for layer caching
-COPY package.json bun.lock pnpm-workspace.yaml turbo.json ./
+COPY package.json bun.lock turbo.json ./
 COPY web/package.json web/
 COPY packages/shared/package.json packages/shared/
 COPY packages/cli/package.json packages/cli/

@@ -52,7 +52,7 @@ bun run test             # Run tests across all packages
 ## Architecture
 
 ```
-lifeos/                          # bun monorepo (pnpm-workspace.yaml)
+lifeos/                          # bun monorepo
   convex/                        # Convex backend -- schema, queries, mutations, HTTP API
     schema.ts                    # Data model (all tables)
     http.ts                      # HTTP router -- REST API for CLI and external integrations
