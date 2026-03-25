@@ -4,7 +4,6 @@ import { useDashboardConfig } from '@/lib/dashboard-config';
 import { type PageKey, getPresetsForPage } from '@/lib/presets';
 import { SectionRenderer } from './section-renderer';
 import { PresetSelector } from './preset-selector';
-import { ConfigureToolbar } from './configure-toolbar';
 
 interface PageShellProps {
   page: PageKey;
@@ -21,7 +20,6 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
   return (
     <div className="max-w-none animate-fade-in">
       {/* Configure mode toolbar */}
-      <ConfigureToolbar />
 
       {/* Config mode: preset selector */}
       {isConfigMode && (

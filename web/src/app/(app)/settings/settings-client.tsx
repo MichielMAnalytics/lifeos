@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '@/lib/convex-api';
-import { ConfigureToolbar } from '@/components/configure-toolbar';
 import type { Id } from '@/lib/convex-api';
 import Link from 'next/link';
 import { DeploymentDashboard } from '@/components/ai-agent/deployment-dashboard';
@@ -154,7 +153,6 @@ export function SettingsClient({
 
   return (
     <div className="max-w-none space-y-12 animate-fade-in">
-      <ConfigureToolbar />
       <h1 className="text-3xl font-bold tracking-tight text-text">Settings</h1>
 
       {/* -- Profile ---------------------------------------- */}

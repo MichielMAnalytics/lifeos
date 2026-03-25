@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
 import { SearchModal } from './search-modal';
+import { ConfigureToolbar } from './configure-toolbar';
 
 const STORAGE_KEY = 'lifeos-nav-expanded';
 
@@ -11,18 +13,18 @@ export function MainContent({ children }: { children: React.ReactNode }) {
   const [expanded, setExpanded] = useState(false);
   const { config, isConfigMode } = useDashboardConfig();
   const isHeader = config.navMode === 'header';
+  const pathname = usePathname();
+  const isFullHeight = pathname === '/life-coach';
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'true') setExpanded(true);
 
-    // Listen for storage changes from the nav toggle
     const onStorage = () => {
       setExpanded(localStorage.getItem(STORAGE_KEY) === 'true');
     };
     window.addEventListener('storage', onStorage);
 
-    // Also poll for same-tab changes (storage event only fires cross-tab)
     const interval = setInterval(() => {
       const current = localStorage.getItem(STORAGE_KEY) === 'true';
       setExpanded((prev) => (prev !== current ? current : prev));
@@ -34,22 +36,23 @@ export function MainContent({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // In header mode, the header is h-14 (56px). When config mode is active,
-  // there's an extra config bar (~36px) making total ~90px. We use mt values
-  // to push content below the fixed header.
-  // In sidebar mode, we use ml values based on expanded/collapsed state.
-
   return (
     <main
       className={cn(
-        'w-full min-h-screen bg-bg overflow-y-auto transition-all duration-200',
+        'w-full bg-bg transition-all duration-200',
+        isFullHeight ? 'h-screen' : 'min-h-screen overflow-y-auto',
         isHeader
           ? (isConfigMode ? 'mt-[5.75rem]' : 'mt-14')
           : (expanded ? 'ml-52' : 'ml-14'),
       )}
     >
+      <ConfigureToolbar />
       <SearchModal />
-      <div className="px-8 py-8 lg:px-12 lg:py-10">{children}</div>
+      {isFullHeight ? (
+        <div className="h-full">{children}</div>
+      ) : (
+        <div className="px-8 py-8 lg:px-12 lg:py-10">{children}</div>
+      )}
     </main>
   );
 }
