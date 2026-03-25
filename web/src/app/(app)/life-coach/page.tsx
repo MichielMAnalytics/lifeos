@@ -259,16 +259,36 @@ export default function LifeCoachPage() {
 
     let cancelled = false;
     client
-      .call<ChatMessage[]>('chat.history', { sessionKey: 'agent:main:main' })
-      .then((history) => {
+      .call<{ messages?: unknown[]; thinkingLevel?: string }>('chat.history', { sessionKey: 'agent:main:main', limit: 200 })
+      .then((res) => {
         if (cancelled) return;
-        if (history && history.length > 0) {
+        const rawMessages = Array.isArray(res?.messages) ? res.messages : (Array.isArray(res) ? res : []);
+        if (rawMessages.length > 0) {
           setMessages(
-            history.map((m) => ({
-              ...m,
-              id: m.id ?? nextId(),
-              timestamp: m.timestamp ?? Date.now(),
-            })),
+            rawMessages
+              .filter((m: unknown) => {
+                const msg = m as Record<string, unknown>;
+                return msg.role === 'user' || msg.role === 'assistant';
+              })
+              .map((m: unknown) => {
+                const msg = m as Record<string, unknown>;
+                // Extract text from content array or string
+                let content = '';
+                if (typeof msg.content === 'string') {
+                  content = msg.content;
+                } else if (Array.isArray(msg.content)) {
+                  content = (msg.content as Array<{ type?: string; text?: string }>)
+                    .filter((c) => c.type === 'text')
+                    .map((c) => c.text ?? '')
+                    .join('');
+                }
+                return {
+                  id: (msg.id as string) ?? nextId(),
+                  role: msg.role as 'user' | 'assistant',
+                  content,
+                  timestamp: (msg.timestamp as number) ?? Date.now(),
+                };
+              }),
           );
         }
         setHistoryLoaded(true);
@@ -282,6 +302,16 @@ export default function LifeCoachPage() {
       cancelled = true;
     };
   }, [client, isConnected, historyLoaded]);
+
+  // Reload history on reconnect to catch cross-channel messages
+  const prevConnectedRef = useRef(false);
+  useEffect(() => {
+    if (isConnected && !prevConnectedRef.current && historyLoaded) {
+      // Reconnected — reload history
+      setHistoryLoaded(false);
+    }
+    prevConnectedRef.current = isConnected;
+  }, [isConnected, historyLoaded]);
 
   // ---- Reset history loaded flag when reconnecting ----
   useEffect(() => {
