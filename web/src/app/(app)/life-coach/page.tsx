@@ -5,6 +5,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { useGateway } from '@/lib/gateway';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 import Link from 'next/link';
 
 // ---------------------------------------------------------------------------
@@ -17,14 +18,6 @@ interface ChatMessage {
   content: string;
   timestamp: number;
   tool_calls?: Array<{ name: string; args?: unknown }>;
-}
-
-interface ChatEventData {
-  type: 'chunk' | 'message' | 'done' | 'error';
-  chunk?: string;
-  content?: string;
-  message?: ChatMessage;
-  error?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -80,33 +73,21 @@ function renderContent(text: string): ReactNode[] {
 
 function TypingIndicator() {
   return (
-    <div className="flex items-center gap-1.5 px-4 py-3">
-      <span className="w-1.5 h-1.5 rounded-full bg-text-muted/40 animate-[bounce_1.4s_ease-in-out_0s_infinite]" />
-      <span className="w-1.5 h-1.5 rounded-full bg-text-muted/40 animate-[bounce_1.4s_ease-in-out_0.2s_infinite]" />
-      <span className="w-1.5 h-1.5 rounded-full bg-text-muted/40 animate-[bounce_1.4s_ease-in-out_0.4s_infinite]" />
-    </div>
-  );
-}
-
-function ConnectionDot({ state }: { state: string }) {
-  const colors: Record<string, string> = {
-    connected: 'bg-success',
-    connecting: 'bg-warning animate-pulse',
-    disconnected: 'bg-text-muted/30',
-    error: 'bg-danger',
-  };
-  const labels: Record<string, string> = {
-    connected: 'Connected',
-    connecting: 'Connecting...',
-    disconnected: 'Disconnected',
-    error: 'Connection error',
-  };
-  return (
-    <div className="flex items-center gap-2">
-      <span className={cn('w-2 h-2 rounded-full shrink-0', colors[state] ?? 'bg-text-muted/30')} />
-      <span className="text-[11px] text-text-muted font-mono">
-        {labels[state] ?? state}
-      </span>
+    <div className="flex items-start gap-3 max-w-[650px] mx-auto px-4">
+      <div className="shrink-0 mt-1">
+        <Image
+          src="/openclaw-icon.png"
+          alt="OpenClaw"
+          width={28}
+          height={28}
+          className="rounded-full"
+        />
+      </div>
+      <div className="flex items-center gap-1.5 pt-3">
+        <span className="w-1.5 h-1.5 rounded-full bg-text-muted/40 animate-[bounce_1.4s_ease-in-out_0s_infinite]" />
+        <span className="w-1.5 h-1.5 rounded-full bg-text-muted/40 animate-[bounce_1.4s_ease-in-out_0.2s_infinite]" />
+        <span className="w-1.5 h-1.5 rounded-full bg-text-muted/40 animate-[bounce_1.4s_ease-in-out_0.4s_infinite]" />
+      </div>
     </div>
   );
 }
@@ -114,7 +95,7 @@ function ConnectionDot({ state }: { state: string }) {
 function ToolCallCard({ call }: { call: { name: string; args?: unknown } }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="mt-2 border border-border rounded-lg overflow-hidden">
+    <div className="mt-2 border border-border/30 rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs text-text-muted hover:bg-surface-hover transition-colors"
@@ -146,7 +127,7 @@ function ToolCallCard({ call }: { call: { name: string; args?: unknown } }) {
         </svg>
       </button>
       {open && call.args != null && (
-        <div className="px-3 py-2 border-t border-border bg-bg">
+        <div className="px-3 py-2 border-t border-border/30 bg-bg">
           <pre className="text-[10px] font-mono text-text-muted whitespace-pre-wrap break-all">
             {JSON.stringify(call.args, null, 2)}
           </pre>
@@ -156,70 +137,15 @@ function ToolCallCard({ call }: { call: { name: string; args?: unknown } }) {
   );
 }
 
-function GetStartedBanner() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (localStorage.getItem('lifeos-coach-introduced') !== 'true') {
-      setVisible(true);
-    }
-  }, []);
-
-  if (!visible) return null;
-
-  function dismiss() {
-    localStorage.setItem('lifeos-coach-introduced', 'true');
-    setVisible(false);
-  }
-
-  return (
-    <div className="mx-auto max-w-lg mb-6 relative border border-border rounded-lg bg-surface p-5">
-      <button
-        onClick={dismiss}
-        className="absolute top-3 right-3 text-text-muted hover:text-text transition-colors"
-        aria-label="Dismiss"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
-      <p className="text-sm font-medium text-text">Get started</p>
-      <p className="mt-1 text-xs text-text-muted leading-relaxed">
-        Try sending <code className="px-1.5 py-0.5 rounded bg-bg text-text font-mono text-[11px]">/lifeos-init</code> to
-        set up your goals, routines, and daily rhythm.
-      </p>
-    </div>
-  );
-}
-
-function WelcomeState() {
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-      <div className="mb-6">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted/30 mx-auto">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-      </div>
-      <h2 className="text-xl font-semibold text-text tracking-tight">
-        What would you like to work on?
-      </h2>
-      <p className="mt-2 text-sm text-text-muted max-w-sm">
-        Your Life Coach is ready. Start a conversation to plan your day, reflect on progress, or brainstorm ideas.
-      </p>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
-// Send button icon
+// Send / Stop icons
 // ---------------------------------------------------------------------------
 
 function SendIcon() {
   return (
     <svg
-      width="16"
-      height="16"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -227,8 +153,8 @@ function SendIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <line x1="22" y1="2" x2="11" y2="13" />
-      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+      <line x1="12" y1="19" x2="12" y2="5" />
+      <polyline points="5 12 12 5 19 12" />
     </svg>
   );
 }
@@ -238,6 +164,62 @@ function StopIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
       <rect x="6" y="6" width="12" height="12" rx="2" />
     </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Message row
+// ---------------------------------------------------------------------------
+
+function MessageRow({ message }: { message: ChatMessage }) {
+  const isUser = message.role === 'user';
+
+  if (isUser) {
+    return (
+      <div className="flex justify-end max-w-[650px] mx-auto px-4">
+        <div className="max-w-[80%]">
+          <div className="bg-accent/15 text-text rounded-2xl rounded-br-md px-4 py-3">
+            <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+              {renderContent(message.content)}
+            </div>
+          </div>
+          <span className="block mt-1 text-[10px] text-text-muted/40 text-right pr-1">
+            {relativeTime(message.timestamp)}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-start gap-3 max-w-[650px] mx-auto px-4">
+      <div className="shrink-0 mt-1">
+        <Image
+          src="/openclaw-icon.png"
+          alt="OpenClaw"
+          width={28}
+          height={28}
+          className="rounded-full"
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm leading-relaxed text-text whitespace-pre-wrap break-words">
+          {renderContent(message.content)}
+        </div>
+
+        {message.tool_calls && message.tool_calls.length > 0 && (
+          <div className="mt-2 space-y-1.5">
+            {message.tool_calls.map((call, i) => (
+              <ToolCallCard key={i} call={call} />
+            ))}
+          </div>
+        )}
+
+        <span className="block mt-1 text-[10px] text-text-muted/40">
+          {relativeTime(message.timestamp)}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -314,7 +296,7 @@ export default function LifeCoachPage() {
     if (!client || !isConnected) return;
 
     return client.subscribe('chat', (raw: unknown) => {
-      const data = raw as { state?: string; message?: { role: string; content: Array<{ type: string; text?: string }>; timestamp?: number } };
+      const data = raw as { state?: string; message?: { role: string; content: Array<{ type: string; text?: string }>; timestamp?: number }; error?: string };
       if (!data.message) return;
 
       const text = data.message.content
@@ -348,7 +330,6 @@ export default function LifeCoachPage() {
       }
 
       if (data.state === 'final') {
-        // Final message — update the streaming message with final content
         if (streamMessageIdRef.current) {
           const currentId = streamMessageIdRef.current;
           setMessages((prev) =>
@@ -416,7 +397,6 @@ export default function LifeCoachPage() {
     streamBufferRef.current = '';
     streamMessageIdRef.current = null;
 
-    // Reset textarea height
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
     }
@@ -476,9 +456,13 @@ export default function LifeCoachPage() {
   if (!hasDeployment) {
     return (
       <div className="flex flex-col items-center justify-center h-full px-6 text-center animate-fade-in">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted/30 mb-6">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
+        <Image
+          src="/openclaw-icon.png"
+          alt="OpenClaw"
+          width={48}
+          height={48}
+          className="rounded-full mb-6 opacity-30"
+        />
         <h2 className="text-lg font-semibold text-text mb-2">Set up your Life Coach to start chatting</h2>
         <p className="text-sm text-text-muted max-w-md mb-6">
           Deploy your personal AI assistant to plan your days, reflect on progress, and keep you accountable.
@@ -522,163 +506,106 @@ export default function LifeCoachPage() {
     );
   }
 
-  // ---- Reconnecting overlay ----
-  const showReconnecting = !isConnected && gatewayState !== 'connecting';
+  // ---- Determine if we should show the empty state ----
+  const hasMessages = messages.length > 0;
+  const canSend = isConnected && !isStreaming;
+  const isDisconnectedOrConnecting = !isConnected;
 
-  // ---- Connected: full chat interface ----
+  // ---- Main chat interface ----
   return (
     <div className="flex flex-col h-full animate-fade-in">
-      {/* -- Status bar -- */}
-      <div className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-border">
-        <ConnectionDot state={gatewayState} />
-        {isStreaming && (
-          <span className="text-[11px] text-text-muted font-mono animate-pulse">
-            Thinking...
-          </span>
-        )}
-      </div>
-
-      {/* -- Reconnecting banner -- */}
-      {showReconnecting && (
-        <div className="shrink-0 px-5 py-2 bg-warning/10 border-b border-warning/20">
-          <p className="text-xs text-warning">
-            Connection lost. Reconnecting...
+      {/* -- Messages area OR empty state -- */}
+      {hasMessages ? (
+        <div className="flex-1 overflow-y-auto">
+          <div className="py-6 space-y-5">
+            {messages.map((msg) => (
+              <MessageRow key={msg.id} message={msg} />
+            ))}
+            {isStreaming && !streamMessageIdRef.current && <TypingIndicator />}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <Image
+            src="/openclaw-icon.png"
+            alt="OpenClaw"
+            width={40}
+            height={40}
+            className="rounded-full mb-5"
+          />
+          <h1 className="text-2xl font-bold text-text tracking-tight mb-3">
+            What can I help with?
+          </h1>
+          <p className="text-xs text-text-muted/50">
+            Powered by{' '}
+            <a
+              href="https://openclaw.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-text-muted transition-colors"
+            >
+              OpenClaw
+            </a>
           </p>
         </div>
       )}
 
-      {/* -- Connecting state -- */}
-      {gatewayState === 'connecting' && messages.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="h-6 w-6 rounded-full border-2 border-text-muted/20 border-t-accent animate-spin mb-3" />
-          <p className="text-sm text-text-muted">Connecting...</p>
-        </div>
-      )}
-
-      {/* -- Message area -- */}
-      {(isConnected || messages.length > 0) && (
-        <>
-          {messages.length === 0 && !isStreaming ? (
-            <div className="flex-1 flex flex-col">
-              <GetStartedBanner />
-              <WelcomeState />
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto">
-              <div className="max-w-3xl mx-auto px-5 py-6 space-y-1">
-                {messages.map((msg) => (
-                  <MessageBubble key={msg.id} message={msg} />
-                ))}
-                {isStreaming && !streamMessageIdRef.current && <TypingIndicator />}
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
-          )}
-
-          {/* -- Input bar -- */}
-          <div className="shrink-0 border-t border-border bg-bg">
-            <div className="max-w-3xl mx-auto px-5 py-3">
-              <div className="flex items-end gap-3 bg-surface border border-border rounded-xl px-4 py-3">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                    adjustTextareaHeight();
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    isConnected
-                      ? 'Message your Life Coach...'
-                      : 'Connecting...'
-                  }
-                  disabled={!isConnected && !isStreaming}
-                  rows={1}
-                  className={cn(
-                    'flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/40',
-                    'focus:outline-none resize-none leading-relaxed',
-                    'min-h-[24px] max-h-[160px]',
-                    (!isConnected && !isStreaming) && 'opacity-40',
-                  )}
-                />
-                {isStreaming ? (
-                  <button
-                    onClick={handleAbort}
-                    className="shrink-0 p-1.5 rounded-lg text-text-muted hover:text-danger transition-colors"
-                    title="Stop generating"
-                  >
-                    <StopIcon />
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleSend}
-                    disabled={!input.trim() || !isConnected}
-                    className={cn(
-                      'shrink-0 p-1.5 rounded-lg transition-colors',
-                      input.trim() && isConnected
-                        ? 'text-accent hover:text-accent-hover'
-                        : 'text-text-muted/20 cursor-not-allowed',
-                    )}
-                    title="Send message"
-                  >
-                    <SendIcon />
-                  </button>
+      {/* -- Input area -- */}
+      <div className="shrink-0 pb-4 pt-2 px-4">
+        <div className="max-w-[650px] mx-auto">
+          <div
+            className={cn(
+              'flex items-end gap-2 border border-border/40 rounded-2xl px-4 py-3 bg-surface transition-colors',
+              'focus-within:border-border/70',
+            )}
+          >
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                adjustTextareaHeight();
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={isDisconnectedOrConnecting ? 'Connecting...' : 'Ask anything'}
+              disabled={isDisconnectedOrConnecting && !isStreaming}
+              rows={1}
+              className={cn(
+                'flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/40',
+                'focus:outline-none resize-none leading-relaxed',
+                'min-h-[24px] max-h-[160px]',
+                (isDisconnectedOrConnecting && !isStreaming) && 'opacity-40',
+              )}
+            />
+            {isStreaming ? (
+              <button
+                onClick={handleAbort}
+                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-text-muted/10 text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                title="Stop generating"
+              >
+                <StopIcon />
+              </button>
+            ) : (
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || !canSend}
+                className={cn(
+                  'shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors',
+                  input.trim() && canSend
+                    ? 'bg-accent text-bg hover:bg-accent-hover'
+                    : 'bg-text-muted/10 text-text-muted/30 cursor-not-allowed',
                 )}
-              </div>
-              <p className="mt-2 text-center text-[10px] text-text-muted/40">
-                Shift + Enter for new line
-              </p>
-            </div>
+                title="Send message"
+              >
+                <SendIcon />
+              </button>
+            )}
           </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Message bubble
-// ---------------------------------------------------------------------------
-
-function MessageBubble({ message }: { message: ChatMessage }) {
-  const isUser = message.role === 'user';
-
-  return (
-    <div
-      className={cn(
-        'flex w-full py-2',
-        isUser ? 'justify-end' : 'justify-start',
-      )}
-    >
-      <div
-        className={cn(
-          'max-w-[75%] rounded-2xl px-4 py-3',
-          isUser
-            ? 'bg-accent text-bg rounded-br-md'
-            : 'bg-surface text-text rounded-bl-md',
-        )}
-      >
-        <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-          {renderContent(message.content)}
+          <p className="mt-2 text-center text-[10px] text-text-muted/30">
+            Shift + Enter for new line
+          </p>
         </div>
-
-        {/* Tool calls */}
-        {message.tool_calls && message.tool_calls.length > 0 && (
-          <div className="mt-2 space-y-1.5">
-            {message.tool_calls.map((call, i) => (
-              <ToolCallCard key={i} call={call} />
-            ))}
-          </div>
-        )}
-
-        <span
-          className={cn(
-            'block mt-1.5 text-[10px] font-mono',
-            isUser ? 'text-bg/50' : 'text-text-muted/50',
-          )}
-        >
-          {relativeTime(message.timestamp)}
-        </span>
       </div>
     </div>
   );
