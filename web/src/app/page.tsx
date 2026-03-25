@@ -6,7 +6,7 @@ import { Authenticated, Unauthenticated, AuthLoading } from 'convex/react';
 
 function GoToApp() {
   const router = useRouter();
-  useEffect(() => { router.replace('/today'); }, [router]);
+  useEffect(() => { router.replace('/life-coach'); }, [router]);
   return null;
 }
 
