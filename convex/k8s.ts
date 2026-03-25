@@ -194,7 +194,7 @@ function buildOpenClawConfig(
   return {
     gateway: {
       auth: { token: "__GATEWAY_TOKEN__", mode: "token" },
-      controlUi: { allowInsecureAuth: true, dangerouslyDisableDeviceAuth: true, dangerouslyAllowHostHeaderOriginFallback: true },
+      controlUi: { allowInsecureAuth: true, dangerouslyDisableDeviceAuth: true, dangerouslyAllowHostHeaderOriginFallback: true, allowedOrigins: ["http://localhost:4101", "https://lifeos.zone", "https://*.lifeos.zone"] },
       trustedProxies: ["10.0.0.0/8"],
     },
     browser: {

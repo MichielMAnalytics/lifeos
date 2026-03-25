@@ -23,9 +23,7 @@ export class GatewayClient {
     this.token = token;
   }
 
-  get state() {
-    return this._state;
-  }
+  get state() { return this._state; }
 
   connect() {
     if (this.disposed) return;
@@ -33,73 +31,51 @@ export class GatewayClient {
     this.setState('connecting');
     this.authenticated = false;
 
-    // Connect to the gateway WebSocket — no path suffix, auth happens after open
     const wsUrl = this.url.replace(/^http/, 'ws');
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
       this.reconnectAttempt = 0;
-      // Send OpenClaw connect message with token auth
-      this.ws!.send(JSON.stringify({
-        type: 'connect',
-        params: {
-          minProtocol: 3,
-          maxProtocol: 3,
-          client: {
-            id: 'lifeos-dashboard',
-            version: '1.0',
-            platform: 'web',
-            mode: 'webchat',
-          },
-          role: 'operator',
-          scopes: ['chat', 'sessions', 'config', 'channels', 'cron', 'skills'],
-          caps: ['tool-events'],
-          auth: { token: this.token },
-        },
-      }));
+      // Wait for connect.challenge event before sending connect
     };
 
     this.ws.onmessage = (evt) => {
       try {
-        const msg = JSON.parse(evt.data);
+        const frame = JSON.parse(evt.data) as Record<string, unknown>;
 
-        // Handle connect response
-        if (msg.type === 'connected') {
-          this.authenticated = true;
-          this.setState('connected');
-          return;
-        }
+        // Gateway event frame: { type: "event", event: string, payload: unknown }
+        if (frame.type === 'event') {
+          const eventName = frame.event as string;
 
-        // Handle connect error
-        if (msg.type === 'error' && !this.authenticated) {
-          this.setState('error');
-          this.ws?.close();
-          return;
-        }
+          // connect.challenge — gateway wants us to authenticate
+          if (eventName === 'connect.challenge') {
+            this.sendConnect();
+            return;
+          }
 
-        // RPC response
-        if (msg.id && this.pending.has(msg.id)) {
-          const { resolve, reject } = this.pending.get(msg.id)!;
-          this.pending.delete(msg.id);
-          if (msg.ok !== false && !msg.error) resolve(msg.result ?? msg.data);
-          else reject(new Error(msg.error?.message ?? msg.error ?? 'Unknown error'));
-          return;
-        }
-
-        // Event push
-        if (msg.event) {
-          const handlers = this.eventHandlers.get(msg.event);
-          if (handlers) handlers.forEach((h) => h(msg.data));
+          // Forward to event handlers
+          const handlers = this.eventHandlers.get(eventName);
+          if (handlers) handlers.forEach((h) => h(frame.payload));
           const wildcardHandlers = this.eventHandlers.get('*');
-          if (wildcardHandlers)
-            wildcardHandlers.forEach((h) => h({ event: msg.event, data: msg.data }));
+          if (wildcardHandlers) wildcardHandlers.forEach((h) => h(frame));
           return;
         }
 
-        // Stream chunks (for chat streaming)
-        if (msg.type === 'chunk' || msg.type === 'message' || msg.type === 'done' || msg.type === 'stream') {
-          const handlers = this.eventHandlers.get('chat');
-          if (handlers) handlers.forEach((h) => h(msg));
+        // Gateway response frame: { type: "res", id: string, ok: boolean, payload: unknown }
+        if (frame.type === 'res') {
+          const id = String(frame.id);
+          const pending = this.pending.get(id);
+          if (!pending) return;
+          this.pending.delete(id);
+
+          if (frame.ok) {
+            pending.resolve(frame.payload);
+          } else {
+            const errPayload = frame.payload as Record<string, unknown> | undefined;
+            pending.reject(new Error(
+              (errPayload?.message as string) ?? (errPayload?.code as string) ?? 'Request failed'
+            ));
+          }
           return;
         }
       } catch {
@@ -114,7 +90,6 @@ export class GatewayClient {
         reject(new Error('Connection closed'));
       }
       this.pending.clear();
-
       if (!this.disposed) {
         this.setState('disconnected');
         this.scheduleReconnect();
@@ -122,8 +97,47 @@ export class GatewayClient {
     };
 
     this.ws.onerror = () => {
-      this.setState('error');
+      if (!this.authenticated) this.setState('error');
     };
+  }
+
+  /** Send the connect request after receiving the challenge */
+  private sendConnect() {
+    const id = String(++this.requestId);
+    const connectMsg = {
+      type: 'req',
+      id,
+      method: 'connect',
+      params: {
+        minProtocol: 3,
+        maxProtocol: 3,
+        client: {
+          id: 'webchat-ui',
+          version: '1.0',
+          platform: navigator?.platform ?? 'web',
+          mode: 'webchat',
+        },
+        role: 'operator',
+        scopes: ['chat', 'sessions', 'config', 'channels', 'cron', 'skills'],
+        caps: ['tool-events'],
+        auth: { token: this.token },
+      },
+    };
+
+    // Register a pending handler for the connect response
+    this.pending.set(id, {
+      resolve: () => {
+        this.authenticated = true;
+        this.setState('connected');
+      },
+      reject: (err) => {
+        console.error('[gateway] connect failed:', err.message);
+        this.setState('error');
+        this.ws?.close();
+      },
+    });
+
+    this.ws!.send(JSON.stringify(connectMsg));
   }
 
   async call<T = unknown>(method: string, params?: Record<string, unknown>): Promise<T> {
@@ -136,7 +150,8 @@ export class GatewayClient {
         resolve: resolve as (v: unknown) => void,
         reject,
       });
-      this.ws!.send(JSON.stringify({ id, method, params: params ?? {} }));
+      // OpenClaw protocol: { type: "req", id, method, params }
+      this.ws!.send(JSON.stringify({ type: 'req', id, method, params: params ?? {} }));
       setTimeout(() => {
         if (this.pending.has(id)) {
           this.pending.delete(id);
@@ -151,16 +166,12 @@ export class GatewayClient {
       this.eventHandlers.set(event, new Set());
     }
     this.eventHandlers.get(event)!.add(handler);
-    return () => {
-      this.eventHandlers.get(event)?.delete(handler);
-    };
+    return () => { this.eventHandlers.get(event)?.delete(handler); };
   }
 
   onStateChange(handler: StateHandler): () => void {
     this.stateHandlers.add(handler);
-    return () => {
-      this.stateHandlers.delete(handler);
-    };
+    return () => { this.stateHandlers.delete(handler); };
   }
 
   disconnect() {
