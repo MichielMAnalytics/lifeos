@@ -463,24 +463,19 @@ export default function LifeCoachPage() {
       inputRef.current.style.height = 'auto';
     }
 
-    // Build content array for the gateway
-    const content: Array<{ type: string; text?: string; source?: { type: string; media_type: string; data: string } }> = [];
-    for (const img of userMessage.images ?? []) {
+    // Build attachments for images
+    const attachments = (userMessage.images ?? []).map((img) => {
       const match = /^data:([^;]+);base64,(.+)$/.exec(img);
-      if (match) {
-        content.push({ type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } });
-      }
-    }
-    if (trimmed) {
-      content.push({ type: 'text', text: trimmed });
-    }
-
-    const sendPayload = content.length === 1 && content[0].type === 'text'
-      ? { sessionKey: 'agent:main:main', message: trimmed, idempotencyKey: crypto.randomUUID() }
-      : { sessionKey: 'agent:main:main', content, idempotencyKey: crypto.randomUUID() };
+      return match ? { type: 'image', mimeType: match[1], content: match[2] } : null;
+    }).filter(Boolean);
 
     try {
-      await client.call('chat.send', sendPayload);
+      await client.call('chat.send', {
+        sessionKey: 'agent:main:main',
+        message: trimmed || '[Image]',
+        idempotencyKey: crypto.randomUUID(),
+        ...(attachments.length > 0 ? { attachments } : {}),
+      });
     } catch (err) {
       console.error('Failed to send message:', err);
       setIsStreaming(false);
