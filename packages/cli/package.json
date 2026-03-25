@@ -15,7 +15,7 @@
     "skills"
   ],
   "bin": {
-    "lifeos": "./dist/lifeos.mjs"
+    "lifeos": "dist/lifeos.mjs"
   },
   "files": [
     "dist/lifeos.mjs",
