@@ -18,6 +18,7 @@ interface ChatMessage {
   content: string;
   timestamp: number;
   tool_calls?: Array<{ name: string; args?: unknown }>;
+  images?: string[]; // data URLs for pasted images
 }
 
 // ---------------------------------------------------------------------------
@@ -73,7 +74,7 @@ function renderContent(text: string): ReactNode[] {
 
 function TypingIndicator() {
   return (
-    <div className="flex items-start gap-3 max-w-[650px] mx-auto px-4">
+    <div className="flex items-start gap-3 max-w-3xl mx-auto px-4">
       <div className="shrink-0 mt-1">
         <Image
           src="/openclaw-icon.png"
@@ -176,9 +177,16 @@ function MessageRow({ message }: { message: ChatMessage }) {
 
   if (isUser) {
     return (
-      <div className="flex justify-end max-w-[650px] mx-auto px-4">
+      <div className="flex justify-end max-w-3xl mx-auto px-4">
         <div className="max-w-[80%]">
           <div className="bg-accent/15 text-text rounded-2xl rounded-br-md px-4 py-3">
+            {message.images && message.images.length > 0 && (
+              <div className="flex gap-2 mb-2">
+                {message.images.map((img, i) => (
+                  <img key={i} src={img} alt="Attached" className="h-24 w-24 object-cover rounded-lg" />
+                ))}
+              </div>
+            )}
             <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
               {renderContent(message.content)}
             </div>
@@ -192,7 +200,7 @@ function MessageRow({ message }: { message: ChatMessage }) {
   }
 
   return (
-    <div className="flex items-start gap-3 max-w-[650px] mx-auto px-4">
+    <div className="flex items-start gap-3 max-w-3xl mx-auto px-4">
       <div className="shrink-0 mt-1">
         <Image
           src="/openclaw-icon.png"
@@ -242,8 +250,28 @@ export default function LifeCoachPage() {
   const streamBufferRef = useRef<string>('');
   const streamMessageIdRef = useRef<string | null>(null);
   const prevGatewayState = useRef<string | null>(null);
+  const [pastedImages, setPastedImages] = useState<Array<{ id: string; dataUrl: string; mimeType: string }>>([]);
 
   const isConnected = gatewayState === 'connected';
+
+  // ---- Handle paste for images ----
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) continue;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          setPastedImages((prev) => [...prev, { id: nextId(), dataUrl, mimeType: item.type }]);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  }, []);
 
   // ---- Auto-resize textarea ----
   const adjustTextareaHeight = useCallback(() => {
@@ -412,17 +440,21 @@ export default function LifeCoachPage() {
   // ---- Send message ----
   const handleSend = useCallback(async () => {
     const trimmed = input.trim();
-    if (!trimmed || !client || !isConnected || isStreaming) return;
+    if ((!trimmed && pastedImages.length === 0) || !client || !isConnected || isStreaming) return;
 
+    // Build display content
+    const displayContent = trimmed || (pastedImages.length > 0 ? '[Image]' : '');
     const userMessage: ChatMessage = {
       id: nextId(),
       role: 'user',
-      content: trimmed,
+      content: displayContent,
       timestamp: Date.now(),
+      images: pastedImages.map((img) => img.dataUrl),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
+    setPastedImages([]);
     setIsStreaming(true);
     streamBufferRef.current = '';
     streamMessageIdRef.current = null;
@@ -431,8 +463,24 @@ export default function LifeCoachPage() {
       inputRef.current.style.height = 'auto';
     }
 
+    // Build content array for the gateway
+    const content: Array<{ type: string; text?: string; source?: { type: string; media_type: string; data: string } }> = [];
+    for (const img of userMessage.images ?? []) {
+      const match = /^data:([^;]+);base64,(.+)$/.exec(img);
+      if (match) {
+        content.push({ type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } });
+      }
+    }
+    if (trimmed) {
+      content.push({ type: 'text', text: trimmed });
+    }
+
+    const sendPayload = content.length === 1 && content[0].type === 'text'
+      ? { sessionKey: 'agent:main:main', message: trimmed, idempotencyKey: crypto.randomUUID() }
+      : { sessionKey: 'agent:main:main', content, idempotencyKey: crypto.randomUUID() };
+
     try {
-      await client.call('chat.send', { sessionKey: 'agent:main:main', message: trimmed, idempotencyKey: crypto.randomUUID() });
+      await client.call('chat.send', sendPayload);
     } catch (err) {
       console.error('Failed to send message:', err);
       setIsStreaming(false);
@@ -446,7 +494,7 @@ export default function LifeCoachPage() {
         },
       ]);
     }
-  }, [input, client, isConnected, isStreaming]);
+  }, [input, pastedImages, client, isConnected, isStreaming]);
 
   // ---- Abort streaming ----
   const handleAbort = useCallback(async () => {
@@ -543,7 +591,23 @@ export default function LifeCoachPage() {
 
   // ---- Input component (reused in both states) ----
   const inputBox = (
-    <div className="max-w-[650px] w-full mx-auto">
+    <div className="max-w-3xl w-full mx-auto">
+      {/* Image previews */}
+      {pastedImages.length > 0 && (
+        <div className="flex gap-2 mb-2 px-1">
+          {pastedImages.map((img) => (
+            <div key={img.id} className="relative group">
+              <img src={img.dataUrl} alt="Pasted" className="h-16 w-16 object-cover rounded-lg border border-border/40" />
+              <button
+                onClick={() => setPastedImages((prev) => prev.filter((i) => i.id !== img.id))}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-bg border border-border flex items-center justify-center text-text-muted hover:text-danger text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       <div
         className={cn(
           'flex items-end gap-2 border border-border/40 rounded-2xl px-4 py-3 bg-surface transition-colors',
@@ -558,6 +622,7 @@ export default function LifeCoachPage() {
             adjustTextareaHeight();
           }}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder={isDisconnectedOrConnecting ? 'Connecting...' : 'Ask anything'}
           disabled={isDisconnectedOrConnecting && !isStreaming}
           rows={1}
@@ -672,7 +737,7 @@ export default function LifeCoachPage() {
       </div>
       <div className="shrink-0 pb-4 pt-2 px-4">
         {messages.length <= 2 && (
-          <div className="max-w-[650px] mx-auto mb-2">
+          <div className="max-w-3xl mx-auto mb-2">
             <button
               onClick={async () => {
                 if (!client || !isConnected) return;

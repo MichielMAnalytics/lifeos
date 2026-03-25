@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useQuery } from 'convex/react';
+import { useQuery, useAction } from 'convex/react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
@@ -292,9 +292,14 @@ const PLAN_LABELS: Record<string, string> = {
 function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: boolean; toggleConfigMode: () => void; isConfigMode: boolean }) {
   const user = useQuery(api.authHelpers.getMe, {});
   const subscription = useQuery(api.stripe.getMySubscription);
+  const balance = useQuery(api.stripe.getBalance);
+  const creditTiers = useQuery(api.stripe.getCreditTiersList);
+  const createCheckout = useAction(api.stripe.createCreditCheckout);
   const { signOut } = useAuthActions();
   const [avatar, setAvatar] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -351,8 +356,69 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
       {menuOpen && (
         <div className={cn(
           'absolute z-50 bg-surface border border-border rounded-lg shadow-lg py-1 animate-scale-in',
-          expanded ? 'bottom-full left-0 right-0 mb-1' : 'bottom-full left-0 mb-1 w-40',
+          expanded ? 'bottom-full left-0 right-0 mb-1' : 'bottom-full left-0 mb-1 w-48',
         )}>
+          {/* Balance display */}
+          {balance !== undefined && (
+            <>
+              <div className="px-3 py-2.5">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Balance</p>
+                <p className="text-sm font-bold text-text font-mono tabular-nums">
+                  EUR {(balance / 100).toFixed(2)}
+                </p>
+              </div>
+              <div className="my-1 border-t border-border/40" />
+            </>
+          )}
+
+          {/* Top up */}
+          <div className="relative">
+            <button
+              onClick={() => setTopUpOpen(!topUpOpen)}
+              className="flex items-center justify-between gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left"
+            >
+              <span className="flex items-center gap-2.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Top up
+              </span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn('transition-transform duration-150', topUpOpen && 'rotate-180')}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {topUpOpen && creditTiers && creditTiers.length > 0 && (
+              <div className="px-2 pb-1.5">
+                {creditTiers.map((tier) => (
+                  <button
+                    key={tier.priceId}
+                    disabled={checkingOut === tier.priceId}
+                    onClick={async () => {
+                      setCheckingOut(tier.priceId);
+                      try {
+                        const result = await createCheckout({ priceId: tier.priceId });
+                        if (result.url) window.location.href = result.url;
+                      } catch (err) {
+                        console.error('Checkout failed:', err);
+                      } finally {
+                        setCheckingOut(null);
+                      }
+                    }}
+                    className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs text-text-muted hover:text-text hover:bg-surface-hover rounded transition-colors disabled:opacity-50"
+                  >
+                    <span className="font-mono">{tier.label}</span>
+                    {checkingOut === tier.priceId && (
+                      <span className="text-[10px] text-text-muted animate-pulse">...</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="my-1 border-t border-border/40" />
+
           <Link
             href="/settings"
             onClick={() => setMenuOpen(false)}
