@@ -8,7 +8,6 @@ import { Nav } from '@/components/nav';
 import { MainContent } from '@/components/main-content';
 import { DashboardConfigProvider } from '@/lib/dashboard-config';
 import { GatewayProvider } from '@/lib/gateway';
-import { ChatWidget } from '@/components/ai-agent/chat-widget';
 import { OnboardingFlow } from '@/components/onboarding-flow';
 import { LoadingScreen } from '@/components/loading-screen';
 
@@ -52,7 +51,6 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
         <Nav />
         <MainContent>{children}</MainContent>
       </div>
-      <ChatWidget />
     </GatewayProvider>
   );
 }

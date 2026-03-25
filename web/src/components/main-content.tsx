@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
-import { GlobalQuickAdd } from './global-quick-add';
 import { SearchModal } from './search-modal';
 
 const STORAGE_KEY = 'lifeos-nav-expanded';
@@ -49,7 +48,6 @@ export function MainContent({ children }: { children: React.ReactNode }) {
           : (expanded ? 'ml-52' : 'ml-14'),
       )}
     >
-      <GlobalQuickAdd />
       <SearchModal />
       <div className="px-8 py-8 lg:px-12 lg:py-10">{children}</div>
     </main>

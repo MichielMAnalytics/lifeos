@@ -511,101 +511,110 @@ export default function LifeCoachPage() {
   const canSend = isConnected && !isStreaming;
   const isDisconnectedOrConnecting = !isConnected;
 
+  // ---- Input component (reused in both states) ----
+  const inputBox = (
+    <div className="max-w-[650px] w-full mx-auto">
+      <div
+        className={cn(
+          'flex items-end gap-2 border border-border/40 rounded-2xl px-4 py-3 bg-surface transition-colors',
+          'focus-within:border-border/70',
+        )}
+      >
+        <textarea
+          ref={inputRef}
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+            adjustTextareaHeight();
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={isDisconnectedOrConnecting ? 'Connecting...' : 'Ask anything'}
+          disabled={isDisconnectedOrConnecting && !isStreaming}
+          rows={1}
+          className={cn(
+            'flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/40',
+            'focus:outline-none resize-none leading-relaxed',
+            'min-h-[24px] max-h-[160px]',
+            (isDisconnectedOrConnecting && !isStreaming) && 'opacity-40',
+          )}
+        />
+        {isStreaming ? (
+          <button
+            onClick={handleAbort}
+            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-text-muted/10 text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+            title="Stop generating"
+          >
+            <StopIcon />
+          </button>
+        ) : (
+          <button
+            onClick={handleSend}
+            disabled={!input.trim() || !canSend}
+            className={cn(
+              'shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors',
+              input.trim() && canSend
+                ? 'bg-accent text-bg hover:bg-accent-hover'
+                : 'bg-text-muted/10 text-text-muted/30 cursor-not-allowed',
+            )}
+            title="Send message"
+          >
+            <SendIcon />
+          </button>
+        )}
+      </div>
+      <p className="mt-2 text-center text-[10px] text-text-muted/30">
+        Shift + Enter for new line
+      </p>
+    </div>
+  );
+
   // ---- Main chat interface ----
+  if (!hasMessages) {
+    // Empty state: everything centered on screen
+    return (
+      <div className="flex flex-col items-center justify-center h-full px-6 animate-fade-in">
+        <Image
+          src="/openclaw-icon.png"
+          alt="OpenClaw"
+          width={40}
+          height={40}
+          className="rounded-full mb-5"
+        />
+        <h1 className="text-2xl font-bold text-text tracking-tight mb-3">
+          What can I help with?
+        </h1>
+        <p className="text-xs text-text-muted/50 mb-8">
+          Powered by{' '}
+          <a
+            href="https://openclaw.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-text-muted transition-colors"
+          >
+            OpenClaw
+          </a>
+        </p>
+        <div className="w-full px-4">
+          {inputBox}
+        </div>
+      </div>
+    );
+  }
+
+  // With messages: messages fill space, input bar at bottom
   return (
     <div className="flex flex-col h-full animate-fade-in">
-      {/* -- Messages area OR empty state -- */}
-      {hasMessages ? (
-        <div className="flex-1 overflow-y-auto">
-          <div className="py-6 space-y-5">
-            {messages.map((msg) => (
-              <MessageRow key={msg.id} message={msg} />
-            ))}
-            {isStreaming && !streamMessageIdRef.current && <TypingIndicator />}
-            <div ref={messagesEndRef} />
-          </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="py-6 space-y-5">
+          {messages.map((msg) => (
+            <MessageRow key={msg.id} message={msg} />
+          ))}
+          {isStreaming && !streamMessageIdRef.current && <TypingIndicator />}
+          <div ref={messagesEndRef} />
         </div>
-      ) : (
-        <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <Image
-            src="/openclaw-icon.png"
-            alt="OpenClaw"
-            width={40}
-            height={40}
-            className="rounded-full mb-5"
-          />
-          <h1 className="text-2xl font-bold text-text tracking-tight mb-3">
-            What can I help with?
-          </h1>
-          <p className="text-xs text-text-muted/50">
-            Powered by{' '}
-            <a
-              href="https://openclaw.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2 hover:text-text-muted transition-colors"
-            >
-              OpenClaw
-            </a>
-          </p>
-        </div>
-      )}
-
-      {/* -- Input area -- */}
+      </div>
       <div className="shrink-0 pb-4 pt-2 px-4">
-        <div className="max-w-[650px] mx-auto">
-          <div
-            className={cn(
-              'flex items-end gap-2 border border-border/40 rounded-2xl px-4 py-3 bg-surface transition-colors',
-              'focus-within:border-border/70',
-            )}
-          >
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                adjustTextareaHeight();
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder={isDisconnectedOrConnecting ? 'Connecting...' : 'Ask anything'}
-              disabled={isDisconnectedOrConnecting && !isStreaming}
-              rows={1}
-              className={cn(
-                'flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/40',
-                'focus:outline-none resize-none leading-relaxed',
-                'min-h-[24px] max-h-[160px]',
-                (isDisconnectedOrConnecting && !isStreaming) && 'opacity-40',
-              )}
-            />
-            {isStreaming ? (
-              <button
-                onClick={handleAbort}
-                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-text-muted/10 text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
-                title="Stop generating"
-              >
-                <StopIcon />
-              </button>
-            ) : (
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || !canSend}
-                className={cn(
-                  'shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors',
-                  input.trim() && canSend
-                    ? 'bg-accent text-bg hover:bg-accent-hover'
-                    : 'bg-text-muted/10 text-text-muted/30 cursor-not-allowed',
-                )}
-                title="Send message"
-              >
-                <SendIcon />
-              </button>
-            )}
-          </div>
-          <p className="mt-2 text-center text-[10px] text-text-muted/30">
-            Shift + Enter for new line
-          </p>
-        </div>
+        {inputBox}
       </div>
     </div>
   );
