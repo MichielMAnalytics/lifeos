@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useQuery } from 'convex/react';
+import { useAuthActions } from '@convex-dev/auth/react';
 import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
@@ -28,9 +29,6 @@ const allPages: Record<string, { label: string; abbr: string }> = {
   calendar: { label: 'Calendar', abbr: 'Ca' },
 };
 
-const bottomLinks = [
-  { href: '/settings', label: 'Settings', abbr: 'Se' },
-] as const;
 
 const STORAGE_KEY = 'lifeos-nav-expanded';
 
@@ -247,7 +245,7 @@ export function Nav() {
         })}
       </div>
 
-      {/* Bottom links */}
+      {/* Bottom */}
       <div className="shrink-0 border-t border-border px-2 py-3">
         {/* Search trigger */}
         <div
@@ -263,68 +261,10 @@ export function Nav() {
           )}
         </div>
 
-        {/* Configure mode toggle */}
-        <button
-          onClick={toggleConfigMode}
-          title={expanded ? undefined : (isConfigMode ? 'Exit Configure' : 'Configure')}
-          className={cn(
-            'group relative flex h-9 items-center transition-all duration-150 w-full',
-            expanded ? 'px-3 gap-3 rounded-lg' : 'justify-center w-10 mx-auto rounded-md',
-            isConfigMode
-              ? 'text-text bg-border/50'
-              : 'text-text-muted hover:text-text',
-          )}
-        >
-          {expanded ? (
-            <span className="text-sm font-medium animate-slide-in">
-              {isConfigMode ? 'Done' : 'Configure'}
-            </span>
-          ) : (
-            <span className="font-mono text-[11px] font-medium tracking-tight">
-              {isConfigMode ? '×' : 'Cf'}
-            </span>
-          )}
-        </button>
-
         {expanded && <GatewayStatusIndicator />}
 
-        {bottomLinks.map(({ href, label, abbr }) => {
-          const isActive = pathname === href || pathname.startsWith(href + '/');
-
-          return (
-            <Link
-              key={href}
-              href={href}
-              title={expanded ? undefined : label}
-              className={cn(
-                'group relative flex h-9 items-center transition-all duration-150',
-                expanded ? 'px-3 gap-3 rounded-lg' : 'justify-center w-10 mx-auto rounded-md',
-                isActive
-                  ? 'text-text'
-                  : 'text-text-muted hover:text-text',
-              )}
-            >
-              {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-text" />
-              )}
-              {(() => {
-                const key = href.slice(1); // "/settings" -> "settings"
-                const Mark = NAV_MARKS[key];
-                return expanded ? (
-                  <span className="flex items-center gap-2.5 text-sm font-medium animate-slide-in">
-                    {Mark && <Mark className="shrink-0 opacity-70" />}
-                    {label}
-                  </span>
-                ) : (
-                  Mark ? <Mark className="shrink-0" /> : <span className="font-mono text-[11px] font-medium tracking-tight">{abbr}</span>
-                );
-              })()}
-            </Link>
-          );
-        })}
-
-        {/* Profile + Plan */}
-        <ProfileBadge expanded={expanded} />
+        {/* Profile + menu (settings, configure, logout) */}
+        <ProfileBadge expanded={expanded} toggleConfigMode={toggleConfigMode} isConfigMode={isConfigMode} />
 
         {/* Toggle arrow at the very bottom */}
         {!expanded && (
@@ -349,15 +289,28 @@ const PLAN_LABELS: Record<string, string> = {
   premium: 'Premium',
 };
 
-function ProfileBadge({ expanded }: { expanded: boolean }) {
+function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: boolean; toggleConfigMode: () => void; isConfigMode: boolean }) {
   const user = useQuery(api.authHelpers.getMe, {});
   const subscription = useQuery(api.stripe.getMySubscription);
+  const { signOut } = useAuthActions();
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('lifeos-avatar');
     if (stored) setAvatar(stored);
   }, []);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [menuOpen]);
 
   if (!user) return null;
 
@@ -371,31 +324,69 @@ function ProfileBadge({ expanded }: { expanded: boolean }) {
   const planLabel = subscription ? PLAN_LABELS[subscription.planType] ?? 'No plan' : 'No plan';
 
   return (
-    <Link
-      href="/settings"
-      title={expanded ? undefined : `${user.name ?? user.email} — ${planLabel}`}
-      className={cn(
-        'flex items-center transition-all duration-150 mt-1',
-        expanded ? 'gap-2.5 px-3 py-2 rounded-lg hover:bg-surface-hover' : 'justify-center w-10 mx-auto py-2',
+    <div className="relative mt-1" ref={menuRef}>
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        title={expanded ? undefined : `${user.name ?? user.email} — ${planLabel}`}
+        className={cn(
+          'flex items-center transition-all duration-150 w-full',
+          expanded ? 'gap-2.5 px-3 py-2 rounded-lg hover:bg-surface-hover' : 'justify-center w-10 mx-auto py-2',
+        )}
+      >
+        {profileImage ? (
+          <img src={profileImage} alt="" className="size-7 rounded-full shrink-0 object-cover" />
+        ) : (
+          <span className="size-7 rounded-full shrink-0 bg-surface flex items-center justify-center text-[10px] font-bold text-text-muted">
+            {initials}
+          </span>
+        )}
+        {expanded && (
+          <span className="flex flex-col min-w-0 text-left animate-slide-in">
+            <span className="text-xs font-medium text-text truncate">{user.name ?? user.email}</span>
+            <span className="text-[10px] text-text-muted">{planLabel} plan</span>
+          </span>
+        )}
+      </button>
+
+      {menuOpen && (
+        <div className={cn(
+          'absolute z-50 bg-surface border border-border rounded-lg shadow-lg py-1 animate-scale-in',
+          expanded ? 'bottom-full left-0 right-0 mb-1' : 'bottom-full left-0 mb-1 w-40',
+        )}>
+          <Link
+            href="/settings"
+            onClick={() => setMenuOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="13" x2="13" y2="3" /><circle cx="8" cy="8" r="2.5" />
+            </svg>
+            Settings
+          </Link>
+          <button
+            onClick={() => { setMenuOpen(false); toggleConfigMode(); }}
+            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+            </svg>
+            {isConfigMode ? 'Done configuring' : 'Configure layout'}
+          </button>
+          <div className="my-1 border-t border-border/40" />
+          <button
+            onClick={() => { setMenuOpen(false); void signOut(); }}
+            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-danger hover:bg-surface-hover transition-colors w-full text-left"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Log out
+          </button>
+        </div>
       )}
-    >
-      {profileImage ? (
-        <img
-          src={profileImage}
-          alt=""
-          className="size-7 rounded-full shrink-0 object-cover"
-        />
-      ) : (
-        <span className="size-7 rounded-full shrink-0 bg-surface flex items-center justify-center text-[10px] font-bold text-text-muted">
-          {initials}
-        </span>
-      )}
-      {expanded && (
-        <span className="flex flex-col min-w-0 animate-slide-in">
-          <span className="text-xs font-medium text-text truncate">{user.name ?? user.email}</span>
-          <span className="text-[10px] text-text-muted">{planLabel} plan</span>
-        </span>
-      )}
-    </Link>
+    </div>
   );
 }

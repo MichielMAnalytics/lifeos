@@ -57,7 +57,7 @@ export function SettingsClient({
   user: User | null;
   initialApiKeys: ApiKeyEntry[];
 }) {
-  const [apiKeys] = useState<ApiKeyEntry[]>(initialApiKeys);
+  const apiKeys = initialApiKeys;
   const [newKeyName, setNewKeyName] = useState('');
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -365,8 +365,8 @@ export function SettingsClient({
         </div>
       </section>
 
-      {/* -- Life Coach ---------------------------------------- */}
-      <AiAgentSection />
+      {/* -- Life Coach (hidden for Home plan) -------------------- */}
+      {subscription?.planType !== 'dashboard' && <AiAgentSection />}
     </div>
   );
 }
