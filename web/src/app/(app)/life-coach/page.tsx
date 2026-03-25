@@ -569,6 +569,13 @@ export default function LifeCoachPage() {
   );
 
   // ---- Main chat interface ----
+  const quickPrompts = [
+    'Hi there!',
+    'Hey coach!',
+    'Good morning',
+    'Let\u2019s get started',
+  ];
+
   if (!hasMessages) {
     // Empty state: everything centered on screen
     return (
@@ -581,9 +588,9 @@ export default function LifeCoachPage() {
           className="rounded-full mb-5"
         />
         <h1 className="text-2xl font-bold text-text tracking-tight mb-3">
-          What can I help with?
+          Ready when you are
         </h1>
-        <p className="text-xs text-text-muted/50 mb-8">
+        <p className="text-xs text-text-muted/50 mb-6">
           Powered by{' '}
           <a
             href="https://openclaw.ai"
@@ -594,6 +601,26 @@ export default function LifeCoachPage() {
             OpenClaw
           </a>
         </p>
+        <div className="flex flex-wrap justify-center gap-2 mb-6">
+          {quickPrompts.map((prompt) => (
+            <button
+              key={prompt}
+              onClick={async () => {
+                if (!client || !isConnected) return;
+                const msg: ChatMessage = { id: nextId(), role: 'user', content: prompt, timestamp: Date.now() };
+                setMessages((prev) => [...prev, msg]);
+                setIsStreaming(true);
+                streamBufferRef.current = '';
+                streamMessageIdRef.current = null;
+                try { await client.call('chat.send', { sessionKey: 'agent:main:main', message: prompt, idempotencyKey: crypto.randomUUID() }); } catch { setIsStreaming(false); }
+              }}
+              disabled={!canSend}
+              className="px-3 py-1.5 text-xs text-text-muted border border-border/40 rounded-full hover:border-border hover:text-text transition-colors disabled:opacity-30"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
         <div className="w-full px-4">
           {inputBox}
         </div>
