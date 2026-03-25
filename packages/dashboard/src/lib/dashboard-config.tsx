@@ -58,8 +58,11 @@ export function DashboardConfigProvider({ children }: { children: React.ReactNod
 
   const isLoading = rawConfig === undefined;
 
+  // Check subscription to hide life-coach for Home plan
+  const subscription = useQuery(api.stripe.getMySubscription);
+  const showLifeCoach = subscription?.planType !== 'dashboard';
+
   // Ensure new pages from DEFAULT_NAV_ORDER are merged into existing configs
-  // life-coach is always pinned first
   const savedOrder = rawConfig?.navOrder ?? [...DEFAULT_NAV_ORDER];
   const mergedOrder = savedOrder.filter((p) => p !== 'life-coach');
   for (const page of DEFAULT_NAV_ORDER) {
@@ -67,7 +70,9 @@ export function DashboardConfigProvider({ children }: { children: React.ReactNod
       mergedOrder.push(page);
     }
   }
-  mergedOrder.unshift('life-coach');
+  if (showLifeCoach) {
+    mergedOrder.unshift('life-coach');
+  }
 
   const config: DashboardConfig = rawConfig
     ? {

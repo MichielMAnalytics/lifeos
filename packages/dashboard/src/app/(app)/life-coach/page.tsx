@@ -13,6 +13,42 @@ import { Onboarding } from '@/components/ai-agent/onboarding';
 import { ConfigCard } from '@/components/ai-agent/config-card';
 import { PaymentStatus } from '@/components/ai-agent/payment-status';
 
+function GetStartedBanner() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem('lifeos-coach-introduced') !== 'true') {
+      setVisible(true);
+    }
+  }, []);
+
+  if (!visible) return null;
+
+  function dismiss() {
+    localStorage.setItem('lifeos-coach-introduced', 'true');
+    setVisible(false);
+  }
+
+  return (
+    <div className="relative border border-border rounded-lg bg-surface p-6">
+      <button
+        onClick={dismiss}
+        className="absolute top-3 right-3 text-text-muted hover:text-text transition-colors"
+        aria-label="Dismiss"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+      <h2 className="text-sm font-semibold text-text">Say hello to your Life Coach</h2>
+      <p className="mt-1 text-xs text-text-muted">
+        Start a conversation to set up your goals, routines, and daily rhythm.
+      </p>
+    </div>
+  );
+}
+
 export default function AiAgentPage() {
   const subscription = useQuery(api.stripe.getMySubscription);
   const deployment = useQuery(api.deploymentQueries.getMyDeployment);
@@ -105,6 +141,7 @@ export default function AiAgentPage() {
           <p className="text-xs text-text-muted">Your Life Coach is active</p>
         </div>
         <PaymentStatus />
+        <GetStartedBanner />
         <DeploymentDashboard deployment={deployment} />
         <ChannelConfig />
         <ApiKeys deploymentStatus={deployment.status} />

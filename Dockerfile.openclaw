@@ -70,6 +70,12 @@ RUN mkdir -p /home/linuxbrew/.linuxbrew \
 # Let `node` user do global npm installs (OpenClaw skills use `npm install -g`)
 RUN chown -R node:node /usr/local/lib/node_modules /usr/local/bin
 
+# Pre-install LifeOS CLI so pods have it on first boot
+RUN npm install -g lifeos-cli
+
+# Stage LifeOS skills for seeding into user PVCs
+COPY packages/cli/skills/ /app/lifeos-skills/
+
 RUN chown -R node:node /app
 USER node
 

@@ -362,6 +362,33 @@ export async function createStatefulSet(opts: {
                 { name: "SUBDOMAIN", value: subdomain },
               ],
             },
+            {
+              name: "lifeos-setup",
+              image: imageTag,
+              command: ["sh", "-c", [
+                'export HOME=/mnt/data',
+                'export PATH="/mnt/data/.npm-global/bin:/usr/local/bin:$PATH"',
+                '',
+                '# Configure LifeOS CLI',
+                'lifeos config set-url "$LIFEOS_API_URL" 2>/dev/null || true',
+                'lifeos config set-key "$LIFEOS_API_KEY" 2>/dev/null || true',
+                '',
+                '# Seed skills on first boot',
+                'mkdir -p /mnt/data/.openclaw/skills',
+                'for skill_dir in /app/lifeos-skills/*/; do',
+                '  skill_name=$(basename "$skill_dir")',
+                '  if [ ! -d "/mnt/data/.openclaw/skills/$skill_name" ]; then',
+                '    cp -r "$skill_dir" "/mnt/data/.openclaw/skills/$skill_name"',
+                '  fi',
+                'done',
+              ].join('\n')],
+              env: [
+                { name: "LIFEOS_API_URL", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_URL" } } },
+                { name: "LIFEOS_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_KEY" } } },
+              ],
+              volumeMounts: [{ name: "data", mountPath: "/mnt/data" }],
+              securityContext: { runAsUser: 1000, runAsGroup: 1000 },
+            },
           ],
           containers: [
             {
@@ -537,6 +564,34 @@ export async function patchStatefulSet(
                   -d '{"podSecret":"'$POD_SECRET'","subdomain":"'$SUBDOMAIN'","userId":"'$USER_ID'","apiKeySource":"'$API_KEY_SOURCE'","ownerEmail":"'$OWNER_EMAIL'","gatewayToken":"'$GATEWAY_TOKEN'"}'`,
       ],
       envFrom: [{ secretRef: { name: initSecretName } }],
+    });
+
+    initContainers.push({
+      name: "lifeos-setup",
+      image: imageTag,
+      command: ["sh", "-c", [
+        'export HOME=/mnt/data',
+        'export PATH="/mnt/data/.npm-global/bin:/usr/local/bin:$PATH"',
+        '',
+        '# Configure LifeOS CLI',
+        'lifeos config set-url "$LIFEOS_API_URL" 2>/dev/null || true',
+        'lifeos config set-key "$LIFEOS_API_KEY" 2>/dev/null || true',
+        '',
+        '# Seed skills on first boot',
+        'mkdir -p /mnt/data/.openclaw/skills',
+        'for skill_dir in /app/lifeos-skills/*/; do',
+        '  skill_name=$(basename "$skill_dir")',
+        '  if [ ! -d "/mnt/data/.openclaw/skills/$skill_name" ]; then',
+        '    cp -r "$skill_dir" "/mnt/data/.openclaw/skills/$skill_name"',
+        '  fi',
+        'done',
+      ].join('\n')],
+      env: [
+        { name: "LIFEOS_API_URL", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_URL" } } },
+        { name: "LIFEOS_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_KEY" } } },
+      ],
+      volumeMounts: [{ name: "data", mountPath: "/mnt/data" }],
+      securityContext: { runAsUser: 1000, runAsGroup: 1000 },
     });
   }
 

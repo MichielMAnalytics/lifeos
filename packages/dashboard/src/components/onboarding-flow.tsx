@@ -453,8 +453,13 @@ function OnboardingFlowInner() {
               </h1>
               <p className="mt-3 text-sm text-text-muted/60">
                 This usually takes a couple of minutes.
-                <br />
-                We&apos;re preparing your personal AI environment.
+              </p>
+              <p className="mt-2 text-xs text-text-muted/40">
+                {deployment?.status === 'provisioning'
+                  ? 'Creating your environment...'
+                  : deployment?.status === 'starting'
+                    ? 'Installing tools and starting up...'
+                    : 'Setting up your Life Coach...'}
               </p>
             </div>
           ) : deployComplete ? (
@@ -465,16 +470,16 @@ function OnboardingFlowInner() {
                 </svg>
               </div>
               <h1 className="text-2xl font-light tracking-tight text-text">
-                You&apos;re <span className="font-semibold">all set</span>
+                Your Life Coach is <span className="font-semibold">live</span>
               </h1>
               <p className="mt-3 text-sm text-text-muted/60">
-                Your Life Coach is live and ready. Welcome to the zone.
+                Say hello — your Life Coach is ready to help you get organized.
               </p>
               <button
-                onClick={() => { localStorage.setItem('lifeos-setup-complete', 'true'); window.location.href = '/today'; }}
+                onClick={() => { localStorage.setItem('lifeos-setup-complete', 'true'); window.location.href = '/life-coach'; }}
                 className="mt-8 rounded-full bg-accent px-8 py-3 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
               >
-                Enter LifeOS
+                Meet your Life Coach
               </button>
             </div>
           ) : (

@@ -53,6 +53,32 @@ export const createApiKey = action({
   },
 });
 
+// ── _createApiKey (for internal use, e.g. deployment onboarding) ──
+
+export const _createApiKey = internalAction({
+  args: {
+    userId: v.id("users"),
+    name: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ key: string; _id: string }> => {
+    const randomHex = crypto.randomBytes(32).toString("hex");
+    const rawKey = `lifeos_sk_${randomHex}`;
+    const prefix = randomHex.slice(0, 8);
+    const keyHash = hashKey(rawKey);
+
+    const createdOrNull = await ctx.runMutation(
+      internal.authHelpers._insertApiKey,
+      { userId: args.userId, keyPrefix: prefix, keyHash, name: args.name },
+    );
+    const created = createdOrNull!;
+
+    return {
+      key: rawKey,
+      _id: created._id as string,
+    };
+  },
+});
+
 // ── validateKey (for HTTP router auth) ───────────────
 
 export const validateKey = internalAction({

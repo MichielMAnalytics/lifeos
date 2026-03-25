@@ -187,6 +187,12 @@ export const deploy = action({
       },
     );
 
+    // Generate a LifeOS API key for the Life Coach
+    const apiKeyResult = await ctx.runAction(internal.apiKeyAuth._createApiKey, {
+      userId,
+      name: "Life Coach",
+    });
+
     try {
       // Seed balance in AI Gateway
       const seedRes = await fetch(`${gatewayUrl}/internal/seedBalance`, {
@@ -226,6 +232,8 @@ export const deploy = action({
         API_KEY_SOURCE: settings?.apiKeySource ?? "ours",
         OWNER_EMAIL: ownerEmail,
         GATEWAY_TOKEN: gatewayToken,
+        LIFEOS_API_KEY: apiKeyResult.key,
+        LIFEOS_API_URL: serverEnv.CONVEX_SITE_URL ?? "",
       });
 
       await createStatefulSet({
