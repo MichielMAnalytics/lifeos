@@ -71,10 +71,11 @@ export class GatewayClient {
           if (frame.ok) {
             pending.resolve(frame.payload);
           } else {
+            const err = frame.error as Record<string, unknown> | undefined;
             const errPayload = frame.payload as Record<string, unknown> | undefined;
-            pending.reject(new Error(
-              (errPayload?.message as string) ?? (errPayload?.code as string) ?? 'Request failed'
-            ));
+            const message = (err?.message as string) ?? (errPayload?.message as string) ?? (err?.code as string) ?? 'Request failed';
+            console.warn('[gateway] request failed:', frame.id, message);
+            pending.reject(new Error(message));
           }
           return;
         }
@@ -112,13 +113,13 @@ export class GatewayClient {
         minProtocol: 3,
         maxProtocol: 3,
         client: {
-          id: 'webchat-ui',
+          id: 'openclaw-control-ui',
           version: '1.0',
           platform: navigator?.platform ?? 'web',
           mode: 'webchat',
         },
         role: 'operator',
-        scopes: ['chat', 'sessions', 'config', 'channels', 'cron', 'skills'],
+        scopes: ['operator.admin', 'operator.read', 'operator.write', 'operator.approvals', 'operator.pairing'],
         caps: ['tool-events'],
         auth: { token: this.token },
       },

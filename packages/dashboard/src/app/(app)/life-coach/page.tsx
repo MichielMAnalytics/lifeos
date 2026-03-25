@@ -277,7 +277,7 @@ export default function LifeCoachPage() {
 
     let cancelled = false;
     client
-      .call<ChatMessage[]>('chat.history', {})
+      .call<ChatMessage[]>('chat.history', { sessionKey: 'agent:main:main' })
       .then((history) => {
         if (cancelled) return;
         if (history && history.length > 0) {
@@ -314,72 +314,55 @@ export default function LifeCoachPage() {
     if (!client || !isConnected) return;
 
     return client.subscribe('chat', (raw: unknown) => {
-      const data = raw as ChatEventData;
+      const data = raw as { state?: string; message?: { role: string; content: Array<{ type: string; text?: string }>; timestamp?: number } };
+      if (!data.message) return;
 
-      if (data.type === 'chunk') {
-        const chunk = data.chunk ?? data.content ?? '';
-        if (!chunk) return;
+      const text = data.message.content
+        ?.filter((c) => c.type === 'text')
+        .map((c) => c.text ?? '')
+        .join('') ?? '';
 
-        streamBufferRef.current += chunk;
-
+      if (data.state === 'delta') {
         if (!streamMessageIdRef.current) {
           const id = nextId();
           streamMessageIdRef.current = id;
+          streamBufferRef.current = text;
           setMessages((prev) => [
             ...prev,
             {
               id,
               role: 'assistant',
-              content: streamBufferRef.current,
-              timestamp: Date.now(),
+              content: text,
+              timestamp: data.message?.timestamp ?? Date.now(),
             },
           ]);
         } else {
           const currentId = streamMessageIdRef.current;
-          const currentContent = streamBufferRef.current;
+          streamBufferRef.current = text;
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === currentId ? { ...m, content: currentContent } : m,
+              m.id === currentId ? { ...m, content: text } : m,
             ),
           );
         }
       }
 
-      if (data.type === 'message' && data.message) {
-        const msg = data.message;
+      if (data.state === 'final') {
+        // Final message — update the streaming message with final content
         if (streamMessageIdRef.current) {
-          // Replace the streaming message with the final one
           const currentId = streamMessageIdRef.current;
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === currentId
-                ? {
-                    ...msg,
-                    id: currentId,
-                    timestamp: msg.timestamp ?? Date.now(),
-                  }
-                : m,
+              m.id === currentId ? { ...m, content: text } : m,
             ),
           );
-        } else {
-          setMessages((prev) => [
-            ...prev,
-            {
-              ...msg,
-              id: msg.id ?? nextId(),
-              timestamp: msg.timestamp ?? Date.now(),
-            },
-          ]);
         }
-      }
-
-      if (data.type === 'done') {
         setIsStreaming(false);
         streamBufferRef.current = '';
         streamMessageIdRef.current = null;
       }
 
-      if (data.type === 'error') {
+      if (data.state === 'error') {
         setIsStreaming(false);
         streamBufferRef.current = '';
         streamMessageIdRef.current = null;
@@ -439,7 +422,7 @@ export default function LifeCoachPage() {
     }
 
     try {
-      await client.call('chat.send', { message: trimmed });
+      await client.call('chat.send', { sessionKey: 'agent:main:main', message: trimmed, idempotencyKey: crypto.randomUUID() });
     } catch (err) {
       console.error('Failed to send message:', err);
       setIsStreaming(false);
@@ -459,7 +442,7 @@ export default function LifeCoachPage() {
   const handleAbort = useCallback(async () => {
     if (!client || !isConnected) return;
     try {
-      await client.call('chat.abort', {});
+      await client.call('chat.abort', { sessionKey: 'agent:main:main' });
     } catch {
       // Ignore abort errors
     }
