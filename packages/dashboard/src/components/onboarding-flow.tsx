@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useAction, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { useSearchParams } from 'next/navigation';
+import { LoadingScreen } from '@/components/loading-screen';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
 type Step = 'welcome' | 'plans' | 'setup';
-
 type PlanView = 'main' | 'dashboard' | 'byok';
 
 interface Plan {
@@ -20,69 +21,97 @@ interface Plan {
   includesDeployment: boolean;
 }
 
-// ── Icons (inline SVG) ─────────────────────────────────────────────────
+// ── Subtle background ──────────────────────────────────────────────────
 
-function TelegramIcon({ className }: { className?: string }) {
+function SoftGlow() {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-    </svg>
-  );
-}
-
-function DiscordIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.037 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 0 .0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z" />
-    </svg>
-  );
-}
-
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
-function LoadingDots() {
-  return (
-    <span className="inline-flex gap-1">
-      <span className="animate-bounce [animation-delay:0ms]">.</span>
-      <span className="animate-bounce [animation-delay:150ms]">.</span>
-      <span className="animate-bounce [animation-delay:300ms]">.</span>
-    </span>
-  );
-}
-
-// ── Step wrapper for crossfade transitions ──────────────────────────────
-
-function StepContainer({
-  active,
-  children,
-}: {
-  active: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out ${
-        active
-          ? 'opacity-100 translate-y-0 pointer-events-auto'
-          : 'opacity-0 -translate-y-4 pointer-events-none'
-      }`}
-    >
-      <div className="w-full max-w-xl px-6">{children}</div>
+    <div className="pointer-events-none fixed inset-0 overflow-hidden">
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.03]"
+        style={{ background: 'radial-gradient(circle, var(--color-accent) 0%, transparent 70%)' }}
+      />
     </div>
+  );
+}
+
+// ── Step indicator dots ────────────────────────────────────────────────
+
+function StepDots({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      {Array.from({ length: total }).map((_, i) => (
+        <div
+          key={i}
+          className={`h-1.5 rounded-full transition-all duration-500 ${
+            i === current
+              ? 'w-6 bg-accent'
+              : i < current
+                ? 'w-1.5 bg-text-muted/40'
+                : 'w-1.5 bg-border'
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Nav arrow ──────────────────────────────────────────────────────────
+
+function NavArrow({ direction, onClick, label }: { direction: 'back' | 'forward'; onClick: () => void; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group flex items-center gap-2 text-xs text-text-muted hover:text-text transition-all duration-200"
+    >
+      {direction === 'back' && (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:-translate-x-0.5">
+          <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
+        </svg>
+      )}
+      <span>{label}</span>
+      {direction === 'forward' && (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-0.5">
+          <path d="M5 12h14" /><path d="M12 5l7 7-7 7" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+// ── Step wrapper for crossfade ─────────────────────────────────────────
+
+function StepContainer({ active, children, onBack }: { active: boolean; children: React.ReactNode; onBack?: () => void }) {
+  return (
+    <>
+      {active && onBack && (
+        <div className="fixed top-6 left-6 z-50">
+          <NavArrow direction="back" onClick={onBack} label="Back" />
+        </div>
+      )}
+      <div
+        className={`absolute inset-0 overflow-y-auto transition-all duration-700 ease-out ${
+          active
+            ? 'opacity-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 translate-y-6 pointer-events-none'
+        }`}
+      >
+        <div className="min-h-full flex flex-col items-center justify-center px-6 py-16">
+          {children}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Feature pill ───────────────────────────────────────────────────────
+
+function FeaturePill({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface/50 px-3 py-1 text-[11px] text-text-muted">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-success">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+      {children}
+    </span>
   );
 }
 
@@ -91,17 +120,15 @@ function StepContainer({
 function PlanCard({
   name,
   price,
-  description,
+  features,
   popular,
-  selected,
   loading,
   onClick,
 }: {
   name: string;
   price: string;
-  description: string;
+  features: string[];
   popular?: boolean;
-  selected?: boolean;
   loading?: boolean;
   onClick: () => void;
 }) {
@@ -109,29 +136,50 @@ function PlanCard({
     <button
       onClick={onClick}
       disabled={loading}
-      className={`relative flex flex-col items-start rounded-xl border p-6 text-left transition-all duration-200 ${
-        selected
-          ? 'border-accent bg-accent-glow'
-          : 'border-border bg-surface hover:bg-surface-hover hover:border-text-muted/30'
+      className={`group relative flex flex-col rounded-2xl border p-6 text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
+        popular
+          ? 'border-accent/40 bg-accent/[0.04]'
+          : 'border-border/60 bg-surface/30 hover:border-text-muted/20'
       } ${loading ? 'opacity-60 pointer-events-none' : ''}`}
     >
       {popular && (
-        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-bg">
-          Most popular
+        <span className="absolute -top-3 left-6 rounded-full bg-accent px-3 py-1 text-[10px] font-medium text-bg tracking-wide">
+          Recommended
         </span>
       )}
-      <span className="text-sm font-semibold text-text">{name}</span>
-      <span className="mt-1 text-2xl font-bold tracking-tight text-text">
-        {price}
-      </span>
-      <span className="mt-2 text-xs leading-relaxed text-text-muted">
-        {description}
-      </span>
-      {loading && (
-        <span className="mt-3 text-xs text-accent">
-          Redirecting<LoadingDots />
+      <span className="text-sm font-medium text-text-muted">{name}</span>
+      <div className="mt-2 flex items-baseline gap-3">
+        <span className="text-3xl font-semibold tracking-tight text-text">
+          {'\u20AC'}0/mo
         </span>
-      )}
+        <span className="text-sm text-text-muted/40 line-through">
+          {price}
+        </span>
+      </div>
+      <div className="mt-4 space-y-2">
+        {features.map((f, i) => (
+          <div key={i} className="flex items-start gap-2 text-xs text-text-muted leading-relaxed">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0 text-success/70">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            {f}
+          </div>
+        ))}
+      </div>
+      <div className="mt-5 flex items-center justify-center rounded-lg bg-accent/10 py-2 text-xs font-medium text-accent transition-colors group-hover:bg-accent group-hover:text-bg">
+        {loading ? (
+          <span className="flex items-center gap-1">
+            Redirecting
+            <span className="inline-flex">
+              <span className="animate-bounce [animation-delay:0ms]">.</span>
+              <span className="animate-bounce [animation-delay:150ms]">.</span>
+              <span className="animate-bounce [animation-delay:300ms]">.</span>
+            </span>
+          </span>
+        ) : (
+          'Start free trial'
+        )}
+      </div>
     </button>
   );
 }
@@ -139,18 +187,23 @@ function PlanCard({
 // ── Main component ─────────────────────────────────────────────────────
 
 export function OnboardingFlow() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <OnboardingFlowInner />
+    </Suspense>
+  );
+}
+
+function OnboardingFlowInner() {
   const searchParams = useSearchParams();
   const subscription = useQuery(api.stripe.getMySubscription);
   const deployment = useQuery(api.deploymentQueries.getMyDeployment);
-  const settings = useQuery(api.deploymentSettings.getMySettings);
   const plans = useQuery(api.stripe.getSubscriptionPlansList);
 
   const createCheckout = useAction(api.stripeCheckout.createSubscriptionCheckout);
   const saveSettings = useMutation(api.deploymentSettings.saveSettings);
   const setPendingDeploy = useMutation(api.deploymentSettings.setPendingDeploy);
   const deployAction = useAction(api.deploymentActions.deploy);
-
-  // ── State ──────────────────────────────────────────────────────────
 
   const [step, setStep] = useState<Step>('welcome');
   const [planView, setPlanView] = useState<PlanView>('main');
@@ -160,20 +213,14 @@ export function OnboardingFlow() {
   const [deploying, setDeploying] = useState(false);
   const [deployComplete, setDeployComplete] = useState(false);
 
-  // ── Determine initial step based on URL + data ─────────────────────
+  const stepIndex = step === 'welcome' ? 0 : step === 'plans' ? 1 : 2;
 
   useEffect(() => {
-    const isSubscriptionSuccess = searchParams.get('subscription') === 'success';
-
-    if (isSubscriptionSuccess && subscription && !deployment) {
-      setStep('setup');
-    } else if (subscription && !deployment) {
-      // Has subscription but no deployment: go to setup
+    const isSuccess = searchParams.get('subscription') === 'success';
+    if ((isSuccess && subscription && !deployment) || (subscription && !deployment)) {
       setStep('setup');
     }
   }, [searchParams, subscription, deployment]);
-
-  // ── Watch deployment status after deploy ────────────────────────────
 
   useEffect(() => {
     if (deploying && deployment && deployment.status === 'running') {
@@ -182,24 +229,12 @@ export function OnboardingFlow() {
     }
   }, [deploying, deployment]);
 
-  // ── Plan helpers ───────────────────────────────────────────────────
-
   const getPlan = useCallback(
-    (planType: string): Plan | undefined => {
-      return plans?.find((p) => p.planType === planType);
-    },
+    (planType: string): Plan | undefined => plans?.find((p) => p.planType === planType),
     [plans],
   );
 
-  const formatPrice = (cents: number): string => {
-    return `\u20AC${(cents / 100).toFixed(0)}/mo`;
-  };
-
-  const formatCredits = (cents: number): string => {
-    return `\u20AC${(cents / 100).toFixed(0)}`;
-  };
-
-  // ── Checkout handler ──────────────────────────────────────────────
+  const fmtPrice = (cents: number) => `\u20AC${(cents / 100).toFixed(0)}`;
 
   async function handleSelectPlan(plan: Plan) {
     if (!plan.priceId) return;
@@ -207,22 +242,17 @@ export function OnboardingFlow() {
     try {
       await setPendingDeploy({ pending: true });
       const result = await createCheckout({ priceId: plan.priceId });
-      if (result.url) {
-        window.location.href = result.url;
-      }
+      if (result.url) window.location.href = result.url;
     } catch (err) {
       console.error('Checkout error:', err);
       setCheckoutLoading(null);
     }
   }
 
-  // ── Deploy handler ────────────────────────────────────────────────
-
-  async function handleDeploy() {
+  async function handleDeploy(skip = false) {
     setDeploying(true);
     try {
-      // Save channel tokens if provided
-      if (telegramToken.trim() || discordToken.trim()) {
+      if (!skip && (telegramToken.trim() || discordToken.trim())) {
         await saveSettings({
           apiKeySource: 'ours',
           selectedModel: 'claude-sonnet',
@@ -237,27 +267,9 @@ export function OnboardingFlow() {
     }
   }
 
-  async function handleSkipSetup() {
-    setDeploying(true);
-    try {
-      await deployAction();
-    } catch (err) {
-      console.error('Deploy error:', err);
-      setDeploying(false);
-    }
-  }
-
-  // ── Loading state ─────────────────────────────────────────────────
-
   if (subscription === undefined || deployment === undefined || plans === undefined) {
-    return (
-      <div className="flex h-full items-center justify-center bg-bg">
-        <div className="h-6 w-6 rounded-full border-2 border-border border-t-accent animate-spin" />
-      </div>
-    );
+    return <LoadingScreen />;
   }
-
-  // ── Plan data ─────────────────────────────────────────────────────
 
   const basicPlan = getPlan('basic');
   const standardPlan = getPlan('standard');
@@ -265,261 +277,276 @@ export function OnboardingFlow() {
   const dashboardPlan = getPlan('dashboard');
   const byokPlan = getPlan('byok');
 
-  // ── Render ────────────────────────────────────────────────────────
-
   return (
-    <div className="relative h-full w-full overflow-hidden bg-bg">
-      {/* ── Step 1: Welcome ──────────────────────────────────────── */}
+    <div className="relative min-h-screen w-full overflow-hidden bg-bg">
+      <SoftGlow />
+
+      {/* ═══ Step 1: Welcome ═══════════════════════════════════════════ */}
       <StepContainer active={step === 'welcome'}>
-        <div className="flex flex-col items-center text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-text sm:text-5xl">
-            Ready to take control
+        <div className="flex flex-col items-center text-center max-w-lg">
+          <h1 className="text-4xl font-light tracking-tight text-text leading-[1.15] sm:text-5xl">
+            Ready to regain
             <br />
-            of your life?
+            <span className="font-semibold">control of your life?</span>
           </h1>
-          <p className="mt-6 max-w-md text-base leading-relaxed text-text-muted">
-            LifeOS is your personal operating system for goals, habits, and
-            growth. Everything in one place, designed to keep you in the zone.
+
+          <p className="mt-8 text-base leading-relaxed text-text-muted/80 max-w-sm">
+            Goals. Habits. Journals. Plans. Reviews.
+            <br />
+            All in one calm, focused space.
           </p>
+
           <button
             onClick={() => setStep('plans')}
-            className="mt-10 rounded-xl bg-accent px-8 py-3.5 text-sm font-semibold text-bg transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]"
+            className="mt-12 rounded-full bg-accent px-10 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
           >
-            Let&apos;s get started
+            Begin your journey
           </button>
         </div>
       </StepContainer>
 
-      {/* ── Step 2: Choose your plan ─────────────────────────────── */}
-      <StepContainer active={step === 'plans'}>
-        <div className="flex flex-col items-center text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-text sm:text-4xl">
-            Try LifeOS free for 7 days
+      {/* ═══ Step 2: Plans ═════════════════════════════════════════════ */}
+      <StepContainer active={step === 'plans'} onBack={() => setStep('welcome')}>
+        <div className="flex flex-col items-center text-center w-full max-w-2xl">
+          <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
+            Try LifeOS <span className="font-semibold">free for 7 days</span>
           </h1>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-text-muted">
-            We believe everyone should experience what it&apos;s like to be in
-            the zone. Pick a plan — you won&apos;t be charged until your trial
-            ends.
+          <p className="mt-4 text-sm leading-relaxed text-text-muted/70 max-w-md">
+            We believe everyone deserves to feel in control.
+            Pick what fits — you won&apos;t be charged until your trial ends.
           </p>
 
           {/* Main plans */}
-          <div
-            className={`mt-10 w-full transition-all duration-400 ease-out ${
-              planView === 'main'
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-4 pointer-events-none absolute'
-            }`}
-          >
-            {planView === 'main' && (
-              <>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  {basicPlan && (
-                    <PlanCard
-                      name="Basic"
-                      price={formatPrice(basicPlan.priceEuroCents)}
-                      description={`${formatCredits(basicPlan.includedCreditsCents)} AI credits included`}
-                      loading={checkoutLoading === 'basic'}
-                      onClick={() => handleSelectPlan(basicPlan)}
-                    />
-                  )}
-                  {standardPlan && (
-                    <PlanCard
-                      name="Standard"
-                      price={formatPrice(standardPlan.priceEuroCents)}
-                      description={`${formatCredits(standardPlan.includedCreditsCents)} AI credits included`}
-                      popular
-                      loading={checkoutLoading === 'standard'}
-                      onClick={() => handleSelectPlan(standardPlan)}
-                    />
-                  )}
-                  {premiumPlan && (
-                    <PlanCard
-                      name="Premium"
-                      price={formatPrice(premiumPlan.priceEuroCents)}
-                      description={`${formatCredits(premiumPlan.includedCreditsCents)} AI credits included`}
-                      loading={checkoutLoading === 'premium'}
-                      onClick={() => handleSelectPlan(premiumPlan)}
-                    />
-                  )}
-                </div>
+          {planView === 'main' && (
+            <div className="mt-10 w-full animate-fade-in">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {basicPlan && (
+                  <PlanCard
+                    name="Basic"
+                    price={`${fmtPrice(basicPlan.priceEuroCents)}/mo`}
+                    features={[
+                      'Full LifeOS home',
+                      'Life Coach (24/7)',
+                      `${fmtPrice(basicPlan.includedCreditsCents)} AI credits/mo`,
+                    ]}
+                    loading={checkoutLoading === 'basic'}
+                    onClick={() => handleSelectPlan(basicPlan)}
+                  />
+                )}
+                {standardPlan && (
+                  <PlanCard
+                    name="Standard"
+                    price={`${fmtPrice(standardPlan.priceEuroCents)}/mo`}
+                    features={[
+                      'Full LifeOS home',
+                      'Life Coach (24/7)',
+                      `${fmtPrice(standardPlan.includedCreditsCents)} AI credits/mo`,
+                      'Priority support',
+                    ]}
+                    popular
+                    loading={checkoutLoading === 'standard'}
+                    onClick={() => handleSelectPlan(standardPlan)}
+                  />
+                )}
+                {premiumPlan && (
+                  <PlanCard
+                    name="Premium"
+                    price={`${fmtPrice(premiumPlan.priceEuroCents)}/mo`}
+                    features={[
+                      'Full LifeOS home',
+                      'Life Coach (24/7)',
+                      `${fmtPrice(premiumPlan.includedCreditsCents)} AI credits/mo`,
+                      'Priority support',
+                      'Early access to features',
+                    ]}
+                    loading={checkoutLoading === 'premium'}
+                    onClick={() => handleSelectPlan(premiumPlan)}
+                  />
+                )}
+              </div>
 
-                <div className="mt-8 flex flex-col items-center gap-2">
-                  <button
-                    onClick={() => setPlanView('dashboard')}
-                    className="text-xs text-text-muted hover:text-text transition-colors"
-                  >
-                    Only interested in the LifeOS dashboard?
-                  </button>
-                  <button
-                    onClick={() => setPlanView('byok')}
-                    className="text-xs text-text-muted hover:text-text transition-colors"
-                  >
-                    Want to bring your own Anthropic API key?
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Dashboard-only plan */}
-          <div
-            className={`mt-10 w-full transition-all duration-400 ease-out ${
-              planView === 'dashboard'
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-4 pointer-events-none absolute'
-            }`}
-          >
-            {planView === 'dashboard' && (
-              <>
-                <div className="mx-auto max-w-xs">
-                  {dashboardPlan && (
-                    <PlanCard
-                      name="Dashboard"
-                      price={formatPrice(dashboardPlan.priceEuroCents)}
-                      description="Full access to the LifeOS dashboard. No AI agent included."
-                      loading={checkoutLoading === 'dashboard'}
-                      onClick={() => handleSelectPlan(dashboardPlan)}
-                    />
-                  )}
-                </div>
+              <div className="mt-10 flex flex-col items-center gap-3">
                 <button
-                  onClick={() => setPlanView('main')}
-                  className="mt-6 text-xs text-text-muted hover:text-text transition-colors"
+                  onClick={() => setPlanView('dashboard')}
+                  className="text-xs text-text-muted/50 hover:text-text-muted transition-colors duration-200"
                 >
-                  &larr; Back to main plans
+                  Already have an AI assistant and only want the LifeOS home?
                 </button>
-              </>
-            )}
-          </div>
+                <button
+                  onClick={() => setPlanView('byok')}
+                  className="text-xs text-text-muted/50 hover:text-text-muted transition-colors duration-200"
+                >
+                  Want to bring your own Anthropic API key instead?
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Dashboard plan */}
+          {planView === 'dashboard' && (
+            <div className="mt-10 w-full max-w-xs mx-auto animate-fade-in flex flex-col items-center">
+              {dashboardPlan && (
+                <PlanCard
+                  name="Home Only"
+                  price={`${fmtPrice(dashboardPlan.priceEuroCents)}/mo`}
+                  features={[
+                    'Full LifeOS home',
+                    'All persona presets & themes',
+                    'CLI access',
+                  ]}
+                  loading={checkoutLoading === 'dashboard'}
+                  onClick={() => handleSelectPlan(dashboardPlan)}
+                />
+              )}
+              <button
+                onClick={() => setPlanView('main')}
+                className="mt-6 text-xs text-text-muted/50 hover:text-text-muted transition-colors"
+              >
+                &larr; See all plans
+              </button>
+            </div>
+          )}
 
           {/* BYOK plan */}
-          <div
-            className={`mt-10 w-full transition-all duration-400 ease-out ${
-              planView === 'byok'
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-4 pointer-events-none absolute'
-            }`}
-          >
-            {planView === 'byok' && (
-              <>
-                <div className="mx-auto max-w-xs">
-                  {byokPlan && (
-                    <PlanCard
-                      name="BYOK"
-                      price={formatPrice(byokPlan.priceEuroCents)}
-                      description="Bring your own Anthropic API key. No credits included."
-                      loading={checkoutLoading === 'byok'}
-                      onClick={() => handleSelectPlan(byokPlan)}
-                    />
-                  )}
-                </div>
-                <button
-                  onClick={() => setPlanView('main')}
-                  className="mt-6 text-xs text-text-muted hover:text-text transition-colors"
-                >
-                  &larr; Back to main plans
-                </button>
-              </>
-            )}
-          </div>
+          {planView === 'byok' && (
+            <div className="mt-10 w-full max-w-xs mx-auto animate-fade-in flex flex-col items-center">
+              {byokPlan && (
+                <PlanCard
+                  name="Bring Your Own Key"
+                  price={`${fmtPrice(byokPlan.priceEuroCents)}/mo`}
+                  features={[
+                    'Full LifeOS home',
+                    'Life Coach (your API key)',
+                    'No credit limits',
+                  ]}
+                  loading={checkoutLoading === 'byok'}
+                  onClick={() => handleSelectPlan(byokPlan)}
+                />
+              )}
+              <button
+                onClick={() => setPlanView('main')}
+                className="mt-6 text-xs text-text-muted/50 hover:text-text-muted transition-colors"
+              >
+                &larr; See all plans
+              </button>
+            </div>
+          )}
+
         </div>
       </StepContainer>
 
-      {/* ── Step 3: Setup / Congratulations ──────────────────────── */}
+      {/* ═══ Step 3: Setup ═════════════════════════════════════════════ */}
       <StepContainer active={step === 'setup'}>
-        <div className="flex flex-col items-center text-center">
-          {deploying ? (
-            /* Deploying state */
+        <div className="flex flex-col items-center text-center w-full max-w-lg">
+          {subscription?.planType === 'dashboard' ? (
+            /* ── Home plan: CLI + AI assistant setup ─────────── */
+            <HomeSetupStep />
+          ) : deploying ? (
             <div className="flex flex-col items-center">
-              <div className="relative h-12 w-12">
-                <div className="absolute inset-0 rounded-full border-2 border-border border-t-accent animate-spin" />
+              <div className="relative h-16 w-16 mb-8">
+                <div className="absolute inset-0 rounded-full border border-border/30" />
+                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent animate-spin" />
+                <img src="/openclaw-icon.png" alt="" className="absolute inset-0 m-auto h-7 w-7 rounded-sm" />
               </div>
-              <h1 className="mt-8 text-2xl font-bold tracking-tight text-text">
-                Setting up your Life Coach
+              <h1 className="text-2xl font-light tracking-tight text-text">
+                Setting up your <span className="font-semibold">Life Coach</span>
               </h1>
-              <p className="mt-3 text-sm text-text-muted">
+              <p className="mt-3 text-sm text-text-muted/60">
                 This usually takes a couple of minutes.
+                <br />
+                We&apos;re preparing your personal AI environment.
               </p>
             </div>
           ) : deployComplete ? (
-            /* Complete state */
             <div className="flex flex-col items-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
-                <CheckIcon className="h-6 w-6 text-success" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10 mb-8">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-success">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               </div>
-              <h1 className="mt-8 text-2xl font-bold tracking-tight text-text">
-                You&apos;re all set!
+              <h1 className="text-2xl font-light tracking-tight text-text">
+                You&apos;re <span className="font-semibold">all set</span>
               </h1>
-              <p className="mt-3 text-sm text-text-muted">
-                Your Life Coach is running. Welcome to the zone.
+              <p className="mt-3 text-sm text-text-muted/60">
+                Your Life Coach is live and ready. Welcome to the zone.
               </p>
+              <button
+                onClick={() => { localStorage.setItem('lifeos-setup-complete', 'true'); window.location.href = '/today'; }}
+                className="mt-8 rounded-full bg-accent px-8 py-3 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
+              >
+                Enter LifeOS
+              </button>
             </div>
           ) : (
-            /* Setup form */
             <>
-              <h1 className="text-3xl font-bold tracking-tight text-text sm:text-4xl">
-                Welcome to LifeOS!
+              <div className="mb-8">
+                <span className="inline-flex items-center gap-2 rounded-full border border-success/20 bg-success/5 px-4 py-1.5 text-xs text-success">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  7-day free trial started
+                </span>
+              </div>
+
+              <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
+                Welcome to <span className="font-semibold">LifeOS</span>
               </h1>
-              <p className="mt-4 max-w-md text-sm leading-relaxed text-text-muted">
-                Your 7-day free trial has started. Let&apos;s set up your Life
-                Coach.
+
+              <p className="mt-4 text-sm leading-relaxed text-text-muted/70 max-w-sm">
+                One last thing — would you like your Life Coach
+                available on Telegram or Discord?
               </p>
 
-              <p className="mt-8 text-sm font-medium text-text">
-                Would you like your Life Coach on Telegram or Discord?
-              </p>
-
-              <div className="mt-6 w-full max-w-sm space-y-4 text-left">
-                {/* Telegram input */}
+              <div className="mt-8 w-full max-w-md space-y-4 text-left">
                 <div>
-                  <label className="flex items-center gap-2 text-xs font-medium text-text-muted mb-1.5">
-                    <TelegramIcon className="h-3.5 w-3.5" />
+                  <label className="flex items-center gap-2.5 text-xs font-medium text-text-muted mb-2">
+                    <img src="/telegram-icon.png" alt="" className="h-4 w-4 rounded-sm" />
                     Telegram Bot Token
+                    <span className="text-text-muted/30 font-normal">optional</span>
                   </label>
                   <input
                     type="text"
                     value={telegramToken}
                     onChange={(e) => setTelegramToken(e.target.value)}
                     placeholder="123456:ABC-DEF1234ghIkl..."
-                    className="w-full rounded-lg border border-border bg-bg px-4 py-2.5 text-sm text-text placeholder:text-text-muted/40 focus:border-accent focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/25 focus:border-accent/50 focus:outline-none transition-colors"
                   />
-                  <p className="mt-1 text-[11px] text-text-muted/60">
-                    Create a bot via @BotFather on Telegram
+                  <p className="mt-1.5 text-[11px] text-text-muted/40">
+                    Create a bot via <span className="text-text-muted/60">@BotFather</span> on Telegram
                   </p>
                 </div>
 
-                {/* Discord input */}
                 <div>
-                  <label className="flex items-center gap-2 text-xs font-medium text-text-muted mb-1.5">
-                    <DiscordIcon className="h-3.5 w-3.5" />
+                  <label className="flex items-center gap-2.5 text-xs font-medium text-text-muted mb-2">
+                    <img src="/discord-icon.png" alt="" className="h-4 w-4 rounded-sm" />
                     Discord Bot Token
+                    <span className="text-text-muted/30 font-normal">optional</span>
                   </label>
                   <input
                     type="text"
                     value={discordToken}
                     onChange={(e) => setDiscordToken(e.target.value)}
                     placeholder="MTIzNDU2Nzg5MDEyMzQ1..."
-                    className="w-full rounded-lg border border-border bg-bg px-4 py-2.5 text-sm text-text placeholder:text-text-muted/40 focus:border-accent focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/25 focus:border-accent/50 focus:outline-none transition-colors"
                   />
-                  <p className="mt-1 text-[11px] text-text-muted/60">
-                    Create a bot in the Discord Developer Portal
+                  <p className="mt-1.5 text-[11px] text-text-muted/40">
+                    Create a bot in the <span className="text-text-muted/60">Discord Developer Portal</span>
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex flex-col items-center gap-3">
+              <div className="mt-10 flex flex-col items-center gap-4">
                 <button
-                  onClick={handleDeploy}
-                  disabled={!telegramToken.trim() && !discordToken.trim()}
-                  className="rounded-xl bg-accent px-8 py-3 text-sm font-semibold text-bg transition-all duration-200 hover:bg-accent-hover active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none"
+                  onClick={() => handleDeploy(false)}
+                  className="w-full max-w-md rounded-full bg-accent px-8 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
                 >
                   Set up my Life Coach
                 </button>
                 <button
-                  onClick={handleSkipSetup}
-                  className="text-xs text-text-muted hover:text-text transition-colors"
+                  onClick={() => handleDeploy(true)}
+                  className="text-xs text-text-muted/40 hover:text-text-muted transition-colors duration-200"
                 >
-                  Skip for now
+                  Skip — I&apos;ll set this up later
                 </button>
               </div>
             </>
@@ -527,5 +554,331 @@ export function OnboardingFlow() {
         </div>
       </StepContainer>
     </div>
+  );
+}
+
+// ── Home plan setup: CLI + AI assistant ────────────────────────────
+
+function CodeBlock({ children }: { children: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="relative group">
+      <pre className="rounded-xl border border-border/40 bg-surface/40 px-5 py-4 text-[13px] font-mono text-text/80 overflow-x-auto leading-relaxed">
+        {children}
+      </pre>
+      <button
+        onClick={() => { navigator.clipboard.writeText(children); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-text-muted/50 hover:text-text-muted bg-surface/80 border border-border/40 rounded-md px-2 py-1"
+      >
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+    </div>
+  );
+}
+
+function StepNumber({ n }: { n: number }) {
+  return (
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/40 text-xs font-medium text-text-muted/60">
+      {n}
+    </span>
+  );
+}
+
+function FixedBackButton({ onClick }: { onClick: () => void }) {
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div className="fixed top-6 left-6 z-50">
+      <NavArrow direction="back" onClick={onClick} label="Back" />
+    </div>,
+    document.body,
+  );
+}
+
+function HomeSetupStep() {
+  const [setupStep, setSetupStep] = useState(0);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [generatingKey, setGeneratingKey] = useState(false);
+  const user = useQuery(api.authHelpers.getMe, {});
+  const existingKeys = useQuery(api.authHelpers.listApiKeys, {});
+  const generateKey = useAction(api.apiKeyAuth.createApiKey);
+  const hasExistingKey = existingKeys && existingKeys.length > 0;
+
+  async function handleGenerateKey() {
+    if (!user?._id || generatingKey || apiKey) return;
+    setGeneratingKey(true);
+    try {
+      const result = await generateKey({ userId: user._id, name: 'CLI' });
+      setApiKey(result.key);
+    } catch (err) {
+      console.error('Failed to generate API key:', err);
+    } finally {
+      setGeneratingKey(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center w-full">
+      {setupStep === 0 && (
+        <div className="flex flex-col items-center text-center animate-fade-in">
+          <div className="mb-8">
+            <span className="inline-flex items-center gap-2 rounded-full border border-success/20 bg-success/5 px-4 py-1.5 text-xs text-success">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              7-day free trial started
+            </span>
+          </div>
+
+          <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
+            Welcome to <span className="font-semibold">LifeOS</span>
+          </h1>
+
+          <p className="mt-4 text-sm leading-relaxed text-text-muted/70 max-w-sm">
+            Let&apos;s connect LifeOS with your AI assistant.
+            It only takes a minute.
+          </p>
+
+          <button
+            onClick={() => setSetupStep(1)}
+            className="mt-10 rounded-full bg-accent px-10 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
+          >
+            Let&apos;s set it up
+          </button>
+
+          <button
+            onClick={() => { localStorage.setItem('lifeos-setup-complete', 'true'); window.location.href = '/today'; }}
+            className="mt-4 text-xs text-text-muted/40 hover:text-text-muted transition-colors duration-200"
+          >
+            Skip — I&apos;ll do this later
+          </button>
+        </div>
+      )}
+
+      {setupStep === 1 && (
+        <div className="flex flex-col items-center text-center w-full animate-fade-in">
+          <FixedBackButton onClick={() => setSetupStep(0)} />
+          <h1 className="text-2xl font-light tracking-tight text-text">
+            Install the <span className="font-semibold">LifeOS CLI</span>
+          </h1>
+
+          <p className="mt-3 text-sm text-text-muted/60 max-w-sm">
+            The CLI lets you capture tasks, ideas, and journal entries from your terminal
+            — and connects your AI assistant to LifeOS.
+          </p>
+
+          <div className="mt-10 w-full max-w-md space-y-6 text-left">
+            <div className="flex gap-4">
+              <StepNumber n={1} />
+              <div className="flex-1 space-y-2">
+                <p className="text-sm font-medium text-text">Install globally</p>
+                <CodeBlock>npm install -g lifeos-cli</CodeBlock>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <StepNumber n={2} />
+              <div className="flex-1 space-y-2">
+                <p className="text-sm font-medium text-text">Set your API URL</p>
+                <CodeBlock>lifeos config set-url https://proper-cormorant-28.eu-west-1.convex.site</CodeBlock>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <StepNumber n={3} />
+              <div className="flex-1 space-y-2">
+                <p className="text-sm font-medium text-text">Authenticate with your API key</p>
+                {apiKey ? (
+                  <CodeBlock>{`lifeos config set-key ${apiKey}`}</CodeBlock>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleGenerateKey}
+                      disabled={generatingKey || !user}
+                      className="rounded-lg border border-border/60 bg-surface/30 px-4 py-2.5 text-sm text-text hover:bg-surface-hover transition-colors disabled:opacity-40"
+                    >
+                      {generatingKey ? 'Generating...' : 'Generate API Key'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <StepNumber n={4} />
+              <div className="flex-1 space-y-2">
+                <p className="text-sm font-medium text-text">Verify it works</p>
+                <CodeBlock>lifeos whoami</CodeBlock>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 flex items-center gap-6">
+            <button
+              onClick={() => setSetupStep(0)}
+              className="text-xs text-text-muted/40 hover:text-text-muted transition-colors"
+            >
+              &larr; Back
+            </button>
+            <button
+              onClick={() => setSetupStep(2)}
+              className="rounded-full bg-accent px-8 py-3 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
+            >
+              Next: Connect your assistant
+            </button>
+          </div>
+        </div>
+      )}
+
+      {setupStep === 2 && (
+        <div className="flex flex-col items-center text-center w-full animate-fade-in">
+          <FixedBackButton onClick={() => setSetupStep(1)} />
+          <AssistantConnectStep apiKey={apiKey} onDone={() => { localStorage.setItem('lifeos-setup-complete', 'true'); window.location.href = '/today'; }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Assistant connection step with multi-assistant support ─────────────
+
+type AssistantType = 'openclaw' | 'claude-code' | 'claude' | 'chatgpt' | 'codex';
+
+const ASSISTANTS: { id: AssistantType; name: string; icon: string }[] = [
+  { id: 'openclaw', name: 'OpenClaw', icon: '/openclaw-icon.png' },
+  { id: 'claude-code', name: 'Claude Code', icon: '/claude-icon.png' },
+  { id: 'claude', name: 'Claude', icon: '/claude-icon.png' },
+  { id: 'chatgpt', name: 'ChatGPT', icon: '/openai-icon.png' },
+  { id: 'codex', name: 'Codex', icon: '/openai-icon.png' },
+];
+
+function AssistantInstructions({ type, apiKey }: { type: AssistantType; apiKey: string | null }) {
+  const key = apiKey ?? 'YOUR_API_KEY';
+
+  switch (type) {
+    case 'openclaw':
+      return (
+        <div className="space-y-4">
+          <CodeBlock>openclaw skill install lifeos</CodeBlock>
+          <p className="text-xs text-text-muted/50">Then set your API key:</p>
+          <CodeBlock>{`openclaw config set skills.lifeos.apiKey ${key}`}</CodeBlock>
+        </div>
+      );
+
+    case 'claude-code':
+      return (
+        <div className="space-y-4">
+          <p className="text-xs text-text-muted/50">Add the LifeOS MCP server:</p>
+          <CodeBlock>{`claude mcp add lifeos -- npx lifeos-mcp --api-key ${key}`}</CodeBlock>
+        </div>
+      );
+
+    case 'claude':
+      return (
+        <div className="space-y-4">
+          <p className="text-xs text-text-muted/50">
+            Go to <span className="text-text/60">Settings &rarr; Integrations &rarr; Add MCP Server</span>
+          </p>
+          <CodeBlock>{`Server URL: https://mcp.lifeos.zone
+API Key: ${key}`}</CodeBlock>
+        </div>
+      );
+
+    case 'chatgpt':
+      return (
+        <div className="space-y-4">
+          <p className="text-xs text-text-muted/50">
+            Go to <span className="text-text/60">Settings &rarr; Developer Mode &rarr; Add MCP Server</span>
+          </p>
+          <CodeBlock>{`Server URL: https://mcp.lifeos.zone
+Authentication: Bearer ${key}`}</CodeBlock>
+          <p className="text-[10px] text-text-muted/30">
+            Requires ChatGPT Pro, Team, Enterprise, or Edu.
+          </p>
+        </div>
+      );
+
+    case 'codex':
+      return (
+        <div className="space-y-4">
+          <p className="text-xs text-text-muted/50">Configure via the Codex CLI:</p>
+          <CodeBlock>{`codex mcp add lifeos --url https://mcp.lifeos.zone --api-key ${key}`}</CodeBlock>
+        </div>
+      );
+  }
+}
+
+function AssistantConnectStep({ apiKey, onDone }: { apiKey: string | null; onDone: () => void }) {
+  const [selected, setSelected] = useState<Set<AssistantType>>(new Set());
+
+  function toggleAssistant(id: AssistantType) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  return (
+    <>
+      <h1 className="text-2xl font-light tracking-tight text-text">
+        Connect your <span className="font-semibold">assistant</span>
+      </h1>
+
+      <p className="mt-3 text-sm text-text-muted/60 max-w-sm">
+        Let your AI assistant read and write to your LifeOS data.
+        Select the one(s) you use.
+      </p>
+
+      <div className="mt-8 flex flex-wrap justify-center gap-2">
+        {ASSISTANTS.map((a) => (
+          <button
+            key={a.id}
+            onClick={() => toggleAssistant(a.id)}
+            className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all duration-200 ${
+              selected.has(a.id)
+                ? 'border-accent/50 bg-accent/5 text-text'
+                : 'border-border/40 text-text-muted/60 hover:border-border hover:text-text-muted'
+            }`}
+          >
+            <img src={a.icon} alt="" className="size-4 rounded-sm" />
+            {a.name}
+          </button>
+        ))}
+      </div>
+
+      {selected.size > 0 && (
+        <div className="mt-8 w-full max-w-lg space-y-8 text-left animate-fade-in">
+          {Array.from(selected).map((id) => {
+            const assistant = ASSISTANTS.find((a) => a.id === id)!;
+            return (
+              <div key={id} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <img src={assistant.icon} alt="" className="size-4 rounded-sm" />
+                  <p className="text-sm font-medium text-text">{assistant.name}</p>
+                </div>
+                <AssistantInstructions type={id} apiKey={apiKey} />
+              </div>
+            );
+          })}
+
+          <div className="pt-2">
+            <p className="text-sm font-medium text-text mb-1">Try it out</p>
+            <p className="text-xs text-text-muted/50">
+              Ask your assistant: &quot;What are my tasks for today?&quot;
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-10">
+        <button
+          onClick={onDone}
+          className="rounded-full bg-accent px-8 py-3 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
+        >
+          Enter LifeOS
+        </button>
+      </div>
+    </>
   );
 }

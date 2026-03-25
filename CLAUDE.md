@@ -2,6 +2,26 @@
 
 Personal Life Operating System -- a single-user productivity platform for managing tasks, goals, projects, journals, day plans, weekly plans, ideas, thoughts, wins, resources, reminders, and reviews. Built as a monorepo with a Convex real-time backend, a Next.js 15 dashboard, and a CLI.
 
+## Naming & Terminology
+
+Use these terms consistently across all user-facing text:
+
+| Use | Don't use |
+|-----|-----------|
+| **LifeOS home** | "dashboard" (internal/code references are fine, but never user-facing) |
+| **Life Coach** | "AI Life Coach", "AI Agent", "AI assistant" |
+| **home** (when referring to the main app) | "dashboard" |
+
+The AI agent feature is called "Life Coach" — never prefix it with "AI". Powered by OpenClaw under the hood, but users see "Life Coach".
+
+## Engineering Standards
+
+- **Obsess over quality.** No hacks, no shortcuts, no "good enough". Every decision should follow senior engineering best practices.
+- Prefer explicit user actions over implicit background effects.
+- Prefer server-side idempotency over client-side storage workarounds.
+- If a pattern feels brittle (sessionStorage, localStorage flags, useEffect side-effect chains), step back and find the proper architectural solution.
+- Ask "what happens if this runs twice?" for every side effect.
+
 ---
 
 ## Quick Start

@@ -137,7 +137,7 @@ export function SettingsClient({
   const days = user ? daysSince(user._creationTime) : 1;
   const userTz = user?.timezone || detectedTz;
   const tzCity = userTz.split('/').pop()?.replace(/_/g, ' ') || userTz;
-  const planLabels: Record<string, string> = { dashboard: 'Dashboard', byok: 'BYOK', basic: 'Basic', standard: 'Standard', premium: 'Premium' };
+  const planLabels: Record<string, string> = { dashboard: 'Home', byok: 'BYOK', basic: 'Basic', standard: 'Standard', premium: 'Premium' };
   const planLabel = subscription ? planLabels[subscription.planType] ?? 'No plan' : 'No plan';
 
   // Trial days remaining (7-day trial from subscription start)

@@ -1,8 +1,8 @@
 'use client';
 
 import { Authenticated, Unauthenticated, AuthLoading, useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
 import { api } from "@/lib/convex-api";
 import { Nav } from '@/components/nav';
 import { MainContent } from '@/components/main-content';
@@ -10,6 +10,9 @@ import { DashboardConfigProvider } from '@/lib/dashboard-config';
 import { GatewayProvider } from '@/lib/gateway';
 import { ChatWidget } from '@/components/ai-agent/chat-widget';
 import { OnboardingFlow } from '@/components/onboarding-flow';
+import { LoadingScreen } from '@/components/loading-screen';
+
+const SETUP_DONE_KEY = 'lifeos-setup-complete';
 
 function RedirectToLogin() {
   const router = useRouter();
@@ -17,26 +20,37 @@ function RedirectToLogin() {
   return null;
 }
 
-function AppShell({ children }: { children: React.ReactNode }) {
+function AppShellInner({ children }: { children: React.ReactNode }) {
   const subscription = useQuery(api.stripe.getMySubscription);
+  const searchParams = useSearchParams();
+  const [setupDone, setSetupDone] = useState<boolean | null>(null);
 
-  // Still loading
-  if (subscription === undefined) {
-    return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="text-text-muted text-sm tracking-wider uppercase animate-pulse">
-          Loading...
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const done = localStorage.getItem(SETUP_DONE_KEY) === 'true';
+    setSetupDone(done);
+  }, []);
 
-  // No subscription — show onboarding (full screen, no sidebar)
-  if (!subscription) {
+  // Mark setup as done when OnboardingFlow completes (user enters the app)
+  useEffect(() => {
+    if (setupDone === false && subscription && !searchParams.get('subscription')) {
+      // User has subscription and no ?subscription= param — they navigated here normally
+      localStorage.setItem(SETUP_DONE_KEY, 'true');
+      setSetupDone(true);
+    }
+  }, [subscription, searchParams, setupDone]);
+
+  if (subscription === undefined || setupDone === null) return <LoadingScreen />;
+
+  // No subscription — show full onboarding (plan selection)
+  if (!subscription) return <OnboardingFlow />;
+
+  // Fresh from Stripe checkout — show setup step
+  const isPostCheckout = searchParams.get('subscription') === 'success';
+  if (isPostCheckout && !setupDone) {
     return <OnboardingFlow />;
   }
 
-  // Has subscription — show normal app with sidebar
+  // Normal app
   return (
     <GatewayProvider>
       <div className="flex w-full min-h-screen">
@@ -48,15 +62,19 @@ function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <AppShellInner>{children}</AppShellInner>
+    </Suspense>
+  );
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <AuthLoading>
-        <div className="min-h-screen bg-bg flex items-center justify-center">
-          <div className="text-text-muted text-sm tracking-wider uppercase animate-pulse">
-            Loading...
-          </div>
-        </div>
+        <LoadingScreen />
       </AuthLoading>
 
       <Unauthenticated>

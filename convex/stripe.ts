@@ -234,7 +234,7 @@ export const getMySubscription = query({
     const sub = await ctx.db
       .query("subscriptions")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
+      .order("desc").first();
     if (!sub) return null;
 
     // Read currentPeriodEnd from the @convex-dev/stripe component
@@ -283,7 +283,7 @@ export const getSubscriptionInternal = internalQuery({
     const sub = await ctx.db
       .query("subscriptions")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
+      .order("desc").first();
     if (!sub) return null;
     return {
       _id: sub._id,
@@ -436,7 +436,7 @@ export const grantFreeBasicMonth = internalMutation({
     const existing = await ctx.db
       .query("subscriptions")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
+      .order("desc").first();
     if (existing && existing.status === "active") {
       throw new Error("User already has an active subscription");
     }

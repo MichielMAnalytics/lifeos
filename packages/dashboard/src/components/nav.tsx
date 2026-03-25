@@ -342,7 +342,7 @@ export function Nav() {
 }
 
 const PLAN_LABELS: Record<string, string> = {
-  dashboard: 'Dashboard',
+  dashboard: 'Home',
   byok: 'BYOK',
   basic: 'Basic',
   standard: 'Standard',

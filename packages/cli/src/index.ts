@@ -42,7 +42,7 @@ program
       }
 
       const u = res.data;
-      console.log(`ID:        ${u.id}`);
+      console.log(`ID:        ${u._id ?? u.id}`);
       console.log(`Email:     ${u.email}`);
       console.log(`Name:      ${u.name ?? '-'}`);
       console.log(`Timezone:  ${u.timezone}`);
