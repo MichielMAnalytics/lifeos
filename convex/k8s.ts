@@ -817,10 +817,7 @@ export async function createIngress(
         "kubernetes.io/ingress.class": "nginx",
         "nginx.ingress.kubernetes.io/proxy-read-timeout": "3600",
         "nginx.ingress.kubernetes.io/proxy-send-timeout": "3600",
-        "nginx.ingress.kubernetes.io/auth-url": `http://${serverEnv.AI_GATEWAY_K8S_SERVICE}.lifeos-system.svc.cluster.local/auth/verify`,
-        "nginx.ingress.kubernetes.io/auth-signin": `https://gw-${serverEnv.AI_GATEWAY_K8S_SERVICE.replace("ai-gateway-", "")}.${domain}/auth/login?rd=$scheme://$host$request_uri`,
-        "nginx.ingress.kubernetes.io/auth-response-headers": "X-Auth-Request-Email",
-        "nginx.ingress.kubernetes.io/auth-always-set-cookie": "true",
+        // Auth handled by OpenClaw gateway token — no nginx auth layer needed
         // Inject a script that restores the gateway token from localStorage into
         // the URL hash on every page load. OpenClaw reads the token from the hash
         // on startup but then strips it via history.replaceState, so without this

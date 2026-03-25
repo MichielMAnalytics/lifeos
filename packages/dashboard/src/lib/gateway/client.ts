@@ -16,6 +16,7 @@ export class GatewayClient {
   private reconnectAttempt = 0;
   private maxReconnectDelay = 30000;
   private disposed = false;
+  private authenticated = false;
 
   constructor(url: string, token: string) {
     this.url = url;
@@ -30,32 +31,76 @@ export class GatewayClient {
     if (this.disposed) return;
     if (this.ws) return;
     this.setState('connecting');
+    this.authenticated = false;
 
-    const wsUrl = `${this.url.replace(/^http/, 'ws')}/ws?token=${encodeURIComponent(this.token)}`;
+    // Connect to the gateway WebSocket — no path suffix, auth happens after open
+    const wsUrl = this.url.replace(/^http/, 'ws');
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
       this.reconnectAttempt = 0;
-      this.setState('connected');
+      // Send OpenClaw connect message with token auth
+      this.ws!.send(JSON.stringify({
+        type: 'connect',
+        params: {
+          minProtocol: 3,
+          maxProtocol: 3,
+          client: {
+            id: 'lifeos-dashboard',
+            version: '1.0',
+            platform: 'web',
+            mode: 'webchat',
+          },
+          role: 'operator',
+          scopes: ['chat', 'sessions', 'config', 'channels', 'cron', 'skills'],
+          caps: ['tool-events'],
+          auth: { token: this.token },
+        },
+      }));
     };
 
     this.ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
+
+        // Handle connect response
+        if (msg.type === 'connected') {
+          this.authenticated = true;
+          this.setState('connected');
+          return;
+        }
+
+        // Handle connect error
+        if (msg.type === 'error' && !this.authenticated) {
+          this.setState('error');
+          this.ws?.close();
+          return;
+        }
+
+        // RPC response
         if (msg.id && this.pending.has(msg.id)) {
-          // RPC response
           const { resolve, reject } = this.pending.get(msg.id)!;
           this.pending.delete(msg.id);
-          if (msg.ok) resolve(msg.result);
-          else reject(new Error(msg.error?.message ?? 'Unknown error'));
-        } else if (msg.event) {
-          // Event push
+          if (msg.ok !== false && !msg.error) resolve(msg.result ?? msg.data);
+          else reject(new Error(msg.error?.message ?? msg.error ?? 'Unknown error'));
+          return;
+        }
+
+        // Event push
+        if (msg.event) {
           const handlers = this.eventHandlers.get(msg.event);
           if (handlers) handlers.forEach((h) => h(msg.data));
-          // Also notify wildcard '*' handlers
           const wildcardHandlers = this.eventHandlers.get('*');
           if (wildcardHandlers)
             wildcardHandlers.forEach((h) => h({ event: msg.event, data: msg.data }));
+          return;
+        }
+
+        // Stream chunks (for chat streaming)
+        if (msg.type === 'chunk' || msg.type === 'message' || msg.type === 'done' || msg.type === 'stream') {
+          const handlers = this.eventHandlers.get('chat');
+          if (handlers) handlers.forEach((h) => h(msg));
+          return;
         }
       } catch {
         /* ignore parse errors */
@@ -64,7 +109,7 @@ export class GatewayClient {
 
     this.ws.onclose = () => {
       this.ws = null;
-      // Reject all pending requests
+      this.authenticated = false;
       for (const [, { reject }] of this.pending) {
         reject(new Error('Connection closed'));
       }
@@ -82,7 +127,7 @@ export class GatewayClient {
   }
 
   async call<T = unknown>(method: string, params?: Record<string, unknown>): Promise<T> {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.authenticated) {
       throw new Error('Not connected');
     }
     const id = String(++this.requestId);
@@ -92,7 +137,6 @@ export class GatewayClient {
         reject,
       });
       this.ws!.send(JSON.stringify({ id, method, params: params ?? {} }));
-      // Timeout after 30s
       setTimeout(() => {
         if (this.pending.has(id)) {
           this.pending.delete(id);
@@ -127,6 +171,7 @@ export class GatewayClient {
       this.ws.close();
       this.ws = null;
     }
+    this.authenticated = false;
     this.setState('disconnected');
   }
 
