@@ -60,7 +60,7 @@ planCommand
   .action(async () => {
     try {
       const client = createClient();
-      const res = await client.get<ApiResponse<DayPlan>>(`/api/v1/plans/${todayStr()}`);
+      const res = await client.get<ApiResponse<DayPlan>>(`/api/v1/day-plans/${todayStr()}`);
 
       if (isJsonMode()) {
         printJson(res);
@@ -80,7 +80,7 @@ planCommand
   .action(async () => {
     try {
       const client = createClient();
-      const res = await client.get<ApiResponse<DayPlan>>(`/api/v1/plans/${tomorrowStr()}`);
+      const res = await client.get<ApiResponse<DayPlan>>(`/api/v1/day-plans/${tomorrowStr()}`);
 
       if (isJsonMode()) {
         printJson(res);
@@ -110,7 +110,7 @@ planCommand
       if (opts.p1) body.p1TaskId = opts.p1;
       if (opts.p2) body.p2TaskId = opts.p2;
 
-      const res = await client.put<ApiResponse<DayPlan>>(`/api/v1/plans/${date}`, body);
+      const res = await client.put<ApiResponse<DayPlan>>(`/api/v1/day-plans/${date}`, body);
 
       if (isJsonMode()) {
         printJson(res);
@@ -130,7 +130,7 @@ planCommand
   .action(async () => {
     try {
       const client = createClient();
-      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/plans/${todayStr()}`, { mitDone: true });
+      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/day-plans/${todayStr()}`, { mitDone: true });
 
       if (isJsonMode()) {
         printJson(res);
@@ -150,7 +150,7 @@ planCommand
   .action(async () => {
     try {
       const client = createClient();
-      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/plans/${todayStr()}`, { p1Done: true });
+      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/day-plans/${todayStr()}`, { p1Done: true });
 
       if (isJsonMode()) {
         printJson(res);
@@ -170,7 +170,7 @@ planCommand
   .action(async () => {
     try {
       const client = createClient();
-      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/plans/${todayStr()}`, { p2Done: true });
+      const res = await client.patch<ApiResponse<DayPlan>>(`/api/v1/day-plans/${todayStr()}`, { p2Done: true });
 
       if (isJsonMode()) {
         printJson(res);

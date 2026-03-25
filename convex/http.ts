@@ -66,6 +66,43 @@ async function parseBody<T = Record<string, unknown>>(request: Request): Promise
   }
 }
 
+/**
+ * Resolve a potentially-truncated entity ID to its full Convex ID.
+ * Full Convex IDs are 32 chars; anything shorter is treated as a prefix
+ * and matched against the user's records in the given table.
+ */
+type ResolvableTable =
+  | "tasks" | "goals" | "projects" | "reminders"
+  | "reviews" | "resources" | "ideas" | "thoughts" | "apiKeys";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const RESOLVER_MAP: Record<ResolvableTable, any> = {
+  tasks: internal.resolveId.resolveTask,
+  goals: internal.resolveId.resolveGoal,
+  projects: internal.resolveId.resolveProject,
+  reminders: internal.resolveId.resolveReminder,
+  reviews: internal.resolveId.resolveReview,
+  resources: internal.resolveId.resolveResource,
+  ideas: internal.resolveId.resolveIdea,
+  thoughts: internal.resolveId.resolveThought,
+  apiKeys: internal.resolveId.resolveApiKey,
+};
+
+async function resolveEntityId<T extends ResolvableTable>(
+  ctx: { runQuery: (...args: [ref: any, args: any]) => Promise<any> },
+  userId: Id<"users">,
+  table: T,
+  rawId: string,
+): Promise<Id<T> | null> {
+  // Full Convex IDs are 32 characters; treat shorter strings as prefixes
+  if (rawId.length >= 32) {
+    return rawId as Id<T>;
+  }
+  const resolver = RESOLVER_MAP[table];
+  const result = await ctx.runQuery(resolver, { userId, prefix: rawId });
+  return result as Id<T> | null;
+}
+
 // ── HTTP Router ──────────────────────────────────────
 
 const http = httpRouter();
@@ -182,12 +219,26 @@ http.route({
     const url = new URL(request.url);
     const projectIdParam = url.searchParams.get("projectId");
     const goalIdParam = url.searchParams.get("goalId");
+
+    let resolvedProjectId: Id<"projects"> | undefined;
+    if (projectIdParam) {
+      const pid = await resolveEntityId(ctx, userId, "projects", projectIdParam);
+      if (!pid) return err("Project not found", 404);
+      resolvedProjectId = pid;
+    }
+    let resolvedGoalId: Id<"goals"> | undefined;
+    if (goalIdParam) {
+      const gid = await resolveEntityId(ctx, userId, "goals", goalIdParam);
+      if (!gid) return err("Goal not found", 404);
+      resolvedGoalId = gid;
+    }
+
     const result = await ctx.runQuery(internal.tasks._list, {
       userId,
       status: url.searchParams.get("status") ?? undefined,
       due: url.searchParams.get("due") ?? undefined,
-      ...(projectIdParam ? { projectId: projectIdParam as Id<"projects"> } : {}),
-      ...(goalIdParam ? { goalId: goalIdParam as Id<"goals"> } : {}),
+      ...(resolvedProjectId ? { projectId: resolvedProjectId } : {}),
+      ...(resolvedGoalId ? { goalId: resolvedGoalId } : {}),
     });
     return json(result);
   }),
@@ -200,13 +251,30 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const body = await parseBody(request);
+
+    // Resolve goalId and projectId if present (may be truncated)
+    let resolvedGoalId: Id<"goals"> | undefined;
+    const rawGoalId = (body.goalId ?? body.goal_id) as string | undefined;
+    if (rawGoalId) {
+      const gid = await resolveEntityId(ctx, userId, "goals", rawGoalId);
+      if (!gid) return err("Goal not found", 404);
+      resolvedGoalId = gid;
+    }
+    let resolvedProjectId: Id<"projects"> | undefined;
+    const rawProjectId = (body.projectId ?? body.project_id) as string | undefined;
+    if (rawProjectId) {
+      const pid = await resolveEntityId(ctx, userId, "projects", rawProjectId);
+      if (!pid) return err("Project not found", 404);
+      resolvedProjectId = pid;
+    }
+
     const task = await ctx.runMutation(internal.tasks._create, {
       userId,
       title: body.title as string,
       notes: (body.notes ?? undefined) as string | undefined,
       dueDate: ((body.dueDate ?? body.due_date) ?? undefined) as string | undefined,
-      projectId: ((body.projectId ?? body.project_id) ?? undefined) as Id<"projects"> | undefined,
-      goalId: ((body.goalId ?? body.goal_id) ?? undefined) as Id<"goals"> | undefined,
+      projectId: resolvedProjectId,
+      goalId: resolvedGoalId,
     });
     return json({ data: task }, 201);
   }),
@@ -227,9 +295,11 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/tasks");
-    if (!id) return err("Missing task id", 400);
-    const task = await ctx.runQuery(internal.tasks._get, { userId, id: id as Id<"tasks"> });
+    const rawId = extractId(url, "/api/v1/tasks");
+    if (!rawId) return err("Missing task id", 400);
+    const id = await resolveEntityId(ctx, userId, "tasks", rawId);
+    if (!id) return err("Task not found", 404);
+    const task = await ctx.runQuery(internal.tasks._get, { userId, id });
     if (!task) return err("Task not found", 404);
     return json({ data: task });
   }),
@@ -242,19 +312,38 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/tasks");
-    if (!id) return err("Missing task id", 400);
+    const rawId = extractId(url, "/api/v1/tasks");
+    if (!rawId) return err("Missing task id", 400);
+    const id = await resolveEntityId(ctx, userId, "tasks", rawId);
+    if (!id) return err("Task not found", 404);
     const body = await parseBody(request);
+
+    // Resolve goalId and projectId if present (may be truncated)
+    let resolvedGoalId: Id<"goals"> | undefined;
+    const rawGoalId = (body.goalId ?? body.goal_id) as string | undefined;
+    if (rawGoalId) {
+      const gid = await resolveEntityId(ctx, userId, "goals", rawGoalId);
+      if (!gid) return err("Goal not found", 404);
+      resolvedGoalId = gid;
+    }
+    let resolvedProjectId: Id<"projects"> | undefined;
+    const rawProjectId = (body.projectId ?? body.project_id) as string | undefined;
+    if (rawProjectId) {
+      const pid = await resolveEntityId(ctx, userId, "projects", rawProjectId);
+      if (!pid) return err("Project not found", 404);
+      resolvedProjectId = pid;
+    }
+
     try {
       const task = await ctx.runMutation(internal.tasks._update, {
         userId,
-        id: id as Id<"tasks">,
+        id,
         title: (body.title ?? undefined) as string | undefined,
         notes: (body.notes ?? undefined) as string | undefined,
         dueDate: ((body.dueDate ?? body.due_date) ?? undefined) as string | undefined,
         status: (body.status ?? undefined) as string | undefined,
-        projectId: ((body.projectId ?? body.project_id) ?? undefined) as Id<"projects"> | undefined,
-        goalId: ((body.goalId ?? body.goal_id) ?? undefined) as Id<"goals"> | undefined,
+        projectId: resolvedProjectId,
+        goalId: resolvedGoalId,
         position: (body.position ?? undefined) as number | undefined,
       });
       return json({ data: task });
@@ -272,12 +361,14 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/tasks");
-    if (!id) return err("Missing task id", 400);
+    const rawId = extractId(url, "/api/v1/tasks");
+    if (!rawId) return err("Missing task id", 400);
+    const id = await resolveEntityId(ctx, userId, "tasks", rawId);
+    if (!id) return err("Task not found", 404);
     try {
       const result = await ctx.runMutation(internal.tasks._remove, {
         userId,
-        id: id as Id<"tasks">,
+        id,
       });
       return json({ data: result });
     } catch (e: unknown) {
@@ -294,25 +385,34 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/tasks");
+    const rawId = extractId(url, "/api/v1/tasks");
 
     // POST /api/v1/tasks/bulk-complete
-    if (id === "bulk-complete") {
+    if (rawId === "bulk-complete") {
       const body = await parseBody(request);
+      const rawIds = body.ids as string[];
+      const resolvedIds: Id<"tasks">[] = [];
+      for (const rid of rawIds) {
+        const resolved = await resolveEntityId(ctx, userId, "tasks", rid);
+        if (!resolved) return err(`Task not found: ${rid}`, 404);
+        resolvedIds.push(resolved);
+      }
       const result = await ctx.runMutation(internal.tasks._bulkComplete, {
         userId,
-        ids: body.ids as Id<"tasks">[],
+        ids: resolvedIds,
       });
       return json({ data: result });
     }
 
     // POST /api/v1/tasks/:id/complete
     const action = extractAction(url, "/api/v1/tasks");
-    if (action === "complete" && id) {
+    if (action === "complete" && rawId) {
+      const id = await resolveEntityId(ctx, userId, "tasks", rawId);
+      if (!id) return err("Task not found", 404);
       try {
         const task = await ctx.runMutation(internal.tasks._complete, {
           userId,
-          id: id as Id<"tasks">,
+          id,
         });
         return json({ data: task });
       } catch (e: unknown) {
@@ -380,9 +480,11 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/projects");
-    if (!id) return err("Missing project id", 400);
-    const project = await ctx.runQuery(internal.projects._get, { userId, id: id as Id<"projects"> });
+    const rawId = extractId(url, "/api/v1/projects");
+    if (!rawId) return err("Missing project id", 400);
+    const id = await resolveEntityId(ctx, userId, "projects", rawId);
+    if (!id) return err("Project not found", 404);
+    const project = await ctx.runQuery(internal.projects._get, { userId, id });
     if (!project) return err("Project not found", 404);
     return json({ data: project });
   }),
@@ -395,13 +497,15 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/projects");
-    if (!id) return err("Missing project id", 400);
+    const rawId = extractId(url, "/api/v1/projects");
+    if (!rawId) return err("Missing project id", 400);
+    const id = await resolveEntityId(ctx, userId, "projects", rawId);
+    if (!id) return err("Project not found", 404);
     const body = await parseBody(request);
     try {
       const project = await ctx.runMutation(internal.projects._update, {
         userId,
-        id: id as Id<"projects">,
+        id,
         title: (body.title ?? undefined) as string | undefined,
         description: (body.description ?? undefined) as string | undefined,
         status: (body.status ?? undefined) as string | undefined,
@@ -421,12 +525,14 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/projects");
-    if (!id) return err("Missing project id", 400);
+    const rawId = extractId(url, "/api/v1/projects");
+    if (!rawId) return err("Missing project id", 400);
+    const id = await resolveEntityId(ctx, userId, "projects", rawId);
+    if (!id) return err("Project not found", 404);
     try {
       const result = await ctx.runMutation(internal.projects._remove, {
         userId,
-        id: id as Id<"projects">,
+        id,
       });
       return json({ data: result });
     } catch (e: unknown) {
@@ -494,21 +600,23 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/goals");
-    if (!id) return err("Missing goal id", 400);
+    const rawId = extractId(url, "/api/v1/goals");
+    if (!rawId) return err("Missing goal id", 400);
+    const id = await resolveEntityId(ctx, userId, "goals", rawId);
+    if (!id) return err("Goal not found", 404);
 
     // Check for /goals/:id/health
     const action = extractAction(url, "/api/v1/goals");
     if (action === "health") {
       const health = await ctx.runQuery(internal.goals._health, {
         userId,
-        id: id as Id<"goals">,
+        id,
       });
       if (!health) return err("Goal not found", 404);
       return json({ data: health });
     }
 
-    const goal = await ctx.runQuery(internal.goals._get, { userId, id: id as Id<"goals"> });
+    const goal = await ctx.runQuery(internal.goals._get, { userId, id });
     if (!goal) return err("Goal not found", 404);
     return json({ data: goal });
   }),
@@ -521,13 +629,15 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/goals");
-    if (!id) return err("Missing goal id", 400);
+    const rawId = extractId(url, "/api/v1/goals");
+    if (!rawId) return err("Missing goal id", 400);
+    const id = await resolveEntityId(ctx, userId, "goals", rawId);
+    if (!id) return err("Goal not found", 404);
     const body = await parseBody(request);
     try {
       const goal = await ctx.runMutation(internal.goals._update, {
         userId,
-        id: id as Id<"goals">,
+        id,
         title: (body.title ?? undefined) as string | undefined,
         description: (body.description ?? undefined) as string | undefined,
         status: (body.status ?? undefined) as string | undefined,
@@ -549,12 +659,14 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/goals");
-    if (!id) return err("Missing goal id", 400);
+    const rawId = extractId(url, "/api/v1/goals");
+    if (!rawId) return err("Missing goal id", 400);
+    const id = await resolveEntityId(ctx, userId, "goals", rawId);
+    if (!id) return err("Goal not found", 404);
     try {
       const result = await ctx.runMutation(internal.goals._remove, {
         userId,
-        id: id as Id<"goals">,
+        id,
       });
       return json({ data: result });
     } catch (e: unknown) {
@@ -675,10 +787,35 @@ http.route({
     const date = extractId(url, "/api/v1/day-plans");
     if (!date) return err("Missing date", 400);
     const body = await parseBody(request);
+
+    // Resolve task IDs if present (may be truncated)
+    const resolved: Record<string, unknown> = { ...body };
+    const rawMit = (body.mitTaskId ?? body.mit_task_id) as string | undefined;
+    if (rawMit) {
+      const tid = await resolveEntityId(ctx, userId, "tasks", rawMit);
+      if (!tid) return err("MIT task not found", 404);
+      resolved.mitTaskId = tid;
+      delete resolved.mit_task_id;
+    }
+    const rawP1 = (body.p1TaskId ?? body.p1_task_id) as string | undefined;
+    if (rawP1) {
+      const tid = await resolveEntityId(ctx, userId, "tasks", rawP1);
+      if (!tid) return err("P1 task not found", 404);
+      resolved.p1TaskId = tid;
+      delete resolved.p1_task_id;
+    }
+    const rawP2 = (body.p2TaskId ?? body.p2_task_id) as string | undefined;
+    if (rawP2) {
+      const tid = await resolveEntityId(ctx, userId, "tasks", rawP2);
+      if (!tid) return err("P2 task not found", 404);
+      resolved.p2TaskId = tid;
+      delete resolved.p2_task_id;
+    }
+
     const result = await ctx.runMutation(internal.dayPlans._upsert, {
       userId,
       planDate: date,
-      ...body,
+      ...resolved,
     });
     return json({ data: result });
   }),
@@ -777,6 +914,32 @@ http.route({
   }),
 });
 
+http.route({
+  pathPrefix: "/api/v1/weekly-plans/",
+  method: "PATCH",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const weekStart = extractId(url, "/api/v1/weekly-plans");
+    if (!weekStart) return err("Missing week_start", 400);
+    const body = await parseBody(request);
+    try {
+      const result = await ctx.runMutation(internal.weeklyPlans._upsert, {
+        userId,
+        weekStart,
+        theme: (body.theme ?? undefined) as string | undefined,
+        goals: (body.goals ?? undefined) as Array<{ title: string; status?: string; goalId?: string }> | undefined,
+        reviewScore: (body.reviewScore ?? body.review_score ?? undefined) as number | undefined,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 404);
+    }
+  }),
+});
+
 // ════════════════════════════════════════════════════════
 // IDEAS
 // ════════════════════════════════════════════════════════
@@ -832,13 +995,15 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/ideas");
-    if (!id) return err("Missing idea id", 400);
+    const rawId = extractId(url, "/api/v1/ideas");
+    if (!rawId) return err("Missing idea id", 400);
+    const id = await resolveEntityId(ctx, userId, "ideas", rawId);
+    if (!id) return err("Idea not found", 404);
     const body = await parseBody(request);
     try {
       const idea = await ctx.runMutation(internal.ideas._update, {
         userId,
-        id: id as Id<"ideas">,
+        id,
         content: (body.content ?? undefined) as string | undefined,
         actionability: (body.actionability ?? undefined) as string | undefined,
         nextStep: ((body.nextStep ?? body.next_step) ?? undefined) as string | undefined,
@@ -858,12 +1023,14 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/ideas");
-    if (!id) return err("Missing idea id", 400);
+    const rawId = extractId(url, "/api/v1/ideas");
+    if (!rawId) return err("Missing idea id", 400);
+    const id = await resolveEntityId(ctx, userId, "ideas", rawId);
+    if (!id) return err("Idea not found", 404);
     try {
       const result = await ctx.runMutation(internal.ideas._remove, {
         userId,
-        id: id as Id<"ideas">,
+        id,
       });
       return json({ data: result });
     } catch (e: unknown) {
@@ -880,15 +1047,17 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/ideas");
+    const rawId = extractId(url, "/api/v1/ideas");
     const action = extractAction(url, "/api/v1/ideas");
 
-    if (action === "promote" && id) {
+    if (action === "promote" && rawId) {
+      const id = await resolveEntityId(ctx, userId, "ideas", rawId);
+      if (!id) return err("Idea not found", 404);
       const body = await parseBody(request);
       try {
         const result = await ctx.runMutation(internal.ideas._promote, {
           userId,
-          id: id as Id<"ideas">,
+          id,
           projectTitle: ((body.projectTitle ?? body.project_title) as string),
         });
         return json({ data: result }, 201);
@@ -952,12 +1121,14 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/thoughts");
-    if (!id) return err("Missing thought id", 400);
+    const rawId = extractId(url, "/api/v1/thoughts");
+    if (!rawId) return err("Missing thought id", 400);
+    const id = await resolveEntityId(ctx, userId, "thoughts", rawId);
+    if (!id) return err("Thought not found", 404);
     try {
       const result = await ctx.runMutation(internal.thoughts._remove, {
         userId,
-        id: id as Id<"thoughts">,
+        id,
       });
       return json({ data: result });
     } catch (e: unknown) {
@@ -1065,13 +1236,15 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/resources");
-    if (!id) return err("Missing resource id", 400);
+    const rawId = extractId(url, "/api/v1/resources");
+    if (!rawId) return err("Missing resource id", 400);
+    const id = await resolveEntityId(ctx, userId, "resources", rawId);
+    if (!id) return err("Resource not found", 404);
     const body = await parseBody(request);
     try {
       const resource = await ctx.runMutation(internal.resources._update, {
         userId,
-        id: id as Id<"resources">,
+        id,
         title: (body.title ?? undefined) as string | undefined,
         url: (body.url ?? undefined) as string | undefined,
         content: (body.content ?? undefined) as string | undefined,
@@ -1092,12 +1265,14 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/resources");
-    if (!id) return err("Missing resource id", 400);
+    const rawId = extractId(url, "/api/v1/resources");
+    if (!rawId) return err("Missing resource id", 400);
+    const id = await resolveEntityId(ctx, userId, "resources", rawId);
+    if (!id) return err("Resource not found", 404);
     try {
       const result = await ctx.runMutation(internal.resources._remove, {
         userId,
-        id: id as Id<"resources">,
+        id,
       });
       return json({ data: result });
     } catch (e: unknown) {
@@ -1164,9 +1339,11 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/reviews");
-    if (!id) return err("Missing review id", 400);
-    const review = await ctx.runQuery(internal.reviews._get, { userId, id: id as Id<"reviews"> });
+    const rawId = extractId(url, "/api/v1/reviews");
+    if (!rawId) return err("Missing review id", 400);
+    const id = await resolveEntityId(ctx, userId, "reviews", rawId);
+    if (!id) return err("Review not found", 404);
+    const review = await ctx.runQuery(internal.reviews._get, { userId, id });
     if (!review) return err("Review not found", 404);
     return json({ data: review });
   }),
@@ -1227,13 +1404,15 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/reminders");
-    if (!id) return err("Missing reminder id", 400);
+    const rawId = extractId(url, "/api/v1/reminders");
+    if (!rawId) return err("Missing reminder id", 400);
+    const id = await resolveEntityId(ctx, userId, "reminders", rawId);
+    if (!id) return err("Reminder not found", 404);
     const body = await parseBody(request);
     try {
       const reminder = await ctx.runMutation(internal.reminders._update, {
         userId,
-        id: id as Id<"reminders">,
+        id,
         title: (body.title ?? undefined) as string | undefined,
         body: (body.body ?? undefined) as string | undefined,
         scheduledAt: ((body.scheduledAt ?? body.scheduled_at) ?? undefined) as number | undefined,
@@ -1254,12 +1433,14 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/reminders");
-    if (!id) return err("Missing reminder id", 400);
+    const rawId = extractId(url, "/api/v1/reminders");
+    if (!rawId) return err("Missing reminder id", 400);
+    const id = await resolveEntityId(ctx, userId, "reminders", rawId);
+    if (!id) return err("Reminder not found", 404);
     try {
       const result = await ctx.runMutation(internal.reminders._remove, {
         userId,
-        id: id as Id<"reminders">,
+        id,
       });
       return json({ data: result });
     } catch (e: unknown) {
@@ -1276,15 +1457,17 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const id = extractId(url, "/api/v1/reminders");
+    const rawId = extractId(url, "/api/v1/reminders");
     const action = extractAction(url, "/api/v1/reminders");
 
-    if (action === "snooze" && id) {
+    if (action === "snooze" && rawId) {
+      const id = await resolveEntityId(ctx, userId, "reminders", rawId);
+      if (!id) return err("Reminder not found", 404);
       const body = await parseBody(request);
       try {
         const result = await ctx.runMutation(internal.reminders._snooze, {
           userId,
-          id: id as Id<"reminders">,
+          id,
           minutes: body.minutes as number,
         });
         return json({ data: result });
@@ -1294,11 +1477,13 @@ http.route({
       }
     }
 
-    if (action === "done" && id) {
+    if (action === "done" && rawId) {
+      const id = await resolveEntityId(ctx, userId, "reminders", rawId);
+      if (!id) return err("Reminder not found", 404);
       try {
         const result = await ctx.runMutation(internal.reminders._markDone, {
           userId,
-          id: id as Id<"reminders">,
+          id,
         });
         return json({ data: result });
       } catch (e: unknown) {
@@ -1700,12 +1885,14 @@ http.route({
     const userId = await authenticate(ctx, request);
     if (!userId) return err("Unauthorized", 401);
     const url = new URL(request.url);
-    const keyId = extractId(url, "/api/v1/auth/api-keys");
-    if (!keyId) return err("Missing key id", 400);
+    const rawKeyId = extractId(url, "/api/v1/auth/api-keys");
+    if (!rawKeyId) return err("Missing key id", 400);
+    const keyId = await resolveEntityId(ctx, userId, "apiKeys", rawKeyId);
+    if (!keyId) return err("API key not found", 404);
     try {
       const result = await ctx.runMutation(internal.authHelpers._deleteApiKey, {
         userId,
-        keyId: keyId as Id<"apiKeys">,
+        keyId,
       });
       return json({ data: result });
     } catch (e: unknown) {

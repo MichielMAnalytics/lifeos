@@ -1,6 +1,6 @@
 {
   "name": "lifeos-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "LifeOS CLI — manage your life operating system from the terminal",
   "type": "module",
   "license": "MIT",
@@ -19,8 +19,16 @@
   },
   "files": [
     "dist/lifeos.mjs",
-    "scripts/postinstall.mjs"
+    "scripts/postinstall.mjs",
+    "logo.svg",
+    "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MichielMAnalytics/lifeos.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/MichielMAnalytics/lifeos#readme",
   "scripts": {
     "build": "bun run scripts/build.ts",
     "dev": "bun run src/index.ts",

@@ -33,6 +33,7 @@ import type * as modelProxy from "../modelProxy.js";
 import type * as mutationLog from "../mutationLog.js";
 import type * as projects from "../projects.js";
 import type * as reminders from "../reminders.js";
+import type * as resolveId from "../resolveId.js";
 import type * as resources from "../resources.js";
 import type * as reviews from "../reviews.js";
 import type * as search from "../search.js";
@@ -77,6 +78,7 @@ declare const fullApi: ApiFromModules<{
   mutationLog: typeof mutationLog;
   projects: typeof projects;
   reminders: typeof reminders;
+  resolveId: typeof resolveId;
   resources: typeof resources;
   reviews: typeof reviews;
   search: typeof search;
