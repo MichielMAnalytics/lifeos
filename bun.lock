@@ -50,16 +50,16 @@
     },
     "packages/cli": {
       "name": "lifeos-cli",
-      "version": "0.1.0",
+      "version": "0.3.0",
       "bin": {
-        "lifeos": "dist/index.js",
+        "lifeos": "dist/lifeos.mjs",
       },
       "dependencies": {
-        "@lifeos/shared": "workspace:*",
         "chalk": "^5.4.0",
         "commander": "^13.0.0",
       },
       "devDependencies": {
+        "@lifeos/shared": "workspace:*",
         "@types/node": "^22.0.0",
         "tsx": "^4.19.0",
         "typescript": "^5.7.0",
