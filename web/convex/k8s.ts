@@ -447,6 +447,8 @@ fs.writeFileSync(cf, JSON.stringify(c));
                   ].join(" && ")
                   + ` && node --disable-warning=ExperimentalWarning openclaw.mjs gateway --allow-unconfigured --bind lan &`
                   + ` until curl -sf http://127.0.0.1:18789 >/dev/null 2>&1; do sleep 0.5; done`
+                  + ` && node openclaw.mjs config set gateway.controlUi.allowedOrigins '["http://localhost:4101","https://lifeos.zone"]' 2>/dev/null || true`
+                  + ` && node openclaw.mjs config set gateway.controlUi.dangerouslyDisableDeviceAuth true 2>/dev/null || true`
                   + ` && exec node /app/file-server.mjs`;
                 })(),
               ],

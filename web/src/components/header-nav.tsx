@@ -1,15 +1,19 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery, useAction } from 'convex/react';
+import { useAuthActions } from '@convex-dev/auth/react';
+import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
-import { LogoHorizontal } from './theme-logo';
+import { LogoMark } from './theme-logo';
 import { NAV_MARKS } from './nav-marks';
 import { SearchTrigger } from './search-modal';
 
 const allPages: Record<string, { label: string }> = {
+  'life-coach': { label: 'Life Coach' },
   today: { label: 'Today' },
   tasks: { label: 'Tasks' },
   projects: { label: 'Projects' },
@@ -136,7 +140,7 @@ export function HeaderNav() {
       <div className="flex h-14 items-center px-6 gap-1">
         {/* Logo */}
         <Link href="/today" className="mr-6 shrink-0 flex items-center">
-          <LogoHorizontal height={48} />
+          <LogoMark size={28} />
         </Link>
 
         {/* Nav links */}
@@ -171,7 +175,7 @@ export function HeaderNav() {
                 <Link
                   href={href}
                   className={cn(
-                    'px-3 py-1.5 text-sm transition-colors rounded whitespace-nowrap',
+                    'px-2.5 py-1.5 text-xs transition-colors rounded whitespace-nowrap',
                     isHidden && 'opacity-40 line-through decoration-1',
                     isActive
                       ? 'text-text bg-surface'
@@ -179,6 +183,17 @@ export function HeaderNav() {
                   )}
                 >
                   {(() => {
+                    if (key === 'life-coach') {
+                      return (
+                        <span className="flex items-center gap-1.5 group/lc relative">
+                          <img src="/openclaw-icon.png" alt="Life Coach" className="shrink-0 size-4 rounded-sm" />
+                          {page.label}
+                          <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 hidden group-hover/lc:block bg-surface border border-border rounded px-2 py-1 text-[10px] text-text-muted whitespace-nowrap shadow-lg pointer-events-auto">
+                            Powered by <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://openclaw.ai/', '_blank'); }} className="text-accent hover:underline cursor-pointer">OpenClaw</span>
+                          </span>
+                        </span>
+                      );
+                    }
                     const Mark = NAV_MARKS[key];
                     return (
                       <span className="flex items-center gap-1.5">
@@ -209,30 +224,13 @@ export function HeaderNav() {
           })}
         </nav>
 
-        {/* Right side: search + configure + settings */}
+        {/* Right side: search + profile */}
         <div className="flex items-center gap-1 shrink-0 ml-2">
           <SearchTrigger
             variant="icon"
             className="px-2 py-1.5"
           />
-          <button
-            onClick={toggleConfigMode}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 text-xs uppercase tracking-wider transition-colors rounded border',
-              isConfigMode
-                ? 'border-text text-text bg-surface font-bold'
-                : 'border-border text-text-muted hover:text-text hover:border-text/40',
-            )}
-          >
-            <GearIcon size={12} />
-            {isConfigMode ? 'Done' : 'Configure'}
-          </button>
-          <Link
-            href="/settings"
-            className="px-3 py-1.5 text-sm text-text-muted hover:text-text transition-colors"
-          >
-            Settings
-          </Link>
+          <HeaderProfileMenu toggleConfigMode={toggleConfigMode} isConfigMode={isConfigMode} />
         </div>
       </div>
 
@@ -279,5 +277,177 @@ export function HeaderNav() {
         </div>
       )}
     </header>
+  );
+}
+
+/* ── Header profile dropdown ──────────────────────────────── */
+
+const PLAN_LABELS: Record<string, string> = {
+  dashboard: 'Home',
+  byok: 'BYOK',
+  basic: 'Basic',
+  standard: 'Standard',
+  premium: 'Premium',
+};
+
+function HeaderProfileMenu({ toggleConfigMode, isConfigMode }: { toggleConfigMode: () => void; isConfigMode: boolean }) {
+  const user = useQuery(api.authHelpers.getMe, {});
+  const subscription = useQuery(api.stripe.getMySubscription);
+  const balance = useQuery(api.stripe.getBalance);
+  const creditTiers = useQuery(api.stripe.getCreditTiersList);
+  const createCheckout = useAction(api.stripe.createCreditCheckout);
+  const { signOut } = useAuthActions();
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('lifeos-avatar');
+    if (stored) setAvatar(stored);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [menuOpen]);
+
+  if (!user) return null;
+
+  const profileImage = avatar ?? user.image;
+  const initials = (user.name ?? user.email ?? '?')
+    .split(/[\s@]+/)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase() ?? '')
+    .join('');
+
+  const planLabel = subscription ? PLAN_LABELS[subscription.planType] ?? 'No plan' : 'No plan';
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        title={`${user.name ?? user.email} — ${planLabel}`}
+        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-surface-hover transition-colors"
+      >
+        {profileImage ? (
+          <img src={profileImage} alt="" className="size-7 rounded-full shrink-0 object-cover" />
+        ) : (
+          <span className="size-7 rounded-full shrink-0 bg-surface flex items-center justify-center text-[10px] font-bold text-text-muted">
+            {initials}
+          </span>
+        )}
+      </button>
+
+      {menuOpen && (
+        <div className="absolute right-0 top-full mt-1 z-50 bg-surface border border-border rounded-lg shadow-lg py-1 w-52 animate-scale-in">
+          {/* User info */}
+          <div className="px-3 py-2.5">
+            <p className="text-xs font-medium text-text truncate">{user.name ?? user.email}</p>
+            <p className="text-[10px] text-text-muted">{planLabel} plan</p>
+          </div>
+          <div className="my-1 border-t border-border/40" />
+
+          {/* Balance display */}
+          {balance !== undefined && (
+            <>
+              <div className="px-3 py-2.5">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Balance</p>
+                <p className="text-sm font-bold text-text font-mono tabular-nums">
+                  EUR {(balance / 100).toFixed(2)}
+                </p>
+              </div>
+              <div className="my-1 border-t border-border/40" />
+            </>
+          )}
+
+          {/* Top up */}
+          <div className="relative">
+            <button
+              onClick={() => setTopUpOpen(!topUpOpen)}
+              className="flex items-center justify-between gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left"
+            >
+              <span className="flex items-center gap-2.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Top up
+              </span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn('transition-transform duration-150', topUpOpen && 'rotate-180')}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {topUpOpen && creditTiers && creditTiers.length > 0 && (
+              <div className="px-2 pb-1.5">
+                {creditTiers.map((tier) => (
+                  <button
+                    key={tier.priceId}
+                    disabled={checkingOut === tier.priceId}
+                    onClick={async () => {
+                      setCheckingOut(tier.priceId);
+                      try {
+                        const result = await createCheckout({ priceId: tier.priceId });
+                        if (result.url) window.location.href = result.url;
+                      } catch (err) {
+                        console.error('Checkout failed:', err);
+                      } finally {
+                        setCheckingOut(null);
+                      }
+                    }}
+                    className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs text-text-muted hover:text-text hover:bg-surface-hover rounded transition-colors disabled:opacity-50"
+                  >
+                    <span className="font-mono">{tier.label}</span>
+                    {checkingOut === tier.priceId && (
+                      <span className="text-[10px] text-text-muted animate-pulse">...</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="my-1 border-t border-border/40" />
+
+          <Link
+            href="/settings"
+            onClick={() => setMenuOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="13" x2="13" y2="3" /><circle cx="8" cy="8" r="2.5" />
+            </svg>
+            Settings
+          </Link>
+          <button
+            onClick={() => { setMenuOpen(false); toggleConfigMode(); }}
+            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+            </svg>
+            {isConfigMode ? 'Done configuring' : 'Configure layout'}
+          </button>
+          <div className="my-1 border-t border-border/40" />
+          <button
+            onClick={() => { setMenuOpen(false); void signOut(); }}
+            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-danger hover:bg-surface-hover transition-colors w-full text-left"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Log out
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
