@@ -224,19 +224,37 @@ export function DeploymentDashboard({
       <Card className="ring-primary/20">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Your Instance</CardTitle>
+            <CardTitle>Your Life Coach</CardTitle>
             <StatusBadge status={deployment.status} />
           </div>
         </CardHeader>
-        <CardContent className="space-y-5">
-          {/* Cockpit Link — primary CTA */}
+        <CardContent className="space-y-4">
+          {/* Running — health + actions */}
           {deployment.status === "running" && (
-            <a href={cockpitUrl} target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="w-full h-11 text-sm gap-2.5 bg-white text-black hover:bg-white/90 animate-[breathe_3s_ease-in-out_infinite]">
-                <ExternalLink className="size-4" />
-                Open Cockpit
-              </Button>
-            </a>
+            <div className="space-y-4">
+              <p className="text-xs text-text-muted">
+                Your Life Coach is online and ready.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRestart}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? "Restarting..." : "Restart"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-text-muted hover:text-danger"
+                  onClick={() => setShowConfirm(true)}
+                  disabled={actionLoading}
+                >
+                  Remove
+                </Button>
+              </div>
+            </div>
           )}
 
           {/* Provisioning / Starting — live timer */}
@@ -248,23 +266,20 @@ export function DeploymentDashboard({
           {deployment.status === "error" && (
             <div className="space-y-3">
               <p className="text-xs text-danger">
-                {deployment.errorMessage ?? "An unexpected error occurred."}
+                Something went wrong. Try restarting your Life Coach.
               </p>
               <div className="flex gap-2">
-                <Button
-                  onClick={handleRetry}
-                  disabled={actionLoading}
-                  size="sm"
-                >
-                  {actionLoading ? "Retrying..." : "Retry"}
+                <Button onClick={handleRetry} disabled={actionLoading} size="sm">
+                  {actionLoading ? "Retrying..." : "Try again"}
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant="ghost"
+                  size="sm"
+                  className="text-text-muted hover:text-danger"
                   onClick={() => setShowConfirm(true)}
                   disabled={actionLoading}
-                  size="sm"
                 >
-                  Destroy
+                  Remove
                 </Button>
               </div>
             </div>
@@ -274,7 +289,7 @@ export function DeploymentDashboard({
           {deployment.status === "suspended" && (
             <div className="space-y-3">
               <p className="text-xs text-text-muted">
-                Your instance has been suspended because your subscription is no longer active. Renew to get back online.
+                Your Life Coach is paused. Renew your subscription to bring it back online.
               </p>
               <Button
                 onClick={handleRenew}
@@ -286,92 +301,15 @@ export function DeploymentDashboard({
               </Button>
             </div>
           )}
-
-          {/* Connection Details — collapsible, only when running */}
-          {deployment.status === "running" && (
-            <details className="group border-t border-text/5 pt-4">
-              <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-text-muted/60 hover:text-text-muted uppercase tracking-wider select-none list-none [&::-webkit-details-marker]:hidden transition-colors">
-                <ChevronDown className="size-3 transition-transform group-open:rotate-180" />
-                Details
-              </summary>
-              <div className="mt-4 space-y-4">
-                {/* Gateway Token */}
-                <div className="space-y-2">
-                  <h3 className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
-                    Gateway Token
-                  </h3>
-                  <div className="flex items-center gap-1">
-                    <code className="flex-1 text-[11px] font-mono text-text-muted bg-bg ring-1 ring-text/10 px-3 py-2 truncate">
-                      {showToken
-                        ? deployment.gatewayToken
-                        : "claw_" + "\u2022".repeat(20)}
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowToken(!showToken)}
-                      className="shrink-0"
-                    >
-                      {showToken ? (
-                        <EyeOff className="size-3.5" />
-                      ) : (
-                        <Eye className="size-3.5" />
-                      )}
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={handleCopy} className="shrink-0">
-                      {copied ? (
-                        <Check className="size-3.5 text-success" />
-                      ) : (
-                        <Copy className="size-3.5" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Endpoint */}
-                <div className="space-y-1.5">
-                  <h3 className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
-                    Endpoint
-                  </h3>
-                  <code className="block text-[11px] text-text-muted font-mono bg-bg ring-1 ring-text/10 px-3 py-2">
-                    {deployment.subdomain}.{process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? "lifeos.zone"}
-                  </code>
-                </div>
-
-                {/* Restart & Destroy */}
-                <div className="pt-4 border-t border-text/5 flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-text-muted"
-                    onClick={handleRestart}
-                    disabled={actionLoading}
-                  >
-                    {actionLoading ? "Restarting..." : "Restart Instance"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-text-muted hover:text-danger"
-                    onClick={() => setShowConfirm(true)}
-                    disabled={actionLoading}
-                  >
-                    Destroy Instance
-                  </Button>
-                </div>
-              </div>
-            </details>
-          )}
         </CardContent>
       </Card>
 
       {/* Destroy Confirmation Dialog */}
       <Dialog open={showConfirm} onClose={() => setShowConfirm(false)}>
         <DialogHeader>
-          <DialogTitle>Destroy Instance</DialogTitle>
+          <DialogTitle>Remove Life Coach</DialogTitle>
           <DialogDescription>
-            Are you sure you want to destroy your instance? This action cannot be
-            undone. Your data will be retained for 30 days.
+            Are you sure? Your Life Coach will go offline. Your data is kept for 30 days in case you change your mind.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -382,7 +320,7 @@ export function DeploymentDashboard({
             disabled={actionLoading}
             loading={actionLoading}
           >
-            {actionLoading ? "Destroying..." : "Confirm Destroy"}
+            {actionLoading ? "Removing..." : "Yes, remove"}
           </Button>
           <Button
             variant="outline"
