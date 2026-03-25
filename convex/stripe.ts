@@ -163,6 +163,7 @@ export const getBalanceInternal = internalQuery({
 // ── Subscription Functions ──────────────────────────────────────────
 
 const planTypeValidator = v.union(
+  v.literal("dashboard"),
   v.literal("byok"),
   v.literal("basic"),
   v.literal("standard"),

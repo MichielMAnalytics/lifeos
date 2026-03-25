@@ -30,7 +30,7 @@ function DemoVideo() {
           This is what you get
         </h2>
         <p className="text-xs text-text-muted max-w-md mx-auto">
-          The complete OpenClaw setup — deployed, configured, and running in under a minute.
+          The complete AI agent setup — deployed, configured, and running in under a minute.
         </p>
       </div>
       <div
@@ -71,7 +71,7 @@ const testimonials = [
     avatar: "/user-1-james.webp",
   },
   {
-    quote: "I tried self-hosting OpenClaw for a week. Claw Now replaced all of that with one click.",
+    quote: "I tried self-hosting an AI agent for a week. LifeOS replaced all of that with one click.",
     highlight: "one click",
     name: "Edwin",
     role: "Software Engineer",
@@ -132,7 +132,7 @@ function SocialProof() {
 const features = [
   { icon: Server, title: "Dedicated pod", desc: "Your own isolated Kubernetes pod — not shared with anyone." },
   { icon: Lock, title: "Encrypted secrets", desc: "API keys stored in Google Cloud Secret Manager with KMS encryption." },
-  { icon: RefreshCw, title: "Auto updates", desc: "Every OpenClaw release deployed automatically with zero downtime." },
+  { icon: RefreshCw, title: "Auto updates", desc: "Every agent release deployed automatically with zero downtime." },
   { icon: Shield, title: "Network isolation", desc: "Pod-level network policies block all cross-tenant communication." },
   { icon: Key, title: "BYOK or managed", desc: "Bring your own API keys or use ours — switch anytime." },
   { icon: Zap, title: "60s deploys", desc: "From sign-up to a running instance in under one minute." },
@@ -200,8 +200,8 @@ function HowItWorks() {
 
 const faqs = [
   {
-    q: "Why pay for Claw Now when OpenClaw is open source?",
-    a: "OpenClaw is free. Running it properly isn't. Self-hosting means setting up Kubernetes, configuring TLS, managing secrets, patching vulnerabilities, and rebuilding Docker images on every update. Claw Now gives you all of that — pod isolation, encrypted storage, secret management, automatic updates — in 60 seconds. You pay for the infrastructure and ops so you can focus on using the agent, not babysitting it.",
+    q: "Why pay for the AI agent add-on?",
+    a: "Running an AI agent properly requires infrastructure: Kubernetes, TLS, secrets management, vulnerability patching, and regular updates. LifeOS gives you all of that — pod isolation, encrypted storage, secret management, automatic updates — in 60 seconds. You pay for the infrastructure and ops so you can focus on using the agent, not babysitting it.",
   },
   {
     q: "What happens to my unused credits?",
@@ -217,7 +217,7 @@ const faqs = [
   },
   {
     q: "What do I get that I can't get self-hosting?",
-    a: "Automatic security patching, zero-downtime updates on every OpenClaw release, enterprise secret management via Google Cloud KMS with 90-day key rotation, per-pod network isolation, built-in rate limiting, a full web UI — all without writing a single line of config. Self-hosting gives you the agent. Claw Now gives you the agent plus production-grade infrastructure around it.",
+    a: "Automatic security patching, zero-downtime updates on every release, enterprise secret management via Google Cloud KMS with 90-day key rotation, per-pod network isolation, built-in rate limiting, a full web UI — all without writing a single line of config. Self-hosting gives you the agent. LifeOS gives you the agent plus production-grade infrastructure around it.",
   },
 ];
 

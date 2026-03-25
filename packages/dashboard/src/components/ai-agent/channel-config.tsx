@@ -133,8 +133,8 @@ export function ChannelConfig() {
           {/* Other channels */}
           <div className="border-t border-border pt-4 mt-1">
             <p className="text-[9px] text-text-muted leading-relaxed">
-              OpenClaw supports 20+ channels including WhatsApp, Slack, Signal, iMessage, and more.
-              Configure additional channels directly from your OpenClaw instance.{" "}
+              The AI agent supports 20+ channels including WhatsApp, Slack, Signal, iMessage, and more.
+              Configure additional channels directly from your agent instance.{" "}
               <a
                 href="https://docs.openclaw.ai/channels"
                 target="_blank"

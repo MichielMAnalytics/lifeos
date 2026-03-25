@@ -57,8 +57,8 @@ const gateways = backends.map((b) =>
   createGateway(k8sProvider, systemNs, gatewayServiceAccountEmail, openclawImageTag, gatewayImageName, b, redis.redisUrl),
 );
 
-// 10. OAuth2 Proxy (shared auth layer for cockpit ingresses)
-const oauth2Proxy = createOAuth2Proxy(k8sProvider, systemNs);
+// 10. OAuth2 Proxy — disabled (LifeOS pods are headless, no UI to protect)
+// const oauth2Proxy = createOAuth2Proxy(k8sProvider, systemNs);
 
 // 11. Network policies
 const networkPolicies = createNetworkPolicies(k8sProvider, usersNs, systemNs);

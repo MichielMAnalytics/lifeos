@@ -1722,19 +1722,6 @@ auth.addHttpRoutes(http);
 // Hosted deployment routes (ported from ClawNow)
 // ═══════════════════════════════════════════════════════════
 
-async function notifySlack(text: string) {
-  const url = serverEnv.SLACK_WEBHOOK_URL;
-  if (!url) return;
-  try {
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-  } catch (e) {
-    console.error("[slack] Failed to send notification:", e);
-  }
-}
 
 // ── Stripe Webhook ───────────────────────────────────
 registerRoutes(http, components.stripe, {
@@ -1759,14 +1746,13 @@ registerRoutes(http, components.stripe, {
       await ctx.runMutation(internal.stripe.creditBalance, { userId: docId, amount: creditAmount });
       const euros = (creditAmount / 100).toFixed(0);
       const email = await ctx.runQuery(internal.deploymentQueries.getUserEmail, { userId: docId });
-      await notifySlack(`*New credit purchase* — EUR ${euros} top-up (${email ?? docId})`);
     },
 
     "customer.subscription.created": async (ctx, event) => {
       const subscription = event.data.object as Stripe.Subscription;
       const metadata = subscription.metadata;
       const userSubject = metadata?.userId;
-      const planType = metadata?.planType as "byok" | "basic" | "standard" | "premium" | undefined;
+      const planType = metadata?.planType as "dashboard" | "byok" | "basic" | "standard" | "premium" | undefined;
       if (!userSubject || !planType) return;
       const docId = userSubject.split("|")[0] as Id<"users">;
       const priceId = subscription.items.data[0]?.price?.id ?? "";
@@ -1787,7 +1773,6 @@ registerRoutes(http, components.stripe, {
       const planLabel = plan?.label ?? planType ?? "unknown";
       const priceEur = plan ? (plan.priceEuroCents / 100).toFixed(0) : "?";
       const email = await ctx.runQuery(internal.deploymentQueries.getUserEmail, { userId: docId });
-      await notifySlack(`*New subscription* — ${planLabel} plan (EUR ${priceEur}/mo, ${email ?? docId})`);
     },
 
     "customer.subscription.updated": async (ctx, event) => {
@@ -1818,7 +1803,6 @@ registerRoutes(http, components.stripe, {
         const uid = userSubject.split("|")[0] as Id<"users">;
         email = await ctx.runQuery(internal.deploymentQueries.getUserEmail, { userId: uid });
       }
-      await notifySlack(`*Churn* — ${planType} subscription canceled (${email ?? userSubject ?? "unknown"})`);
     },
 
     "invoice.paid": async (ctx, event) => {

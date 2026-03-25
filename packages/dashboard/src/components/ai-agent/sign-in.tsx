@@ -22,34 +22,21 @@ export function SignInCard() {
         <CardContent className="pt-10 pb-8 px-8">
           <div className="flex flex-col items-center text-center">
             {/* Logo mark */}
-            <a href="https://azin.run" className="mb-8 transition-transform duration-150 hover:scale-110 active:scale-95">
+            <a href="https://lifeos.zone" className="mb-8 transition-transform duration-150 hover:scale-110 active:scale-95">
               <img
                 src="/icon-white.svg"
-                alt="ClawNow"
+                alt="LifeOS"
                 className="size-9"
               />
             </a>
 
             {/* Title */}
             <h2 className="text-sm font-medium text-text tracking-tight mb-1 font-heading">
-              Sign in to Claw<span className="text-accent/70">Now</span>
+              Sign in to Life<span className="text-accent/70">OS</span>
             </h2>
             <p className="text-[11px] text-text-muted/70 mb-6">
               Welcome back. Please sign in to continue.
             </p>
-
-            <a
-              href="https://openclaw.ai/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-2 mb-8 rounded bg-surface/50 hover:bg-surface-hover transition-colors group"
-            >
-              <img src="/openclaw-icon.png" alt="Openclaw" className="size-6 shrink-0" />
-              <p className="text-[10px] text-text-muted leading-relaxed group-hover:text-text transition-colors">
-                A production-grade deployment solution of the world's famous{" "}
-                <span className="text-text font-medium">OpenClaw</span>.
-              </p>
-            </a>
 
             {/* Google button */}
             <button
@@ -83,7 +70,7 @@ export function SignInCard() {
       {/* Footer */}
       <div className="mt-6 text-center">
         <p className="text-[10px] text-text-muted/40 tracking-wide uppercase">
-          Secured by Azin
+          Secured by LifeOS
         </p>
       </div>
     </div>

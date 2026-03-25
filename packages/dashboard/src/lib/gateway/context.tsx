@@ -32,7 +32,7 @@ export function GatewayProvider({ children }: { children: ReactNode }) {
     // Only connect if deployment is running
     if (!deployment || deployment.status !== 'running') return;
 
-    const domain = process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? 'lifeos.app';
+    const domain = process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? 'lifeos.zone';
     const url = `https://${deployment.subdomain}.${domain}`;
     const client = new GatewayClient(url, deployment.gatewayToken);
 

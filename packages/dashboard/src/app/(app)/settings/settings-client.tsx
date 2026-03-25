@@ -309,7 +309,7 @@ export function SettingsClient({
           ) : (
             <div className="px-6 py-8 text-center">
               <p className="text-sm text-text-muted">No API keys yet.</p>
-              <p className="text-xs text-text-muted/60 mt-1">Create one to connect the CLI or OpenClaw.</p>
+              <p className="text-xs text-text-muted/60 mt-1">Create one to connect the CLI or AI agent.</p>
             </div>
           )}
 
@@ -332,7 +332,7 @@ export function SettingsClient({
                 type="text"
                 value={newKeyName}
                 onChange={(e) => setNewKeyName(e.target.value)}
-                placeholder="Key name (e.g. CLI, Mobile, OpenClaw)"
+                placeholder="Key name (e.g. CLI, Mobile, AI Agent)"
                 className="flex-1 border border-border bg-transparent px-4 py-2.5 text-sm text-text placeholder:text-text-muted/50 focus:border-text focus:outline-none font-mono"
               />
               <button

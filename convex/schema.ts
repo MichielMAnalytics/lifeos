@@ -216,6 +216,7 @@ export default defineSchema({
     stripeSubscriptionId: v.string(),
     stripePriceId: v.string(),
     planType: v.union(
+      v.literal("dashboard"),
       v.literal("byok"),
       v.literal("basic"),
       v.literal("standard"),

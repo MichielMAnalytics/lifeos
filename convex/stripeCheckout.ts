@@ -48,10 +48,7 @@ export const createSubscriptionCheckout = action({
           userId,
           planType: plan.planType,
         },
-        // BYOK plan gets 7-day free trial
-        ...(plan.planType === "byok" && {
-          trial_period_days: 7,
-        }),
+        trial_period_days: 7,
       },
       allow_promotion_codes: true,
     });

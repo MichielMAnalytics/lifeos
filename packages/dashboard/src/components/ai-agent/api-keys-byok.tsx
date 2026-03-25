@@ -51,7 +51,7 @@ export function ApiKeys({ deploymentStatus }: { deploymentStatus?: DeploymentSta
             <>
               <p className="text-[9px] text-text-muted leading-relaxed">
                 Model API keys are handled by your plan — no setup needed.
-                Use this section to add API keys for OpenClaw skills and integrations.
+                Use this section to add API keys for agent skills and integrations.
               </p>
               <CustomEnvVars />
             </>

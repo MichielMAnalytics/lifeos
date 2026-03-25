@@ -66,7 +66,7 @@ function DeployButton({
           className="w-full h-12 text-sm gap-2.5"
         >
           <Zap className="size-4" />
-          {deploying ? "Deploying..." : "Deploy Claw Now"}
+          {deploying ? "Deploying..." : "Deploy AI Agent"}
         </Button>
 
         <p className="text-[10px] text-text-muted">
@@ -108,7 +108,7 @@ export function ConfigCard({
       <ChannelConfig />
       {isByok && <ByokCredentials />}
       <p className="text-center pt-2">
-        <a href="mailto:contact@azin.run?subject=%5BClawNow%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A" className="text-xs text-text-muted/50 hover:text-text-muted transition-colors">
+        <a href="mailto:support@lifeos.zone?subject=%5BLifeOS%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A" className="text-xs text-text-muted/50 hover:text-text-muted transition-colors">
           Contact Support
         </a>
       </p>

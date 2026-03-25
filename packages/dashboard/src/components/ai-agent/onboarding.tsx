@@ -25,29 +25,13 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
     if (preferredModel) sessionStorage.removeItem("pref_model");
   }, [preferredModel]);
 
-  const mappedModel = preferredModel === "claude-opus" ? "claude" : preferredModel;
-  const validModelIds = MODELS.map((m) => m.id);
-  const [selectedModel, setSelectedModel] = useState(
-    mappedModel && validModelIds.includes(mappedModel) ? mappedModel : "claude",
-  );
+  // Default to Claude Sonnet 4.6 — model selector is hidden
+  const [selectedModel] = useState("claude-sonnet");
   const [telegramToken, setTelegramToken] = useState("");
   const [discordToken, setDiscordToken] = useState("");
   const [saving, setSaving] = useState(false);
   const [skipAccepted, setSkipAccepted] = useState(false);
 
-  // Auto-switch model if current selection becomes unavailable
-  const hasAnthropicCred = anthropicAuthMethod === "api_key" ? !!anthropicKey : !!anthropicSetupToken;
-  const hasOpenaiCred = !!openaiKey;
-  useEffect(() => {
-    if (!isByok) return;
-    const isClaude = selectedModel.startsWith("claude");
-    const isGpt = selectedModel.startsWith("gpt");
-    if (isClaude && !hasAnthropicCred && hasOpenaiCred) {
-      setSelectedModel("gpt");
-    } else if (isGpt && !hasOpenaiCred && hasAnthropicCred) {
-      setSelectedModel("claude");
-    }
-  }, [isByok, hasAnthropicCred, hasOpenaiCred, selectedModel]);
 
   const handleContinue = async () => {
     setSaving(true);
@@ -102,7 +86,7 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
               Configure your instance
             </h2>
             <p className="text-xs text-text-muted leading-relaxed">
-              Choose how you want to use AI models, then select your default model.
+              Choose how you want to use AI models. Your agent will use Claude Sonnet 4.6 by default.
             </p>
           </div>
 
@@ -138,7 +122,7 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
               <div className="space-y-2">
                 <p className="text-xs text-text-muted leading-relaxed">
                   Enter at least one API key to get started. Select a default
-                  model below — you can change all of this later inside OpenClaw.
+                  model below — you can change all of this later inside your agent instance.
                 </p>
               </div>
 
@@ -214,54 +198,7 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
             </>
           )}
 
-          {!isByok && (
-            <div className="space-y-2">
-              <p className="text-xs text-text-muted leading-relaxed">
-                Select the AI model your instance will use by default.
-                You can always change this later inside OpenClaw.
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {isByok && (
-              <label className="text-[10px] uppercase tracking-wider text-text-muted">
-                Default model
-              </label>
-            )}
-            <div className="flex flex-wrap gap-2">
-              {MODELS.filter((m) => (isByok || !("byokOnly" in m && m.byokOnly)) && (!isByok || !("platformOnly" in m && m.platformOnly))).map((model) => {
-                const isClaude = model.id.startsWith("claude");
-                const isGpt = model.id.startsWith("gpt");
-                const hasAnthropic = isByok
-                  ? (anthropicAuthMethod === "api_key" ? !!anthropicKey : !!anthropicSetupToken)
-                  : true;
-                const hasOpenai = isByok ? !!openaiKey : true;
-                const disabled = (isClaude && !hasAnthropic) || (isGpt && !hasOpenai);
-
-                return (
-                  <Button
-                    key={model.id}
-                    variant={selectedModel === model.id ? "default" : "outline"}
-                    onClick={() => !disabled && setSelectedModel(model.id)}
-                    disabled={disabled}
-                    className={cn("gap-2", disabled && "opacity-40")}
-                  >
-                    <img
-                      src={model.icon}
-                      alt={model.label}
-                      className={cn(
-                        "size-3.5",
-                        "iconClass" in model && selectedModel !== model.id && model.iconClass,
-                      )}
-                    />
-                    {model.label}
-                    {selectedModel === model.id && <Check className="size-3 ml-1" />}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Model selector hidden — defaulting to Claude Sonnet 4.6 */}
 
           {/* Messaging Channels (optional) */}
           <details className="group">
@@ -319,8 +256,8 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
                 </p>
               </div>
               <p className="text-[9px] text-text-muted leading-relaxed">
-                OpenClaw supports 20+ channels including WhatsApp, Slack, Signal, iMessage, and more.
-                Configure additional channels directly from your OpenClaw instance.{" "}
+                The AI agent supports 20+ channels including WhatsApp, Slack, Signal, iMessage, and more.
+                Configure additional channels directly from your agent instance.{" "}
                 <a
                   href="https://docs.openclaw.ai/channels"
                   target="_blank"
@@ -361,7 +298,7 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
                     {skipAccepted && <Check className="size-3.5" />}
                   </span>
                   <span className="text-[10px] text-text-muted leading-relaxed group-hover:text-text/70 transition-colors">
-                    I will set up my tokens through OpenClaw itself and accept the risk of keys being compromised.
+                    I will set up my tokens through the agent instance itself and accept the risk of keys being compromised.
                   </span>
                 </label>
                 <button

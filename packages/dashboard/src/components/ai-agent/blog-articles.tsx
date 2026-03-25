@@ -5,29 +5,29 @@ import { capture, EVENTS } from "@/lib/analytics";
 const ARTICLES = [
   {
     number: 1,
-    title: "Your First 30 Minutes: Set Up Your OpenClaw Agent Right",
-    url: "https://azin.run/blog/first-30-minutes-openclaw-agent",
+    title: "Your First 30 Minutes: Set Up Your AI Agent Right",
+    url: "https://lifeos.zone/blog/first-30-minutes-ai-agent",
     summary:
-      "You just deployed OpenClaw. Gateway is running. Now what?",
+      "You just deployed your AI agent. Gateway is running. Now what?",
   },
   {
     number: 2,
     title: "Memory That Actually Works: Setup Guide (Not Just Chat History)",
-    url: "https://azin.run/blog/openclaw-memory-setup-guide",
+    url: "https://lifeos.zone/blog/ai-agent-memory-setup-guide",
     summary:
-      "OpenClaw doesn't magically remember things. You have to teach it how.",
+      "Your AI agent doesn't magically remember things. You have to teach it how.",
   },
   {
     number: 3,
     title: "Skills & Permissions: What Your Agent Can Do (And What It Shouldn't)",
-    url: "https://azin.run/blog/openclaw-skills-permissions",
+    url: "https://lifeos.zone/blog/ai-agent-skills-permissions",
     summary:
       "Without boundaries, your agent can do everything. With boundaries, only what it needs.",
   },
   {
     number: 4,
     title: "Multi-Agent Teams: Running Multiple Agents (The Right Way)",
-    url: "https://azin.run/blog/multi-agent-teams-openclaw",
+    url: "https://lifeos.zone/blog/multi-agent-teams",
     summary:
       "One agent is useful. Five agents working together? That's a team.",
   },
@@ -38,7 +38,7 @@ export function BlogArticles() {
     <section className="max-w-4xl mx-auto mt-16">
       <div className="mb-6">
         <h2 className="text-lg font-heading font-medium text-zinc-100 tracking-tight">
-          Learn OpenClaw
+          Learn AI Agent
         </h2>
         <p className="text-sm text-zinc-400">
           From first agent to production team.

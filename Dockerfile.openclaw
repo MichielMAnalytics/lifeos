@@ -1,0 +1,112 @@
+# ── Stage 1: Builder ─────────────────────────────────────────────
+FROM node:22-bookworm AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN corepack enable
+
+# Bun is required by OpenClaw build scripts
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
+
+WORKDIR /app
+
+# Clone OpenClaw at a pinned release tag.
+# Using git clone (vs upstream Dockerfile's staged COPY) ensures ALL files —
+# including extensions/*/package.json — are present before pnpm install,
+# so pnpm properly resolves and links extension dependencies
+# (e.g. google-auth-library for googlechat).
+ARG OPENCLAW_VERSION=v2026.3.13-1
+RUN git clone --depth 1 --branch ${OPENCLAW_VERSION} https://github.com/openclaw/openclaw.git .
+
+RUN pnpm install --frozen-lockfile
+
+RUN OPENCLAW_A2UI_SKIP_MISSING=1 pnpm build
+ENV OPENCLAW_PREFER_PNPM=1
+# Skip UI build — LifeOS serves its own dashboard, OpenClaw runs headless
+
+# Clean up build-only artifacts. We intentionally skip `pnpm prune --prod`
+# because extensions (e.g. googlechat) are loaded dynamically at runtime and
+# their production deps (e.g. google-auth-library) would be dropped since no
+# root-level production dependency references them through the dependency graph.
+RUN rm -rf .git node_modules/.cache /root/.local/share/pnpm/store
+
+# ── Stage 2: Runtime ─────────────────────────────────────────────
+FROM node:22-bookworm-slim
+
+# git:            runtime use + Homebrew
+# curl, file:     Homebrew core
+# procps:         Homebrew health checks (ps)
+# build-essential: compile Homebrew formulas that lack prebuilt bottles
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git curl ca-certificates file procps build-essential python3 \
+    chromium \
+    && rm -rf /var/lib/apt/lists/*
+
+# Tell Puppeteer / Playwright to use the system Chromium instead of downloading their own
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV CHROME_BIN=/usr/bin/chromium
+
+RUN corepack enable
+
+WORKDIR /app
+COPY --from=builder /app /app
+COPY file-server.mjs /app/file-server.mjs
+
+# node-pty (native PTY for interactive terminal) + ws (WebSocket server)
+RUN npm install --prefix /opt/file-server-deps node-pty ws
+
+ENV NODE_ENV=production
+ENV OPENCLAW_PREFER_PNPM=1
+# Persist V8 compile cache so subsequent openclaw commands start faster
+ENV NODE_COMPILE_CACHE=/app/.compile-cache
+
+# Pre-create Homebrew prefix as root so `node` user can install there
+RUN mkdir -p /home/linuxbrew/.linuxbrew \
+    && chown -R node:node /home/linuxbrew/.linuxbrew
+
+# Let `node` user do global npm installs (OpenClaw skills use `npm install -g`)
+RUN chown -R node:node /usr/local/lib/node_modules /usr/local/bin
+
+RUN chown -R node:node /app
+USER node
+
+# Homebrew (Linuxbrew) — needed so OpenClaw skill install buttons work.
+RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+ENV HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
+ENV PATH="${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}"
+
+# GitHub CLI — installed as standalone binary to /usr/local/bin because
+# the Homebrew prefix is overlaid by a PVC mount at runtime in K8s.
+RUN GH_VERSION=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/') \
+  && curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz" \
+     | tar -xz --strip-components=2 -C /usr/local/bin "gh_${GH_VERSION}_linux_amd64/bin/gh"
+
+# Provide an openclaw executable
+RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /app/openclaw.mjs "$@"' > /usr/local/bin/openclaw \
+  && chmod +x /usr/local/bin/openclaw
+
+# Expose the Pi coding-agent binary (bundled via @mariozechner/pi-coding-agent).
+# pnpm links it into node_modules/.bin/pi but that dir isn't on PATH.
+RUN printf '%s\n' '#!/usr/bin/env bash' 'exec /app/node_modules/.bin/pi "$@"' > /usr/local/bin/pi \
+  && chmod +x /usr/local/bin/pi
+
+# Pre-warm the V8 compile cache by booting the gateway with a synthetic config
+# that enables all plugins/channels used at runtime. Without this, the warmup
+# only caches core gateway code (~12MB) and misses plugin modules (~7MB) that
+# then need JIT compilation at runtime, adding 2+ minutes to startup.
+RUN mkdir -p /tmp/warmup-home/.openclaw \
+    && echo '{"gateway":{"auth":{"mode":"token","token":"warmup-token"},"controlUi":{"dangerouslyDisableDeviceAuth":true,"dangerouslyAllowHostHeaderOriginFallback":true}},"browser":{"enabled":true,"headless":true,"noSandbox":true},"channels":{"telegram":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]},"discord":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]},"whatsapp":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]}},"plugins":{"entries":{"whatsapp":{"enabled":true},"telegram":{"enabled":true},"discord":{"enabled":true},"googlechat":{"enabled":true}}}}' \
+       > /tmp/warmup-home/.openclaw/openclaw.json
+RUN HOME=/tmp/warmup-home node --disable-warning=ExperimentalWarning openclaw.mjs gateway --allow-unconfigured &\
+    pid=$!; \
+    for i in $(seq 1 180); do \
+      if curl -sf http://127.0.0.1:18789 >/dev/null 2>&1; then break; fi; \
+      sleep 1; \
+    done; \
+    kill $pid 2>/dev/null; wait $pid 2>/dev/null || true; \
+    rm -rf /tmp/warmup-home
+
+CMD ["node", "--disable-warning=ExperimentalWarning", "openclaw.mjs", "gateway", "--allow-unconfigured"]

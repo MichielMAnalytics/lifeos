@@ -160,7 +160,7 @@ function UserMenu() {
                   <p className="text-[10px] text-text-muted mt-1">
                     Want to switch tiers?{" "}
                     <a
-                      href="mailto:contact@azin.run?subject=%5BClawNow%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A"
+                      href="mailto:support@lifeos.zone?subject=%5BLifeOS%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A"
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
@@ -266,11 +266,8 @@ export function Header() {
   return (
     <header className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
       <div className="flex items-center gap-2">
-        <a href="https://azin.run/product/claw-now" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold tracking-tight text-text hover:opacity-80 transition-opacity">
-          Claw<span className="text-accent">Now</span>
-        </a>
-        <a href="https://azin.run" target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 text-[10px] font-medium tracking-wide text-zinc-500 border border-zinc-700 rounded-md hover:border-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-all">
-          OpenClaw on Azin
+        <a href="https://lifeos.zone" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold tracking-tight text-text hover:opacity-80 transition-opacity">
+          Life<span className="text-accent">OS</span>
         </a>
       </div>
       <Authenticated>
@@ -281,7 +278,7 @@ export function Header() {
           <UserMenu />
         </Authenticated>
         <Unauthenticated>
-          <a href="mailto:contact@azin.run?subject=%5BClawNow%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A" className="text-text-muted text-xs hover:text-text transition-colors">
+          <a href="mailto:support@lifeos.zone?subject=%5BLifeOS%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A" className="text-text-muted text-xs hover:text-text transition-colors">
             Contact Support
           </a>
         </Unauthenticated>

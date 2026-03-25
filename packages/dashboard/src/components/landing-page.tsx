@@ -31,12 +31,12 @@ import { capture, EVENTS } from "@/lib/analytics";
 const EASE_OUT_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const TESTIMONIALS = [
-  { name: "Marco", role: "Backend Engineer", quote: "Went from a 4-hour self-hosting rabbit hole to ", highlight: "a running instance in 90 seconds", quoteTail: ". Haven't touched infra since.", color: "#6366f1" },
-  { name: "Priya", role: "Freelance Developer", quote: "I just wanted an AI assistant on Telegram. ClawNow let me ", highlight: "skip the Kubernetes learning curve entirely", quoteTail: ".", color: "#f59e0b" },
-  { name: "Thomas", role: "CTO, 4-person startup", quote: "We evaluated self-hosting, but the ", highlight: "secret management and pod isolation alone", quoteTail: " justified the price. Not even close.", color: "#10b981" },
-  { name: "Lena", role: "Product Manager", quote: "I'm not technical. I signed in with Google, picked a model, and ", highlight: "had my agent running before my coffee was ready", quoteTail: ".", color: "#ec4899" },
-  { name: "Daniel", role: "Security Consultant", quote: "First hosting provider I've seen that does ", highlight: "CMEK, network isolation, and zero-trust properly", quoteTail: " for AI agents. Audited it myself.", color: "#8b5cf6" },
-  { name: "Sofia", role: "Agency Owner", quote: "Deployed 3 instances for different clients. ", highlight: "Each one fully isolated, automatic updates, zero maintenance.", quoteTail: " That's the selling point.", color: "#06b6d4" },
+  { name: "Marco", role: "Backend Engineer", quote: "Replaced Notion, Todoist, and a journal app with ", highlight: "one dashboard that actually connects everything", quoteTail: ". My morning routine is 10 minutes now.", color: "#6366f1" },
+  { name: "Priya", role: "Freelance Developer", quote: "The AI agent on Telegram ", highlight: "checks in on my goals while I sleep", quoteTail: ". I wake up to a briefing, not a blank page.", color: "#f59e0b" },
+  { name: "Thomas", role: "CTO, 4-person startup", quote: "Seven persona presets means ", highlight: "I flip between founder mode and deep-work mode", quoteTail: " in one click. Huge productivity boost.", color: "#10b981" },
+  { name: "Lena", role: "Product Manager", quote: "Not technical at all. Signed in with Google, picked the minimalist theme, and ", highlight: "had my whole week planned before coffee was ready", quoteTail: ".", color: "#ec4899" },
+  { name: "Daniel", role: "Security Consultant", quote: "Finally a life OS that ", highlight: "keeps data private and encrypted by default", quoteTail: ". No shared databases, no snooping.", color: "#8b5cf6" },
+  { name: "Sofia", role: "Agency Owner", quote: "Tasks, goals, journal, reviews -- ", highlight: "all in one place with real-time sync", quoteTail: ". I stopped context-switching between 5 apps.", color: "#06b6d4" },
 ];
 
 const PRICING_TIERS = [
@@ -95,19 +95,19 @@ type ProviderValues = Record<string, string>;
 
 const FIXED_PROVIDERS: { id: string; name: string; highlight?: boolean; values: ProviderValues }[] = [
   { id: "selfhost", name: "Self-host", values: { setup: "4\u20136 hours", secret_mgmt: ".env files", encryption: "no", isolation: "no", patching: "Manual", access: "no", audit: "no", byok: "yes", integrations: "All (manual setup)", price: "$0 + your time" } },
-  { id: "azin", name: "Azin", highlight: true, values: { setup: "120 seconds", secret_mgmt: "Secret Manager + CMEK", encryption: "yes", isolation: "yes", patching: "Automatic (GKE)", access: "Google OAuth", audit: "yes", byok: "yes", integrations: "All channels + full UI", price: "From \u20AC20" } },
+  { id: "azin", name: "LifeOS", highlight: true, values: { setup: "120 seconds", secret_mgmt: "Secret Manager + CMEK", encryption: "yes", isolation: "yes", patching: "Automatic (GKE)", access: "Google OAuth", audit: "yes", byok: "yes", integrations: "All channels + full UI", price: "From \u20AC20" } },
 ];
 
 const OPTIONAL_PROVIDERS: { id: string; name: string; values: ProviderValues }[] = [
   { id: "myclaw", name: "MyClaw.ai", values: { setup: "30 seconds", secret_mgmt: "Not disclosed", encryption: "Claimed, unspecified", isolation: "Isolated container", patching: "Automatic", access: "Not disclosed", audit: "no", byok: "no", integrations: "All channels + web terminal", price: "$9\u201329" } },
   { id: "simpleclaw", name: "SimpleClaw", values: { setup: "< 1 minute", secret_mgmt: "no", encryption: "no", isolation: "no", patching: "no", access: "yes", audit: "no", byok: "no", integrations: "Telegram only", price: "$49" } },
   { id: "clawdhost", name: "ClawdHost", values: { setup: "1 minute", secret_mgmt: "AES-256 encrypted", encryption: "Not disclosed", isolation: "Isolated VPS", patching: "Automatic", access: "Account login", audit: "no", byok: "yes", integrations: "WhatsApp, Telegram, Discord, Slack", price: "$25" } },
-  { id: "openclawd", name: "OpenClawd", values: { setup: "10\u201315 min", secret_mgmt: "Local files", encryption: "no", isolation: "Local machine", patching: "Manual", access: "Local only", audit: "no", byok: "yes", integrations: "All (100+ skills)", price: "$5\u201350 (API only)" } },
+  { id: "openclawd", name: "Self-host (advanced)", values: { setup: "10\u201315 min", secret_mgmt: "Local files", encryption: "no", isolation: "Local machine", patching: "Manual", access: "Local only", audit: "no", byok: "yes", integrations: "All (100+ skills)", price: "$5\u201350 (API only)" } },
   { id: "clawbook", name: "ClawBook", values: { setup: "< 5 minutes", secret_mgmt: "Encrypted on server", encryption: "SSL/TLS only", isolation: "Docker container", patching: "Automatic", access: "SSH + pairing code", audit: "no", byok: "yes", integrations: "12+ channels", price: "$20\u201360" } },
 ];
 
 const SECURITY_PILLARS = [
-  { icon: Server, title: "Pod-level isolation", summary: "Every user gets a dedicated Kubernetes StatefulSet \u2014 a full, isolated container with its own 5GB encrypted persistent volume.", detail: "This is not a shared multi-tenant process. It\u2019s a full, isolated container running the native OpenClaw binary. Your data never shares storage or memory with another user." },
+  { icon: Server, title: "Pod-level isolation", summary: "Every user gets a dedicated Kubernetes StatefulSet \u2014 a full, isolated container with its own 5GB encrypted persistent volume.", detail: "This is not a shared multi-tenant process. It\u2019s a full, isolated container running the AI agent binary. Your data never shares storage or memory with another user." },
   { icon: Shield, title: "Zero-trust networking", summary: "Default-deny ingress on every namespace. All private IP ranges blocked \u2014 no lateral movement between pods.", detail: "User pods can only talk to DNS, the AI Gateway, and the public internet. All private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) are blocked." },
   { icon: Lock, title: "Encryption everywhere", summary: "CMEK via Google Cloud KMS with 90-day auto-rotation. Each instance gets its own TLS certificate via Let\u2019s Encrypt.", detail: "Both etcd (cluster state) and persistent disks use Customer-Managed Encryption Keys. In-transit encryption via Let\u2019s Encrypt + cert-manager." },
   { icon: Key, title: "Owner-only access", summary: "Each instance is bound to your Google account at the infrastructure level. No shared access, no admin backdoors.", detail: "Google OAuth authentication via oauth2-proxy. The AI Gateway verifies both that you\u2019re authenticated AND that you\u2019re the owner." },
@@ -120,7 +120,7 @@ const FAQ_ITEMS = [
   {
     question: "How are my API keys handled?",
     answer: "Your API keys are stored in Google Cloud Secret Manager -- Google's enterprise-grade secret vault. Keys are never injected as environment variables, never logged, and the agent runtime never sees them directly. The AI gateway retrieves them per-request via a secure internal API.",
-    link: { text: "Read our security architecture", href: "https://azin.run/blog/openclaw-security-architecture" },
+    link: { text: "Read our security architecture", href: "https://lifeos.zone/blog/security-architecture" },
   },
   {
     question: "Can I use my own API key?",
@@ -129,11 +129,11 @@ const FAQ_ITEMS = [
   {
     question: "How is my instance isolated from other users?",
     answer: "Every user gets their own dedicated Kubernetes pod -- not a shared container, not a multi-tenant process. Network policies enforce default-deny ingress. Your pod has its own encrypted storage volume, its own TLS certificate, and its own set of secrets. There is no shared state between pods.",
-    link: { text: "See isolation details", href: "https://azin.run/blog/openclaw-security-architecture" },
+    link: { text: "See isolation details", href: "https://lifeos.zone/blog/security-architecture" },
   },
   {
-    question: "What happens when OpenClaw updates?",
-    answer: "Your instance is automatically updated to the latest OpenClaw release with zero downtime. We use a rolling update strategy: first the new image is pulled, then your pod is gracefully restarted with the updated configuration. You don't need to do anything.",
+    question: "What happens when the AI agent updates?",
+    answer: "Your instance is automatically updated to the latest release with zero downtime. We use a rolling update strategy: first the new image is pulled, then your pod is gracefully restarted with the updated configuration. You don't need to do anything.",
   },
   {
     question: "How much does it cost?",
@@ -331,28 +331,25 @@ function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
           >
-            <img src="/openclaw-icon.png" alt="OpenClaw" className="size-12 mb-5" />
+            <img src="/icon-white.svg" alt="LifeOS" className="size-12 mb-5" />
 
             <div className="flex items-center gap-4 mb-1">
-              <a href="https://azin.run/product/claw-now" target="_blank" rel="noopener noreferrer" className="text-2xl font-medium tracking-[-0.02em] font-heading hover:opacity-80 transition-opacity">
-                <span className="text-text">Claw</span>
-                <span className="text-accent">Now</span>
-              </a>
-              <a href="https://azin.run" target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-2.5 py-1 text-[10px] font-medium tracking-wide text-text-muted border border-text/10 rounded-md font-heading hover:border-text/20 hover:text-text/80 transition-all">
-                OpenClaw on Azin
+              <a href="https://lifeos.zone" target="_blank" rel="noopener noreferrer" className="text-2xl font-medium tracking-[-0.02em] font-heading hover:opacity-80 transition-opacity">
+                <span className="text-text">Life</span>
+                <span className="text-accent">OS</span>
               </a>
             </div>
 
             <h1 className="mt-5 text-3xl sm:text-4xl lg:text-[2.75rem] font-medium tracking-[-0.02em] leading-[1.1] font-heading">
-              ClawNow: your AI assistant,
+              Your personal life operating system,
               <br />
-              <span className="text-text-muted">deployed in 1 minute.</span>
+              <span className="text-text-muted">with an optional 24/7 AI agent.</span>
             </h1>
 
             <p className="mt-6 text-base text-text-muted leading-relaxed max-w-md">
-              The easiest and most secure way to deploy OpenClaw. ClawNow gives you an
-              isolated, managed and private instance, so that you can worry about getting
-              shit done. Instead of worrying about infrastructure and security.
+              Tasks, goals, journals, day plans, weekly reviews -- all in one real-time dashboard.
+              Add an AI agent that connects to Telegram, Discord, or WhatsApp and works while you sleep.
+              7 persona presets, 6 themes, zero config.
             </p>
 
             {/* Social proof avatar stack */}
@@ -369,20 +366,10 @@ function HeroSection() {
                 ))}
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-text-muted font-medium">Trusted by 500+ developers</span>
-                <span className="text-[10px] text-text-muted/70">99.9% uptime on GKE Autopilot</span>
+                <span className="text-xs text-text-muted font-medium">Trusted by productive people</span>
+                <span className="text-[10px] text-text-muted/70">Real-time sync, hosted on secure infrastructure</span>
               </div>
             </div>
-
-            <a
-              href="https://github.com/openclaw/openclaw"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-2 text-xs text-text-muted hover:text-text transition-colors"
-            >
-              <GitHubIcon className="size-4" />
-              openclaw/openclaw
-            </a>
           </motion.div>
 
           {/* Right: Configure your instance card */}
@@ -410,13 +397,13 @@ function HeroSection() {
             <div className="relative z-10 bg-surface rounded-lg p-6">
               {/* Card header */}
               <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-text/8">
-                <img src="/openclaw-icon.png" alt="OpenClaw" className="size-5" />
+                <img src="/icon-white.svg" alt="LifeOS" className="size-5" />
                 <div className="flex flex-col flex-1">
-                  <span className="text-sm font-medium text-text">Configure your instance</span>
-                  <span className="text-[10px] text-text-muted font-heading">No Dockerfile required</span>
+                  <span className="text-sm font-medium text-text">Get started with LifeOS</span>
+                  <span className="text-[10px] text-text-muted font-heading">Dashboard + optional AI agent</span>
                 </div>
                 <a
-                  href="https://openclaw.azin.run"
+                  href="https://lifeos.zone"
                   className="text-xs text-text-muted hover:text-text transition-colors font-heading"
                 >
                   or log in &rarr;
@@ -531,7 +518,7 @@ function VideoSection() {
       >
         <iframe
           src="https://www.youtube.com/embed/hgwFs6z0iS8?rel=0&modestbranding=1&color=white"
-          title="ClawNow demo"
+          title="LifeOS demo"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           className="w-full h-full"
@@ -727,7 +714,7 @@ function ComparisonSection() {
           badge="Compare"
           title="Not all hosting is equal."
           titleMuted="See what you actually get."
-          blogLink={{ text: "Deep dive \u2192", href: "https://azin.run/blog/clawnow-vs-shared-ai-platforms" }}
+          blogLink={{ text: "Deep dive \u2192", href: "https://lifeos.zone/blog/lifeos-vs-shared-ai-platforms" }}
         />
 
         {/* Compare with... button */}
@@ -771,7 +758,7 @@ function ComparisonSection() {
                     Feature
                   </th>
                   {allColumns.map((col) => {
-                    const isAzin = col.id === "azin";
+                    const isAzin = col.highlight;
                     const isOptional = OPTIONAL_PROVIDERS.some((p) => p.id === col.id);
                     return (
                       <th
@@ -814,7 +801,7 @@ function ComparisonSection() {
                       {row.label}
                     </td>
                     {allColumns.map((col) => {
-                      const isAzin = col.id === "azin";
+                      const isAzin = col.highlight;
                       const value = col.values[row.id] ?? "?";
                       return (
                         <td
@@ -870,7 +857,7 @@ function SecuritySection() {
             accessible only by its owner. No shared containers. No shared memory. No shared risk.
           </p>
           <a
-            href="https://azin.run/blog/sandbox-your-ai-agents"
+            href="https://lifeos.zone/blog/sandbox-your-ai-agents"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block text-sm text-accent hover:text-accent/80 transition-colors mt-3"
@@ -973,7 +960,7 @@ function SecuritySection() {
         {/* GitHub callout */}
         <div className="mt-10 text-center">
           <a
-            href="https://github.com/openclaw/openclaw"
+            href="https://github.com/lifeos-zone/lifeos"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-xs text-text-muted hover:text-text transition-colors"
@@ -1138,8 +1125,8 @@ function CTASection() {
               <span className="text-text-muted">1 minute, one Google sign-in.</span>
             </h2>
             <p className="mt-5 text-sm lg:text-base text-text-muted leading-relaxed max-w-lg">
-              ClawNow gives you an isolated pod, encrypted storage, and zero-trust networking.
-              Pick a model and ship -- we handle the rest.
+              LifeOS gives you a real-time productivity dashboard, encrypted storage, and an optional AI agent.
+              Sign in with Google and start organizing your life -- we handle the rest.
             </p>
           </div>
 
@@ -1153,16 +1140,14 @@ function CTASection() {
               }}
               className="inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-bg text-sm font-medium px-8 py-4 rounded-md transition-all duration-150 active:scale-[0.99]"
             >
-              Deploy Claw Now
+              Get Started with LifeOS
               <ChevronRight className="w-4 h-4" />
             </a>
             <a
-              href="https://azin.run/contact"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="mailto:support@lifeos.zone?subject=LifeOS"
               className="inline-flex items-center justify-center ring-1 ring-text/10 text-sm px-8 py-4 rounded-md text-text hover:ring-text/20 transition-all duration-150 active:scale-[0.99]"
             >
-              Book a demo
+              Contact us
             </a>
           </div>
         </motion.div>
@@ -1180,22 +1165,19 @@ function Footer() {
     <footer className="border-t border-text/[0.08] py-8 px-6 lg:px-12">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <img src="/icon-white.svg" alt="ClawNow" className="size-5" />
+          <img src="/icon-white.svg" alt="LifeOS" className="size-5" />
           <span className="text-xs text-text-muted font-heading">
-            Claw<span className="text-text">Now</span> by{" "}
-            <a href="https://azin.run" target="_blank" rel="noopener noreferrer" className="text-text hover:text-accent transition-colors">
-              Azin
-            </a>
+            Life<span className="text-text">OS</span>
           </span>
         </div>
         <div className="flex items-center gap-6 text-[11px] text-text-muted font-heading">
-          <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors">
+          <a href="https://github.com/lifeos-zone/lifeos" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors">
             GitHub
           </a>
-          <a href="https://azin.run/blog" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors">
+          <a href="https://lifeos.zone/blog" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors">
             Blog
           </a>
-          <a href="mailto:contact@azin.run" className="hover:text-text transition-colors">
+          <a href="mailto:support@lifeos.zone" className="hover:text-text transition-colors">
             Contact
           </a>
         </div>

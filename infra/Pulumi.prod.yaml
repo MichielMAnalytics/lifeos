@@ -1,8 +1,8 @@
 config:
-  gcp:project: claw-now-prod
+  gcp:project: lifeos-prod-491301
   gcp:region: europe-west3
   lifeos:dnsProvider: godaddy
-  lifeos:domain: openclaw.azin.run
+  lifeos:domain: lifeos.zone
   lifeos:openclawImageTag: latest
   lifeos:jwtSigningKey: 78a1710deae11f3c62c25e907ab15bd4
   lifeos:convexSiteUrl: https://api.openclaw.azin.run

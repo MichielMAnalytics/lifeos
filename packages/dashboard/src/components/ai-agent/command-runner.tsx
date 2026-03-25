@@ -43,7 +43,7 @@ export function CommandRunnerContent({
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const domain = process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? "lifeos.app";
+  const domain = process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? "lifeos.zone";
   const base = `https://${subdomain}.${domain}`;
 
   // Pick up command injected from cheatsheet
@@ -155,7 +155,7 @@ export function CommandRunnerContent({
                       <div className="mt-1 ml-[18px] space-y-1.5">
                         <img src={parsed.qrDataUrl} alt="QR Code" className="w-48 h-48 rounded bg-white p-1" />
                         {parsed.message && <p className="text-gray-400 text-[10px]">{parsed.message}</p>}
-                        <p className="text-gray-500 text-[10px]">Scan with WhatsApp, then run: <span className="text-emerald-400/70">openclaw channels login wait</span></p>
+                        <p className="text-gray-500 text-[10px]">Scan with WhatsApp, then run: <span className="text-emerald-400/70">agent channels login wait</span></p>
                       </div>
                     );
                   }

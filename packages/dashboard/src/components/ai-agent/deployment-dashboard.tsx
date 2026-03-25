@@ -158,7 +158,7 @@ export function DeploymentDashboard({
   const [actionLoading, setActionLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const domain = process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? "lifeos.app";
+  const domain = process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? "lifeos.zone";
   const cockpitUrl = `https://${deployment.subdomain}.${domain}/_/setup#token=${encodeURIComponent(deployment.gatewayToken)}`;
 
   const handleCopy = async () => {
@@ -334,7 +334,7 @@ export function DeploymentDashboard({
                     Endpoint
                   </h3>
                   <code className="block text-[11px] text-text-muted font-mono bg-bg ring-1 ring-text/10 px-3 py-2">
-                    {deployment.subdomain}.{process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? "lifeos.app"}
+                    {deployment.subdomain}.{process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? "lifeos.zone"}
                   </code>
                 </div>
 

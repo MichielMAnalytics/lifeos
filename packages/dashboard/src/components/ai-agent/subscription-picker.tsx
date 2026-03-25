@@ -68,7 +68,7 @@ export function SubscriptionPicker({
           Choose your plan to deploy
         </h2>
         <p className="text-xs text-text-muted max-w-md mx-auto">
-          Subscribe to deploy and run your Claw Now instance.
+          Subscribe to deploy and run your AI agent instance.
           All plans include managed hosting and automatic updates.
         </p>
       </div>

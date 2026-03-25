@@ -25,45 +25,45 @@ const CHEATSHEET: { label: string; items: { cmd: string; desc: string }[] }[] = 
   {
     label: "Status & Health",
     items: [
-      { cmd: "openclaw health", desc: "Instance health check" },
-      { cmd: "openclaw status", desc: "Current status" },
-      { cmd: "openclaw channels status", desc: "Channel status" },
+      { cmd: "agent health", desc: "Instance health check" },
+      { cmd: "agent status", desc: "Current status" },
+      { cmd: "agent channels status", desc: "Channel status" },
     ],
   },
   {
     label: "Models",
     items: [
-      { cmd: "openclaw models list", desc: "Available models" },
-      { cmd: "openclaw config get", desc: "Full config (includes model)" },
+      { cmd: "agent models list", desc: "Available models" },
+      { cmd: "agent config get", desc: "Full config (includes model)" },
     ],
   },
   {
     label: "Sessions & Chat",
     items: [
-      { cmd: "openclaw sessions list", desc: "Active sessions" },
-      { cmd: "openclaw tts status", desc: "Text-to-speech status" },
+      { cmd: "agent sessions list", desc: "Active sessions" },
+      { cmd: "agent tts status", desc: "Text-to-speech status" },
     ],
   },
   {
     label: "Config",
     items: [
-      { cmd: "openclaw config get", desc: "View config" },
-      { cmd: "openclaw config schema", desc: "Config schema" },
+      { cmd: "agent config get", desc: "View config" },
+      { cmd: "agent config schema", desc: "Config schema" },
     ],
   },
   {
     label: "Skills & Cron",
     items: [
-      { cmd: "openclaw skills status", desc: "Installed skills" },
-      { cmd: "openclaw cron list", desc: "Scheduled jobs" },
+      { cmd: "agent skills status", desc: "Installed skills" },
+      { cmd: "agent cron list", desc: "Scheduled jobs" },
     ],
   },
   {
     label: "Logs & Debug",
     items: [
-      { cmd: "openclaw logs tail", desc: "Tail logs" },
-      { cmd: "openclaw usage status", desc: "Usage stats" },
-      { cmd: "openclaw usage cost", desc: "Cost breakdown" },
+      { cmd: "agent logs tail", desc: "Tail logs" },
+      { cmd: "agent usage status", desc: "Usage stats" },
+      { cmd: "agent usage cost", desc: "Cost breakdown" },
     ],
   },
 ];
@@ -105,7 +105,7 @@ function CheatsheetPopover({
               className="flex items-baseline gap-2 w-full text-left px-2 py-1 rounded hover:bg-surface-hover/50 transition-colors group"
             >
               <code className="text-[11px] font-mono text-text shrink-0 group-hover:text-accent transition-colors">
-                {item.cmd.replace("openclaw ", "")}
+                {item.cmd.replace("agent ", "")}
               </code>
               <span className="text-[10px] text-text-muted/50 truncate">{item.desc}</span>
             </button>

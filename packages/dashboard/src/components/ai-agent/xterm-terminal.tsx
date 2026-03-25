@@ -63,7 +63,7 @@ export function XtermTerminal({
     fitRef.current = fitAddon;
 
     // WebSocket connection
-    const domain = process.env.NEXT_PUBLIC_LIFEOS_DOMAIN || "lifeos.app";
+    const domain = process.env.NEXT_PUBLIC_LIFEOS_DOMAIN || "lifeos.zone";
     const wsUrl = `wss://${subdomain}.${domain}/_/api/terminal?token=${encodeURIComponent(gatewayToken)}`;
     term.write(`\x1b[90mConnecting to ${subdomain}.${domain}...\x1b[0m\r\n`);
     const ws = new WebSocket(wsUrl);

@@ -5,6 +5,7 @@ const serverEnvSchema = z.object({
   STRIPE_PRICE_10: z.string().optional(),
   STRIPE_PRICE_25: z.string().optional(),
   STRIPE_PRICE_50: z.string().optional(),
+  STRIPE_SUB_DASHBOARD: z.string().optional(),
   STRIPE_SUB_BYOK: z.string().optional(),
   STRIPE_SUB_BASIC: z.string().optional(),
   STRIPE_SUB_STANDARD: z.string().optional(),
@@ -17,10 +18,9 @@ const serverEnvSchema = z.object({
   GATEWAY_SYSTEM_KEY: z.string().optional(),
   AI_GATEWAY_INTERNAL_URL: z.string().optional(),
   AI_GATEWAY_K8S_SERVICE: z.string().default("ai-gateway"),
-  SLACK_WEBHOOK_URL: z.string().optional(),
   OPENCLAW_IMAGE_TAG: z.string().optional(),
   GCP_PROJECT_ID: z.string().optional(),
-  LIFEOS_DOMAIN: z.string().default("lifeos.app"),
+  LIFEOS_DOMAIN: z.string().default("lifeos.zone"),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
@@ -60,36 +60,49 @@ export function getCreditTiersList(): Array<{
 
 const PLAN_DEFS = [
   {
+    key: "STRIPE_SUB_DASHBOARD" as const,
+    planType: "dashboard" as const,
+    priceEuroCents: 1000,
+    includedCreditsCents: 0,
+    apiKeyMode: "none" as const,
+    label: "Dashboard",
+    includesDeployment: false,
+  },
+  {
     key: "STRIPE_SUB_BYOK" as const,
     planType: "byok" as const,
-    priceEuroCents: 2000,
+    priceEuroCents: 3000,
     includedCreditsCents: 0,
     apiKeyMode: "byok" as const,
     label: "BYOK",
+    includesDeployment: true,
   },
   {
     key: "STRIPE_SUB_BASIC" as const,
     planType: "basic" as const,
-    priceEuroCents: 3000,
+    priceEuroCents: 4000,
     includedCreditsCents: 1000,
     apiKeyMode: "ours" as const,
     label: "Basic",
+    includesDeployment: true,
   },
   {
     key: "STRIPE_SUB_STANDARD" as const,
     planType: "standard" as const,
-    priceEuroCents: 4500,
+    priceEuroCents: 5500,
     includedCreditsCents: 2500,
     apiKeyMode: "ours" as const,
     label: "Standard",
+    includesDeployment: true,
   },
   {
     key: "STRIPE_SUB_PREMIUM" as const,
     planType: "premium" as const,
-    priceEuroCents: 7500,
-    includedCreditsCents: 5500,
+    priceEuroCents: 10500,
+    includedCreditsCents: 5000,
     apiKeyMode: "ours" as const,
     label: "Premium",
+    includesDeployment: true,
   },
 ];
 
@@ -107,11 +120,12 @@ export function getSubscriptionPlans(): Record<
 
 export function getSubscriptionPlansList(): Array<{
   priceId: string;
-  planType: "byok" | "basic" | "standard" | "premium";
+  planType: "dashboard" | "byok" | "basic" | "standard" | "premium";
   priceEuroCents: number;
   includedCreditsCents: number;
-  apiKeyMode: "byok" | "ours";
+  apiKeyMode: "none" | "byok" | "ours";
   label: string;
+  includesDeployment: boolean;
 }> {
   return PLAN_DEFS.map((plan) => ({
     priceId: serverEnv[plan.key] ?? "",
@@ -120,6 +134,7 @@ export function getSubscriptionPlansList(): Array<{
     includedCreditsCents: plan.includedCreditsCents,
     apiKeyMode: plan.apiKeyMode,
     label: plan.label,
+    includesDeployment: plan.includesDeployment,
   })).filter((p) => p.priceId !== "");
 }
 

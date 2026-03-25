@@ -40,7 +40,7 @@ export function FileBrowserContent({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const domain = process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? "lifeos.app";
+  const domain = process.env.NEXT_PUBLIC_LIFEOS_DOMAIN ?? "lifeos.zone";
   const base = `https://${subdomain}.${domain}`;
 
   const fetchDir = useCallback(

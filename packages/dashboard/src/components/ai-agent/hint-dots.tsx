@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 
-const STORAGE_KEY = "clawnow_hints_dismissed";
+const STORAGE_KEY = "lifeos_hints_dismissed";
 
 interface HintsContextValue {
   dismissed: boolean;
