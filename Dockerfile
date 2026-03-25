@@ -3,19 +3,14 @@ FROM node:22-bookworm-slim AS builder
 
 RUN npm install -g bun
 
-WORKDIR /app
-
-# Copy web app package manifest + lockfile
-COPY web/package.json web/bun.lock web/
-
-# Copy convex types (needed for build)
-COPY convex/ convex/
-
-# Install web deps independently
 WORKDIR /app/web
+
+# Copy package manifest + lockfile
+COPY web/package.json web/bun.lock ./
+
 RUN bun install --frozen-lockfile
 
-# Copy web source
+# Copy source (convex/ is inside web/)
 COPY web/ .
 
 # Build args for public env vars baked into the client bundle

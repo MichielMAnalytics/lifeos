@@ -5,5 +5,5 @@
  *   import { api } from '@/lib/convex-api';
  *   import type { Id } from '@/lib/convex-api';
  */
-export { api } from "../../../convex/_generated/api";
-export type { Id, Doc } from "../../../convex/_generated/dataModel";
+export { api } from "../../convex/_generated/api";
+export type { Id, Doc } from "../../convex/_generated/dataModel";

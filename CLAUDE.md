@@ -28,7 +28,7 @@ The AI agent feature is called "Life Coach" — never prefix it with "AI". Power
 
 ```bash
 bun install              # Install all dependencies
-bun run dev              # Start Convex dev server + Next.js dashboard concurrently
+cd web && bun run dev    # Start Convex dev server + Next.js dashboard concurrently
 bun run cli <cmd>        # Run a CLI command (via bun)
 ```
 
