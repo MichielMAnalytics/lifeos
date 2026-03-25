@@ -39,7 +39,9 @@ export const checkDeploymentHealth = internalAction({
 
       clearTimeout(timeout);
 
-      if (res.status < 500) {
+      // Any response means the pod + ingress are alive.
+      // 503 is expected when nginx auth-url blocks unauthenticated requests.
+      if (res.status < 504) {
         // Healthy — transition to running
         await ctx.runMutation(internal.deploymentQueries.updateDeploymentStatus, {
           deploymentId,

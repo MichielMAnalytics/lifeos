@@ -12,8 +12,6 @@ import { ChatWidget } from '@/components/ai-agent/chat-widget';
 import { OnboardingFlow } from '@/components/onboarding-flow';
 import { LoadingScreen } from '@/components/loading-screen';
 
-const SETUP_DONE_KEY = 'lifeos-setup-complete';
-
 function RedirectToLogin() {
   const router = useRouter();
   useEffect(() => { router.replace('/login'); }, [router]);
@@ -22,32 +20,29 @@ function RedirectToLogin() {
 
 function AppShellInner({ children }: { children: React.ReactNode }) {
   const subscription = useQuery(api.stripe.getMySubscription);
+  const deployment = useQuery(api.deploymentQueries.getMyDeployment);
   const searchParams = useSearchParams();
-  const [setupDone, setSetupDone] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    const done = localStorage.getItem(SETUP_DONE_KEY) === 'true';
-    setSetupDone(done);
-  }, []);
+  if (subscription === undefined || deployment === undefined) return <LoadingScreen />;
 
-  // Mark setup as done when OnboardingFlow completes (user enters the app)
-  useEffect(() => {
-    if (setupDone === false && subscription && !searchParams.get('subscription')) {
-      // User has subscription and no ?subscription= param — they navigated here normally
-      localStorage.setItem(SETUP_DONE_KEY, 'true');
-      setSetupDone(true);
-    }
-  }, [subscription, searchParams, setupDone]);
-
-  if (subscription === undefined || setupDone === null) return <LoadingScreen />;
-
-  // No subscription — show full onboarding (plan selection)
+  // No subscription at all — show full onboarding
   if (!subscription) return <OnboardingFlow />;
 
-  // Fresh from Stripe checkout — show setup step
+  // Post-checkout redirect — show setup step
   const isPostCheckout = searchParams.get('subscription') === 'success';
-  if (isPostCheckout && !setupDone) {
+
+  // For deployment plans (not dashboard): show onboarding if no deployment exists yet
+  const isDeploymentPlan = subscription.planType !== 'dashboard';
+  const hasDeployment = deployment && deployment.status !== 'deactivated';
+
+  if (isPostCheckout && isDeploymentPlan && !hasDeployment) {
     return <OnboardingFlow />;
+  }
+
+  // For Home plan post-checkout: show CLI setup if not done
+  if (isPostCheckout && !isDeploymentPlan) {
+    const setupDone = typeof window !== 'undefined' && localStorage.getItem('lifeos-setup-complete') === 'true';
+    if (!setupDone) return <OnboardingFlow />;
   }
 
   // Normal app
