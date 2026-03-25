@@ -412,7 +412,20 @@ const cf = h + '/.openclaw/openclaw.json';
 const p = JSON.parse(fs.readFileSync(pf, 'utf8'));
 if (!fs.existsSync(cf)) { fs.writeFileSync(cf, JSON.stringify(p)); process.exit(0); }
 const c = JSON.parse(fs.readFileSync(cf, 'utf8'));
-c.gateway = Object.assign(c.gateway || {}, p.gateway);
+// Deep merge gateway — preserve nested objects like controlUi
+const gw = c.gateway || {};
+const pgw = p.gateway || {};
+Object.keys(pgw).forEach(k => {
+  if (typeof pgw[k] === 'object' && pgw[k] && !Array.isArray(pgw[k])) {
+    gw[k] = Object.assign(gw[k] || {}, pgw[k]);
+  } else {
+    gw[k] = pgw[k];
+  }
+});
+c.gateway = gw;
+// Always force allowedOrigins (critical for dashboard access)
+if (!c.gateway.controlUi) c.gateway.controlUi = {};
+c.gateway.controlUi.allowedOrigins = (p.gateway && p.gateway.controlUi && p.gateway.controlUi.allowedOrigins) || [];
 c.models = p.models;
 c.agents = p.agents;
 if (!c.browser) c.browser = p.browser;
