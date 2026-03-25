@@ -63,7 +63,7 @@ export default function AiAgentPage() {
     return (
       <div className="mx-auto max-w-2xl animate-fade-in">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-text tracking-tight mb-2">AI Agent</h1>
+          <h1 className="text-2xl font-bold text-text tracking-tight mb-2">Life Coach</h1>
           <p className="text-xs text-text-muted">Add a 24/7 AI assistant to your LifeOS</p>
         </div>
         <PaymentStatus />
@@ -78,9 +78,9 @@ export default function AiAgentPage() {
               <line x1="4" y1="12" x2="12" y2="12" />
             </svg>
           </div>
-          <h2 className="text-lg font-bold text-text">Deploy your personal AI agent</h2>
+          <h2 className="text-lg font-bold text-text">Activate your personal Life Coach</h2>
           <p className="text-sm text-text-muted max-w-md mx-auto">
-            Upgrade your plan to get a dedicated AI agent instance with Telegram, Discord, and WhatsApp integration. Your AI agent runs 24/7 and connects to your LifeOS data.
+            Upgrade your plan to get a dedicated Life Coach instance with Telegram, Discord, and WhatsApp integration. Your Life Coach runs 24/7 and connects to your LifeOS data.
           </p>
           <div className="pt-2">
             <Link
@@ -101,8 +101,8 @@ export default function AiAgentPage() {
     return (
       <div className="mx-auto max-w-2xl space-y-4 animate-fade-in">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-text tracking-tight mb-2">AI Agent</h1>
-          <p className="text-xs text-text-muted">Manage your deployed AI agent instance</p>
+          <h1 className="text-2xl font-bold text-text tracking-tight mb-2">Life Coach</h1>
+          <p className="text-xs text-text-muted">Your Life Coach is active</p>
         </div>
         <PaymentStatus />
         <DeploymentDashboard deployment={deployment} />
@@ -120,8 +120,8 @@ export default function AiAgentPage() {
     return (
       <div className="mx-auto max-w-2xl animate-fade-in">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-text tracking-tight mb-2">AI Agent</h1>
-          <p className="text-xs text-text-muted">Deploy your personal AI assistant</p>
+          <h1 className="text-2xl font-bold text-text tracking-tight mb-2">Life Coach</h1>
+          <p className="text-xs text-text-muted">Set up your always-on Life Coach</p>
         </div>
         <PaymentStatus />
         <Onboarding
@@ -137,8 +137,8 @@ export default function AiAgentPage() {
   return (
     <div className="mx-auto max-w-2xl animate-fade-in">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-text tracking-tight mb-2">AI Agent</h1>
-        <p className="text-xs text-text-muted">Deploy your personal AI assistant</p>
+        <h1 className="text-2xl font-bold text-text tracking-tight mb-2">Life Coach</h1>
+        <p className="text-xs text-text-muted">Set up your always-on Life Coach</p>
       </div>
       <PaymentStatus />
       <ConfigCard preferredPlan={urlPrefs.plan} onRequestReconfigure={setReconfiguring} />

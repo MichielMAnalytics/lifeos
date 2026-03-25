@@ -6,7 +6,7 @@ const LIGHT_THEMES = new Set(['zen', 'light']);
 
 export function LogoMark({ size = 28, className }: { size?: number; className?: string }) {
   const { theme } = useTheme();
-  const src = LIGHT_THEMES.has(theme) ? '/logo-black.svg' : '/logo-white.svg';
+  const src = LIGHT_THEMES.has(theme) ? '/logo-only-black.svg' : '/logo-only-white.svg';
   return <img src={src} alt="LifeOS" width={size} height={size} className={className} />;
 }
 

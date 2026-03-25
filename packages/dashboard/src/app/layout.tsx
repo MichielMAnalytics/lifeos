@@ -7,7 +7,10 @@ export const metadata: Metadata = {
   title: 'LifeOS',
   description: 'Personal Life Operating System',
   icons: {
-    icon: '/favicon.svg',
+    icon: [
+      { url: '/logo-only-black.svg', media: '(prefers-color-scheme: light)' },
+      { url: '/logo-only-white.svg', media: '(prefers-color-scheme: dark)' },
+    ],
   },
 };
 

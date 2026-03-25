@@ -25,8 +25,7 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
     if (preferredModel) sessionStorage.removeItem("pref_model");
   }, [preferredModel]);
 
-  // Default to Claude Sonnet 4.6 — model selector is hidden
-  const [selectedModel] = useState("claude-sonnet");
+  const [selectedModel, setSelectedModel] = useState("claude-sonnet");
   const [telegramToken, setTelegramToken] = useState("");
   const [discordToken, setDiscordToken] = useState("");
   const [saving, setSaving] = useState(false);
@@ -95,7 +94,7 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
               type="button"
               onClick={() => setIsByok(false)}
               className={cn(
-                "flex-1 py-2 text-[10px] uppercase tracking-wider border transition-colors cursor-pointer",
+                "flex-1 py-2 text-[10px] uppercase tracking-wider border rounded-md transition-colors cursor-pointer",
                 !isByok
                   ? "bg-text text-bg border-text"
                   : "bg-transparent text-text-muted border-border hover:border-text/30",
@@ -107,7 +106,7 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
               type="button"
               onClick={() => setIsByok(true)}
               className={cn(
-                "flex-1 py-2 text-[10px] uppercase tracking-wider border transition-colors cursor-pointer",
+                "flex-1 py-2 text-[10px] uppercase tracking-wider border rounded-md transition-colors cursor-pointer",
                 isByok
                   ? "bg-text text-bg border-text"
                   : "bg-transparent text-text-muted border-border hover:border-text/30",
@@ -198,10 +197,30 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
             </>
           )}
 
-          {/* Model selector hidden — defaulting to Claude Sonnet 4.6 */}
+          {/* Model selector — Anthropic models only */}
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-wider text-text-muted">
+              AI Model
+            </label>
+            <div className="grid grid-cols-3 gap-1">
+              {MODELS.filter((m) => m.id.startsWith("claude")).map((model) => (
+                <Button
+                  key={model.id}
+                  variant={selectedModel === model.id ? "default" : "outline"}
+                  onClick={() => setSelectedModel(model.id)}
+                  size="sm"
+                  className="gap-1.5 text-[10px]"
+                >
+                  <img src={model.icon} alt={model.label} className="size-3" />
+                  {model.label.replace("Claude ", "")}
+                  {selectedModel === model.id && <Check className="size-2.5" />}
+                </Button>
+              ))}
+            </div>
+          </div>
 
           {/* Messaging Channels (optional) */}
-          <details className="group">
+          <details className="group" open>
             <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-text-muted/60 hover:text-text-muted uppercase tracking-wider select-none list-none [&::-webkit-details-marker]:hidden transition-colors">
               <svg className="size-3 transition-transform group-open:rotate-90" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 2l4 4-4 4" /></svg>
               Messaging Channels

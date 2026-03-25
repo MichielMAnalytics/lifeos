@@ -58,14 +58,16 @@ export function DashboardConfigProvider({ children }: { children: React.ReactNod
 
   const isLoading = rawConfig === undefined;
 
-  // Ensure new pages from DEFAULT_NAV_ORDER are appended to existing configs
+  // Ensure new pages from DEFAULT_NAV_ORDER are merged into existing configs
+  // life-coach is always pinned first
   const savedOrder = rawConfig?.navOrder ?? [...DEFAULT_NAV_ORDER];
-  const mergedOrder = [...savedOrder];
+  const mergedOrder = savedOrder.filter((p) => p !== 'life-coach');
   for (const page of DEFAULT_NAV_ORDER) {
-    if (!mergedOrder.includes(page)) {
+    if (page !== 'life-coach' && !mergedOrder.includes(page)) {
       mergedOrder.push(page);
     }
   }
+  mergedOrder.unshift('life-coach');
 
   const config: DashboardConfig = rawConfig
     ? {

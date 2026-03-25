@@ -192,6 +192,6 @@ export const NAV_MARKS: Record<string, React.ComponentType<{ className?: string 
   reviews: MarkReviews,
   resources: MarkResources,
   calendar: MarkCalendar,
-  'ai-agent': MarkAiAgent,
+  'life-coach': MarkAiAgent,
   settings: MarkSettings,
 };

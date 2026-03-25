@@ -25,9 +25,9 @@ interface ApiKeyEntry {
 
 function daysSince(creationTime: number): number {
   try {
-    return Math.max(0, Math.floor((Date.now() - creationTime) / 86400000));
+    return Math.max(1, Math.floor((Date.now() - creationTime) / 86400000) + 1);
   } catch {
-    return 0;
+    return 1;
   }
 }
 
@@ -133,9 +133,17 @@ export function SettingsClient({
     }
   }
 
-  const days = user ? daysSince(user._creationTime) : 0;
+  const subscription = useQuery(api.stripe.getMySubscription);
+  const days = user ? daysSince(user._creationTime) : 1;
   const userTz = user?.timezone || detectedTz;
   const tzCity = userTz.split('/').pop()?.replace(/_/g, ' ') || userTz;
+  const planLabels: Record<string, string> = { dashboard: 'Dashboard', byok: 'BYOK', basic: 'Basic', standard: 'Standard', premium: 'Premium' };
+  const planLabel = subscription ? planLabels[subscription.planType] ?? 'No plan' : 'No plan';
+
+  // Trial days remaining (7-day trial from subscription start)
+  const trialDaysLeft = subscription
+    ? Math.max(0, Math.ceil((subscription.currentPeriodEnd - Date.now()) / 86400000))
+    : null;
 
   return (
     <div className="max-w-none space-y-12 animate-fade-in">
@@ -221,7 +229,17 @@ export function SettingsClient({
             </div>
 
             {/* Stats row */}
-            <div className="grid grid-cols-3 divide-x divide-border">
+            <div className="grid grid-cols-4 divide-x divide-border">
+              <div className="px-6 py-4 text-center">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Plan</p>
+                <p className="text-sm font-bold text-text">{planLabel}</p>
+                {trialDaysLeft !== null && trialDaysLeft > 0 && (
+                  <p className="text-[10px] text-success mt-0.5">{trialDaysLeft}d trial left</p>
+                )}
+                {!subscription && (
+                  <Link href="/life-coach" className="text-[10px] text-accent hover:underline mt-0.5 inline-block">Choose plan</Link>
+                )}
+              </div>
               <Stat label="Timezone" value={tzUpdated ? (detectedTz.split('/').pop()?.replace(/_/g, ' ') || detectedTz) : tzCity} />
               <Stat label="Joined" value={formatJoinDate(user._creationTime)} />
               <Stat label="API Keys" value={String(apiKeys.length)} mono />
@@ -332,7 +350,7 @@ export function SettingsClient({
                 type="text"
                 value={newKeyName}
                 onChange={(e) => setNewKeyName(e.target.value)}
-                placeholder="Key name (e.g. CLI, Mobile, AI Agent)"
+                placeholder="Key name (e.g. CLI, Mobile, Life Coach)"
                 className="flex-1 border border-border bg-transparent px-4 py-2.5 text-sm text-text placeholder:text-text-muted/50 focus:border-text focus:outline-none font-mono"
               />
               <button
@@ -347,7 +365,7 @@ export function SettingsClient({
         </div>
       </section>
 
-      {/* -- AI Agent ---------------------------------------- */}
+      {/* -- Life Coach ---------------------------------------- */}
       <AiAgentSection />
     </div>
   );
@@ -375,7 +393,7 @@ function Stat({ label, value, mono }: { label: string; value: string; mono?: boo
   );
 }
 
-/* -- AI Agent Section --------------------------------------- */
+/* -- Life Coach Section --------------------------------------- */
 
 const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
   running: { dot: 'bg-success', label: 'Running' },
@@ -391,7 +409,7 @@ function AiAgentSection() {
 
   return (
     <section>
-      <SectionHeader label="AI Agent" />
+      <SectionHeader label="Life Coach" />
 
       <div className="border border-border">
         {deployment === undefined ? (
@@ -414,7 +432,7 @@ function AiAgentSection() {
               Deploy your personal AI agent to automate tasks, manage channels, and more.
             </p>
             <Link
-              href="/ai-agent"
+              href="/life-coach"
               className="inline-block mt-4 bg-text text-bg px-5 py-2.5 text-xs font-medium uppercase tracking-wider hover:opacity-90 transition-opacity"
             >
               Get Started
@@ -439,7 +457,7 @@ function AiAgentSection() {
               </div>
             </div>
             <Link
-              href="/ai-agent"
+              href="/life-coach"
               className="text-xs font-mono text-text underline underline-offset-2 hover:opacity-70 transition-opacity"
             >
               Manage

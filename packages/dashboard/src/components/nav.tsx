@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
 import { HeaderNav } from './header-nav';
@@ -12,6 +14,7 @@ import { SearchTrigger } from './search-modal';
 import { GatewayStatusIndicator } from './ai-agent/gateway-status-indicator';
 
 const allPages: Record<string, { label: string; abbr: string }> = {
+  'life-coach': { label: 'Life Coach', abbr: 'Lc' },
   today: { label: 'Today', abbr: 'To' },
   tasks: { label: 'Tasks', abbr: 'Ta' },
   projects: { label: 'Projects', abbr: 'Pr' },
@@ -23,7 +26,6 @@ const allPages: Record<string, { label: string; abbr: string }> = {
   reviews: { label: 'Reviews', abbr: 'Re' },
   resources: { label: 'Resources', abbr: 'Rs' },
   calendar: { label: 'Calendar', abbr: 'Ca' },
-  'ai-agent': { label: 'AI Agent', abbr: 'Ai' },
 };
 
 const bottomLinks = [
@@ -88,7 +90,7 @@ export function Nav() {
       >
         {expanded ? (
           <>
-            <LogoHorizontal height={48} className="animate-fade-in" />
+            <LogoMark size={28} className="animate-fade-in" />
             <button
               onClick={toggle}
               className="flex h-7 w-7 shrink-0 items-center justify-center text-text-muted transition-colors hover:text-text font-mono text-xs"
@@ -103,7 +105,7 @@ export function Nav() {
             className="flex shrink-0 items-center justify-center transition-colors hover:opacity-70"
             title="Expand sidebar"
           >
-            <LogoMark size={46} />
+            <LogoMark size={28} />
           </button>
         )}
       </div>
@@ -180,6 +182,24 @@ export function Nav() {
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-text" />
                 )}
                 {(() => {
+                  if (key === 'life-coach') {
+                    return expanded ? (
+                      <span className="flex items-center gap-2.5 text-sm font-medium animate-slide-in group/lc relative">
+                        <img src="/openclaw-icon.png" alt="Life Coach" className="shrink-0 size-4 rounded-sm" />
+                        {label}
+                        <span className="absolute left-0 bottom-full mb-1 z-50 hidden group-hover/lc:block bg-surface border border-border rounded px-2 py-1 text-[10px] text-text-muted whitespace-nowrap shadow-lg pointer-events-auto">
+                          Powered by <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://openclaw.ai/', '_blank'); }} className="text-accent hover:underline cursor-pointer">OpenClaw</span>
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="relative group/lc">
+                        <img src="/openclaw-icon.png" alt="Life Coach" className="shrink-0 size-4 rounded-sm" />
+                        <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 hidden group-hover/lc:block bg-surface border border-border rounded px-2 py-1 text-[10px] text-text-muted whitespace-nowrap shadow-lg pointer-events-auto">
+                          Powered by <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://openclaw.ai/', '_blank'); }} className="text-accent hover:underline cursor-pointer">OpenClaw</span>
+                        </span>
+                      </span>
+                    );
+                  }
                   const Mark = NAV_MARKS[key];
                   return expanded ? (
                     <span className="flex items-center gap-2.5 text-sm font-medium animate-slide-in">
@@ -303,6 +323,9 @@ export function Nav() {
           );
         })}
 
+        {/* Profile + Plan */}
+        <ProfileBadge expanded={expanded} />
+
         {/* Toggle arrow at the very bottom */}
         {!expanded && (
           <button
@@ -315,5 +338,64 @@ export function Nav() {
         )}
       </div>
     </nav>
+  );
+}
+
+const PLAN_LABELS: Record<string, string> = {
+  dashboard: 'Dashboard',
+  byok: 'BYOK',
+  basic: 'Basic',
+  standard: 'Standard',
+  premium: 'Premium',
+};
+
+function ProfileBadge({ expanded }: { expanded: boolean }) {
+  const user = useQuery(api.authHelpers.getMe, {});
+  const subscription = useQuery(api.stripe.getMySubscription);
+  const [avatar, setAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('lifeos-avatar');
+    if (stored) setAvatar(stored);
+  }, []);
+
+  if (!user) return null;
+
+  const profileImage = avatar ?? user.image;
+  const initials = (user.name ?? user.email ?? '?')
+    .split(/[\s@]+/)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase() ?? '')
+    .join('');
+
+  const planLabel = subscription ? PLAN_LABELS[subscription.planType] ?? 'No plan' : 'No plan';
+
+  return (
+    <Link
+      href="/settings"
+      title={expanded ? undefined : `${user.name ?? user.email} — ${planLabel}`}
+      className={cn(
+        'flex items-center transition-all duration-150 mt-1',
+        expanded ? 'gap-2.5 px-3 py-2 rounded-lg hover:bg-surface-hover' : 'justify-center w-10 mx-auto py-2',
+      )}
+    >
+      {profileImage ? (
+        <img
+          src={profileImage}
+          alt=""
+          className="size-7 rounded-full shrink-0 object-cover"
+        />
+      ) : (
+        <span className="size-7 rounded-full shrink-0 bg-surface flex items-center justify-center text-[10px] font-bold text-text-muted">
+          {initials}
+        </span>
+      )}
+      {expanded && (
+        <span className="flex flex-col min-w-0 animate-slide-in">
+          <span className="text-xs font-medium text-text truncate">{user.name ?? user.email}</span>
+          <span className="text-[10px] text-text-muted">{planLabel} plan</span>
+        </span>
+      )}
+    </Link>
   );
 }

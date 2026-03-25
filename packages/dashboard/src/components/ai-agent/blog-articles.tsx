@@ -13,14 +13,14 @@ const ARTICLES = [
   {
     number: 2,
     title: "Memory That Actually Works: Setup Guide (Not Just Chat History)",
-    url: "https://lifeos.zone/blog/ai-agent-memory-setup-guide",
+    url: "https://lifeos.zone/blog/life-coach-memory-setup-guide",
     summary:
       "Your AI agent doesn't magically remember things. You have to teach it how.",
   },
   {
     number: 3,
     title: "Skills & Permissions: What Your Agent Can Do (And What It Shouldn't)",
-    url: "https://lifeos.zone/blog/ai-agent-skills-permissions",
+    url: "https://lifeos.zone/blog/life-coach-skills-permissions",
     summary:
       "Without boundaries, your agent can do everything. With boundaries, only what it needs.",
   },
