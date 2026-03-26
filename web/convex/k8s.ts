@@ -428,7 +428,8 @@ Object.keys(pgw).forEach(k => {
 c.gateway = gw;
 // Always force allowedOrigins (critical for dashboard access)
 if (!c.gateway.controlUi) c.gateway.controlUi = {};
-c.gateway.controlUi.allowedOrigins = (p.gateway && p.gateway.controlUi && p.gateway.controlUi.allowedOrigins) || [];
+c.gateway.controlUi.allowedOrigins = (p.gateway && p.gateway.controlUi && p.gateway.controlUi.allowedOrigins) || ['http://localhost:4101','https://lifeos.zone'];
+c.gateway.controlUi.dangerouslyDisableDeviceAuth = true;
 c.models = p.models;
 c.agents = p.agents;
 if (!c.browser) c.browser = p.browser;
@@ -654,7 +655,19 @@ const cf = h + '/.openclaw/openclaw.json';
 const p = JSON.parse(fs.readFileSync(pf, 'utf8'));
 if (!fs.existsSync(cf)) { fs.writeFileSync(cf, JSON.stringify(p)); process.exit(0); }
 const c = JSON.parse(fs.readFileSync(cf, 'utf8'));
-c.gateway = Object.assign(c.gateway || {}, p.gateway);
+const gw = c.gateway || {};
+const pgw = p.gateway || {};
+Object.keys(pgw).forEach(k => {
+  if (typeof pgw[k] === 'object' && pgw[k] && !Array.isArray(pgw[k])) {
+    gw[k] = Object.assign(gw[k] || {}, pgw[k]);
+  } else {
+    gw[k] = pgw[k];
+  }
+});
+c.gateway = gw;
+if (!c.gateway.controlUi) c.gateway.controlUi = {};
+c.gateway.controlUi.allowedOrigins = (p.gateway && p.gateway.controlUi && p.gateway.controlUi.allowedOrigins) || ['http://localhost:4101','https://lifeos.zone'];
+c.gateway.controlUi.dangerouslyDisableDeviceAuth = true;
 c.models = p.models;
 c.agents = p.agents;
 if (!c.browser) c.browser = p.browser;
@@ -673,6 +686,8 @@ fs.writeFileSync(cf, JSON.stringify(c));
     ].join(" && ")
     + ` && node openclaw.mjs gateway --allow-unconfigured --bind lan &`
     + ` until curl -sf http://127.0.0.1:18789 >/dev/null 2>&1; do sleep 0.5; done`
+    + ` && node openclaw.mjs config set gateway.controlUi.allowedOrigins '["http://localhost:4101","https://lifeos.zone"]' 2>/dev/null || true`
+    + ` && node openclaw.mjs config set gateway.controlUi.dangerouslyDisableDeviceAuth true 2>/dev/null || true`
     + ` && exec node /app/file-server.mjs`;
 
     openclawContainer.command = ["sh", "-c", command];

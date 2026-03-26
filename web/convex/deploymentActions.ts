@@ -411,10 +411,8 @@ export const restart = action({
     const settings = await ctx.runQuery(internal.deploymentSettings.getUserSettings, { userId });
     const selectedModel = settings?.selectedModel ?? "claude-sonnet";
     await patchStatefulSet(resourceName, dep.configHash, selectedModel, `${resourceName}-init`, {
-      enabledChannels: {
-        telegram: !!settings?.telegramBotTokenLength,
-        discord: !!settings?.discordBotTokenLength,
-      },
+      telegram: !!settings?.telegramBotTokenLength,
+      discord: !!settings?.discordBotTokenLength,
     });
 
     // Delete the pod; the StatefulSet controller recreates it with updated spec (PVC preserved)
