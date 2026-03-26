@@ -1,28 +1,18 @@
 config:
   gcp:project: lifeos-prod-491301
   gcp:region: europe-west3
-  lifeos:dnsProvider: godaddy
+  lifeos:dnsProvider: cloudDns
   lifeos:domain: lifeos.zone
   lifeos:openclawImageTag: latest
-  lifeos:jwtSigningKey: 78a1710deae11f3c62c25e907ab15bd4
-  lifeos:convexSiteUrl: https://api.openclaw.azin.run
-  lifeos:gatewaySystemKey: 78a1710deae11f3c62c25e907ab15bd4
-  lifeos:gatewayImageName: europe-west3-docker.pkg.dev/claw-now-prod/lifeos-prod/ai-gateway:latest
+  lifeos:convexSiteUrl: https://charming-squid-23.eu-west-1.convex.site
+  lifeos:gatewayImageName: europe-west3-docker.pkg.dev/lifeos-prod-491301/lifeos-prod/ai-gateway:latest
   lifeos:backends:
-    - id: "prod"
-      convexSiteUrl: "https://api.openclaw.azin.run"
-  lifeos:oauth2ProxyClientId:
-    secure: v1:cMps8+PVcL8j4FLo:ypj8pK6UeaYTPSm6BzMsgxL1wezc6LhX/54dvFvwE2pxjt/nHeDYbwU0WoSHW0gToHqP5JoeztwtejendX3KH4UeJM+KL4rN7MYjMw/SGL7aCSukMUhWeA==
-  lifeos:oauth2ProxyClientSecret:
-    secure: v1:/ESxtyEigjNIpEgj:fBxGKh3OTDZsGyX7F44e5iEi0GX/3IhSfAJ/gX/Ino76BrsvteJNYBwoDQuszBua2OCT
-  lifeos:openaiApiKey:
-    secure: v1:GDIy7iYA179ShK/H:rPiOJBBV6HigFVdzUm9XfSklVp80I1ODEtgO80218mUhy1FOAInGkv2BZ2WkdbSD3Ee4qFzQeC6LiGy2LjeJEbWcxl8GUj0E/lEYNHoSnQUfv8mnxgpgDX/U1geDNzoYzyNr4jm9ET+X58i6eYTMvdMETQaLZldnXy6+6WyLlXOM+KLWc+pyXxns5o0ZaCUuhpJX6aW4Cpup+Y4HH4iK5BlrJ3XEq1fmUb57rYtUIpHojydV
-  lifeos:oauth2ProxyCookieSecret:
-    secure: v1:kUIb0BeqBDEvZDUE:MOcoqXbFRUlCf4nKKZAXORw8RUi+hXpo46gxPot1jKri4wVosCO3hPKwOTtPD0bXle5RNHn7rXUqcdH2
+    - id: "default"
+      convexSiteUrl: "https://charming-squid-23.eu-west-1.convex.site"
+  lifeos:jwtSigningKey:
+    secure: v1:hVJuezUxsTD0iM69:j3qhXqKbcnzNg/ORcciKSE1sXUz8vaEBfpUbAo7c7ief4Q90CLe5FL6jD7hSvVpH
+  lifeos:gatewaySystemKey:
+    secure: v1:Rfp+wfsSKuyI/j/o:Nh9iZu60wGm2PJtOEP2flMwB9j8vdDDz/g50ciAZO7jq2vxFKg1wc0ICQzLnwuZn
   lifeos:anthropicApiKey:
-    secure: v1:8gfCm+GpC5o2MTHJ:fRC1+1kXzZ+NVZfWW4ibfwt9Y62+6xXOkzH8HWQKYu0mkMnOyryaWPaRGZAxDrjgftKoQVIVQHkLJc45TcWThJJ/vEO5RCdqZ/zEdHWMGNVG9EmUhjwJlvmE8AgoNLIOHJoM88kprwDo3OqCUUSYPXvVWRu7kHfn3HK4nw==
-  lifeos:godaddyApiKey:
-    secure: v1:1P2uxpjJnIZZm/27:lQM5DDP4iSIUfy03iODNQ1YR1QAl7HaYMoe6poMORSNX22y4ncbN5sfV99zrzxUjr3cB
-  lifeos:godaddyApiSecret:
-    secure: v1:CtiOgef9LqTcR3Gl:uZUil9SmZdq+Zi4hqvgJoBKdff1iTq1YJLr3c3yT9+jgKsnB7nQ=
-encryptionsalt: v1:HpvGTXTfiEE=:v1:qcSqAsTxhOgHQLzr:O8Lqq2voVItJJ7kuCc+ly4wbbFijZA==
+    secure: v1:2NpfOD9wbzZlAdyq:2RtP6rM8UEoHQAbpBPgEtI1OKC04eM8O2Qm3rAXfVrpU0cgYdYHMM+akyH6Z4ogsG+t8LVed4VkVpyyTZpx4ErnFxcnFCXHl9TgHod2CC72/qne0H9spS1cgsivmIaMz834oo6DAxdEsRKEPInUlXEruTzPs57Nb3+asyw==
+encryptionsalt: v1:F+Lr6Wq9yNo=:v1:zh5CqyFmdQce09u7:OUXJzIDTZ+RZdlwaAqeoWI6pPdlUAg==

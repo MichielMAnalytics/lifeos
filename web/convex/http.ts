@@ -57,6 +57,16 @@ function extractAction(url: URL, prefix: string): string | null {
   return segments[1] ?? null;
 }
 
+/** Convert a value to epoch milliseconds. Accepts epoch numbers or ISO date strings. */
+function toEpoch(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const ms = new Date(value).getTime();
+    if (!isNaN(ms)) return ms;
+  }
+  throw new Error("Invalid date/time value");
+}
+
 /** Safe JSON body parse with type assertion */
 async function parseBody<T = Record<string, unknown>>(request: Request): Promise<T> {
   try {
@@ -1385,7 +1395,7 @@ http.route({
       userId,
       title: body.title as string,
       body: (body.body ?? undefined) as string | undefined,
-      scheduledAt: (body.scheduledAt ?? body.scheduled_at) as number,
+      scheduledAt: toEpoch(body.scheduledAt ?? body.scheduled_at),
     });
     return json({ data: reminder }, 201);
   }),
@@ -1415,7 +1425,7 @@ http.route({
         id,
         title: (body.title ?? undefined) as string | undefined,
         body: (body.body ?? undefined) as string | undefined,
-        scheduledAt: ((body.scheduledAt ?? body.scheduled_at) ?? undefined) as number | undefined,
+        scheduledAt: (body.scheduledAt ?? body.scheduled_at) != null ? toEpoch(body.scheduledAt ?? body.scheduled_at) : undefined,
         status: (body.status ?? undefined) as string | undefined,
       });
       return json({ data: reminder });

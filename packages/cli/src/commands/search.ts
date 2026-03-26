@@ -44,7 +44,7 @@ export const searchCommand = new Command('search')
       const d = res.data;
       let found = false;
 
-      if (d.tasks.length > 0) {
+      if ((d.tasks?.length ?? 0) > 0) {
         found = true;
         console.log('\nTasks:');
         printTable(
@@ -53,7 +53,7 @@ export const searchCommand = new Command('search')
         );
       }
 
-      if (d.goals.length > 0) {
+      if ((d.goals?.length ?? 0) > 0) {
         found = true;
         console.log('\nGoals:');
         printTable(
@@ -62,7 +62,7 @@ export const searchCommand = new Command('search')
         );
       }
 
-      if (d.ideas.length > 0) {
+      if ((d.ideas?.length ?? 0) > 0) {
         found = true;
         console.log('\nIdeas:');
         printTable(
@@ -71,7 +71,7 @@ export const searchCommand = new Command('search')
         );
       }
 
-      if (d.journal.length > 0) {
+      if ((d.journal?.length ?? 0) > 0) {
         found = true;
         console.log('\nJournal:');
         printTable(
@@ -80,7 +80,7 @@ export const searchCommand = new Command('search')
         );
       }
 
-      if (d.resources.length > 0) {
+      if ((d.resources?.length ?? 0) > 0) {
         found = true;
         console.log('\nResources:');
         printTable(

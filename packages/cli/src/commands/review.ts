@@ -69,29 +69,32 @@ reviewCommand
         return;
       }
 
-      const d = res.data;
+      const d = res.data as Record<string, unknown>;
       console.log('=== Daily Review ===\n');
 
-      if (d.tasks_completed_today.length > 0) {
+      const completedToday = (d.completedToday ?? d.tasks_completed_today ?? []) as Array<{ title: string }>;
+      if (completedToday.length > 0) {
         console.log('Tasks completed today:');
-        for (const t of d.tasks_completed_today) {
+        for (const t of completedToday) {
           console.log(`  - ${t.title}`);
         }
         console.log();
       }
 
-      if (d.wins_today.length > 0) {
+      const winsToday = (d.todayWins ?? d.wins_today ?? []) as Array<{ content: string }>;
+      if (winsToday.length > 0) {
         console.log('Wins today:');
-        for (const w of d.wins_today) {
+        for (const w of winsToday) {
           console.log(`  - ${w.content}`);
         }
         console.log();
       }
 
-      if (d.journal) {
-        console.log(`Journal MIT:  ${d.journal.mit ?? '-'}`);
-        console.log(`Journal P1:   ${d.journal.p1 ?? '-'}`);
-        console.log(`Journal P2:   ${d.journal.p2 ?? '-'}`);
+      const journal = (d.todayJournal ?? d.journal) as { mit?: string; p1?: string; p2?: string } | null;
+      if (journal) {
+        console.log(`Journal MIT:  ${journal.mit ?? '-'}`);
+        console.log(`Journal P1:   ${journal.p1 ?? '-'}`);
+        console.log(`Journal P2:   ${journal.p2 ?? '-'}`);
       }
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
@@ -112,19 +115,24 @@ reviewCommand
         return;
       }
 
-      const d = res.data;
+      const d = res.data as Record<string, unknown>;
       console.log('=== Weekly Review ===\n');
 
-      if (d.weekly_plan) {
-        console.log(`Theme:  ${d.weekly_plan.theme ?? '-'}`);
-        console.log(`Score:  ${d.weekly_plan.reviewScore ?? d.weekly_plan.review_score ?? '-'}`);
+      const weeklyPlan = (d.weeklyPlan ?? d.weekly_plan) as { theme?: string; reviewScore?: number; review_score?: number } | null;
+      if (weeklyPlan) {
+        console.log(`Theme:  ${weeklyPlan.theme ?? '-'}`);
+        console.log(`Score:  ${weeklyPlan.reviewScore ?? weeklyPlan.review_score ?? '-'}`);
         console.log();
       }
 
-      console.log(`Tasks completed: ${d.tasks_completed.length}`);
-      console.log(`Journal entries: ${d.journals.length}`);
-      console.log(`Wins:            ${d.wins.length}`);
-      console.log(`Goals tracked:   ${d.goals.length}`);
+      const tasksCompleted = (d.completedThisWeek ?? d.tasks_completed ?? []) as unknown[];
+      const journals = (d.weekJournals ?? d.journals ?? []) as unknown[];
+      const wins = (d.weekWins ?? d.wins ?? []) as unknown[];
+      const goals = (d.activeGoals ?? d.goals ?? []) as unknown[];
+      console.log(`Tasks completed: ${tasksCompleted.length}`);
+      console.log(`Journal entries: ${journals.length}`);
+      console.log(`Wins:            ${wins.length}`);
+      console.log(`Goals tracked:   ${goals.length}`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;
