@@ -3,6 +3,9 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { ConvexClientProvider } from '@/lib/convex';
 import './globals.css';
 
+// All pages depend on Convex (auth, data) — skip static prerendering
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'LifeOS',
   description: 'Personal Life Operating System',
