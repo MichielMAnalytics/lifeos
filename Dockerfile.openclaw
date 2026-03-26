@@ -76,6 +76,9 @@ RUN npm install -g lifeos-cli
 # Stage LifeOS skills for seeding into user PVCs
 COPY packages/cli/skills/ /app/lifeos-skills/
 
+# Also place skills in the bundled skills dir so OpenClaw's skill loader picks them up natively
+COPY packages/cli/skills/ /app/skills/
+
 RUN chown -R node:node /app
 USER node
 

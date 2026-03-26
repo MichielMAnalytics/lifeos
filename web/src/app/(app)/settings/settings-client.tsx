@@ -68,6 +68,8 @@ export function SettingsClient({
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingKeyId, setDeletingKeyId] = useState<Id<"apiKeys"> | null>(null);
+  const deleteApiKeyMutation = useMutation(api.authHelpers.deleteApiKey);
 
 
   // Profile picture from localStorage
@@ -146,9 +148,15 @@ export function SettingsClient({
   const planLabels: Record<string, string> = { dashboard: 'Home', byok: 'BYOK', basic: 'Basic', standard: 'Standard', premium: 'Premium' };
   const planLabel = subscription ? planLabels[subscription.planType] ?? 'No plan' : 'No plan';
 
-  // Trial days remaining (7-day trial from subscription start)
+  // Trial days remaining — count calendar days between today and period end
   const trialDaysLeft = subscription
-    ? Math.max(0, Math.ceil((subscription.currentPeriodEnd - Date.now()) / 86400000))
+    ? (() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const end = new Date(subscription.currentPeriodEnd);
+        end.setHours(0, 0, 0, 0);
+        return Math.max(0, Math.round((end.getTime() - today.getTime()) / 86400000));
+      })()
     : null;
 
   return (
@@ -250,8 +258,17 @@ export function SettingsClient({
               <Stat label="API Keys" value={String(apiKeys.length)} mono />
             </div>
 
-            {/* Timezone auto-detect notice */}
-            {detectedTz && detectedTz !== user.timezone && !tzUpdated && (
+            {/* Timezone auto-detect notice — compare offsets to avoid false positives from alias differences */}
+            {detectedTz && !tzUpdated && (() => {
+              try {
+                const now = new Date();
+                const detectedOffset = new Intl.DateTimeFormat('en-US', { timeZone: detectedTz, timeZoneName: 'longOffset' }).format(now);
+                const storedOffset = new Intl.DateTimeFormat('en-US', { timeZone: user.timezone, timeZoneName: 'longOffset' }).format(now);
+                return detectedOffset !== storedOffset;
+              } catch {
+                return detectedTz !== user.timezone;
+              }
+            })() && (
               <div className="px-6 py-3 border-t border-border flex items-center justify-between">
                 <p className="text-xs text-text-muted">
                   Your browser timezone is <span className="font-mono text-text">{detectedTz}</span>,
@@ -325,6 +342,27 @@ export function SettingsClient({
                       <span className="text-xs text-text-muted/50">[ never used ]</span>
                     )}
                     <div className={`h-2 w-2 rounded-full ${key.lastUsedAt ? 'bg-success' : 'bg-border'}`} />
+                    <button
+                      onClick={async () => {
+                        setDeletingKeyId(key._id);
+                        try {
+                          await deleteApiKeyMutation({ keyId: key._id });
+                        } catch {
+                          // silent
+                        } finally {
+                          setDeletingKeyId(null);
+                        }
+                      }}
+                      disabled={deletingKeyId === key._id}
+                      className="text-text-muted/40 hover:text-danger transition-colors disabled:opacity-30"
+                      title="Delete key"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               ))}
