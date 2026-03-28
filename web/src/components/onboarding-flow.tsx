@@ -210,7 +210,7 @@ function OnboardingFlowInner() {
   const [planView, setPlanView] = useState<PlanView>('main');
   const [selectedPlanType, setSelectedPlanType] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-  const [anthropicAuthMethod, setAnthropicAuthMethod] = useState<'api_key' | 'setup_token'>('api_key');
+  const [anthropicAuthMethod, setAnthropicAuthMethod] = useState<'api_key' | 'setup_token'>('setup_token');
   const [anthropicApiKey, setAnthropicApiKey] = useState('');
   const [anthropicSetupToken, setAnthropicSetupToken] = useState('');
   const [telegramToken, setTelegramToken] = useState('');
