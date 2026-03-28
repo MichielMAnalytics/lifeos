@@ -11,6 +11,7 @@ export function createNetworking(
   const gcpConfig = new pulumi.Config("gcp");
   const domain = config.require("domain");
   const gcpProject = gcpConfig.require("project");
+  const dnsZoneProject = config.get("dnsZoneProject") ?? gcpProject;
   const dnsProvider = config.get("dnsProvider") ?? "cloudDns";
 
   const wildcardSecretName = `wildcard-${domain.replace(/\./g, "-")}-tls`;
@@ -155,7 +156,7 @@ export function createNetworking(
         },
         dns01: {
           cloudDNS: {
-            project: gcpProject,
+            project: dnsZoneProject,
           },
         },
       };

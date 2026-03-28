@@ -1,8 +1,9 @@
 config:
   gcp:project: acquired-racer-491202-b4
   gcp:region: europe-west3
-  lifeos:dnsProvider: cloudDns
-  lifeos:domain: lifeos.zone
+  lifeos:dnsProvider: manual
+  lifeos:domain: dev.lifeos.zone
+  lifeos:dnsZoneProject: lifeos-prod-491301
   lifeos:openclawImageTag: latest
   lifeos:jwtSigningKey: 78a1710deae11f3c62c25e907ab15bd4
   lifeos:convexSiteUrl: https://proper-cormorant-28.eu-west-1.convex.site
