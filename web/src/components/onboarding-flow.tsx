@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useAction, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
@@ -9,7 +9,7 @@ import { LoadingScreen } from '@/components/loading-screen';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
-type Step = 'welcome' | 'plans' | 'setup';
+type Step = 'welcome' | 'plans' | 'byok-key' | 'channels' | 'setup';
 type PlanView = 'main' | 'dashboard' | 'byok';
 
 interface Plan {
@@ -198,6 +198,7 @@ function OnboardingFlowInner() {
   const searchParams = useSearchParams();
   const subscription = useQuery(api.stripe.getMySubscription);
   const deployment = useQuery(api.deploymentQueries.getMyDeployment);
+  const settings = useQuery(api.deploymentSettings.getMySettings);
   const plans = useQuery(api.stripe.getSubscriptionPlansList);
 
   const createCheckout = useAction(api.stripeCheckout.createSubscriptionCheckout);
@@ -207,21 +208,45 @@ function OnboardingFlowInner() {
 
   const [step, setStep] = useState<Step>('welcome');
   const [planView, setPlanView] = useState<PlanView>('main');
+  const [selectedPlanType, setSelectedPlanType] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [anthropicApiKey, setAnthropicApiKey] = useState('');
   const [telegramToken, setTelegramToken] = useState('');
   const [discordToken, setDiscordToken] = useState('');
   const [deploying, setDeploying] = useState(false);
   const [deployComplete, setDeployComplete] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const autoDeployTriggered = useRef(false);
 
-  const stepIndex = step === 'welcome' ? 0 : step === 'plans' ? 1 : 2;
+  // Determine whether the selected plan is a deployment plan (includes Life Coach)
+  const isDeploymentPlan = (planType: string | null | undefined) =>
+    planType === 'basic' || planType === 'standard' || planType === 'premium' || planType === 'byok';
 
+  // ── After Stripe redirect: auto-deploy for deployment plans ──────
   useEffect(() => {
+    if (autoDeployTriggered.current) return;
     const isSuccess = searchParams.get('subscription') === 'success';
-    if ((isSuccess && subscription && !deployment) || (subscription && !deployment)) {
-      setStep('setup');
-    }
-  }, [searchParams, subscription, deployment]);
+    if (!isSuccess || !subscription || deployment) return;
 
+    if (subscription.planType === 'dashboard') {
+      // Dashboard plan: show CLI setup
+      setStep('setup');
+      return;
+    }
+
+    if (isDeploymentPlan(subscription.planType) && settings?.pendingDeploy) {
+      // Settings were saved before checkout; auto-deploy now
+      autoDeployTriggered.current = true;
+      setStep('setup');
+      setDeploying(true);
+      deployAction().catch((err) => {
+        console.error('Auto-deploy error:', err);
+        setDeploying(false);
+      });
+    }
+  }, [searchParams, subscription, deployment, settings, deployAction]);
+
+  // ── Track deployment status ──────────────────────────────────────
   useEffect(() => {
     if (deploying && deployment && deployment.status === 'running') {
       setDeploying(false);
@@ -236,38 +261,60 @@ function OnboardingFlowInner() {
 
   const fmtPrice = (cents: number) => `\u20AC${(cents / 100).toFixed(0)}`;
 
-  async function handleSelectPlan(plan: Plan) {
+  // ── Plan selection handlers ──────────────────────────────────────
+  // Dashboard plan goes straight to Stripe (no channels/BYOK steps)
+  function handleSelectDashboardPlan(plan: Plan) {
     if (!plan.priceId) return;
     setCheckoutLoading(plan.planType);
+    (async () => {
+      try {
+        const result = await createCheckout({ priceId: plan.priceId });
+        if (result.url) window.location.href = result.url;
+      } catch (err) {
+        console.error('Checkout error:', err);
+        setCheckoutLoading(null);
+      }
+    })();
+  }
+
+  // Deployment plans: remember the selected plan and advance to next step
+  function handleSelectDeploymentPlan(planType: string) {
+    setSelectedPlanType(planType);
+    if (planType === 'byok') {
+      setStep('byok-key');
+    } else {
+      setStep('channels');
+    }
+  }
+
+  // ── Save settings + go to Stripe ─────────────────────────────────
+  async function handleProceedToCheckout() {
+    const plan = selectedPlanType ? getPlan(selectedPlanType) : undefined;
+    if (!plan?.priceId) return;
+
+    setSavingSettings(true);
     try {
+      // Save settings to Convex BEFORE redirecting to Stripe
+      const isByok = selectedPlanType === 'byok';
+      await saveSettings({
+        apiKeySource: isByok ? 'byok' : 'ours',
+        selectedModel: 'claude-sonnet',
+        anthropicKey: isByok && anthropicApiKey.trim() ? anthropicApiKey.trim() : undefined,
+        telegramBotToken: telegramToken.trim() || undefined,
+        discordBotToken: discordToken.trim() || undefined,
+      });
       await setPendingDeploy({ pending: true });
+
+      // Redirect to Stripe checkout
       const result = await createCheckout({ priceId: plan.priceId });
       if (result.url) window.location.href = result.url;
     } catch (err) {
       console.error('Checkout error:', err);
-      setCheckoutLoading(null);
+      setSavingSettings(false);
     }
   }
 
-  async function handleDeploy(skip = false) {
-    setDeploying(true);
-    try {
-      if (!skip && (telegramToken.trim() || discordToken.trim())) {
-        await saveSettings({
-          apiKeySource: 'ours',
-          selectedModel: 'claude-sonnet',
-          telegramBotToken: telegramToken.trim() || undefined,
-          discordBotToken: discordToken.trim() || undefined,
-        });
-      }
-      await deployAction();
-    } catch (err) {
-      console.error('Deploy error:', err);
-      setDeploying(false);
-    }
-  }
-
-  if (subscription === undefined || deployment === undefined || plans === undefined) {
+  if (subscription === undefined || deployment === undefined || plans === undefined || settings === undefined) {
     return <LoadingScreen />;
   }
 
@@ -329,8 +376,7 @@ function OnboardingFlowInner() {
                       'Life Coach (24/7)',
                       `${fmtPrice(basicPlan.includedCreditsCents)} AI credits/mo`,
                     ]}
-                    loading={checkoutLoading === 'basic'}
-                    onClick={() => handleSelectPlan(basicPlan)}
+                    onClick={() => handleSelectDeploymentPlan('basic')}
                   />
                 )}
                 {standardPlan && (
@@ -344,8 +390,7 @@ function OnboardingFlowInner() {
                       'Priority support',
                     ]}
                     popular
-                    loading={checkoutLoading === 'standard'}
-                    onClick={() => handleSelectPlan(standardPlan)}
+                    onClick={() => handleSelectDeploymentPlan('standard')}
                   />
                 )}
                 {premiumPlan && (
@@ -359,8 +404,7 @@ function OnboardingFlowInner() {
                       'Priority support',
                       'Early access to features',
                     ]}
-                    loading={checkoutLoading === 'premium'}
-                    onClick={() => handleSelectPlan(premiumPlan)}
+                    onClick={() => handleSelectDeploymentPlan('premium')}
                   />
                 )}
               </div>
@@ -395,7 +439,7 @@ function OnboardingFlowInner() {
                     'CLI access',
                   ]}
                   loading={checkoutLoading === 'dashboard'}
-                  onClick={() => handleSelectPlan(dashboardPlan)}
+                  onClick={() => handleSelectDashboardPlan(dashboardPlan)}
                 />
               )}
               <button
@@ -407,7 +451,7 @@ function OnboardingFlowInner() {
             </div>
           )}
 
-          {/* BYOK plan */}
+          {/* BYOK plan (just the card — API key input is a separate step) */}
           {planView === 'byok' && (
             <div className="mt-10 w-full max-w-xs mx-auto animate-fade-in flex flex-col items-center">
               {byokPlan && (
@@ -419,8 +463,7 @@ function OnboardingFlowInner() {
                     'Life Coach (your API key)',
                     'No credit limits',
                   ]}
-                  loading={checkoutLoading === 'byok'}
-                  onClick={() => handleSelectPlan(byokPlan)}
+                  onClick={() => handleSelectDeploymentPlan('byok')}
                 />
               )}
               <button
@@ -435,7 +478,145 @@ function OnboardingFlowInner() {
         </div>
       </StepContainer>
 
-      {/* ═══ Step 3: Setup ═════════════════════════════════════════════ */}
+      {/* ═══ Step 3: BYOK API Key (only for BYOK plan) ═════════════════ */}
+      <StepContainer active={step === 'byok-key'} onBack={() => { setStep('plans'); setPlanView('byok'); }}>
+        <div className="flex flex-col items-center text-center w-full max-w-lg">
+          <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
+            Your <span className="font-semibold">Anthropic API key</span>
+          </h1>
+
+          <p className="mt-4 text-sm leading-relaxed text-text-muted/70 max-w-sm">
+            Your Life Coach is powered by Claude. Enter your Anthropic API key
+            and you&apos;ll only pay for what you use — no credit limits.
+          </p>
+
+          <div className="mt-8 w-full max-w-md text-left">
+            <label className="flex items-center gap-2 text-xs font-medium text-text-muted mb-2">
+              Anthropic API Key
+            </label>
+            <input
+              type="password"
+              value={anthropicApiKey}
+              onChange={(e) => setAnthropicApiKey(e.target.value)}
+              placeholder="sk-ant-api03-..."
+              autoComplete="off"
+              className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/25 focus:border-accent/50 focus:outline-none transition-colors"
+            />
+            <p className="mt-2 text-[11px] text-text-muted/40">
+              Get your key at{' '}
+              <a
+                href="https://console.anthropic.com/settings/keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-muted/60 underline underline-offset-2 hover:text-text-muted"
+              >
+                console.anthropic.com
+              </a>
+              . Your key is encrypted and never stored in plain text.
+            </p>
+          </div>
+
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <button
+              onClick={() => setStep('channels')}
+              disabled={!anthropicApiKey.trim().startsWith('sk-ant-')}
+              className="w-full max-w-md rounded-full bg-accent px-8 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97] disabled:opacity-30 disabled:pointer-events-none"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </StepContainer>
+
+      {/* ═══ Step 4: Channels (Telegram/Discord) ═══════════════════════ */}
+      <StepContainer
+        active={step === 'channels'}
+        onBack={() => setStep(selectedPlanType === 'byok' ? 'byok-key' : 'plans')}
+      >
+        <div className="flex flex-col items-center text-center w-full max-w-lg">
+          <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
+            Connect your <span className="font-semibold">channels</span>
+          </h1>
+
+          <p className="mt-4 text-sm leading-relaxed text-text-muted/70 max-w-sm">
+            Want your Life Coach available on Telegram or Discord?
+            You can always add these later in settings.
+          </p>
+
+          <div className="mt-8 w-full max-w-md space-y-4 text-left">
+            <div>
+              <label className="flex items-center gap-2.5 text-xs font-medium text-text-muted mb-2">
+                <img src="/telegram-icon.png" alt="" className="h-4 w-4 rounded-sm" />
+                Telegram Bot Token
+                <span className="text-text-muted/30 font-normal">optional</span>
+              </label>
+              <input
+                type="text"
+                value={telegramToken}
+                onChange={(e) => setTelegramToken(e.target.value)}
+                placeholder="123456:ABC-DEF1234ghIkl..."
+                className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/25 focus:border-accent/50 focus:outline-none transition-colors"
+              />
+              <p className="mt-1.5 text-[11px] text-text-muted/40">
+                Create a bot via <span className="text-text-muted/60">@BotFather</span> on Telegram
+              </p>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2.5 text-xs font-medium text-text-muted mb-2">
+                <img src="/discord-icon.png" alt="" className="h-4 w-4 rounded-sm" />
+                Discord Bot Token
+                <span className="text-text-muted/30 font-normal">optional</span>
+              </label>
+              <input
+                type="text"
+                value={discordToken}
+                onChange={(e) => setDiscordToken(e.target.value)}
+                placeholder="MTIzNDU2Nzg5MDEyMzQ1..."
+                className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/25 focus:border-accent/50 focus:outline-none transition-colors"
+              />
+              <p className="mt-1.5 text-[11px] text-text-muted/40">
+                Create a bot in the <span className="text-text-muted/60">Discord Developer Portal</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <button
+              onClick={handleProceedToCheckout}
+              disabled={savingSettings}
+              className="w-full max-w-md rounded-full bg-accent px-8 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97] disabled:opacity-60"
+            >
+              {savingSettings ? (
+                <span className="flex items-center justify-center gap-1">
+                  Saving
+                  <span className="inline-flex">
+                    <span className="animate-bounce [animation-delay:0ms]">.</span>
+                    <span className="animate-bounce [animation-delay:150ms]">.</span>
+                    <span className="animate-bounce [animation-delay:300ms]">.</span>
+                  </span>
+                </span>
+              ) : (
+                'Continue to checkout'
+              )}
+            </button>
+            <button
+              onClick={() => {
+                // Skip channels but still save settings + proceed to checkout
+                setTelegramToken('');
+                setDiscordToken('');
+                handleProceedToCheckout();
+              }}
+              disabled={savingSettings}
+              className="text-xs text-text-muted/40 hover:text-text-muted transition-colors duration-200"
+            >
+              Skip — I&apos;ll add these later
+            </button>
+          </div>
+        </div>
+      </StepContainer>
+
+      {/* ═══ Step 5: Setup (post-checkout) ═════════════════════════════ */}
       <StepContainer active={step === 'setup'}>
         <div className="flex flex-col items-center text-center w-full max-w-lg">
           {subscription?.planType === 'dashboard' ? (
@@ -483,7 +664,8 @@ function OnboardingFlowInner() {
               </button>
             </div>
           ) : (
-            <>
+            /* Fallback: subscription exists but no deployment yet, manual deploy */
+            <div className="flex flex-col items-center">
               <div className="mb-8">
                 <span className="inline-flex items-center gap-2 rounded-full border border-success/20 bg-success/5 px-4 py-1.5 text-xs text-success">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -498,63 +680,22 @@ function OnboardingFlowInner() {
               </h1>
 
               <p className="mt-4 text-sm leading-relaxed text-text-muted/70 max-w-sm">
-                One last thing — would you like your Life Coach
-                available on Telegram or Discord?
+                Your subscription is active. Let&apos;s deploy your Life Coach.
               </p>
 
-              <div className="mt-8 w-full max-w-md space-y-4 text-left">
-                <div>
-                  <label className="flex items-center gap-2.5 text-xs font-medium text-text-muted mb-2">
-                    <img src="/telegram-icon.png" alt="" className="h-4 w-4 rounded-sm" />
-                    Telegram Bot Token
-                    <span className="text-text-muted/30 font-normal">optional</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={telegramToken}
-                    onChange={(e) => setTelegramToken(e.target.value)}
-                    placeholder="123456:ABC-DEF1234ghIkl..."
-                    className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/25 focus:border-accent/50 focus:outline-none transition-colors"
-                  />
-                  <p className="mt-1.5 text-[11px] text-text-muted/40">
-                    Create a bot via <span className="text-text-muted/60">@BotFather</span> on Telegram
-                  </p>
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2.5 text-xs font-medium text-text-muted mb-2">
-                    <img src="/discord-icon.png" alt="" className="h-4 w-4 rounded-sm" />
-                    Discord Bot Token
-                    <span className="text-text-muted/30 font-normal">optional</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={discordToken}
-                    onChange={(e) => setDiscordToken(e.target.value)}
-                    placeholder="MTIzNDU2Nzg5MDEyMzQ1..."
-                    className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/25 focus:border-accent/50 focus:outline-none transition-colors"
-                  />
-                  <p className="mt-1.5 text-[11px] text-text-muted/40">
-                    Create a bot in the <span className="text-text-muted/60">Discord Developer Portal</span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-10 flex flex-col items-center gap-4">
-                <button
-                  onClick={() => handleDeploy(false)}
-                  className="w-full max-w-md rounded-full bg-accent px-8 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
-                >
-                  Set up my Life Coach
-                </button>
-                <button
-                  onClick={() => handleDeploy(true)}
-                  className="text-xs text-text-muted/40 hover:text-text-muted transition-colors duration-200"
-                >
-                  Skip — I&apos;ll set this up later
-                </button>
-              </div>
-            </>
+              <button
+                onClick={() => {
+                  setDeploying(true);
+                  deployAction().catch((err) => {
+                    console.error('Deploy error:', err);
+                    setDeploying(false);
+                  });
+                }}
+                className="mt-8 rounded-full bg-accent px-10 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
+              >
+                Deploy my Life Coach
+              </button>
+            </div>
           )}
         </div>
       </StepContainer>
