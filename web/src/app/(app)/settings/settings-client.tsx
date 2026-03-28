@@ -408,6 +408,47 @@ export function SettingsClient({
         </div>
       </section>
 
+      {/* -- CLI Setup (Home plan only) ----------------------------- */}
+      {subscription?.planType === 'dashboard' && (
+        <section>
+          <SectionHeader label="CLI Setup" />
+          <div className="border border-border rounded-xl p-6 space-y-5">
+            <p className="text-sm text-text-muted">
+              Connect the LifeOS CLI to capture tasks, ideas, and journal entries from your terminal.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-medium text-text mb-2">1. Install globally</p>
+                <pre className="rounded-lg border border-border/40 bg-surface/40 px-4 py-3 text-xs font-mono text-text/80 overflow-x-auto">
+                  npm install -g lifeos-cli
+                </pre>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-text mb-2">2. Set your API URL</p>
+                <pre className="rounded-lg border border-border/40 bg-surface/40 px-4 py-3 text-xs font-mono text-text/80 overflow-x-auto">
+                  {`lifeos config set-url ${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? 'https://charming-squid-23.eu-west-1.convex.site'}`}
+                </pre>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-text mb-2">3. Authenticate with your API key</p>
+                <p className="text-xs text-text-muted">
+                  Copy your key from above, then run:
+                </p>
+                <pre className="mt-1.5 rounded-lg border border-border/40 bg-surface/40 px-4 py-3 text-xs font-mono text-text/80 overflow-x-auto">
+                  lifeos config set-key YOUR_API_KEY
+                </pre>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-text mb-2">4. Verify it works</p>
+                <pre className="rounded-lg border border-border/40 bg-surface/40 px-4 py-3 text-xs font-mono text-text/80 overflow-x-auto">
+                  lifeos whoami
+                </pre>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* -- Life Coach (hidden for Home plan) -------------------- */}
       {subscription?.planType !== 'dashboard' && <AiAgentSection />}
     </div>
