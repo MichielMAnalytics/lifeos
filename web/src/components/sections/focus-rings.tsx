@@ -41,7 +41,7 @@ export function FocusRings() {
         {focusItems.map((item) => (
           <div
             key={item.label}
-            className="border border-border p-6 flex flex-col items-center gap-4"
+            className="border border-border rounded-xl p-6 flex flex-col items-center gap-4"
           >
             <span className="text-xs font-bold text-text-muted uppercase tracking-widest">
               {item.label}

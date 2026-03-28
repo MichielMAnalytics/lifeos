@@ -6,7 +6,8 @@ import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
 import { IdeaForm } from '@/components/idea-form';
-import type { Doc } from '../../../../../convex/_generated/dataModel';
+import { IdeaDetailModal } from '@/components/idea-detail-modal';
+import type { Doc } from '@/lib/convex-api';
 
 // ── Types ────────────────────────────────────────────
 
@@ -91,9 +92,10 @@ function ActionabilityDropdown({ current, onSelect, onClose }: ActionabilityDrop
 interface IdeaRowProps {
   idea: Idea;
   index: number;
+  onSelect: (idea: Idea) => void;
 }
 
-function IdeaRow({ idea, index }: IdeaRowProps) {
+function IdeaRow({ idea, index, onSelect }: IdeaRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -120,11 +122,11 @@ function IdeaRow({ idea, index }: IdeaRowProps) {
       <div
         role="button"
         tabIndex={0}
-        onClick={() => setExpanded((prev) => !prev)}
+        onClick={() => onSelect(idea)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            setExpanded((prev) => !prev);
+            onSelect(idea);
           }
         }}
         className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-surface-hover cursor-pointer group"
@@ -202,8 +204,15 @@ function IdeaRow({ idea, index }: IdeaRowProps) {
 
 export function IdeasGrid() {
   const ideas = useQuery(api.ideas.list, {});
+  const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
 
-  if (!ideas) return <div className="text-text-muted">Loading...</div>;
+  if (!ideas) return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="h-40 rounded-xl bg-surface animate-pulse" />
+      ))}
+    </div>
+  );
 
   // Sort by creation time descending (newest first)
   const sorted = [...ideas].sort((a, b) => b._creationTime - a._creationTime);
@@ -228,10 +237,34 @@ export function IdeasGrid() {
 
       {/* Ideas Table */}
       {sorted.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-base font-medium text-text">No ideas yet</p>
-          <p className="text-sm text-text-muted mt-1">
-            Capture one above to get started.
+        <div className="space-y-4">
+          <div className="border border-dashed border-border/50 rounded-xl overflow-hidden">
+            {[
+              { content: 'What if we could automate the weekly review...', level: 'High' },
+              { content: 'A better way to track daily wins and progress', level: 'Medium' },
+              { content: 'Explore integrating with calendar for reminders', level: 'Low' },
+            ].map((ghost, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-4 px-5 py-3.5 opacity-40 border-b border-border/30 last:border-b-0"
+              >
+                <span className="text-xs font-mono text-text-muted w-8 shrink-0">
+                  [{String(idx + 1).padStart(2, '0')}]
+                </span>
+                <span className="flex-1 text-sm text-text-muted italic truncate min-w-0">
+                  {ghost.content}
+                </span>
+                <span className="text-xs font-medium px-2 py-0.5 rounded border border-border/50 text-text-muted shrink-0">
+                  {ghost.level}
+                </span>
+                <span className="text-xs text-text-muted font-mono shrink-0 w-16 text-right">
+                  Today
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-sm text-text-muted/70">
+            Capture your first idea
           </p>
         </div>
       ) : (
@@ -247,9 +280,22 @@ export function IdeasGrid() {
 
           {/* Rows */}
           {sorted.map((idea, idx) => (
-            <IdeaRow key={idea._id} idea={idea} index={idx + 1} />
+            <IdeaRow key={idea._id} idea={idea} index={idx + 1} onSelect={setSelectedIdea} />
           ))}
         </div>
+      )}
+
+      {/* Detail Modal */}
+      {selectedIdea && (
+        <IdeaDetailModal
+          idea={selectedIdea}
+          allIdeas={ideas ?? []}
+          onClose={() => setSelectedIdea(null)}
+          onSelectIdea={(id) => {
+            const found = ideas?.find((i) => i._id === id);
+            if (found) setSelectedIdea(found);
+          }}
+        />
       )}
     </div>
   );

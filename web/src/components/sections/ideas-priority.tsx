@@ -31,7 +31,7 @@ export function IdeasPriority() {
   });
 
   return (
-    <div className="border border-border">
+    <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
         <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
           Ideas by Priority

@@ -4,7 +4,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { GoalForm } from '@/components/goal-form';
 import Link from 'next/link';
-import type { Doc } from '../../../../../convex/_generated/dataModel';
+import type { Doc } from '@/lib/convex-api';
 
 const healthColor: Record<string, string> = {
   on_track: 'bg-success',
@@ -40,7 +40,7 @@ function GoalCard({ goal }: { goal: Doc<"goals"> }) {
 
   return (
     <Link key={goal._id} href={`/goals/${goal._id}`}>
-      <div className="border border-border p-6 transition-colors hover:border-text/30 group h-full flex flex-col">
+      <div className="border border-border rounded-xl p-6 transition-colors hover:border-text/30 group h-full flex flex-col">
         {/* Top row: title + health dot */}
         <div className="flex items-start justify-between gap-4 mb-3">
           <h3 className="text-lg font-bold text-text group-hover:text-accent transition-colors leading-snug">
@@ -90,7 +90,13 @@ function GoalCard({ goal }: { goal: Doc<"goals"> }) {
 export function GoalsGrid() {
   const goals = useQuery(api.goals.list, { status: "active" });
 
-  if (!goals) return <div className="text-text-muted">Loading...</div>;
+  if (!goals) return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="h-40 rounded-xl bg-surface animate-pulse" />
+      ))}
+    </div>
+  );
 
   return (
     <div className="max-w-none space-y-8">

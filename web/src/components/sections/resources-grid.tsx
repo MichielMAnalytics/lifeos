@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
-import type { Doc } from '../../../../../convex/_generated/dataModel';
+import type { Doc } from '@/lib/convex-api';
 
 // ── Types ────────────────────────────────────────────
 
@@ -317,7 +317,7 @@ function AddResourceForm({ onClose }: AddFormProps) {
   );
 
   return (
-    <form onSubmit={handleSubmit} className="border border-border p-5 space-y-4">
+    <form onSubmit={handleSubmit} className="border border-border rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs font-bold text-text-muted uppercase tracking-widest">
           Add Resource
@@ -740,7 +740,13 @@ export function ResourcesGrid() {
   }, [selectedId, resources]);
 
   if (!resources) {
-    return <div className="text-text-muted">Loading...</div>;
+    return (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-40 rounded-xl bg-surface animate-pulse" />
+        ))}
+      </div>
+    );
   }
 
   // Detail view
@@ -846,7 +852,7 @@ export function ResourcesGrid() {
           </p>
         </div>
       ) : (
-        <div className="border border-border">
+        <div className="border border-border rounded-xl overflow-hidden">
           {/* Table header */}
           <div className="flex items-center gap-4 px-5 py-2.5 border-b border-border bg-surface">
             <span className="w-6 shrink-0" />

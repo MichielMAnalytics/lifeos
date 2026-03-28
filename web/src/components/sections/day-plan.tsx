@@ -45,11 +45,17 @@ export function DayPlan() {
   const dayPlan = useQuery(api.dayPlans.getByDate, { date: today() });
 
   if (dayPlan === undefined) {
-    return <div className="text-text-muted">Loading...</div>;
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-16 rounded-xl bg-surface animate-pulse" />
+        ))}
+      </div>
+    );
   }
 
   return (
-    <div className="border border-border">
+    <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-baseline justify-between">
         <h2 className="text-sm font-bold text-text uppercase tracking-wide">Today</h2>
         <span className="text-xs font-mono text-text-muted">{formatDate(today())}</span>
@@ -101,7 +107,7 @@ export function DayPlan() {
 
           {/* Overflow */}
           {dayPlan.overflow && dayPlan.overflow.length > 0 && (
-            <div className="border border-warning/30 px-4 py-3">
+            <div className="border border-warning/30 rounded-xl px-4 py-3">
               <p className="text-xs font-bold text-warning uppercase tracking-wide">Overflow</p>
               <p className="text-xs text-text-muted mt-1">
                 {dayPlan.overflow.length} task(s) did not fit in today&apos;s schedule.

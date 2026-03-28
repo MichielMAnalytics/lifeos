@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
+import { useDashboardConfig } from '@/lib/dashboard-config';
 
 // ── Constants ─────────────────────────────────────────
 
@@ -33,6 +34,15 @@ interface FlatResult {
   title: string;
   subtitle: string;
   path: string;
+}
+
+interface Command {
+  id: string;
+  label: string;
+  category: 'create' | 'navigate' | 'action';
+  icon: React.ReactNode;
+  action: () => void;
+  keywords: string[];
 }
 
 // ── Helpers ───────────────────────────────────────────
@@ -146,6 +156,49 @@ function ClockIcon() {
   );
 }
 
+function PlusIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <polygon points="5 3 19 12 5 21 5 3" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
+const COMMAND_CATEGORY_LABELS: Record<string, string> = {
+  create: 'Quick Actions',
+  navigate: 'Navigate',
+  action: 'Actions',
+};
+
+const COMMAND_CATEGORY_ORDER = ['create', 'navigate', 'action'] as const;
+
 // ── Component ─────────────────────────────────────────
 
 export function SearchModal() {
@@ -156,6 +209,85 @@ export function SearchModal() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { toggleConfigMode } = useDashboardConfig();
+
+  // ── Build commands list ─────────────────────────────
+  const commands: Command[] = useMemo(() => {
+    const close = () => setOpen(false);
+
+    const nav = (path: string) => () => {
+      close();
+      router.push(path);
+    };
+
+    return [
+      // Create actions
+      { id: 'new-task', label: 'New Task', category: 'create' as const, icon: <PlusIcon />, action: nav('/tasks'), keywords: ['create', 'add', 'task', 'todo'] },
+      { id: 'new-idea', label: 'New Idea', category: 'create' as const, icon: <PlusIcon />, action: nav('/ideas'), keywords: ['create', 'add', 'idea', 'capture'] },
+      { id: 'new-thought', label: 'New Thought', category: 'create' as const, icon: <PlusIcon />, action: nav('/thoughts'), keywords: ['create', 'add', 'thought', 'note'] },
+      { id: 'new-project', label: 'New Project', category: 'create' as const, icon: <PlusIcon />, action: nav('/projects'), keywords: ['create', 'add', 'project'] },
+      { id: 'new-goal', label: 'New Goal', category: 'create' as const, icon: <PlusIcon />, action: nav('/goals'), keywords: ['create', 'add', 'goal', 'objective'] },
+      { id: 'new-win', label: 'New Win', category: 'create' as const, icon: <PlusIcon />, action: nav('/journal'), keywords: ['create', 'add', 'win', 'celebrate'] },
+      { id: 'new-reminder', label: 'New Reminder', category: 'create' as const, icon: <PlusIcon />, action: nav('/today'), keywords: ['create', 'add', 'reminder', 'alert'] },
+
+      // Navigate actions
+      { id: 'go-today', label: 'Go to Today', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/today'), keywords: ['home', 'today', 'now'] },
+      { id: 'go-tasks', label: 'Go to Tasks', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/tasks'), keywords: ['tasks', 'todos'] },
+      { id: 'go-projects', label: 'Go to Projects', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/projects'), keywords: ['projects'] },
+      { id: 'go-compass', label: 'Go to Compass', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/goals'), keywords: ['goals', 'compass', 'objectives'] },
+      { id: 'go-journal', label: 'Go to Journal', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/journal'), keywords: ['journal', 'diary', 'log'] },
+      { id: 'go-ideas', label: 'Go to Ideas', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/ideas'), keywords: ['ideas', 'brainstorm'] },
+      { id: 'go-thoughts', label: 'Go to Thoughts', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/thoughts'), keywords: ['thoughts', 'notes'] },
+      { id: 'go-reviews', label: 'Go to Reviews', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/reviews'), keywords: ['reviews', 'reflect'] },
+      { id: 'go-resources', label: 'Go to Resources', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/resources'), keywords: ['resources', 'links', 'bookmarks'] },
+      { id: 'go-schedules', label: 'Go to Schedules', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/calendar'), keywords: ['calendar', 'schedules', 'plan'] },
+      { id: 'go-settings', label: 'Go to Settings', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/settings'), keywords: ['settings', 'preferences', 'config'] },
+
+      // Actions
+      { id: 'start-weekly-review', label: 'Start Weekly Review', category: 'action' as const, icon: <PlayIcon />, action: nav('/reviews'), keywords: ['weekly', 'review', 'start'] },
+      { id: 'start-daily-review', label: 'Start Daily Review', category: 'action' as const, icon: <PlayIcon />, action: nav('/reviews'), keywords: ['daily', 'review', 'start'] },
+      {
+        id: 'configure-layout',
+        label: 'Configure Layout',
+        category: 'action' as const,
+        icon: <SettingsIcon />,
+        action: () => {
+          close();
+          toggleConfigMode();
+        },
+        keywords: ['configure', 'layout', 'customize', 'theme', 'design'],
+      },
+    ];
+  }, [router, toggleConfigMode]);
+
+  // ── Filter commands by query ────────────────────────
+  const filteredCommands = useMemo(() => {
+    const raw = query.trim();
+    if (raw === '' || raw === '>') return commands;
+
+    const search = (raw.startsWith('>') ? raw.slice(1) : raw).trim().toLowerCase();
+    if (search === '') return commands;
+
+    return commands.filter(cmd => {
+      const haystack = [cmd.label, ...cmd.keywords].join(' ').toLowerCase();
+      return search.split(/\s+/).every(term => haystack.includes(term));
+    });
+  }, [query, commands]);
+
+  // ── Group filtered commands by category ─────────────
+  const commandGroups = useMemo(() => {
+    const groups: { category: string; label: string; items: Command[] }[] = [];
+    for (const cat of COMMAND_CATEGORY_ORDER) {
+      const items = filteredCommands.filter(c => c.category === cat);
+      if (items.length > 0) {
+        groups.push({ category: cat, label: COMMAND_CATEGORY_LABELS[cat] ?? cat, items });
+      }
+    }
+    return groups;
+  }, [filteredCommands]);
+
+  // ── Determine if we're in command-only mode ─────────
+  const isCommandMode = query.trim().startsWith('>');
 
   // ── Keyboard shortcut: Cmd+K / Ctrl+K ──────────────
   useEffect(() => {
@@ -195,14 +327,21 @@ export function SearchModal() {
     }
   }, [open]);
 
+  // ── Determine search query (strip > prefix) ────────
+  const effectiveSearchQuery = useMemo(() => {
+    const raw = debouncedQuery.trim();
+    if (raw.startsWith('>')) return '';
+    return raw;
+  }, [debouncedQuery]);
+
   // ── Query Convex ────────────────────────────────────
   const rawResults = useQuery(
     api.search.search,
-    debouncedQuery.trim().length > 0 ? { q: debouncedQuery.trim() } : 'skip'
+    effectiveSearchQuery.length > 0 ? { q: effectiveSearchQuery } : 'skip'
   );
 
   // ── Flatten results into ordered list ───────────────
-  const { sections, flatItems } = useMemo(() => {
+  const { sections, flatItems: searchFlatItems } = useMemo(() => {
     if (!rawResults || typeof rawResults !== 'object') {
       return { sections: [] as { key: string; label: string; items: FlatResult[] }[], flatItems: [] as FlatResult[] };
     }
@@ -223,19 +362,50 @@ export function SearchModal() {
     return { sections: secs, flatItems: flat };
   }, [rawResults]);
 
-  // ── Reset selected index when results change ────────
+  // ── Build unified selectable items list ─────────────
+  // Commands come first, then search results
+  const totalSelectableCount = filteredCommands.length + searchFlatItems.length;
+
+  // Determine which commands and results to show
+  const isSearching = effectiveSearchQuery.length > 0;
+  const isLoading = isSearching && rawResults === undefined;
+  const hasSearchResults = sections.length > 0;
+  const noSearchResults = isSearching && !isLoading && !hasSearchResults;
+  const showCommands = filteredCommands.length > 0;
+  const showRecent = !isSearching && !isCommandMode && !query.trim();
+
+  // ── Reset selected index when items change ──────────
   useEffect(() => {
     setSelectedIndex(0);
-  }, [flatItems]);
+  }, [filteredCommands.length, searchFlatItems.length, query]);
+
+  // ── Execute action for current selection ────────────
+  const executeSelected = useCallback(() => {
+    if (selectedIndex < filteredCommands.length) {
+      // Selected item is a command
+      filteredCommands[selectedIndex].action();
+    } else {
+      // Selected item is a search result
+      const resultIndex = selectedIndex - filteredCommands.length;
+      const item = searchFlatItems[resultIndex];
+      if (item) {
+        if (effectiveSearchQuery) {
+          saveRecentSearch(effectiveSearchQuery);
+        }
+        setOpen(false);
+        router.push(item.path);
+      }
+    }
+  }, [selectedIndex, filteredCommands, searchFlatItems, effectiveSearchQuery, router]);
 
   // ── Navigate to a result ────────────────────────────
   const navigateTo = useCallback((path: string) => {
-    if (debouncedQuery.trim()) {
-      saveRecentSearch(debouncedQuery.trim());
+    if (effectiveSearchQuery) {
+      saveRecentSearch(effectiveSearchQuery);
     }
     setOpen(false);
     router.push(path);
-  }, [router, debouncedQuery]);
+  }, [router, effectiveSearchQuery]);
 
   // ── Keyboard navigation ─────────────────────────────
   useEffect(() => {
@@ -251,8 +421,9 @@ export function SearchModal() {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSelectedIndex(prev => {
+          const max = totalSelectableCount;
           const next = prev + 1;
-          return next >= flatItems.length ? 0 : next;
+          return next >= max ? 0 : next;
         });
         return;
       }
@@ -260,25 +431,23 @@ export function SearchModal() {
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         setSelectedIndex(prev => {
+          const max = totalSelectableCount;
           const next = prev - 1;
-          return next < 0 ? Math.max(flatItems.length - 1, 0) : next;
+          return next < 0 ? Math.max(max - 1, 0) : next;
         });
         return;
       }
 
       if (e.key === 'Enter') {
         e.preventDefault();
-        const item = flatItems[selectedIndex];
-        if (item) {
-          navigateTo(item.path);
-        }
+        executeSelected();
         return;
       }
     };
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open, flatItems, selectedIndex, navigateTo]);
+  }, [open, totalSelectableCount, executeSelected]);
 
   // ── Scroll selected item into view ──────────────────
   useEffect(() => {
@@ -297,13 +466,8 @@ export function SearchModal() {
 
   if (!open) return null;
 
-  const isSearching = debouncedQuery.trim().length > 0;
-  const isLoading = isSearching && rawResults === undefined;
-  const hasResults = sections.length > 0;
-  const noResults = isSearching && !isLoading && !hasResults;
-  const showRecent = !isSearching && recentSearches.length > 0;
-
-  let flatIndex = -1;
+  // Track the global flat index for keyboard navigation across commands + results
+  let globalIndex = -1;
 
   return (
     <div
@@ -312,7 +476,7 @@ export function SearchModal() {
         if (e.target === e.currentTarget) setOpen(false);
       }}
     >
-      <div className="w-full max-w-2xl mx-4 mt-[15vh] h-fit max-h-[60vh] flex flex-col border border-border bg-bg shadow-2xl">
+      <div className="w-full max-w-2xl mx-4 mt-[15vh] h-fit max-h-[60vh] flex flex-col rounded-xl border border-border bg-bg shadow-2xl overflow-hidden">
         {/* ── Search input row ─────────────────────────── */}
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <SearchIcon className="shrink-0 text-text-muted" />
@@ -321,7 +485,7 @@ export function SearchModal() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search LifeOS..."
+            placeholder="Search or type > for commands..."
             className="flex-1 bg-transparent text-lg text-text placeholder:text-text-muted/50 focus:outline-none"
           />
           <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-border bg-surface px-1.5 text-[10px] font-mono text-text-muted">
@@ -331,6 +495,54 @@ export function SearchModal() {
 
         {/* ── Results area ─────────────────────────────── */}
         <div ref={listRef} className="flex-1 overflow-y-auto">
+          {/* Commands section */}
+          {showCommands && (
+            <div className="py-2">
+              {commandGroups.map(({ category, label, items }) => (
+                <div key={category} className="mb-1">
+                  <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                    {label}
+                  </p>
+                  {items.map((cmd) => {
+                    globalIndex++;
+                    const idx = globalIndex;
+                    const isSelected = idx === selectedIndex;
+
+                    return (
+                      <button
+                        key={cmd.id}
+                        data-result-index={idx}
+                        className={cn(
+                          'flex w-full items-center gap-3 px-4 py-2 text-left transition-colors rounded-lg mx-0',
+                          isSelected
+                            ? 'bg-surface text-text'
+                            : 'text-text-muted hover:bg-surface/50 hover:text-text',
+                        )}
+                        onClick={() => cmd.action()}
+                        onMouseEnter={() => setSelectedIndex(idx)}
+                      >
+                        <span className={cn(
+                          'flex items-center justify-center w-7 h-7 rounded-lg border',
+                          isSelected ? 'border-accent/30 bg-accent/10 text-accent' : 'border-border bg-surface text-text-muted',
+                        )}>
+                          {cmd.icon}
+                        </span>
+                        <span className="flex-1 min-w-0 truncate text-sm">
+                          {cmd.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Separator between commands and search results */}
+          {showCommands && hasSearchResults && (
+            <div className="mx-4 border-t border-border" />
+          )}
+
           {/* Loading state */}
           {isLoading && (
             <div className="px-4 py-8 text-center">
@@ -339,16 +551,16 @@ export function SearchModal() {
           )}
 
           {/* No results */}
-          {noResults && (
+          {noSearchResults && !showCommands && (
             <div className="px-4 py-8 text-center">
               <p className="text-sm text-text-muted">
-                No results for &ldquo;{debouncedQuery.trim()}&rdquo;
+                No results for &ldquo;{effectiveSearchQuery}&rdquo;
               </p>
             </div>
           )}
 
-          {/* Recent searches (shown when input is empty) */}
-          {showRecent && (
+          {/* Recent searches (shown when input is empty and no command mode) */}
+          {showRecent && recentSearches.length > 0 && (
             <div className="px-2 py-3">
               <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-widest text-text-muted">
                 Recent searches
@@ -356,7 +568,7 @@ export function SearchModal() {
               {recentSearches.map((term) => (
                 <button
                   key={term}
-                  className="flex w-full items-center gap-2.5 rounded px-2 py-1.5 text-sm text-text-muted transition-colors hover:bg-surface hover:text-text"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-text-muted transition-colors hover:bg-surface hover:text-text"
                   onClick={() => {
                     setQuery(term);
                     setDebouncedQuery(term);
@@ -369,8 +581,8 @@ export function SearchModal() {
             </div>
           )}
 
-          {/* Grouped results */}
-          {hasResults && (
+          {/* Grouped search results */}
+          {hasSearchResults && !isCommandMode && (
             <div className="py-2">
               {sections.map(({ key, label, items }) => (
                 <div key={key} className="mb-1">
@@ -378,8 +590,8 @@ export function SearchModal() {
                     {label}
                   </p>
                   {items.map((item) => {
-                    flatIndex++;
-                    const idx = flatIndex;
+                    globalIndex++;
+                    const idx = globalIndex;
                     const isSelected = idx === selectedIndex;
 
                     return (
@@ -387,7 +599,7 @@ export function SearchModal() {
                         key={item.id}
                         data-result-index={idx}
                         className={cn(
-                          'flex w-full items-center justify-between gap-3 px-4 py-2 text-left transition-colors',
+                          'flex w-full items-center justify-between gap-3 px-4 py-2 text-left transition-colors rounded-lg',
                           isSelected
                             ? 'bg-surface text-text'
                             : 'text-text-muted hover:bg-surface/50 hover:text-text',
@@ -431,6 +643,13 @@ export function SearchModal() {
               esc
             </kbd>
             close
+          </span>
+          <span className="ml-auto flex items-center gap-1 text-[10px] text-text-muted">
+            Type
+            <kbd className="inline-flex h-4 items-center rounded border border-border bg-surface px-1 font-mono text-[9px]">
+              &gt;
+            </kbd>
+            for commands
           </span>
         </div>
       </div>

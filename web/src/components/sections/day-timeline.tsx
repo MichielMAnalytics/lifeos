@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
+import type { Id } from '@/lib/convex-api';
 import { useTodayDate } from '@/lib/today-date-context';
 import { cn } from '@/lib/utils';
 
-// ── Block type colors (reuse the same palette as day-plan.tsx) ──
+// ── Block type colors ────────────────────────────────────
 
 const blockBorder: Record<string, string> = {
   mit: 'border-l-accent',
@@ -20,13 +21,66 @@ const blockBorder: Record<string, string> = {
   other: 'border-l-text-muted',
 };
 
+const blockBg: Record<string, string> = {
+  mit: 'bg-accent/10',
+  p1: 'bg-purple-500/10',
+  p2: 'bg-indigo-500/10',
+  event: 'bg-warning/10',
+  break: 'bg-text-muted/5',
+  lunch: 'bg-text-muted/5',
+  task: 'bg-success/10',
+  wake: 'bg-warning/10',
+  other: 'bg-text-muted/5',
+};
+
 const checkableTypes = new Set(['mit', 'p1', 'p2', 'task']);
+
+// ── Constants ────────────────────────────────────────────
+
+const GRID_START_HOUR = 6;
+const GRID_END_HOUR = 23;
+const HOUR_HEIGHT = 60; // px per hour
+const TOTAL_HOURS = GRID_END_HOUR - GRID_START_HOUR;
+const GRID_HEIGHT = TOTAL_HOURS * HOUR_HEIGHT;
+const LABEL_WIDTH = 56; // px for the hour label gutter
+const RESIZE_HANDLE_HEIGHT = 8; // px
+const MIN_DURATION_MINUTES = 15;
 
 // ── Helpers ──────────────────────────────────────────────
 
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
+}
+
+function minutesToPosition(minutes: number): number {
+  const offset = minutes - GRID_START_HOUR * 60;
+  return (offset / 60) * HOUR_HEIGHT;
+}
+
+function minutesToTimeString(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
+
+function snapToQuarter(minutes: number): number {
+  return Math.round(minutes / 15) * 15;
+}
+
+function clampMinutes(minutes: number): number {
+  return Math.max(GRID_START_HOUR * 60, Math.min(minutes, GRID_END_HOUR * 60));
+}
+
+function positionToMinutes(y: number): number {
+  return (y / HOUR_HEIGHT) * 60 + GRID_START_HOUR * 60;
+}
+
+function formatHour(hour: number): string {
+  if (hour === 0 || hour === 24) return '12 AM';
+  if (hour === 12) return '12 PM';
+  if (hour < 12) return `${hour} AM`;
+  return `${hour - 12} PM`;
 }
 
 function getDoneField(type: string): 'mitDone' | 'p1Done' | 'p2Done' | null {
@@ -51,7 +105,7 @@ function getDoneValue(
   return dayPlan[field];
 }
 
-// ── ScheduleBlock ────────────────────────────────────────
+// ── ScheduleBlock type ───────────────────────────────────
 
 interface ScheduleBlock {
   start: string;
@@ -61,92 +115,275 @@ interface ScheduleBlock {
   taskId?: string;
 }
 
-function BlockRow({
+// ── Resize state type ───────────────────────────────────
+
+interface ResizeState {
+  blockIndex: number;
+  edge: 'bottom' | 'top';
+  initialMouseY: number;
+  initialStartMin: number;
+  initialEndMin: number;
+}
+
+// ── EventCard (positioned block on the grid) ─────────────
+
+function EventCard({
   block,
-  isPast,
-  isCurrent,
+  blockIndex,
   done,
   onToggle,
+  onResizeStart,
+  overrideStartMin,
+  overrideEndMin,
+  isResizing,
 }: {
   block: ScheduleBlock;
-  isPast: boolean;
-  isCurrent: boolean;
+  blockIndex: number;
   done: boolean;
   onToggle: (() => void) | null;
+  onResizeStart: (e: React.MouseEvent, blockIndex: number, edge: 'bottom' | 'top') => void;
+  overrideStartMin?: number;
+  overrideEndMin?: number;
+  isResizing: boolean;
 }) {
+  const startMin = overrideStartMin ?? timeToMinutes(block.start);
+  const endMin = overrideEndMin ?? timeToMinutes(block.end);
+  const top = minutesToPosition(startMin);
+  const height = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT, 20);
+
+  const formatTime = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    const suffix = h >= 12 ? 'PM' : 'AM';
+    const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${displayH}:${m.toString().padStart(2, '0')} ${suffix}`;
+  };
+
+  const displayStart = overrideStartMin != null ? minutesToTimeString(overrideStartMin) : block.start;
+  const displayEnd = overrideEndMin != null ? minutesToTimeString(overrideEndMin) : block.end;
+
+  const handleDragStart = (e: React.DragEvent) => {
+    // Don't start drag if we're resizing
+    if (isResizing) {
+      e.preventDefault();
+      return;
+    }
+    e.dataTransfer.setData('application/x-timeline-block-index', String(blockIndex));
+    e.dataTransfer.setData('application/x-block-label', block.label);
+    e.dataTransfer.setData('application/x-block-type', block.type);
+    e.dataTransfer.setData('application/x-block-task-id', block.taskId ?? '');
+    const duration = timeToMinutes(block.end) - timeToMinutes(block.start);
+    e.dataTransfer.setData('application/x-block-duration', String(duration));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
     <div
+      draggable={!isResizing}
+      onDragStart={handleDragStart}
       className={cn(
-        'flex items-center gap-4 border-l-2 px-4 py-3 transition-colors',
+        'absolute left-0 right-0 rounded-lg border-l-[3px] px-3 py-1.5 overflow-hidden transition-opacity select-none group',
         blockBorder[block.type] ?? 'border-l-text-muted',
-        isPast && 'opacity-50',
-        isCurrent && 'bg-danger/5',
+        blockBg[block.type] ?? 'bg-text-muted/5',
+        done && 'opacity-50',
+        isResizing ? 'cursor-ns-resize z-30' : 'cursor-grab active:cursor-grabbing',
       )}
+      style={{
+        top: `${top}px`,
+        height: `${height}px`,
+      }}
     >
-      {/* Time range */}
-      <span className="w-28 shrink-0 font-mono text-xs text-text-muted">
-        {block.start} - {block.end}
-      </span>
+      {/* Top resize handle */}
+      <div
+        className="absolute top-0 left-0 right-0 cursor-n-resize z-10"
+        style={{ height: `${RESIZE_HANDLE_HEIGHT}px` }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onResizeStart(e, blockIndex, 'top');
+        }}
+      />
 
-      {/* Optional checkbox for priority/task blocks */}
-      {onToggle ? (
-        <button
-          onClick={onToggle}
-          className={cn(
-            'flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-all',
-            done
-              ? 'border-success bg-success text-white'
-              : 'border-text-muted/40 hover:border-text',
-          )}
-          aria-label={`Toggle ${block.label}`}
-        >
-          {done && (
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          )}
-        </button>
-      ) : (
-        <span className="w-4 shrink-0" />
-      )}
-
-      {/* Label */}
-      <span
-        className={cn(
-          'flex-1 text-sm truncate',
-          done ? 'line-through text-text-muted' : 'text-text',
+      <div className="flex items-start gap-2 h-full">
+        {/* Checkbox for checkable types */}
+        {onToggle && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
+            className={cn(
+              'flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-all mt-0.5',
+              done
+                ? 'border-success bg-success text-white'
+                : 'border-text-muted/40 hover:border-text',
+            )}
+            aria-label={`Toggle ${block.label}`}
+          >
+            {done && (
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </button>
         )}
-      >
-        {block.label}
-      </span>
 
-      {/* Type badge */}
-      <span className="text-xs font-mono text-text-muted uppercase">
-        {block.type}
-      </span>
+        <div className="flex-1 min-w-0">
+          <p
+            className={cn(
+              'text-sm font-medium truncate leading-tight',
+              done ? 'line-through text-text-muted' : 'text-text',
+            )}
+          >
+            {block.label}
+          </p>
+          {height >= 36 && (
+            <p className="text-xs text-text-muted mt-0.5">
+              {formatTime(displayStart)} - {formatTime(displayEnd)}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom resize handle */}
+      <div
+        className="absolute bottom-0 left-0 right-0 cursor-s-resize z-10"
+        style={{ height: `${RESIZE_HANDLE_HEIGHT}px` }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onResizeStart(e, blockIndex, 'bottom');
+        }}
+      />
+
+      {/* Visual resize indicator on hover */}
+      <div className="absolute bottom-0 left-2 right-2 h-1 rounded-full bg-text-muted/0 group-hover:bg-text-muted/30 transition-colors" />
     </div>
   );
 }
 
-// ── NowLine ──────────────────────────────────────────────
+// ── NowLine (red current-time indicator) ─────────────────
 
-function NowLine() {
+function NowIndicator({ nowMinutes }: { nowMinutes: number }) {
+  const top = minutesToPosition(nowMinutes);
+
+  // Only show if within the grid bounds
+  if (top < 0 || top > GRID_HEIGHT) return null;
+
   return (
-    <div className="relative flex items-center gap-2 py-1">
-      <span className="h-2 w-2 rounded-full bg-danger shrink-0" />
-      <span className="text-xs font-bold text-danger uppercase tracking-widest">
-        Now
-      </span>
-      <div className="flex-1 h-px bg-danger" />
+    <div
+      className="absolute left-0 right-0 z-20 pointer-events-none"
+      style={{ top: `${top}px` }}
+    >
+      {/* Red circle on the left edge */}
+      <div className="absolute -left-[5px] -top-[5px] h-[10px] w-[10px] rounded-full bg-danger" />
+      {/* Red line across the width */}
+      <div className="h-[2px] bg-danger w-full" />
+    </div>
+  );
+}
+
+// ── TaskSidebarCard ──────────────────────────────────────
+
+function TaskSidebarCard({ task }: { task: { _id: Id<'tasks'>; title: string } }) {
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('application/x-task-id', task._id);
+    e.dataTransfer.setData('application/x-task-title', task.title);
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  return (
+    <div
+      draggable
+      onDragStart={handleDragStart}
+      className="rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text truncate cursor-grab active:cursor-grabbing hover:border-accent/50 transition-colors"
+      title={task.title}
+    >
+      {task.title}
+    </div>
+  );
+}
+
+// ── TaskSidebar ──────────────────────────────────────────
+
+function TaskSidebar({
+  todayTasks,
+  overdueTasks,
+  isDragOverSidebar,
+  onSidebarDragOver,
+  onSidebarDragLeave,
+  onSidebarDrop,
+}: {
+  todayTasks: { _id: Id<'tasks'>; title: string }[] | undefined;
+  overdueTasks: { _id: Id<'tasks'>; title: string }[] | undefined;
+  isDragOverSidebar: boolean;
+  onSidebarDragOver: (e: React.DragEvent) => void;
+  onSidebarDragLeave: () => void;
+  onSidebarDrop: (e: React.DragEvent) => void;
+}) {
+  const todayCount = todayTasks?.length ?? 0;
+  const overdueCount = overdueTasks?.length ?? 0;
+  const isEmpty = todayCount === 0 && overdueCount === 0;
+
+  return (
+    <div
+      className={cn(
+        'shrink-0 w-[200px] border-l border-border overflow-y-auto max-h-[660px] transition-colors',
+        isDragOverSidebar && 'bg-danger/10 border-l-danger/50',
+      )}
+      onDragOver={onSidebarDragOver}
+      onDragLeave={onSidebarDragLeave}
+      onDrop={onSidebarDrop}
+    >
+      <div className="p-3 space-y-4">
+        {/* Drop-to-remove indicator */}
+        {isDragOverSidebar && (
+          <div className="rounded-lg border-2 border-dashed border-danger/40 px-3 py-3 text-center">
+            <p className="text-xs font-bold text-danger">Remove from schedule</p>
+          </div>
+        )}
+
+        {/* Overdue section */}
+        {overdueCount > 0 && (
+          <div>
+            <h3 className="text-xs font-bold text-danger uppercase tracking-wide mb-2">
+              Overdue ({overdueCount})
+            </h3>
+            <div className="space-y-1.5">
+              {overdueTasks!.map((task) => (
+                <TaskSidebarCard key={task._id} task={task} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Today section */}
+        {todayCount > 0 && (
+          <div>
+            <h3 className="text-xs font-bold text-text-muted uppercase tracking-wide mb-2">
+              Today ({todayCount})
+            </h3>
+            <div className="space-y-1.5">
+              {todayTasks!.map((task) => (
+                <TaskSidebarCard key={task._id} task={task} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {isEmpty && !isDragOverSidebar && (
+          <p className="text-xs text-text-muted text-center py-4">No tasks</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -158,7 +395,23 @@ export function DayTimeline() {
   const dayPlan = useQuery(api.dayPlans.getByDate, { date });
   const upsert = useMutation(api.dayPlans.upsert);
 
+  const todayTasks = useQuery(api.tasks.list, { status: 'todo', due: 'today' });
+  const overdueTasks = useQuery(api.tasks.list, { status: 'todo', due: 'overdue' });
+
   const [now, setNow] = useState(() => new Date());
+  const [dropTargetMinutes, setDropTargetMinutes] = useState<number | null>(null);
+
+  // Resize state
+  const [resizing, setResizing] = useState<ResizeState | null>(null);
+  const [resizePreview, setResizePreview] = useState<{ startMin: number; endMin: number } | null>(null);
+
+  // Drag-to-reposition state
+  const [blockDropTargetMinutes, setBlockDropTargetMinutes] = useState<number | null>(null);
+
+  // Sidebar drop state
+  const [isDragOverSidebar, setIsDragOverSidebar] = useState(false);
+
+  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isToday) return;
@@ -168,22 +421,211 @@ export function DayTimeline() {
 
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
+  const schedule: ScheduleBlock[] = dayPlan?.schedule ?? [];
+
+  // ── Resize handlers (native mouse events) ──────────────
+
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent, blockIndex: number, edge: 'bottom' | 'top') => {
+      const block = schedule[blockIndex];
+      if (!block) return;
+
+      setResizing({
+        blockIndex,
+        edge,
+        initialMouseY: e.clientY,
+        initialStartMin: timeToMinutes(block.start),
+        initialEndMin: timeToMinutes(block.end),
+      });
+      setResizePreview({
+        startMin: timeToMinutes(block.start),
+        endMin: timeToMinutes(block.end),
+      });
+    },
+    [schedule],
+  );
+
+  useEffect(() => {
+    if (!resizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!gridRef.current) return;
+      const rect = gridRef.current.getBoundingClientRect();
+      const mouseY = e.clientY - rect.top;
+      const mouseMinutes = snapToQuarter(positionToMinutes(mouseY));
+
+      if (resizing.edge === 'bottom') {
+        const newEnd = clampMinutes(mouseMinutes);
+        const minEnd = resizing.initialStartMin + MIN_DURATION_MINUTES;
+        setResizePreview({
+          startMin: resizing.initialStartMin,
+          endMin: Math.max(newEnd, minEnd),
+        });
+      } else {
+        const newStart = clampMinutes(mouseMinutes);
+        const maxStart = resizing.initialEndMin - MIN_DURATION_MINUTES;
+        setResizePreview({
+          startMin: Math.min(newStart, maxStart),
+          endMin: resizing.initialEndMin,
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (resizePreview && dayPlan) {
+        const updatedSchedule = [...schedule];
+        updatedSchedule[resizing.blockIndex] = {
+          ...updatedSchedule[resizing.blockIndex],
+          start: minutesToTimeString(resizePreview.startMin),
+          end: minutesToTimeString(resizePreview.endMin),
+        };
+        void upsert({ date, schedule: updatedSchedule });
+      }
+      setResizing(null);
+      setResizePreview(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizing, resizePreview, schedule, dayPlan, date, upsert]);
+
+  // ── Grid drag handlers (for both sidebar tasks and timeline block repositioning) ──
+
+  const calcDropMinutes = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const dropY = e.clientY - rect.top;
+    const rawMinutes = positionToMinutes(dropY);
+    return snapToQuarter(rawMinutes);
+  }, []);
+
+  const handleDragOver = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      const hasTask = e.dataTransfer.types.includes('application/x-task-id');
+      const hasBlock = e.dataTransfer.types.includes('application/x-timeline-block-index');
+
+      if (!hasTask && !hasBlock) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = hasBlock ? 'move' : 'copy';
+
+      const minutes = calcDropMinutes(e);
+
+      if (hasBlock) {
+        setBlockDropTargetMinutes(minutes);
+      } else {
+        setDropTargetMinutes(minutes);
+      }
+    },
+    [calcDropMinutes],
+  );
+
+  const handleDragLeave = useCallback(() => {
+    setDropTargetMinutes(null);
+    setBlockDropTargetMinutes(null);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setDropTargetMinutes(null);
+      setBlockDropTargetMinutes(null);
+
+      // Case 1: Dropping a timeline block to reposition
+      const blockIndexStr = e.dataTransfer.getData('application/x-timeline-block-index');
+      if (blockIndexStr !== '') {
+        const blockIndex = Number(blockIndexStr);
+        const durationStr = e.dataTransfer.getData('application/x-block-duration');
+        const duration = Number(durationStr) || 60;
+        const dropMinutes = calcDropMinutes(e);
+
+        const newStart = clampMinutes(dropMinutes);
+        const newEnd = clampMinutes(newStart + duration);
+
+        // If the end got clamped, adjust the start to maintain duration
+        const actualEnd = Math.min(newEnd, GRID_END_HOUR * 60);
+        const actualStart = Math.max(actualEnd - duration, GRID_START_HOUR * 60);
+
+        const updatedSchedule = [...schedule];
+        updatedSchedule[blockIndex] = {
+          ...updatedSchedule[blockIndex],
+          start: minutesToTimeString(actualStart),
+          end: minutesToTimeString(actualEnd),
+        };
+        void upsert({ date, schedule: updatedSchedule });
+        return;
+      }
+
+      // Case 2: Dropping a task from the sidebar
+      const taskId = e.dataTransfer.getData('application/x-task-id');
+      const taskTitle = e.dataTransfer.getData('application/x-task-title');
+      if (!taskId || !taskTitle) return;
+
+      const startMinutes = calcDropMinutes(e);
+      const endMinutes = startMinutes + 60;
+
+      const clampedStart = Math.max(GRID_START_HOUR * 60, Math.min(startMinutes, (GRID_END_HOUR - 1) * 60));
+      const clampedEnd = Math.min(GRID_END_HOUR * 60, endMinutes);
+
+      const newBlock: ScheduleBlock = {
+        start: minutesToTimeString(clampedStart),
+        end: minutesToTimeString(clampedEnd),
+        label: taskTitle,
+        type: 'task',
+        taskId,
+      };
+
+      const existingSchedule: ScheduleBlock[] = dayPlan?.schedule ?? [];
+      void upsert({ date, schedule: [...existingSchedule, newBlock] });
+    },
+    [calcDropMinutes, dayPlan, date, upsert, schedule],
+  );
+
+  // ── Sidebar drag handlers (drop block to remove from schedule) ──
+
+  const handleSidebarDragOver = useCallback((e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes('application/x-timeline-block-index')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOverSidebar(true);
+  }, []);
+
+  const handleSidebarDragLeave = useCallback(() => {
+    setIsDragOverSidebar(false);
+  }, []);
+
+  const handleSidebarDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOverSidebar(false);
+
+      const blockIndexStr = e.dataTransfer.getData('application/x-timeline-block-index');
+      if (blockIndexStr === '') return;
+
+      const blockIndex = Number(blockIndexStr);
+      const updatedSchedule = schedule.filter((_, i) => i !== blockIndex);
+      void upsert({ date, schedule: updatedSchedule });
+    },
+    [schedule, date, upsert],
+  );
+
+  // Loading state
   if (dayPlan === undefined) {
     return (
-      <div className="border border-border">
+      <div className="rounded-xl border border-border bg-surface">
         <div className="px-6 py-4 border-b border-border">
-          <div className="animate-pulse h-4 w-28 bg-surface rounded" />
+          <div className="animate-pulse h-4 w-28 bg-bg-subtle rounded" />
         </div>
         <div className="p-6 space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="animate-pulse h-10 bg-surface rounded" />
+            <div key={i} className="animate-pulse h-10 bg-bg-subtle rounded" />
           ))}
         </div>
       </div>
     );
   }
-
-  const schedule: ScheduleBlock[] = dayPlan?.schedule ?? [];
 
   const handleToggle = (type: string) => {
     const field = getDoneField(type);
@@ -191,45 +633,12 @@ export function DayTimeline() {
     void upsert({ date, [field]: !dayPlan[field] });
   };
 
-  // Build render list with NOW line insertions
-  type RenderItem =
-    | { kind: 'block'; block: ScheduleBlock; index: number }
-    | { kind: 'now' };
-
-  const items: RenderItem[] = [];
-  let nowInserted = false;
-
-  for (let i = 0; i < schedule.length; i++) {
-    const block = schedule[i];
-
-    // Insert NOW line before this block if now falls before its start
-    if (isToday && !nowInserted && nowMinutes < timeToMinutes(block.start)) {
-      items.push({ kind: 'now' });
-      nowInserted = true;
-    }
-
-    items.push({ kind: 'block', block, index: i });
-
-    // Insert NOW line between blocks if now falls in the gap
-    if (isToday && !nowInserted) {
-      const nextBlock = schedule[i + 1];
-      const blockEnd = timeToMinutes(block.end);
-      if (nowMinutes >= blockEnd) {
-        if (!nextBlock || nowMinutes < timeToMinutes(nextBlock.start)) {
-          items.push({ kind: 'now' });
-          nowInserted = true;
-        }
-      }
-    }
-  }
-
-  // If NOW hasn't been inserted yet and it's today, append it at the end
-  if (isToday && !nowInserted) {
-    items.push({ kind: 'now' });
-  }
+  // Build the hour labels array
+  const hours = Array.from({ length: TOTAL_HOURS }, (_, i) => GRID_START_HOUR + i);
 
   return (
-    <div className="border border-border">
+    <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      {/* Header */}
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
         <h2 className="text-sm font-bold text-text uppercase tracking-wide">
           Timeline
@@ -241,43 +650,136 @@ export function DayTimeline() {
         )}
       </div>
 
-      {schedule.length > 0 ? (
-        <div className="py-2">
-          {items.map((item) => {
-            if (item.kind === 'now') {
-              return <div key="now-line" className="px-4"><NowLine /></div>;
-            }
+      {/* Calendar grid + task sidebar */}
+      <div className="flex overflow-hidden">
+        <div className="flex-1 overflow-y-auto max-h-[660px]">
+          <div className="flex" style={{ minHeight: `${GRID_HEIGHT}px` }}>
+            {/* Hour labels gutter */}
+            <div
+              className="shrink-0 border-r border-border"
+              style={{ width: `${LABEL_WIDTH}px` }}
+            >
+              {hours.map((hour) => (
+                <div
+                  key={hour}
+                  className="relative"
+                  style={{ height: `${HOUR_HEIGHT}px` }}
+                >
+                  <span className="absolute -top-[9px] right-3 text-[11px] text-text-muted select-none">
+                    {formatHour(hour)}
+                  </span>
+                </div>
+              ))}
+            </div>
 
-            const { block, index } = item;
-            const blockStart = timeToMinutes(block.start);
-            const blockEnd = timeToMinutes(block.end);
-            const isPast = isToday && nowMinutes >= blockEnd;
-            const isCurrent =
-              isToday && nowMinutes >= blockStart && nowMinutes < blockEnd;
+            {/* Grid area with events */}
+            <div
+              ref={gridRef}
+              className={cn(
+                'flex-1 relative',
+                resizing && 'cursor-ns-resize',
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              {/* Hour grid lines */}
+              {hours.map((hour) => (
+                <div
+                  key={hour}
+                  className="absolute left-0 right-0 border-t border-border"
+                  style={{ top: `${(hour - GRID_START_HOUR) * HOUR_HEIGHT}px` }}
+                />
+              ))}
 
-            const isCheckable = checkableTypes.has(block.type);
-            const done = dayPlan ? getDoneValue(dayPlan, block.type) : false;
+              {/* Half-hour dashed lines */}
+              {hours.map((hour) => (
+                <div
+                  key={`half-${hour}`}
+                  className="absolute left-0 right-0 border-t border-border/40 border-dashed"
+                  style={{
+                    top: `${(hour - GRID_START_HOUR) * HOUR_HEIGHT + HOUR_HEIGHT / 2}px`,
+                  }}
+                />
+              ))}
 
-            return (
-              <BlockRow
-                key={`block-${index}`}
-                block={block}
-                isPast={isPast}
-                isCurrent={isCurrent}
-                done={done}
-                onToggle={isCheckable ? () => handleToggle(block.type) : null}
-              />
-            );
-          })}
+              {/* Drop indicator for sidebar tasks */}
+              {dropTargetMinutes !== null && (
+                <div
+                  className="absolute left-0 right-0 bg-accent/15 border border-accent/30 rounded pointer-events-none z-10"
+                  style={{
+                    top: `${minutesToPosition(dropTargetMinutes)}px`,
+                    height: `${HOUR_HEIGHT}px`,
+                  }}
+                />
+              )}
+
+              {/* Drop indicator for repositioning timeline blocks */}
+              {blockDropTargetMinutes !== null && (
+                <div
+                  className="absolute left-0 right-0 bg-success/15 border border-success/30 rounded pointer-events-none z-10"
+                  style={{
+                    top: `${minutesToPosition(blockDropTargetMinutes)}px`,
+                    height: `${HOUR_HEIGHT}px`,
+                  }}
+                />
+              )}
+
+              {/* Event blocks */}
+              <div className="absolute inset-0 px-2">
+                {schedule.map((block, index) => {
+                  const isCheckable = checkableTypes.has(block.type);
+                  const done = dayPlan ? getDoneValue(dayPlan, block.type) : false;
+                  const isBeingResized = resizing?.blockIndex === index;
+
+                  return (
+                    <EventCard
+                      key={`block-${index}`}
+                      block={block}
+                      blockIndex={index}
+                      done={done}
+                      onToggle={isCheckable ? () => handleToggle(block.type) : null}
+                      onResizeStart={handleResizeStart}
+                      overrideStartMin={isBeingResized ? resizePreview?.startMin : undefined}
+                      overrideEndMin={isBeingResized ? resizePreview?.endMin : undefined}
+                      isResizing={isBeingResized}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Now line */}
+              {isToday && <NowIndicator nowMinutes={nowMinutes} />}
+
+              {/* Empty state message */}
+              {schedule.length === 0 && (
+                <div
+                  className="absolute inset-x-0 flex flex-col items-center justify-center pointer-events-none"
+                  style={{
+                    top: `${2 * HOUR_HEIGHT}px`,
+                    height: `${2 * HOUR_HEIGHT}px`,
+                  }}
+                >
+                  <p className="text-sm text-text-muted">No events scheduled</p>
+                  <p className="text-xs text-text-muted/60 mt-1">
+                    Drag tasks from the sidebar or create a day plan
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-          <p className="text-sm text-text-muted">No schedule blocks</p>
-          <p className="text-xs text-text-muted/60 mt-1">
-            Create a day plan to populate the timeline
-          </p>
-        </div>
-      )}
+
+        {/* Task sidebar */}
+        <TaskSidebar
+          todayTasks={todayTasks}
+          overdueTasks={overdueTasks}
+          isDragOverSidebar={isDragOverSidebar}
+          onSidebarDragOver={handleSidebarDragOver}
+          onSidebarDragLeave={handleSidebarDragLeave}
+          onSidebarDrop={handleSidebarDrop}
+        />
+      </div>
 
       {/* Overflow warning */}
       {dayPlan?.overflow && dayPlan.overflow.length > 0 && (

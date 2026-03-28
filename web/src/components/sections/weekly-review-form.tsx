@@ -61,9 +61,15 @@ function GoalHealthBadge({ goalId }: { goalId: Id<"goals"> }) {
   );
 }
 
+// ── Props ────────────────────────────────────────────
+
+interface WeeklyReviewFormProps {
+  onSaved?: () => void;
+}
+
 // ── Main component ───────────────────────────────────
 
-export function WeeklyReviewForm() {
+export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
   const { start, end } = useMemo(() => getCurrentWeekRange(), []);
   const weekStartStr = toDateStr(start);
   const weekEndStr = toDateStr(end);
@@ -129,6 +135,7 @@ export function WeeklyReviewForm() {
         score: scoreNum,
       });
       setSaved(true);
+      onSaved?.();
     } finally {
       setSaving(false);
     }
@@ -136,7 +143,7 @@ export function WeeklyReviewForm() {
 
   if (saved) {
     return (
-      <div className="border border-border p-8 text-center">
+      <div className="border border-border rounded-xl p-8 text-center">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-success">
           <polyline points="20 6 9 17 4 12" />
         </svg>
@@ -151,7 +158,7 @@ export function WeeklyReviewForm() {
   const isLoading = journals === undefined || goals === undefined;
 
   return (
-    <div className="border border-border">
+    <div className="border border-border rounded-xl">
       {/* Header */}
       <div className="px-6 py-4 border-b border-border">
         <h2 className="text-sm font-bold text-text uppercase tracking-wide">
@@ -162,8 +169,8 @@ export function WeeklyReviewForm() {
       {isLoading ? (
         <div className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-20 bg-surface rounded" />
-            <div className="h-20 bg-surface rounded" />
+            <div className="h-20 bg-surface rounded-lg" />
+            <div className="h-20 bg-surface rounded-lg" />
           </div>
         </div>
       ) : (
@@ -193,7 +200,7 @@ export function WeeklyReviewForm() {
               onChange={(e) => setAdditionalHighlights(e.target.value)}
               placeholder="Add more highlights (one per line)..."
               rows={3}
-              className="w-full bg-surface border border-border px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
@@ -207,7 +214,7 @@ export function WeeklyReviewForm() {
               onChange={(e) => setChallenges(e.target.value)}
               placeholder="What was difficult this week?"
               rows={3}
-              className="w-full bg-surface border border-border px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
@@ -220,7 +227,7 @@ export function WeeklyReviewForm() {
               <span className="text-xs text-text-muted block mb-3">Pre-filled from active goals:</span>
               <div className="space-y-4">
                 {goals.map((goal) => (
-                  <div key={goal._id} className="border border-border p-4">
+                  <div key={goal._id} className="border border-border rounded-lg p-4">
                     <div className="flex items-center justify-between gap-3 mb-2">
                       <span className="text-sm font-medium text-text">{goal.title}</span>
                       <GoalHealthBadge goalId={goal._id} />
@@ -232,7 +239,7 @@ export function WeeklyReviewForm() {
                       }
                       placeholder="Notes on progress..."
                       rows={2}
-                      className="w-full bg-bg border border-border px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+                      className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
                     />
                   </div>
                 ))}
@@ -253,7 +260,7 @@ export function WeeklyReviewForm() {
                   value={p1}
                   onChange={(e) => setP1(e.target.value)}
                   placeholder="Most important thing next week"
-                  className="flex-1 bg-surface border border-border px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
+                  className="flex-1 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
                 />
               </div>
               <div className="flex items-center gap-3">
@@ -263,7 +270,7 @@ export function WeeklyReviewForm() {
                   value={p2}
                   onChange={(e) => setP2(e.target.value)}
                   placeholder="Second priority"
-                  className="flex-1 bg-surface border border-border px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
+                  className="flex-1 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
                 />
               </div>
               <div className="flex items-center gap-3">
@@ -273,7 +280,7 @@ export function WeeklyReviewForm() {
                   value={p3}
                   onChange={(e) => setP3(e.target.value)}
                   placeholder="Third priority"
-                  className="flex-1 bg-surface border border-border px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
+                  className="flex-1 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
                 />
               </div>
             </div>
@@ -291,7 +298,7 @@ export function WeeklyReviewForm() {
               value={score}
               onChange={(e) => setScore(e.target.value)}
               placeholder="How was this week?"
-              className="w-24 bg-surface border border-border px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
+              className="w-24 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
             />
           </div>
 
@@ -300,7 +307,7 @@ export function WeeklyReviewForm() {
             <button
               onClick={handleSave}
               disabled={saving || !score || parseInt(score, 10) < 1 || parseInt(score, 10) > 10}
-              className="px-6 py-2.5 text-sm font-bold uppercase tracking-wide bg-accent text-bg hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 text-sm font-bold uppercase tracking-wide bg-accent text-bg rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : 'Save Review'}
             </button>

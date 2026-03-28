@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { Button } from '@/components/ui/button';
-import type { Id } from '../../../../convex/_generated/dataModel';
+import type { Id } from '@/lib/convex-api';
 
 export function TaskActions({
   taskId,
