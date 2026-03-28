@@ -187,7 +187,13 @@ export const deploy = action({
       },
     );
 
-    // Generate a LifeOS API key for the Life Coach
+    // Generate a LifeOS API key for the Life Coach.
+    // Delete any existing "Life Coach" key first to avoid accumulating orphaned keys on redeploy.
+    const existingKeys = await ctx.runQuery(internal.authHelpers._listApiKeys, { userId });
+    const existingLifeCoachKey = existingKeys?.find((k: { name?: string }) => k.name === "Life Coach");
+    if (existingLifeCoachKey) {
+      await ctx.runMutation(internal.authHelpers._deleteApiKey, { userId, keyId: existingLifeCoachKey._id });
+    }
     const apiKeyResult = await ctx.runAction(internal.apiKeyAuth._createApiKey, {
       userId,
       name: "Life Coach",
