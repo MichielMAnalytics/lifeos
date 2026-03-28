@@ -2,13 +2,23 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Authenticated, AuthLoading } from "convex/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
 
+// Persist ?plan= param across OAuth redirect
+function StoreUrlPrefs() {
+  const searchParams = useSearchParams();
+  const plan = searchParams.get('plan');
+  if (plan && typeof window !== 'undefined') {
+    sessionStorage.setItem('pref_plan', plan);
+  }
+  return null;
+}
+
 function RedirectToApp() {
   const router = useRouter();
-  useEffect(() => { router.replace('/today'); }, [router]);
+  useEffect(() => { router.replace('/life-coach'); }, [router]);
   return null;
 }
 
@@ -17,6 +27,7 @@ export default function LoginPage() {
 
   return (
     <>
+      <StoreUrlPrefs />
       <Authenticated>
         <RedirectToApp />
       </Authenticated>

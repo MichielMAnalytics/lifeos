@@ -1,8 +1,18 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { Authenticated, Unauthenticated, AuthLoading } from 'convex/react';
+
+// Persist ?plan= param across OAuth/login redirect (read by onboarding-flow.tsx)
+function StoreUrlPrefs() {
+  const searchParams = useSearchParams();
+  const plan = searchParams.get('plan');
+  if (plan && typeof window !== 'undefined') {
+    sessionStorage.setItem('pref_plan', plan);
+  }
+  return null;
+}
 
 function GoToApp() {
   const router = useRouter();
@@ -19,6 +29,7 @@ function GoToLogin() {
 export default function Home() {
   return (
     <div className="min-h-screen bg-bg">
+      <StoreUrlPrefs />
       <AuthLoading>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-text-muted text-sm tracking-wider uppercase animate-pulse">
