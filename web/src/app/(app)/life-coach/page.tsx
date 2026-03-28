@@ -173,6 +173,23 @@ function StopIcon() {
   );
 }
 
+function PaperclipIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Message row
 // ---------------------------------------------------------------------------
@@ -603,8 +620,45 @@ export default function LifeCoachPage() {
   const isDisconnectedOrConnecting = !isConnected;
 
   // ---- Input component (reused in both states) ----
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) continue;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        setPastedImages((prev) => [...prev, { id: nextId(), dataUrl, mimeType: file.type }]);
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  }, []);
+
+  const handleNewSession = useCallback(async () => {
+    if (!client || !isConnected) return;
+    const msg: ChatMessage = { id: nextId(), role: 'user', content: '/new', timestamp: Date.now() };
+    setMessages((prev) => [...prev, msg]);
+    setIsStreaming(true);
+    streamBufferRef.current = '';
+    streamMessageIdRef.current = null;
+    try {
+      await client.call('chat.send', { sessionKey: 'agent:main:main', message: '/new', idempotencyKey: crypto.randomUUID() });
+    } catch { setIsStreaming(false); }
+  }, [client, isConnected]);
+
   const inputBox = (
     <div className="max-w-3xl w-full mx-auto">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleFileSelect}
+      />
       {/* Image previews */}
       {pastedImages.length > 0 && (
         <div className="flex gap-2 mb-2 px-1">
@@ -623,7 +677,7 @@ export default function LifeCoachPage() {
       )}
       <div
         className={cn(
-          'flex items-end gap-2 border border-border/40 rounded-2xl px-4 py-3 bg-surface transition-colors',
+          'flex flex-col border border-border/40 rounded-2xl px-4 py-3 bg-surface transition-colors',
           'focus-within:border-border/70',
         )}
       >
@@ -640,35 +694,57 @@ export default function LifeCoachPage() {
           disabled={isDisconnectedOrConnecting && !isStreaming}
           rows={1}
           className={cn(
-            'flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/40',
+            'w-full bg-transparent text-sm text-text placeholder:text-text-muted/40',
             'focus:outline-none resize-none leading-relaxed',
             'min-h-[24px] max-h-[160px]',
             (isDisconnectedOrConnecting && !isStreaming) && 'opacity-40',
           )}
         />
-        {isStreaming ? (
-          <button
-            onClick={handleAbort}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-text-muted/10 text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
-            title="Stop generating"
-          >
-            <StopIcon />
-          </button>
-        ) : (
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || !canSend}
-            className={cn(
-              'shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors',
-              input.trim() && canSend
-                ? 'bg-accent text-bg hover:bg-accent-hover'
-                : 'bg-text-muted/10 text-text-muted/30 cursor-not-allowed',
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={!canSend}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted/40 hover:text-text-muted hover:bg-text-muted/10 transition-colors disabled:opacity-30"
+              title="Attach image"
+            >
+              <PaperclipIcon />
+            </button>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleNewSession}
+              disabled={!canSend}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted/40 hover:text-text-muted hover:bg-text-muted/10 transition-colors disabled:opacity-30"
+              title="New session"
+            >
+              <PlusIcon />
+            </button>
+            {isStreaming ? (
+              <button
+                onClick={handleAbort}
+                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-text-muted/10 text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                title="Stop generating"
+              >
+                <StopIcon />
+              </button>
+            ) : (
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || !canSend}
+                className={cn(
+                  'shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors',
+                  input.trim() && canSend
+                    ? 'bg-accent text-bg hover:bg-accent-hover'
+                    : 'bg-text-muted/10 text-text-muted/30 cursor-not-allowed',
+                )}
+                title="Send message"
+              >
+                <SendIcon />
+              </button>
             )}
-            title="Send message"
-          >
-            <SendIcon />
-          </button>
-        )}
+          </div>
+        </div>
       </div>
       <p className="mt-2 text-center text-[10px] text-text-muted/30">
         Shift + Enter for new line
