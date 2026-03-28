@@ -478,16 +478,6 @@ function OnboardingFlowInner() {
             {/* Tab toggle */}
             <div className="flex rounded-lg overflow-hidden border border-border/60 mb-5">
               <button
-                onClick={() => setAnthropicAuthMethod('api_key')}
-                className={`flex-1 py-2.5 text-[10px] uppercase tracking-wider font-medium transition-colors ${
-                  anthropicAuthMethod === 'api_key'
-                    ? 'bg-text text-bg'
-                    : 'bg-transparent text-text-muted hover:text-text'
-                }`}
-              >
-                API Key
-              </button>
-              <button
                 onClick={() => setAnthropicAuthMethod('setup_token')}
                 className={`flex-1 py-2.5 text-[10px] uppercase tracking-wider font-medium transition-colors ${
                   anthropicAuthMethod === 'setup_token'
@@ -496,6 +486,16 @@ function OnboardingFlowInner() {
                 }`}
               >
                 Claude Subscription
+              </button>
+              <button
+                onClick={() => setAnthropicAuthMethod('api_key')}
+                className={`flex-1 py-2.5 text-[10px] uppercase tracking-wider font-medium transition-colors ${
+                  anthropicAuthMethod === 'api_key'
+                    ? 'bg-text text-bg'
+                    : 'bg-transparent text-text-muted hover:text-text'
+                }`}
+              >
+                API Key
               </button>
             </div>
 
