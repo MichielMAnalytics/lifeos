@@ -623,9 +623,9 @@ export default function LifeCoachPage() {
           height={48}
           className="rounded-full mb-6 opacity-30"
         />
-        <h2 className="text-lg font-semibold text-text mb-2">Set up your Life Coach to start chatting</h2>
+        <h2 className="text-lg font-semibold text-text mb-2">Your Life Coach is almost ready</h2>
         <p className="text-sm text-text-muted max-w-md mb-6">
-          Deploy your personal AI assistant to plan your days, reflect on progress, and keep you accountable.
+          Just one more step — head to Settings to activate your personal Life Coach. It only takes a minute.
         </p>
         <Link
           href="/settings"
