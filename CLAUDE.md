@@ -493,6 +493,52 @@ bun run check            # Type-check all packages
 
 ---
 
+## Convex Database (CLI)
+
+All Convex CLI commands must run from the `web/` directory.
+
+### Query / mutate data
+
+```bash
+# Run any exported function (dev deployment by default)
+npx convex run '<module>:<function>' '<json-args>'
+
+# Use --no-push to skip redeploying functions first
+npx convex run --no-push 'deploymentQueries:getDesiredState' '{}'
+
+# Examples
+npx convex run --no-push 'deploymentQueries:updateDeploymentStatus' '{"deploymentId":"<id>","status":"deactivated"}'
+npx convex run --no-push 'adminCleanup:wipeUserSubscription' '{"userId":"<id>"}'
+```
+
+### Environment variables
+
+```bash
+npx convex env list                          # List dev env vars
+npx convex env set VAR_NAME "value"          # Set on dev
+npx convex env list --prod                   # List prod env vars
+npx convex env set VAR_NAME "value" --prod   # Set on prod
+```
+
+### Deploy
+
+```bash
+npx convex dev --once      # Push to dev (proper-cormorant-28)
+npx convex deploy --yes    # Push to prod (charming-squid-23)
+```
+
+### Useful functions
+
+| Function | Purpose |
+|----------|---------|
+| `deploymentQueries:getDesiredState` | List active deployments with full IDs |
+| `deploymentQueries:updateDeploymentStatus` | Change deployment status (args: `deploymentId`, `status`) |
+| `adminCleanup:wipeUserSubscription` | Reset a user's subscription |
+| `adminCleanup:wipeUserFully` | Fully reset a user |
+| `adminCleanup:listAllData` | List all data for debugging |
+
+---
+
 ## Development
 
 ### File Structure Overview
