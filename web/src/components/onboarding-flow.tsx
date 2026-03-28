@@ -210,7 +210,9 @@ function OnboardingFlowInner() {
   const [planView, setPlanView] = useState<PlanView>('main');
   const [selectedPlanType, setSelectedPlanType] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [anthropicAuthMethod, setAnthropicAuthMethod] = useState<'api_key' | 'setup_token'>('api_key');
   const [anthropicApiKey, setAnthropicApiKey] = useState('');
+  const [anthropicSetupToken, setAnthropicSetupToken] = useState('');
   const [telegramToken, setTelegramToken] = useState('');
   const [discordToken, setDiscordToken] = useState('');
   const [deploying, setDeploying] = useState(false);
@@ -299,7 +301,13 @@ function OnboardingFlowInner() {
       await saveSettings({
         apiKeySource: isByok ? 'byok' : 'ours',
         selectedModel: 'claude-sonnet',
-        anthropicKey: isByok && anthropicApiKey.trim() ? anthropicApiKey.trim() : undefined,
+        anthropicAuthMethod: isByok ? anthropicAuthMethod : undefined,
+        ...(isByok && anthropicAuthMethod === 'api_key' && anthropicApiKey.trim()
+          ? { anthropicKey: anthropicApiKey.trim() }
+          : {}),
+        ...(isByok && anthropicAuthMethod === 'setup_token' && anthropicSetupToken.trim()
+          ? { anthropicSetupToken: anthropicSetupToken.trim() }
+          : {}),
         telegramBotToken: telegramToken.trim() || undefined,
         discordBotToken: discordToken.trim() || undefined,
       });
@@ -458,44 +466,89 @@ function OnboardingFlowInner() {
       <StepContainer active={step === 'byok-key'} onBack={() => { setStep('plans'); setPlanView('main'); }}>
         <div className="flex flex-col items-center text-center w-full max-w-lg">
           <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
-            Your <span className="font-semibold">Anthropic API key</span>
+            Your <span className="font-semibold">Anthropic credentials</span>
           </h1>
 
           <p className="mt-4 text-sm leading-relaxed text-text-muted/70 max-w-sm">
-            Your Life Coach is powered by Claude. Enter your Anthropic API key
+            Your Life Coach is powered by Claude. Connect your Anthropic account
             and you&apos;ll only pay for what you use — no credit limits.
           </p>
 
-          <div className="mt-8 w-full max-w-md text-left">
-            <label className="flex items-center gap-2 text-xs font-medium text-text-muted mb-2">
-              Anthropic API Key
-            </label>
-            <input
-              type="password"
-              value={anthropicApiKey}
-              onChange={(e) => setAnthropicApiKey(e.target.value)}
-              placeholder="sk-ant-api03-..."
-              autoComplete="off"
-              className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/25 focus:border-accent/50 focus:outline-none transition-colors"
-            />
-            <p className="mt-2 text-[11px] text-text-muted/40">
-              Get your key at{' '}
-              <a
-                href="https://console.anthropic.com/settings/keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-text-muted/60 underline underline-offset-2 hover:text-text-muted"
+          <div className="mt-8 w-full max-w-md">
+            {/* Tab toggle */}
+            <div className="flex rounded-lg overflow-hidden border border-border/60 mb-5">
+              <button
+                onClick={() => setAnthropicAuthMethod('api_key')}
+                className={`flex-1 py-2.5 text-[10px] uppercase tracking-wider font-medium transition-colors ${
+                  anthropicAuthMethod === 'api_key'
+                    ? 'bg-text text-bg'
+                    : 'bg-transparent text-text-muted hover:text-text'
+                }`}
               >
-                console.anthropic.com
-              </a>
-              . Your key is encrypted and never stored in plain text.
-            </p>
+                API Key
+              </button>
+              <button
+                onClick={() => setAnthropicAuthMethod('setup_token')}
+                className={`flex-1 py-2.5 text-[10px] uppercase tracking-wider font-medium transition-colors ${
+                  anthropicAuthMethod === 'setup_token'
+                    ? 'bg-text text-bg'
+                    : 'bg-transparent text-text-muted hover:text-text'
+                }`}
+              >
+                Claude Subscription
+              </button>
+            </div>
+
+            {anthropicAuthMethod === 'api_key' ? (
+              <div className="text-left">
+                <input
+                  type="password"
+                  value={anthropicApiKey}
+                  onChange={(e) => setAnthropicApiKey(e.target.value)}
+                  placeholder="sk-ant-api03-..."
+                  autoComplete="off"
+                  className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/25 focus:border-accent/50 focus:outline-none transition-colors"
+                />
+                <p className="mt-2 text-[11px] text-text-muted/40">
+                  Get your key at{' '}
+                  <a
+                    href="https://console.anthropic.com/settings/keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-text-muted/60 underline underline-offset-2 hover:text-text-muted"
+                  >
+                    console.anthropic.com
+                  </a>
+                  . Your key is encrypted and never stored in plain text.
+                </p>
+              </div>
+            ) : (
+              <div className="text-left">
+                <input
+                  type="password"
+                  value={anthropicSetupToken}
+                  onChange={(e) => setAnthropicSetupToken(e.target.value)}
+                  placeholder="Paste setup token..."
+                  autoComplete="off"
+                  className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/25 focus:border-accent/50 focus:outline-none transition-colors"
+                />
+                <p className="mt-2 text-[11px] text-text-muted/40">
+                  Run{' '}
+                  <code className="px-1.5 py-0.5 rounded bg-surface text-text-muted/70 text-[10px]">claude setup-token</code>
+                  {' '}in your terminal, then paste the token above.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mt-10 flex flex-col items-center gap-4">
             <button
               onClick={() => setStep('channels')}
-              disabled={!anthropicApiKey.trim().startsWith('sk-ant-')}
+              disabled={
+                anthropicAuthMethod === 'api_key'
+                  ? !anthropicApiKey.trim().startsWith('sk-ant-')
+                  : !anthropicSetupToken.trim()
+              }
               className="w-full max-w-md rounded-full bg-accent px-8 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97] disabled:opacity-30 disabled:pointer-events-none"
             >
               Continue
