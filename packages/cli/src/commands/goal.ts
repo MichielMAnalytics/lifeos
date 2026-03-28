@@ -123,6 +123,52 @@ function colorHealth(status: string): string {
 }
 
 goalCommand
+  .command('update <id>')
+  .description('Update a goal')
+  .option('-t, --title <title>', 'New title')
+  .option('-d, --description <desc>', 'New description')
+  .option('-s, --status <status>', 'New status (active, completed, dropped)')
+  .option('-q, --quarter <quarter>', 'Quarter (e.g. 2026-Q1)')
+  .option('--target-date <date>', 'Target date (YYYY-MM-DD)')
+  .action(async (id: string, opts: { title?: string; description?: string; status?: string; quarter?: string; targetDate?: string }) => {
+    try {
+      const client = createClient();
+      const body: Record<string, unknown> = {};
+      if (opts.title) body.title = opts.title;
+      if (opts.description) body.description = opts.description;
+      if (opts.status) body.status = opts.status;
+      if (opts.quarter) body.quarter = opts.quarter;
+      if (opts.targetDate) body.targetDate = opts.targetDate;
+
+      const res = await client.patch<ApiResponse<Goal>>(`/api/v1/goals/${id}`, body);
+
+      if (isJsonMode()) {
+        printJson(res);
+        return;
+      }
+
+      printSuccess(`Goal updated: ${res.data.title}`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+goalCommand
+  .command('delete <id>')
+  .description('Delete a goal')
+  .action(async (id: string) => {
+    try {
+      const client = createClient();
+      await client.del(`/api/v1/goals/${id}`);
+      printSuccess(`Goal ${id.slice(0, 8)} deleted.`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+goalCommand
   .command('health [id]')
   .description('Show health for one or all goals')
   .action(async (id?: string) => {
