@@ -16,7 +16,7 @@ export function OverdueAlert() {
   }
 
   return (
-    <div className="border border-danger/40 px-6 py-4 flex items-center justify-between">
+    <div className="border border-danger/40 rounded-xl px-6 py-4 flex items-center justify-between">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-danger">
           {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}

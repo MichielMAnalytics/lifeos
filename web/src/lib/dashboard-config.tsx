@@ -64,7 +64,7 @@ export function DashboardConfigProvider({ children }: { children: React.ReactNod
 
   // Ensure new pages from DEFAULT_NAV_ORDER are merged into existing configs
   const savedOrder = rawConfig?.navOrder ?? [...DEFAULT_NAV_ORDER];
-  const mergedOrder = savedOrder.filter((p) => p !== 'life-coach');
+  const mergedOrder = savedOrder.filter((p) => p !== 'life-coach' && p !== 'plan');
   for (const page of DEFAULT_NAV_ORDER) {
     if (page !== 'life-coach' && !mergedOrder.includes(page)) {
       mergedOrder.push(page);

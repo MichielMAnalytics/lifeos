@@ -226,7 +226,13 @@ export function ReviewsTimeline() {
   const reviews = useQuery(api.reviews.list, {});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  if (!reviews) return <div className="text-text-muted">Loading...</div>;
+  if (!reviews) return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="h-16 rounded-xl bg-surface animate-pulse" />
+      ))}
+    </div>
+  );
 
   return (
     <div className="max-w-none space-y-8">
@@ -241,7 +247,7 @@ export function ReviewsTimeline() {
           <p className="text-sm text-text-muted mt-1">Complete a daily or weekly review to see it here.</p>
         </div>
       ) : (
-        <div className="border border-border divide-y divide-border">
+        <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
           {reviews.map((review, idx: number) => {
             const reviewType = review.reviewType;
             const typeLabel = reviewTypeLabel[reviewType] ?? reviewType;

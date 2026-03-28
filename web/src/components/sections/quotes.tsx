@@ -54,13 +54,13 @@ export function Quotes() {
   const quote = QUOTES[index];
 
   return (
-    <div className="border border-border">
+    <div className="mt-2 border border-border rounded-xl">
       <div className="px-6 py-4 border-b border-border">
         <h2 className="text-sm font-bold text-text uppercase tracking-wide">
           Daily Quote
         </h2>
       </div>
-      <div className="px-6 py-8 flex flex-col items-center text-center">
+      <div className="px-6 py-10 flex flex-col items-center text-center">
         <p className="text-sm italic text-text leading-relaxed max-w-md">
           &ldquo;{quote.text}&rdquo;
         </p>

@@ -8,7 +8,13 @@ export function WeeklyPlan() {
   const weeklyPlanResult = useQuery(api.weeklyPlans.list, { current: true });
 
   if (weeklyPlanResult === undefined) {
-    return <div className="text-text-muted">Loading...</div>;
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-16 rounded-xl bg-surface animate-pulse" />
+        ))}
+      </div>
+    );
   }
 
   // When current: true, the API returns a single plan or null (not an array)
@@ -17,7 +23,7 @@ export function WeeklyPlan() {
     : weeklyPlanResult;
 
   return (
-    <div className="border border-border">
+    <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-baseline justify-between">
         <h2 className="text-sm font-bold text-text uppercase tracking-wide">Weekly Plan</h2>
         {weeklyPlan && (

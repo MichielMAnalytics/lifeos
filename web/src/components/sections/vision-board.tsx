@@ -35,7 +35,7 @@ function AddImageForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border border-border bg-surface p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="border border-border rounded-xl bg-surface p-4 space-y-3">
       <input
         type="url"
         placeholder="Paste image URL..."
@@ -88,7 +88,7 @@ function ImageCard({
 
   return (
     <div
-      className="relative group border border-border overflow-hidden"
+      className="relative group border border-border rounded-xl overflow-hidden"
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >
@@ -145,7 +145,7 @@ export function VisionBoard() {
   }
 
   return (
-    <div className="border border-border flex flex-col">
+    <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
         <h2 className="text-sm font-bold text-text uppercase tracking-wide">

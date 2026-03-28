@@ -3,7 +3,7 @@
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { JournalForm } from '@/components/journal-form';
-import type { Doc } from '../../../../../convex/_generated/dataModel';
+import type { Doc } from '@/lib/convex-api';
 
 type JournalEntry = Doc<'journals'>;
 
@@ -147,7 +147,13 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
 export function JournalTimeline() {
   const entries = useQuery(api.journals.list, {});
 
-  if (!entries) return <div className="text-text-muted">Loading...</div>;
+  if (!entries) return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="h-16 rounded-xl bg-surface animate-pulse" />
+      ))}
+    </div>
+  );
 
   return (
     <div className="max-w-none space-y-8">
@@ -162,10 +168,47 @@ export function JournalTimeline() {
 
       {/* Entries */}
       {entries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-base font-medium text-text">No entries yet</p>
-          <p className="mt-1 text-sm text-text-muted">
-            Start writing to track your days.
+        <div className="space-y-4">
+          {/* Ghost journal entry */}
+          <div className="border border-dashed border-border/50 rounded-xl p-6 opacity-40">
+            <h3 className="text-lg font-semibold text-text-muted mb-5">Today</h3>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                Priorities
+              </span>
+              <div className="mt-2.5 space-y-2">
+                <div className="flex items-start gap-3 text-sm">
+                  <span className="mt-1 shrink-0">
+                    <svg width="10" height="10" viewBox="0 0 10 10">
+                      <circle cx="5" cy="5" r="4" fill="currentColor" className="text-text-muted" />
+                    </svg>
+                  </span>
+                  <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-text-muted w-7">MIT</span>
+                  <span className="text-text-muted italic">Your most important task</span>
+                </div>
+                <div className="flex items-start gap-3 text-sm">
+                  <span className="mt-1 shrink-0">
+                    <svg width="10" height="10" viewBox="0 0 10 10">
+                      <circle cx="5" cy="5" r="3.5" fill="none" stroke="currentColor" strokeWidth="1" className="text-text-muted" />
+                    </svg>
+                  </span>
+                  <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-text-muted w-7">P1</span>
+                  <span className="text-text-muted italic">Second priority for the day</span>
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-border/50 my-5" />
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                Journal
+              </span>
+              <div className="mt-2.5 text-sm text-text-muted italic leading-relaxed">
+                How was your day? What did you learn?
+              </div>
+            </div>
+          </div>
+          <p className="text-center text-sm text-text-muted/70">
+            Start your first journal entry
           </p>
         </div>
       ) : (

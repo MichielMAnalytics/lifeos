@@ -21,10 +21,9 @@ const allPages: Record<string, { label: string }> = {
   journal: { label: 'Journal' },
   ideas: { label: 'Ideas' },
   thoughts: { label: 'Thoughts' },
-  plan: { label: 'Plan' },
   reviews: { label: 'Reviews' },
   resources: { label: 'Resources' },
-  calendar: { label: 'Calendar' },
+  calendar: { label: 'Schedules' },
 };
 
 /* ── SVG icon components ─────────────────────────────────── */

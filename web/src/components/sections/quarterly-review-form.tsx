@@ -43,9 +43,15 @@ function formatDateLong(d: Date): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+// ── Props ────────────────────────────────────────────
+
+interface QuarterlyReviewFormProps {
+  onSaved?: () => void;
+}
+
 // ── Main component ───────────────────────────────────
 
-export function QuarterlyReviewForm() {
+export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) {
   const quarter = useMemo(() => getCurrentQuarterRange(), []);
   const quarterStartStr = toDateStr(quarter.start);
   const quarterEndStr = toDateStr(quarter.end);
@@ -136,6 +142,7 @@ export function QuarterlyReviewForm() {
         score: scoreNum,
       });
       setSaved(true);
+      onSaved?.();
     } finally {
       setSaving(false);
     }
@@ -143,7 +150,7 @@ export function QuarterlyReviewForm() {
 
   if (saved) {
     return (
-      <div className="border border-border p-8 text-center">
+      <div className="border border-border rounded-xl p-8 text-center">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-success">
           <polyline points="20 6 9 17 4 12" />
         </svg>
@@ -158,7 +165,7 @@ export function QuarterlyReviewForm() {
   const isLoading = allReviews === undefined || allGoals === undefined;
 
   return (
-    <div className="border border-border">
+    <div className="border border-border rounded-xl">
       {/* Header */}
       <div className="px-6 py-4 border-b border-border">
         <h2 className="text-sm font-bold text-text uppercase tracking-wide">
@@ -188,7 +195,7 @@ export function QuarterlyReviewForm() {
               onChange={(e) => setSummary(e.target.value)}
               placeholder="How would you summarize this quarter?"
               rows={4}
-              className="w-full bg-surface border border-border px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
@@ -219,7 +226,7 @@ export function QuarterlyReviewForm() {
               onChange={(e) => setAdditionalAchievements(e.target.value)}
               placeholder="Add more achievements (one per line)..."
               rows={3}
-              className="w-full bg-surface border border-border px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
@@ -269,7 +276,7 @@ export function QuarterlyReviewForm() {
               onChange={(e) => setWhatDidntWork(e.target.value)}
               placeholder="What would you do differently?"
               rows={3}
-              className="w-full bg-surface border border-border px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
@@ -283,7 +290,7 @@ export function QuarterlyReviewForm() {
               onChange={(e) => setNextQuarterGoals(e.target.value)}
               placeholder="What do you want to achieve next quarter? (one per line)"
               rows={4}
-              className="w-full bg-surface border border-border px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
@@ -299,7 +306,7 @@ export function QuarterlyReviewForm() {
               value={score}
               onChange={(e) => setScore(e.target.value)}
               placeholder="Rate this quarter"
-              className="w-24 bg-surface border border-border px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
+              className="w-24 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
             />
           </div>
 
@@ -308,7 +315,7 @@ export function QuarterlyReviewForm() {
             <button
               onClick={handleSave}
               disabled={saving || !score || parseInt(score, 10) < 1 || parseInt(score, 10) > 10}
-              className="px-6 py-2.5 text-sm font-bold uppercase tracking-wide bg-accent text-bg hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 text-sm font-bold uppercase tracking-wide bg-accent text-bg rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : 'Save Quarterly Review'}
             </button>

@@ -4,9 +4,10 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
-import type { Doc } from '../../../../../convex/_generated/dataModel';
+import type { Doc } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { GoalForm } from '@/components/goal-form';
+import { GoalDetailModal } from '@/components/goal-detail-modal';
 
 // ── Helpers ────────────────────────────────────────────
 
@@ -32,7 +33,7 @@ const healthDot: Record<string, string> = {
 
 // ── GoalRow ──────────────────────────────────────────
 
-function GoalRow({ goal }: { goal: Doc<'goals'> }) {
+function GoalRow({ goal, onSelect }: { goal: Doc<'goals'>; onSelect: (goalId: Id<'goals'>) => void }) {
   const [expanded, setExpanded] = useState(false);
   const health = useQuery(api.goals.health, { id: goal._id });
   const goalDetail = useQuery(api.goals.get, expanded ? { id: goal._id } : 'skip');
@@ -83,9 +84,9 @@ function GoalRow({ goal }: { goal: Doc<'goals'> }) {
           )}
         </button>
 
-        {/* Title + expand toggle */}
+        {/* Title + open detail */}
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => onSelect(goal._id)}
           className="flex-1 flex items-center gap-3 text-left min-w-0"
         >
           <span className="text-xs text-text-muted shrink-0">
@@ -177,10 +178,12 @@ function QuarterSection({
   quarter,
   goals,
   isCurrent,
+  onSelectGoal,
 }: {
   quarter: string;
   goals: Doc<'goals'>[];
   isCurrent: boolean;
+  onSelectGoal: (goalId: Id<'goals'>) => void;
 }) {
   const activeCount = goals.filter((g) => g.status === 'active').length;
   const completedCount = goals.filter((g) => g.status === 'completed').length;
@@ -217,7 +220,7 @@ function QuarterSection({
 
       {/* Goal rows */}
       {goals.map((goal) => (
-        <GoalRow key={goal._id} goal={goal} />
+        <GoalRow key={goal._id} goal={goal} onSelect={onSelectGoal} />
       ))}
     </div>
   );
@@ -228,6 +231,7 @@ function QuarterSection({
 export function QuarterlyGoals() {
   const allGoals = useQuery(api.goals.list, {});
   const currentQuarter = useMemo(() => getCurrentQuarter(), []);
+  const [selectedGoalId, setSelectedGoalId] = useState<Id<'goals'> | null>(null);
 
   const grouped = useMemo(() => {
     if (!allGoals) return null;
@@ -271,9 +275,61 @@ export function QuarterlyGoals() {
 
       {/* Quarters */}
       {grouped && grouped.sorted.length === 0 && grouped.unassigned.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-base font-medium text-text">No goals yet</p>
-          <p className="text-sm text-text-muted mt-1">Create a goal to get started.</p>
+        <div className="space-y-4">
+          {/* Ghost quarter section */}
+          <div className="border border-dashed border-border/50 rounded-xl overflow-hidden">
+            {/* Quarter header */}
+            <div className="flex items-baseline justify-between px-4 py-3 border-b border-border/30 bg-accent/5 opacity-60">
+              <div className="flex items-center gap-3">
+                <h3 className="text-sm font-bold text-text-muted uppercase tracking-wide font-mono">
+                  {currentQuarter}
+                </h3>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-accent/60">
+                  Current
+                </span>
+              </div>
+              <span className="text-xs text-text-muted">0/3 done</span>
+            </div>
+
+            {/* Ghost goal rows */}
+            {[
+              { title: 'Launch product beta', tasks: 5 },
+              { title: 'Grow revenue to $10k MRR', tasks: 3 },
+              { title: 'Hire 2 team members', tasks: 2 },
+            ].map((ghost, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-3 px-4 py-3 opacity-40 border-b border-border/30 last:border-b-0"
+              >
+                {/* Ghost checkbox */}
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-dashed border-border" />
+
+                {/* Title */}
+                <div className="flex-1 flex items-center gap-3 min-w-0">
+                  <span className="text-xs text-text-muted shrink-0">{'\u25B8'}</span>
+                  <span className="text-sm font-medium text-text-muted italic truncate">
+                    {ghost.title}
+                  </span>
+                </div>
+
+                {/* Status badge */}
+                <span className="shrink-0 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-accent/10 text-accent/50">
+                  Active
+                </span>
+
+                {/* Health dot */}
+                <span className="h-2 w-2 rounded-full shrink-0 bg-text-muted/50" />
+
+                {/* Task count */}
+                <span className="text-xs font-mono text-text-muted shrink-0 w-14 text-right">
+                  {ghost.tasks} tasks
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-sm text-text-muted/70">
+            Set your first quarterly goal
+          </p>
         </div>
       ) : grouped ? (
         <div className="space-y-6">
@@ -283,6 +339,7 @@ export function QuarterlyGoals() {
               quarter={quarter}
               goals={goals}
               isCurrent={quarter === currentQuarter}
+              onSelectGoal={setSelectedGoalId}
             />
           ))}
 
@@ -291,10 +348,19 @@ export function QuarterlyGoals() {
               quarter="No Quarter"
               goals={grouped.unassigned}
               isCurrent={false}
+              onSelectGoal={setSelectedGoalId}
             />
           )}
         </div>
       ) : null}
+
+      {/* Detail Modal */}
+      {selectedGoalId && (
+        <GoalDetailModal
+          goalId={selectedGoalId}
+          onClose={() => setSelectedGoalId(null)}
+        />
+      )}
     </div>
   );
 }

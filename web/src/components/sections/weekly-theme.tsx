@@ -16,7 +16,7 @@ export function WeeklyTheme() {
   const plan = Array.isArray(weeklyPlan) ? weeklyPlan[0] ?? null : weeklyPlan;
 
   return (
-    <div className="border border-border flex flex-col">
+    <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
         <h2 className="text-sm font-bold text-text uppercase tracking-wide">
           Weekly Theme

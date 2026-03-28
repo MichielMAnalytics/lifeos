@@ -223,7 +223,7 @@ export function SettingsClient({
                     <p className="text-xl font-bold text-text">
                       {getGreeting(user.name)}
                     </p>
-                    <p className="text-sm text-text-muted font-mono mt-1">
+                    <p className="text-sm text-text-muted mt-1">
                       {user.email}
                     </p>
                   </div>
@@ -234,7 +234,7 @@ export function SettingsClient({
                   <p className="text-[10px] uppercase tracking-widest text-text-muted">
                     Day
                   </p>
-                  <p className="text-4xl font-bold text-text font-mono tabular-nums leading-tight">
+                  <p className="text-4xl font-bold text-text tabular-nums leading-tight">
                     {days}
                   </p>
                 </div>
@@ -277,7 +277,7 @@ export function SettingsClient({
                 <button
                   onClick={handleUpdateTimezone}
                   disabled={updatingTz}
-                  className="text-xs font-mono text-text underline underline-offset-2 hover:opacity-70 transition-opacity disabled:opacity-50"
+                  className="text-xs text-text underline underline-offset-2 hover:opacity-70 transition-opacity disabled:opacity-50"
                 >
                   {updatingTz ? 'Updating...' : 'Update'}
                 </button>

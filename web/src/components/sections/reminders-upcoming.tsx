@@ -60,7 +60,7 @@ export function RemindersUpcoming() {
 
   if (allReminders === undefined) {
     return (
-      <div className="border border-border">
+      <div className="border border-border rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
           <div className="animate-pulse h-4 w-40 bg-surface rounded" />
         </div>
@@ -82,7 +82,7 @@ export function RemindersUpcoming() {
   };
 
   return (
-    <div className="border border-border">
+    <div className="border border-border rounded-xl overflow-hidden">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
         <h2 className="text-sm font-bold text-text uppercase tracking-wide">
           Upcoming Reminders

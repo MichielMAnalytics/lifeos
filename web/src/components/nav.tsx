@@ -9,40 +9,41 @@ import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
 import { HeaderNav } from './header-nav';
-import { LogoMark, LogoHorizontal } from './theme-logo';
+import { LogoMark } from './theme-logo';
 import { NAV_MARKS } from './nav-marks';
 import { SearchTrigger } from './search-modal';
-import { GatewayStatusIndicator } from './ai-agent/gateway-status-indicator';
 
-const allPages: Record<string, { label: string; abbr: string }> = {
+
+const allPages: Record<string, { label: string; abbr: string; category?: string }> = {
   'life-coach': { label: 'Life Coach', abbr: 'Lc' },
-  today: { label: 'Today', abbr: 'To' },
-  tasks: { label: 'Tasks', abbr: 'Ta' },
-  projects: { label: 'Projects', abbr: 'Pr' },
-  goals: { label: 'Compass', abbr: 'Co' },
-  journal: { label: 'Journal', abbr: 'Jo' },
-  ideas: { label: 'Ideas', abbr: 'Id' },
-  thoughts: { label: 'Thoughts', abbr: 'Th' },
-  plan: { label: 'Plan', abbr: 'Pl' },
-  reviews: { label: 'Reviews', abbr: 'Re' },
-  resources: { label: 'Resources', abbr: 'Rs' },
-  calendar: { label: 'Calendar', abbr: 'Ca' },
+  today: { label: 'Today', abbr: 'To', category: 'Daily' },
+  tasks: { label: 'Tasks', abbr: 'Ta', category: 'Daily' },
+  journal: { label: 'Journal', abbr: 'Jo', category: 'Daily' },
+  projects: { label: 'Projects', abbr: 'Pr', category: 'Work' },
+  goals: { label: 'Compass', abbr: 'Co', category: 'Work' },
+  ideas: { label: 'Ideas', abbr: 'Id', category: 'Capture' },
+  thoughts: { label: 'Thoughts', abbr: 'Th', category: 'Capture' },
+  resources: { label: 'Resources', abbr: 'Rs', category: 'Capture' },
+  reviews: { label: 'Reviews', abbr: 'Re', category: 'Reflect' },
+  calendar: { label: 'Schedules', abbr: 'Sc', category: 'Reflect' },
 };
 
+const CATEGORY_ORDER = ['Daily', 'Work', 'Capture', 'Reflect'];
 
 const STORAGE_KEY = 'lifeos-nav-expanded';
 
 export function Nav() {
   const pathname = usePathname();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [mounted, setMounted] = useState(false);
   const { config, isConfigMode, toggleConfigMode, togglePageVisibility, setNavOrder } = useDashboardConfig();
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'true') setExpanded(true);
+    if (stored === 'false') setExpanded(false);
     setMounted(true);
   }, []);
 
@@ -72,29 +73,76 @@ export function Nav() {
         hidden: false,
       }));
 
+  // Group nav links by category
+  const grouped: { category: string | null; items: typeof navLinks }[] = [];
+  if (!isConfigMode) {
+    // Life Coach has no category — render it first standalone
+    const lifeCoach = navLinks.filter(l => l.key === 'life-coach');
+    const rest = navLinks.filter(l => l.key !== 'life-coach');
+
+    if (lifeCoach.length > 0) {
+      grouped.push({ category: null, items: lifeCoach });
+    }
+
+    for (const cat of CATEGORY_ORDER) {
+      const items = rest.filter(l => allPages[l.key]?.category === cat);
+      if (items.length > 0) {
+        grouped.push({ category: cat, items });
+      }
+    }
+    // Uncategorized remainder
+    const catSet = new Set(CATEGORY_ORDER);
+    const uncategorized = rest.filter(l => !allPages[l.key]?.category || !catSet.has(allPages[l.key]!.category!));
+    if (uncategorized.length > 0) {
+      grouped.push({ category: null, items: uncategorized });
+    }
+  }
+
+  const showExpanded = expanded || hovered;
+
   return (
     <nav
+      onMouseEnter={() => { if (!expanded) setHovered(true); }}
+      onMouseLeave={() => setHovered(false)}
       className={cn(
-        'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-border bg-bg transition-all duration-200',
-        expanded ? 'w-52' : 'w-14',
+        'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-border/60 bg-bg transition-all duration-200',
+        showExpanded ? 'w-56' : 'w-14',
       )}
     >
-      {/* Logo area */}
+      {/* Logo + toggle */}
       <div
         className={cn(
-          'flex h-14 shrink-0 items-center border-b border-border',
-          expanded ? 'justify-between px-4' : 'justify-center',
+          'flex h-14 shrink-0 items-center',
+          showExpanded ? 'justify-between px-4' : 'justify-center',
         )}
       >
-        {expanded ? (
+        {showExpanded ? (
           <>
-            <LogoMark size={28} className="animate-fade-in" />
+            <div className="flex items-center gap-2.5">
+              <LogoMark size={24} className="opacity-80" />
+              <span className="text-sm font-semibold text-text tracking-tight">LifeOS</span>
+            </div>
             <button
               onClick={toggle}
-              className="flex h-7 w-7 shrink-0 items-center justify-center text-text-muted transition-colors hover:text-text font-mono text-xs"
-              title="Collapse sidebar"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
+              title={expanded ? 'Collapse sidebar' : 'Pin sidebar'}
             >
-              &larr;
+              {/* Notion-style toggle icon */}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {expanded ? (
+                  <>
+                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                    <line x1="9" y1="3" x2="9" y2="21" />
+                    <polyline points="14 9 12 12 14 15" />
+                  </>
+                ) : (
+                  <>
+                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                    <line x1="9" y1="3" x2="9" y2="21" />
+                    <polyline points="12 9 14 12 12 15" />
+                  </>
+                )}
+              </svg>
             </button>
           </>
         ) : (
@@ -103,183 +151,251 @@ export function Nav() {
             className="flex shrink-0 items-center justify-center transition-colors hover:opacity-70"
             title="Expand sidebar"
           >
-            <LogoMark size={28} />
+            <LogoMark size={24} />
           </button>
         )}
       </div>
 
       {/* Main links */}
-      <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pt-4">
-        {navLinks.map(({ key, href, label, abbr, hidden }, index) => {
-          const isActive = pathname === href || pathname.startsWith(href + '/');
-
-          return (
-            <div
-              key={key}
-              className={cn(
-                'relative flex items-center',
-                isConfigMode && dragOverKey === key && 'border-t-2 border-text',
+      <div className="flex flex-1 flex-col overflow-y-auto px-2.5 pt-2 pb-2">
+        {isConfigMode ? (
+          // Config mode: flat list with drag handles (no categories)
+          <div className="flex flex-col gap-0.5">
+            {navLinks.map(({ key, href, label, abbr, hidden }) => {
+              const isActive = pathname === href || pathname.startsWith(href + '/');
+              return (
+                <NavItem
+                  key={key}
+                  itemKey={key}
+                  href={href}
+                  label={label}
+                  abbr={abbr}
+                  hidden={hidden}
+                  isActive={isActive}
+                  showExpanded={showExpanded}
+                  isConfigMode={isConfigMode}
+                  mounted={mounted}
+                  index={0}
+                  dragKey={dragKey}
+                  dragOverKey={dragOverKey}
+                  setDragKey={setDragKey}
+                  setDragOverKey={setDragOverKey}
+                  config={config}
+                  setNavOrder={setNavOrder}
+                  togglePageVisibility={togglePageVisibility}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          // Normal mode: grouped by category
+          grouped.map((group, gi) => (
+            <div key={group.category ?? `g-${gi}`} className="mb-1">
+              {group.category && showExpanded && (
+                <div className="px-2 pt-3 pb-1.5 first:pt-0">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted/50">
+                    {group.category}
+                  </span>
+                </div>
               )}
-              draggable={isConfigMode}
-              onDragStart={(e) => {
-                setDragKey(key);
-                e.dataTransfer.effectAllowed = 'move';
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                setDragOverKey(key);
-              }}
-              onDragLeave={() => setDragOverKey(null)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOverKey(null);
-                if (!dragKey || dragKey === key) return;
-                const order = [...config.navOrder];
-                const fromIdx = order.indexOf(dragKey);
-                const toIdx = order.indexOf(key);
-                if (fromIdx === -1 || toIdx === -1) return;
-                order.splice(fromIdx, 1);
-                order.splice(toIdx, 0, dragKey);
-                setNavOrder(order);
-                setDragKey(null);
-              }}
-              onDragEnd={() => { setDragKey(null); setDragOverKey(null); }}
-            >
-              {/* Drag grip in config mode */}
-              {isConfigMode && expanded && (
-                <span className="flex items-center justify-center w-5 shrink-0 cursor-grab text-text-muted/40 hover:text-text-muted">
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-                    <circle cx="3" cy="2" r="1" /><circle cx="7" cy="2" r="1" />
-                    <circle cx="3" cy="5" r="1" /><circle cx="7" cy="5" r="1" />
-                    <circle cx="3" cy="8" r="1" /><circle cx="7" cy="8" r="1" />
-                  </svg>
-                </span>
+              {!showExpanded && gi > 0 && group.category && (
+                <div className="mx-auto my-2 w-5 border-t border-border/40" />
               )}
-              <Link
-                href={href}
-                title={expanded ? undefined : label}
-                className={cn(
-                  'group relative flex h-9 items-center transition-all duration-150 flex-1',
-                  expanded ? (isConfigMode ? 'px-1 gap-2 rounded-lg' : 'px-3 gap-3 rounded-lg') : 'justify-center w-10 mx-auto rounded-md',
-                  hidden && 'opacity-40',
-                  isActive
-                    ? 'text-text'
-                    : 'text-text-muted hover:text-text',
-                  isConfigMode && dragKey === key && 'opacity-30',
-                )}
-                style={
-                  expanded && mounted && !isConfigMode
-                    ? { animationDelay: `${index * 30}ms` }
-                    : undefined
-                }
-                onClick={isConfigMode ? (e) => e.preventDefault() : undefined}
-              >
-                {/* Active dot indicator */}
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-text" />
-                )}
-                {(() => {
-                  if (key === 'life-coach') {
-                    return expanded ? (
-                      <span className="flex items-center gap-2.5 text-sm font-medium animate-slide-in group/lc relative">
-                        <img src="/openclaw-icon.png" alt="Life Coach" className="shrink-0 size-4 rounded-sm" />
-                        {label}
-                        <span className="absolute left-0 bottom-full mb-1 z-50 hidden group-hover/lc:block bg-surface border border-border rounded px-2 py-1 text-[10px] text-text-muted whitespace-nowrap shadow-lg pointer-events-auto">
-                          Powered by <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://openclaw.ai/', '_blank'); }} className="text-accent hover:underline cursor-pointer">OpenClaw</span>
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="relative group/lc">
-                        <img src="/openclaw-icon.png" alt="Life Coach" className="shrink-0 size-4 rounded-sm" />
-                        <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 hidden group-hover/lc:block bg-surface border border-border rounded px-2 py-1 text-[10px] text-text-muted whitespace-nowrap shadow-lg pointer-events-auto">
-                          Powered by <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://openclaw.ai/', '_blank'); }} className="text-accent hover:underline cursor-pointer">OpenClaw</span>
-                        </span>
-                      </span>
-                    );
-                  }
-                  const Mark = NAV_MARKS[key];
-                  return expanded ? (
-                    <span className="flex items-center gap-2.5 text-sm font-medium animate-slide-in">
-                      {Mark && <Mark className="shrink-0 opacity-70" />}
-                      {label}
-                    </span>
-                  ) : (
-                    Mark ? <Mark className="shrink-0" /> : <span className="font-mono text-[11px] font-medium tracking-tight">{abbr}</span>
+              <div className="flex flex-col gap-0.5">
+                {group.items.map(({ key, href, label, abbr, hidden }, index) => {
+                  const isActive = pathname === href || pathname.startsWith(href + '/');
+                  return (
+                    <NavItem
+                      key={key}
+                      itemKey={key}
+                      href={href}
+                      label={label}
+                      abbr={abbr}
+                      hidden={hidden}
+                      isActive={isActive}
+                      showExpanded={showExpanded}
+                      isConfigMode={false}
+                      mounted={mounted}
+                      index={index}
+                      dragKey={dragKey}
+                      dragOverKey={dragOverKey}
+                      setDragKey={setDragKey}
+                      setDragOverKey={setDragOverKey}
+                      config={config}
+                      setNavOrder={setNavOrder}
+                      togglePageVisibility={togglePageVisibility}
+                    />
                   );
-                })()}
-              </Link>
-
-              {/* Config mode: visibility toggle */}
-              {isConfigMode && expanded && (
-                <button
-                  onClick={() => togglePageVisibility(key, hidden)}
-                  className={cn(
-                    'flex h-6 w-6 shrink-0 items-center justify-center rounded transition-colors mr-1',
-                    hidden
-                      ? 'text-text-muted hover:text-text'
-                      : 'text-text hover:text-text-muted',
-                  )}
-                  title={hidden ? `Show ${label}` : `Hide ${label}`}
-                >
-                  {hidden ? (
-                    // Eye-off icon (simplified SVG)
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                      <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
-                  ) : (
-                    // Eye icon (simplified SVG)
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  )}
-                </button>
-              )}
-
+                })}
+              </div>
             </div>
-          );
-        })}
+          ))
+        )}
       </div>
 
       {/* Bottom */}
-      <div className="shrink-0 border-t border-border px-2 py-3">
+      <div className="shrink-0 border-t border-border/40 px-2.5 py-3">
         {/* Search trigger */}
         <div
           className={cn(
             'group relative flex h-9 items-center transition-all duration-150 w-full',
-            expanded ? 'px-3 gap-3 rounded-lg' : 'justify-center w-10 mx-auto rounded-md',
+            showExpanded ? 'px-2.5 gap-3 rounded-lg' : 'justify-center w-10 mx-auto rounded-lg',
           )}
         >
-          {expanded ? (
+          {showExpanded ? (
             <SearchTrigger variant="expanded" />
           ) : (
             <SearchTrigger variant="icon" />
           )}
         </div>
 
-        {expanded && <GatewayStatusIndicator />}
-
-        {/* Profile + menu (settings, configure, logout) */}
-        <ProfileBadge expanded={expanded} toggleConfigMode={toggleConfigMode} isConfigMode={isConfigMode} />
-
-        {/* Toggle arrow at the very bottom */}
-        {!expanded && (
-          <button
-            onClick={toggle}
-            className="flex h-9 w-10 mx-auto items-center justify-center text-text-muted hover:text-text transition-colors font-mono text-xs mt-1"
-            title="Expand sidebar"
-          >
-            &rarr;
-          </button>
-        )}
+        {/* Profile + menu */}
+        <ProfileBadge expanded={showExpanded} toggleConfigMode={toggleConfigMode} isConfigMode={isConfigMode} />
       </div>
     </nav>
   );
 }
+
+// ── Nav Item ──────────────────────────────────────────────
+
+interface NavItemProps {
+  itemKey: string;
+  href: string;
+  label: string;
+  abbr: string;
+  hidden: boolean;
+  isActive: boolean;
+  showExpanded: boolean;
+  isConfigMode: boolean;
+  mounted: boolean;
+  index: number;
+  dragKey: string | null;
+  dragOverKey: string | null;
+  setDragKey: (k: string | null) => void;
+  setDragOverKey: (k: string | null) => void;
+  config: { navOrder: string[] };
+  setNavOrder: (order: string[]) => void;
+  togglePageVisibility: (page: string, visible: boolean) => void;
+}
+
+function NavItem({
+  itemKey, href, label, abbr, hidden, isActive, showExpanded, isConfigMode,
+  mounted, index, dragKey, dragOverKey, setDragKey, setDragOverKey, config,
+  setNavOrder, togglePageVisibility,
+}: NavItemProps) {
+  return (
+    <div
+      className={cn(
+        'relative flex items-center',
+        isConfigMode && dragOverKey === itemKey && 'border-t-2 border-text',
+      )}
+      draggable={isConfigMode}
+      onDragStart={(e) => {
+        setDragKey(itemKey);
+        e.dataTransfer.effectAllowed = 'move';
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setDragOverKey(itemKey);
+      }}
+      onDragLeave={() => setDragOverKey(null)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOverKey(null);
+        if (!dragKey || dragKey === itemKey) return;
+        const order = [...config.navOrder];
+        const fromIdx = order.indexOf(dragKey);
+        const toIdx = order.indexOf(itemKey);
+        if (fromIdx === -1 || toIdx === -1) return;
+        order.splice(fromIdx, 1);
+        order.splice(toIdx, 0, dragKey);
+        setNavOrder(order);
+        setDragKey(null);
+      }}
+      onDragEnd={() => { setDragKey(null); setDragOverKey(null); }}
+    >
+      {/* Drag grip in config mode */}
+      {isConfigMode && showExpanded && (
+        <span className="flex items-center justify-center w-5 shrink-0 cursor-grab text-text-muted/40 hover:text-text-muted">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+            <circle cx="3" cy="2" r="1" /><circle cx="7" cy="2" r="1" />
+            <circle cx="3" cy="5" r="1" /><circle cx="7" cy="5" r="1" />
+            <circle cx="3" cy="8" r="1" /><circle cx="7" cy="8" r="1" />
+          </svg>
+        </span>
+      )}
+      <Link
+        href={href}
+        title={showExpanded ? undefined : label}
+        className={cn(
+          'group relative flex h-8 items-center transition-all duration-150 flex-1',
+          showExpanded
+            ? (isConfigMode ? 'px-1 gap-2.5 rounded-lg' : 'px-2.5 gap-2.5 rounded-lg')
+            : 'justify-center w-10 mx-auto rounded-lg',
+          hidden && 'opacity-40',
+          isActive
+            ? 'bg-surface-hover text-text'
+            : 'text-text-muted hover:bg-surface-hover hover:text-text',
+          isConfigMode && dragKey === itemKey && 'opacity-30',
+        )}
+        onClick={isConfigMode ? (e) => e.preventDefault() : undefined}
+      >
+        {(() => {
+          if (itemKey === 'life-coach') {
+            return showExpanded ? (
+              <span className="flex items-center gap-2.5 text-[13px] font-medium">
+                <img src="/openclaw-icon.png" alt="Life Coach" className="shrink-0 size-4 rounded-sm" />
+                {label}
+              </span>
+            ) : (
+              <img src="/openclaw-icon.png" alt="Life Coach" className="shrink-0 size-4 rounded-sm" />
+            );
+          }
+          const Mark = NAV_MARKS[itemKey];
+          return showExpanded ? (
+            <span className="flex items-center gap-2.5 text-[13px] font-medium">
+              {Mark && <Mark className="shrink-0 opacity-60" />}
+              {label}
+            </span>
+          ) : (
+            Mark ? <Mark className="shrink-0" /> : <span className="font-mono text-[11px] font-medium tracking-tight">{abbr}</span>
+          );
+        })()}
+      </Link>
+
+      {/* Config mode: visibility toggle */}
+      {isConfigMode && showExpanded && (
+        <button
+          onClick={() => togglePageVisibility(itemKey, hidden)}
+          className={cn(
+            'flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors mr-1',
+            hidden
+              ? 'text-text-muted hover:text-text'
+              : 'text-text hover:text-text-muted',
+          )}
+          title={hidden ? `Show ${label}` : `Hide ${label}`}
+        >
+          {hidden ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+              <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+              <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Profile Badge ─────────────────────────────────────────
 
 const PLAN_LABELS: Record<string, string> = {
   dashboard: 'Home',
@@ -335,7 +451,7 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
         title={expanded ? undefined : `${user.name ?? user.email} — ${planLabel}`}
         className={cn(
           'flex items-center transition-all duration-150 w-full',
-          expanded ? 'gap-2.5 px-3 py-2 rounded-lg hover:bg-surface-hover' : 'justify-center w-10 mx-auto py-2',
+          expanded ? 'gap-2.5 px-2.5 py-2 rounded-lg hover:bg-surface-hover' : 'justify-center w-10 mx-auto py-2',
         )}
       >
         {profileImage ? (
@@ -355,7 +471,7 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
 
       {menuOpen && (
         <div className={cn(
-          'absolute z-50 bg-surface border border-border rounded-lg shadow-lg py-1 animate-scale-in',
+          'absolute z-50 bg-surface border border-border rounded-xl shadow-lg py-1 animate-scale-in',
           expanded ? 'bottom-full left-0 right-0 mb-1' : 'bottom-full left-0 mb-1 w-48',
         )}>
           {/* Balance display */}
@@ -363,7 +479,7 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
             <>
               <div className="px-3 py-2.5">
                 <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Balance</p>
-                <p className="text-sm font-bold text-text font-mono tabular-nums">
+                <p className="text-sm font-bold text-text tabular-nums">
                   EUR {(balance / 100).toFixed(2)}
                 </p>
               </div>
@@ -375,7 +491,7 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
           <div className="relative">
             <button
               onClick={() => setTopUpOpen(!topUpOpen)}
-              className="flex items-center justify-between gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left"
+              className="flex items-center justify-between gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left rounded-lg mx-0"
             >
               <span className="flex items-center gap-2.5">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -405,9 +521,9 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
                         setCheckingOut(null);
                       }
                     }}
-                    className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs text-text-muted hover:text-text hover:bg-surface-hover rounded transition-colors disabled:opacity-50"
+                    className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs text-text-muted hover:text-text hover:bg-surface-hover rounded-lg transition-colors disabled:opacity-50"
                   >
-                    <span className="font-mono">{tier.label}</span>
+                    <span className="tabular-nums">{tier.label}</span>
                     {checkingOut === tier.priceId && (
                       <span className="text-[10px] text-text-muted animate-pulse">...</span>
                     )}
@@ -422,7 +538,7 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
           <Link
             href="/settings"
             onClick={() => setMenuOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
+            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors rounded-lg mx-1"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="13" x2="13" y2="3" /><circle cx="8" cy="8" r="2.5" />
@@ -431,18 +547,20 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
           </Link>
           <button
             onClick={() => { setMenuOpen(false); toggleConfigMode(); }}
-            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left"
+            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left rounded-lg mx-1"
+            style={{ width: 'calc(100% - 0.5rem)' }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" />
+              <rect x="3" y="14" width="7" height="7" rx="2" /><rect x="14" y="14" width="7" height="7" rx="2" />
             </svg>
             {isConfigMode ? 'Done configuring' : 'Configure layout'}
           </button>
           <div className="my-1 border-t border-border/40" />
           <button
             onClick={() => { setMenuOpen(false); void signOut(); }}
-            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-danger hover:bg-surface-hover transition-colors w-full text-left"
+            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-danger hover:bg-surface-hover transition-colors w-full text-left rounded-lg mx-1"
+            style={{ width: 'calc(100% - 0.5rem)' }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
