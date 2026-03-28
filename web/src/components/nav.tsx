@@ -474,8 +474,8 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
           'absolute z-50 bg-surface border border-border rounded-xl shadow-lg py-1 animate-scale-in',
           expanded ? 'bottom-full left-0 right-0 mb-1' : 'bottom-full left-0 mb-1 w-48',
         )}>
-          {/* Balance display */}
-          {balance !== undefined && (
+          {/* Balance display (hide for Home plan — no credits) */}
+          {balance !== undefined && subscription?.planType !== 'dashboard' && (
             <>
               <div className="px-3 py-2.5">
                 <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Balance</p>
@@ -487,8 +487,8 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
             </>
           )}
 
-          {/* Top up */}
-          <div className="relative">
+          {/* Top up (hide for Home plan) */}
+          {subscription?.planType !== 'dashboard' && <div className="relative">
             <button
               onClick={() => setTopUpOpen(!topUpOpen)}
               className="flex items-center justify-between gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left rounded-lg mx-0"
@@ -531,7 +531,7 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
                 ))}
               </div>
             )}
-          </div>
+          </div>}
 
           <div className="my-1 border-t border-border/40" />
 
