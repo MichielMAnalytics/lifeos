@@ -438,6 +438,24 @@ export default function LifeCoachPage() {
 
     return client.subscribe('chat', (raw: unknown) => {
       const data = raw as { state?: string; message?: { role: string; content: Array<{ type: string; text?: string }>; timestamp?: number }; error?: string };
+
+      // Handle errors first (may not have a message field)
+      if (data.state === 'error') {
+        setIsStreaming(false);
+        streamBufferRef.current = '';
+        streamMessageIdRef.current = null;
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: nextId(),
+            role: 'assistant',
+            content: data.error ?? data.message?.content?.map((c) => c.text).join('') ?? 'Something went wrong. Please try again.',
+            timestamp: Date.now(),
+          },
+        ]);
+        return;
+      }
+
       if (!data.message) return;
 
       const text = data.message.content
@@ -484,20 +502,6 @@ export default function LifeCoachPage() {
         streamMessageIdRef.current = null;
       }
 
-      if (data.state === 'error') {
-        setIsStreaming(false);
-        streamBufferRef.current = '';
-        streamMessageIdRef.current = null;
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: nextId(),
-            role: 'assistant',
-            content: data.error ?? 'An error occurred.',
-            timestamp: Date.now(),
-          },
-        ]);
-      }
     });
   }, [client, isConnected]);
 
