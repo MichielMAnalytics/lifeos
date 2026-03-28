@@ -534,7 +534,11 @@ function OnboardingFlowInner() {
                 />
                 <p className="mt-2 text-[11px] text-text-muted/40">
                   Run{' '}
-                  <code className="px-1.5 py-0.5 rounded bg-surface text-text-muted/70 text-[10px]">claude setup-token</code>
+                  <code
+                    onClick={() => { navigator.clipboard.writeText('claude setup-token'); }}
+                    className="px-1.5 py-0.5 rounded bg-surface text-text-muted/70 text-[10px] cursor-pointer hover:text-text-muted hover:bg-surface-hover transition-colors"
+                    title="Click to copy"
+                  >claude setup-token</code>
                   {' '}in your terminal, then paste the token above.
                 </p>
               </div>
