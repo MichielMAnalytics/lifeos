@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useAction, useMutation } from 'convex/react';
+import { useAuthActions } from '@convex-dev/auth/react';
 import { api } from '@/lib/convex-api';
 import { useSearchParams } from 'next/navigation';
 import { LoadingScreen } from '@/components/loading-screen';
@@ -196,6 +197,7 @@ export function OnboardingFlow() {
 
 function OnboardingFlowInner() {
   const searchParams = useSearchParams();
+  const { signOut } = useAuthActions();
   const subscription = useQuery(api.stripe.getMySubscription);
   const deployment = useQuery(api.deploymentQueries.getMyDeployment);
   const settings = useQuery(api.deploymentSettings.getMySettings);
@@ -353,6 +355,14 @@ function OnboardingFlowInner() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-bg">
       <SoftGlow />
+
+      {/* Logout — always visible, top-right */}
+      <button
+        onClick={() => void signOut()}
+        className="fixed top-6 right-6 z-50 text-[11px] text-text-muted/30 hover:text-text-muted/60 transition-colors"
+      >
+        Sign out
+      </button>
 
       {/* ═══ Step 1: Welcome ═══════════════════════════════════════════ */}
       <StepContainer active={step === 'welcome'}>
