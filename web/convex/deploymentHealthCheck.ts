@@ -39,9 +39,9 @@ export const checkDeploymentHealth = internalAction({
 
       clearTimeout(timeout);
 
-      // Any response means the pod + ingress are alive.
-      // 503 is expected when nginx auth-url blocks unauthenticated requests.
-      if (res.status < 504) {
+      // Only 200 means the OpenClaw gateway inside the pod is responding.
+      // 404 = ingress has no backend yet, 502/503 = pod not ready.
+      if (res.status >= 200 && res.status < 400) {
         // Healthy — transition to running
         await ctx.runMutation(internal.deploymentQueries.updateDeploymentStatus, {
           deploymentId,
