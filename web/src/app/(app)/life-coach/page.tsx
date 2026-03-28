@@ -30,6 +30,11 @@ function nextId(): string {
   return `msg_${++_msgId}_${Date.now()}`;
 }
 
+/** Hide OpenClaw system heartbeat messages from the chat UI */
+function isHeartbeatMessage(content: string): boolean {
+  return content.includes('HEARTBEAT') || content.includes('heartbeat.md');
+}
+
 function relativeTime(ts: number): string {
   const diff = Math.floor((Date.now() - ts) / 1000);
   if (diff < 10) return 'just now';
@@ -316,7 +321,8 @@ export default function LifeCoachPage() {
                   content,
                   timestamp: (msg.timestamp as number) ?? Date.now(),
                 };
-              }),
+              })
+              .filter((m) => !isHeartbeatMessage(m.content)),
           );
         }
         setHistoryLoaded(true);
@@ -735,7 +741,7 @@ export default function LifeCoachPage() {
     <div className="flex flex-col h-full animate-fade-in">
       <div className="flex-1 overflow-y-auto">
         <div className="py-6 space-y-5">
-          {messages.map((msg) => (
+          {messages.filter((msg) => !isHeartbeatMessage(msg.content)).map((msg) => (
             <MessageRow key={msg.id} message={msg} />
           ))}
           {isStreaming && !streamMessageIdRef.current && <TypingIndicator />}
