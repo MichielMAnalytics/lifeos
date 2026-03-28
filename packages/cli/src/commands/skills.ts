@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
-import { mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import chalk from "chalk";
 import type { Command } from "commander";
 
@@ -69,11 +69,18 @@ export async function installSkills(options: { agent?: string; json?: boolean })
     installed.push({ name: skillName, files: writtenFiles });
   }
 
+  // Register update hook and statusline for Claude Code
+  const hookRegistered = agent === "claude" ? await registerUpdateHook(json) : false;
+
   if (json) {
     console.log(JSON.stringify({ agent, installed, path: baseDir }));
   } else {
     for (const skill of installed) {
       console.log(`  ${chalk.green("+")} ${skill.name} ${chalk.dim(`(${skill.files.length} files)`)}`);
+    }
+    if (hookRegistered) {
+      console.log(`  ${chalk.green("+")} SessionStart hook ${chalk.dim("(update checker)")}`);
+      console.log(`  ${chalk.green("+")} statusline ${chalk.dim("(update indicator)")}`);
     }
     console.log();
     console.log(chalk.green(`Installed ${installed.length} skills to ${baseDir} for ${agentName}`));
@@ -88,4 +95,79 @@ function parseAgent(agent: string | undefined): SupportedAgent {
   console.error(chalk.red(`Unsupported agent '${agent}'. Expected 'claude' or 'codex'.`));
   process.exitCode = 1;
   return "claude";
+}
+
+// ---------------------------------------------------------------------------
+// Claude SessionStart hook + statusline patch
+// ---------------------------------------------------------------------------
+
+const HOOK_SCRIPT_PATH = join(
+  getHomeDir(),
+  ".claude",
+  "skills",
+  "lifeos-update",
+  "scripts",
+  "check-update.sh",
+);
+const HOOK_MARKER = "lifeos-update-check";
+
+async function registerUpdateHook(json: boolean): Promise<boolean> {
+  const settingsPath = join(getHomeDir(), ".claude", "settings.json");
+
+  try {
+    let settings: Record<string, unknown> = {};
+    try {
+      const raw = await readFile(settingsPath, "utf-8");
+      settings = JSON.parse(raw);
+    } catch {
+      // No settings file yet — start fresh
+    }
+
+    // --- SessionStart hook ---
+    const hooks = (settings.hooks ?? {}) as Record<string, unknown[]>;
+    const sessionStartEntries = (hooks.SessionStart ?? []) as Array<{
+      matcher: string;
+      hooks: Array<{ type: string; command: string }>;
+    }>;
+
+    const alreadyRegistered = sessionStartEntries.some((entry) =>
+      entry.hooks?.some(
+        (h) => h.command?.includes(HOOK_MARKER) || h.command?.includes("check-update.sh"),
+      ),
+    );
+
+    if (!alreadyRegistered) {
+      sessionStartEntries.push({
+        matcher: "",
+        hooks: [
+          {
+            type: "command",
+            command: `bash "${HOOK_SCRIPT_PATH}" # ${HOOK_MARKER}`,
+          },
+        ],
+      });
+      hooks.SessionStart = sessionStartEntries;
+      settings.hooks = hooks;
+    }
+
+    // --- Statusline: prepend update indicator ---
+    const statusLine = settings.statusLine as { type: string; command: string } | undefined;
+
+    if (statusLine?.command && !statusLine.command.includes("lifeos-update-check")) {
+      const cacheFile = "$HOME/.claude/cache/lifeos-update-check.json";
+      const updateSnippet = `lifeos_update=""; if [ -f "${cacheFile}" ]; then _ua=$(cat "${cacheFile}" | jq -r '.update_available // false' 2>/dev/null); if [ "$_ua" = "true" ]; then lifeos_update=$(printf '\\033[33m\\xe2\\xac\\x86 /lifeos-update\\033[0m | '); fi; fi`;
+
+      const original = statusLine.command;
+      statusLine.command = `${updateSnippet}; _orig=$(${original}); printf '%s%s' "$lifeos_update" "$_orig"`;
+      settings.statusLine = statusLine;
+    }
+
+    await writeFile(settingsPath, JSON.stringify(settings, null, 2) + "\n", "utf-8");
+    return true;
+  } catch (error) {
+    if (!json) {
+      console.error(chalk.yellow("  ! Could not register update hook:"), (error as Error).message);
+    }
+    return false;
+  }
 }
