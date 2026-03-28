@@ -66,11 +66,11 @@ function DeployButton({
           className="w-full h-12 text-sm gap-2.5"
         >
           <Zap className="size-4" />
-          {deploying ? "Deploying..." : "Deploy AI Agent"}
+          {deploying ? "Setting up..." : "Start my Life Coach"}
         </Button>
 
         <p className="text-[10px] text-text-muted">
-          Your instance will be live in under 1 minute.
+          Ready in under a minute.
         </p>
       </CardContent>
     </Card>
