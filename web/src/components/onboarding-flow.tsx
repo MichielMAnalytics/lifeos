@@ -206,9 +206,25 @@ function OnboardingFlowInner() {
   const setPendingDeploy = useMutation(api.deploymentSettings.setPendingDeploy);
   const deployAction = useAction(api.deploymentActions.deploy);
 
-  const [step, setStep] = useState<Step>('welcome');
-  const [planView, setPlanView] = useState<PlanView>('main');
-  const [selectedPlanType, setSelectedPlanType] = useState<string | null>(null);
+  // Read preselection from URL (?plan=standard) or sessionStorage (persisted across OAuth redirect)
+  const urlPlan = searchParams.get('plan');
+  if (typeof window !== 'undefined' && urlPlan) {
+    sessionStorage.setItem('pref_plan', urlPlan);
+  }
+  const prefPlan = typeof window !== 'undefined' ? sessionStorage.getItem('pref_plan') : null;
+
+  const [step, setStep] = useState<Step>(() => {
+    if (!prefPlan) return 'welcome';
+    if (prefPlan === 'byok') return 'byok-key';
+    if (prefPlan === 'dashboard') return 'plans';
+    if (['basic', 'standard', 'premium'].includes(prefPlan)) return 'channels';
+    return 'welcome';
+  });
+  const [planView, setPlanView] = useState<PlanView>(() => {
+    if (prefPlan === 'dashboard') return 'dashboard';
+    return 'main';
+  });
+  const [selectedPlanType, setSelectedPlanType] = useState<string | null>(() => prefPlan);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [anthropicAuthMethod, setAnthropicAuthMethod] = useState<'api_key' | 'setup_token'>('setup_token');
   const [anthropicApiKey, setAnthropicApiKey] = useState('');
@@ -270,6 +286,7 @@ function OnboardingFlowInner() {
     setCheckoutLoading(plan.planType);
     (async () => {
       try {
+        sessionStorage.removeItem('pref_plan');
         const result = await createCheckout({ priceId: plan.priceId });
         if (result.url) window.location.href = result.url;
       } catch (err) {
@@ -314,6 +331,7 @@ function OnboardingFlowInner() {
       await setPendingDeploy({ pending: true });
 
       // Redirect to Stripe checkout
+      sessionStorage.removeItem('pref_plan');
       const result = await createCheckout({ priceId: plan.priceId });
       if (result.url) window.location.href = result.url;
     } catch (err) {
