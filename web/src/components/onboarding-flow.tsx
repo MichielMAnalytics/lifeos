@@ -886,7 +886,7 @@ function HomeSetupStep() {
               <StepNumber n={2} />
               <div className="flex-1 space-y-2">
                 <p className="text-sm font-medium text-text">Set your API URL</p>
-                <CodeBlock>lifeos config set-url https://proper-cormorant-28.eu-west-1.convex.site</CodeBlock>
+                <CodeBlock>{`lifeos config set-url ${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? 'https://charming-squid-23.eu-west-1.convex.site'}`}</CodeBlock>
               </div>
             </div>
 
