@@ -417,7 +417,7 @@ function OnboardingFlowInner() {
                   Already have an AI assistant and only want the LifeOS home?
                 </button>
                 <button
-                  onClick={() => setPlanView('byok')}
+                  onClick={() => { setSelectedPlanType('byok'); setStep('byok-key'); }}
                   className="text-xs text-text-muted/50 hover:text-text-muted transition-colors duration-200"
                 >
                   Want to bring your own Anthropic API key instead?
@@ -451,35 +451,11 @@ function OnboardingFlowInner() {
             </div>
           )}
 
-          {/* BYOK plan (just the card — API key input is a separate step) */}
-          {planView === 'byok' && (
-            <div className="mt-10 w-full max-w-xs mx-auto animate-fade-in flex flex-col items-center">
-              {byokPlan && (
-                <PlanCard
-                  name="Bring Your Own Key"
-                  price={`${fmtPrice(byokPlan.priceEuroCents)}/mo`}
-                  features={[
-                    'Full LifeOS home',
-                    'Life Coach (your API key)',
-                    'No credit limits',
-                  ]}
-                  onClick={() => handleSelectDeploymentPlan('byok')}
-                />
-              )}
-              <button
-                onClick={() => setPlanView('main')}
-                className="mt-6 text-xs text-text-muted/50 hover:text-text-muted transition-colors"
-              >
-                &larr; See all plans
-              </button>
-            </div>
-          )}
-
         </div>
       </StepContainer>
 
       {/* ═══ Step 3: BYOK API Key (only for BYOK plan) ═════════════════ */}
-      <StepContainer active={step === 'byok-key'} onBack={() => { setStep('plans'); setPlanView('byok'); }}>
+      <StepContainer active={step === 'byok-key'} onBack={() => { setStep('plans'); setPlanView('main'); }}>
         <div className="flex flex-col items-center text-center w-full max-w-lg">
           <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
             Your <span className="font-semibold">Anthropic API key</span>
