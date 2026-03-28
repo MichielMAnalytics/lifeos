@@ -31,6 +31,9 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
   const [saving, setSaving] = useState(false);
   const [skipAccepted, setSkipAccepted] = useState(false);
 
+  const hasAnthropicCred = anthropicAuthMethod === "api_key" ? !!anthropicKey.trim() : !!anthropicSetupToken.trim();
+  const hasOpenaiCred = !!openaiKey.trim();
+
 
   const handleContinue = async () => {
     setSaving(true);
