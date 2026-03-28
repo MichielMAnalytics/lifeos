@@ -173,6 +173,66 @@ function StopIcon() {
   );
 }
 
+function LifeCoachStartingScreen({ status, startTime }: { status: 'provisioning' | 'starting'; startTime: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  const maxSeconds = 90;
+  const pinnedStart = useRef(startTime);
+
+  useEffect(() => {
+    const update = () => {
+      const secs = Math.floor((Date.now() - pinnedStart.current) / 1000);
+      setElapsed(Math.min(Math.max(secs, 0), maxSeconds));
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const capped = elapsed >= maxSeconds;
+  const minutes = Math.floor(elapsed / 60);
+  const seconds = elapsed % 60;
+  const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  const progress = Math.min(elapsed / maxSeconds, 1);
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full px-6 text-center animate-fade-in">
+      <div className="relative h-14 w-14 mb-8">
+        <div className="absolute inset-0 rounded-full border border-border/20" />
+        <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent animate-spin" style={{ animationDuration: '1.5s' }} />
+        <Image src="/openclaw-icon.png" alt="" width={28} height={28} className="absolute inset-0 m-auto rounded-sm" />
+      </div>
+
+      <p className="text-sm text-text-muted">
+        {status === 'provisioning' ? 'Setting up your Life Coach...' : 'Starting your Life Coach...'}
+      </p>
+
+      <div className="mt-6 w-full max-w-xs">
+        {capped ? (
+          <div className="space-y-2">
+            <p className="text-xs text-text-muted/40">Finalizing last details...</p>
+            <div className="h-1 bg-text/5 rounded-full overflow-hidden">
+              <div className="h-full w-1/3 bg-accent/50 rounded-full animate-[indeterminate_1.5s_ease-in-out_infinite]" />
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-text-muted/40">This usually takes about a minute</p>
+              <span className="font-mono text-xs tabular-nums text-text-muted/60">{display}</span>
+            </div>
+            <div className="h-1 bg-text/5 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-accent/50 rounded-full transition-all duration-1000 ease-linear"
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PaperclipIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -577,13 +637,16 @@ export default function LifeCoachPage() {
   if (deployment.status !== 'running') {
     const isStarting = deployment.status === 'provisioning' || deployment.status === 'starting';
     const isError = deployment.status === 'error';
-    const statusText = isStarting
-      ? 'Your Life Coach is getting ready...'
-      : isError
-        ? 'Something went wrong. Try restarting from Settings.'
-        : deployment.status === 'suspended'
-          ? 'Your Life Coach is paused.'
-          : 'Your Life Coach is offline.';
+
+    if (isStarting) {
+      return <LifeCoachStartingScreen status={deployment.status as 'provisioning' | 'starting'} startTime={deployment.lastUpdatedAt} />;
+    }
+
+    const statusText = isError
+      ? 'Something went wrong. Try restarting from Settings.'
+      : deployment.status === 'suspended'
+        ? 'Your Life Coach is paused.'
+        : 'Your Life Coach is offline.';
 
     return (
       <div className="flex flex-col items-center justify-center h-full px-6 text-center animate-fade-in">
@@ -592,24 +655,17 @@ export default function LifeCoachPage() {
           alt=""
           width={40}
           height={40}
-          className={cn('rounded-full mb-6', isStarting && 'animate-pulse')}
+          className="rounded-full mb-6 opacity-30"
         />
         <p className="text-sm text-text-muted mb-2">
           {statusText}
         </p>
-        {isStarting && (
-          <p className="text-xs text-text-muted/40">
-            This usually takes a minute or two.
-          </p>
-        )}
-        {!isStarting && (
-          <Link
-            href="/settings"
-            className="mt-3 text-xs text-text-muted/50 hover:text-text-muted transition-colors"
-          >
-            Go to Settings
-          </Link>
-        )}
+        <Link
+          href="/settings"
+          className="mt-3 text-xs text-text-muted/50 hover:text-text-muted transition-colors"
+        >
+          Go to Settings
+        </Link>
       </div>
     );
   }
