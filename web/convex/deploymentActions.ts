@@ -752,7 +752,7 @@ export const rolloutPatch = internalAction({
           GATEWAY_TOKEN: depRecord.gatewayToken,
           ...channelTokens,
           ...customEnvVars,
-        });
+          });
 
         // Create the split init secret (idempotent — createSecret handles 409)
         await createSecret(initSecretName, {
@@ -1057,6 +1057,7 @@ export const syncChannelTokensToPod = internalAction({
       GATEWAY_TOKEN: depRecord.gatewayToken,
       ...channelTokens,
       ...customEnvVars,
+      ...(serverEnv.OPENAI_API_KEY ? { OPENAI_API_KEY: serverEnv.OPENAI_API_KEY } : {}),
     });
 
     // Patch StatefulSet template so enabled channels match token availability
@@ -1149,6 +1150,7 @@ export const syncCustomEnvVarsToPod = internalAction({
       GATEWAY_TOKEN: depRecord.gatewayToken,
       ...channelTokens,
       ...customEnvVars,
+      ...(serverEnv.OPENAI_API_KEY ? { OPENAI_API_KEY: serverEnv.OPENAI_API_KEY } : {}),
     });
 
     // Restart pod to pick up new env vars

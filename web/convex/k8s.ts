@@ -285,8 +285,10 @@ function buildOpenClawConfig(
       media: {
         audio: {
           enabled: true,
+          echoTranscript: true,
+          echoFormat: "🎤 \"{transcript}\"",
           models: [
-            { provider: "openai", model: "whisper-1" },
+            { provider: "openai", model: "gpt-4o-mini-transcribe", baseUrl: `${gatewayUrl}/v1/openai` },
           ],
         },
       },
