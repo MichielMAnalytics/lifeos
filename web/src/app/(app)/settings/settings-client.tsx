@@ -532,14 +532,8 @@ function AiAgentSection() {
             <InstanceTools subdomain={deployment.subdomain} gatewayToken={deployment.gatewayToken} />
           )}
         </div>
-      ) : !settings || reconfiguring ? (
-        // No settings yet -- show onboarding
-        <Onboarding
-          preferredPlan={reconfiguring}
-          onComplete={reconfiguring ? () => setReconfiguring(null) : undefined}
-        />
       ) : (
-        // Settings exist but no deployment -- show config card with deploy button
+        // No deployment -- show config card with deploy button
         <ConfigCard onRequestReconfigure={setReconfiguring} />
       )}
     </section>
