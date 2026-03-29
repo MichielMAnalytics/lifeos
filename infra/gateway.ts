@@ -92,8 +92,8 @@ export function createGateway(
                   },
                 },
               },
-              // OPENAI_API_KEY — required for Whisper audio transcription proxy
-              {
+              // OPENAI_API_KEY — enables Whisper audio transcription proxy (only if secret is provisioned)
+              ...(config.getSecret("openaiApiKey") ? [{
                 name: "OPENAI_API_KEY",
                 valueFrom: {
                   secretKeyRef: {
@@ -101,7 +101,7 @@ export function createGateway(
                     key: "openai-api-key",
                   },
                 },
-              },
+              }] : []),
               {
                 name: "GCP_PROJECT_ID",
                 value: gcpProject,
