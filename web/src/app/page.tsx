@@ -31,10 +31,14 @@ export default function Home() {
     <div className="min-h-screen bg-bg">
       <StoreUrlPrefs />
       <AuthLoading>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-text-muted text-sm tracking-wider uppercase animate-pulse">
-            Signing in...
-          </div>
+        <div className="min-h-screen flex flex-col items-center justify-center">
+          <img
+            src="/logo-only-white.svg"
+            alt="LifeOS"
+            width={40}
+            height={40}
+            className="animate-pulse opacity-40"
+          />
         </div>
       </AuthLoading>
       <Authenticated>
