@@ -1,6 +1,6 @@
 {
   "name": "lifeos-cli",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "LifeOS CLI — manage your life operating system from the terminal",
   "type": "module",
   "license": "MIT",

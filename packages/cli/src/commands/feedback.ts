@@ -33,7 +33,7 @@ function gatherContext(): string {
 
   try { info.platform = `${os.platform()} ${os.arch()}`; } catch { /* skip */ }
   try { info.node = process.version; } catch { /* skip */ }
-  try { info.cliVersion = '0.5.0'; } catch { /* skip */ }
+  try { info.cliVersion = '0.5.1'; } catch { /* skip */ }
   try { info.cwd = process.cwd(); } catch { /* skip */ }
 
   // Detect coding agent

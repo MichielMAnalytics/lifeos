@@ -27,7 +27,7 @@ const program = new Command();
 program
   .name('lifeos')
   .description('Personal Life Operating System')
-  .version('0.1.0')
+  .version('0.5.1')
   .option('--json', 'Output results as JSON');
 
 // ── whoami ────────────────────────────────────────────────
