@@ -17,7 +17,7 @@ export function createCluster() {
     purpose: "ENCRYPT_DECRYPT",
   });
 
-  const cluster = new gcp.container.Cluster("lifeos-cluster", {
+  const cluster = new gcp.container.Cluster("lifeos-cluster-v2", {
     location: region,
     enableAutopilot: true,
     ipAllocationPolicy: {},
@@ -29,7 +29,7 @@ export function createCluster() {
       workloadPool: pulumi.interpolate`${project}.svc.id.goog`,
     },
     releaseChannel: {
-      channel: "REGULAR",
+      channel: "STABLE",
     },
   });
 
