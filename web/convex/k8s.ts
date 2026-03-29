@@ -281,6 +281,16 @@ function buildOpenClawConfig(
         model: { primary: selectedModelRef },
       },
     },
+    tools: {
+      media: {
+        audio: {
+          enabled: true,
+          models: [
+            { provider: "openai", model: "whisper-1" },
+          ],
+        },
+      },
+    },
     skills: {
       load: {
         extraDirs: ["/home/node/.openclaw/skills"],
@@ -436,6 +446,7 @@ c.gateway.controlUi.allowedOrigins = (p.gateway && p.gateway.controlUi && p.gate
 c.gateway.controlUi.dangerouslyDisableDeviceAuth = true;
 c.models = p.models;
 c.agents = p.agents;
+c.tools = p.tools;
 c.skills = p.skills;
 if (!c.browser) c.browser = p.browser;
 c.channels = Object.assign(c.channels || {}, p.channels || {});
@@ -674,6 +685,7 @@ c.gateway.controlUi.allowedOrigins = (p.gateway && p.gateway.controlUi && p.gate
 c.gateway.controlUi.dangerouslyDisableDeviceAuth = true;
 c.models = p.models;
 c.agents = p.agents;
+c.tools = p.tools;
 c.skills = p.skills;
 if (!c.browser) c.browser = p.browser;
 c.channels = Object.assign(c.channels || {}, p.channels || {});
