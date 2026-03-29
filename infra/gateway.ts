@@ -92,16 +92,16 @@ export function createGateway(
                   },
                 },
               },
-              // OPENAI_API_KEY — only if configured
-              // {
-              //   name: "OPENAI_API_KEY",
-              //   valueFrom: {
-              //     secretKeyRef: {
-              //       name: "lifeos-system-secrets",
-              //       key: "openai-api-key",
-              //     },
-              //   },
-              // },
+              // OPENAI_API_KEY — enables Whisper audio transcription proxy (only if secret is provisioned)
+              ...(config.getSecret("openaiApiKey") ? [{
+                name: "OPENAI_API_KEY",
+                valueFrom: {
+                  secretKeyRef: {
+                    name: "lifeos-system-secrets",
+                    key: "openai-api-key",
+                  },
+                },
+              }] : []),
               {
                 name: "GCP_PROJECT_ID",
                 value: gcpProject,
