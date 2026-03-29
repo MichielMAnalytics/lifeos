@@ -125,3 +125,15 @@ export const resolveApiKey = internalQuery({
     return match?._id ?? null;
   },
 });
+
+export const resolveVisionBoard = internalQuery({
+  args: { userId: v.id("users"), prefix: v.string() },
+  handler: async (ctx, { userId, prefix }) => {
+    const docs = await ctx.db
+      .query("visionBoard")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .take(500);
+    const match = docs.find((d) => (d._id as string).startsWith(prefix));
+    return match?._id ?? null;
+  },
+});

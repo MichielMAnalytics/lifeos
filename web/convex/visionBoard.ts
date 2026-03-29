@@ -156,6 +156,41 @@ export const _add = internalMutation({
   },
 });
 
+export const _update = internalMutation({
+  args: {
+    userId: v.id("users"),
+    id: v.id("visionBoard"),
+    imageUrl: v.optional(v.string()),
+    caption: v.optional(v.string()),
+    position: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== args.userId) {
+      throw new Error("Vision board item not found");
+    }
+
+    const updates: Record<string, unknown> = {};
+    if (args.imageUrl !== undefined) updates.imageUrl = args.imageUrl;
+    if (args.caption !== undefined) updates.caption = args.caption;
+    if (args.position !== undefined) updates.position = args.position;
+
+    await ctx.db.patch(args.id, updates);
+    const updated = await ctx.db.get(args.id);
+
+    await ctx.db.insert("mutationLog", {
+      userId: args.userId,
+      action: "update",
+      tableName: "visionBoard",
+      recordId: args.id,
+      beforeData: existing,
+      afterData: updated,
+    });
+
+    return updated;
+  },
+});
+
 export const _remove = internalMutation({
   args: {
     userId: v.id("users"),
@@ -164,7 +199,7 @@ export const _remove = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db.get(args.id);
     if (!existing || existing.userId !== args.userId) {
-      throw new Error("Image not found");
+      throw new Error("Vision board item not found");
     }
 
     await ctx.db.delete(args.id);

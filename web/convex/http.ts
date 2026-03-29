@@ -83,7 +83,8 @@ async function parseBody<T = Record<string, unknown>>(request: Request): Promise
  */
 type ResolvableTable =
   | "tasks" | "goals" | "projects" | "reminders"
-  | "reviews" | "resources" | "ideas" | "thoughts" | "wins" | "apiKeys";
+  | "reviews" | "resources" | "ideas" | "thoughts" | "wins" | "apiKeys"
+  | "visionBoard";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const RESOLVER_MAP: Record<ResolvableTable, any> = {
@@ -97,6 +98,7 @@ const RESOLVER_MAP: Record<ResolvableTable, any> = {
   thoughts: internal.resolveId.resolveThought,
   wins: internal.resolveId.resolveWin,
   apiKeys: internal.resolveId.resolveApiKey,
+  visionBoard: internal.resolveId.resolveVisionBoard,
 };
 
 async function resolveEntityId<T extends ResolvableTable>(
@@ -2113,6 +2115,152 @@ registerRoutes(http, components.stripe, {
       console.warn(`[stripe] Invoice payment failed: ${invoice.id}`);
     },
   },
+});
+
+// ════════════════════════════════════════════════════════
+// IDENTITY
+// ════════════════════════════════════════════════════════
+
+http.route({
+  path: "/api/v1/identity",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/identity",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runQuery(internal.identity._get, { userId });
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/api/v1/identity",
+  method: "PUT",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody(request);
+    if (!body.statement || typeof body.statement !== "string") {
+      return err("statement is required");
+    }
+    try {
+      const result = await ctx.runMutation(internal.identity._upsert, {
+        userId,
+        statement: body.statement as string,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Upsert failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+// ════════════════════════════════════════════════════════
+// VISION BOARD
+// ════════════════════════════════════════════════════════
+
+http.route({
+  path: "/api/v1/vision-board",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/vision-board",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runQuery(internal.visionBoard._list, { userId });
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/api/v1/vision-board",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody(request);
+    if (!body.imageUrl || typeof body.imageUrl !== "string") {
+      return err("imageUrl is required");
+    }
+    try {
+      const item = await ctx.runMutation(internal.visionBoard._add, {
+        userId,
+        imageUrl: body.imageUrl as string,
+        caption: (body.caption ?? undefined) as string | undefined,
+      });
+      return json({ data: item }, 201);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Create failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/vision-board/",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/vision-board/",
+  method: "PATCH",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/vision-board");
+    if (!rawId) return err("Missing vision board item id", 400);
+    const id = await resolveEntityId(ctx, userId, "visionBoard", rawId);
+    if (!id) return err("Vision board item not found", 404);
+    const body = await parseBody(request);
+    try {
+      const result = await ctx.runMutation(internal.visionBoard._update, {
+        userId, id,
+        imageUrl: (body.imageUrl ?? undefined) as string | undefined,
+        caption: (body.caption ?? undefined) as string | undefined,
+        position: (body.position ?? undefined) as number | undefined,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 404);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/vision-board/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/vision-board");
+    if (!rawId) return err("Missing vision board item id", 400);
+    const id = await resolveEntityId(ctx, userId, "visionBoard", rawId);
+    if (!id) return err("Vision board item not found", 404);
+    try {
+      const result = await ctx.runMutation(internal.visionBoard._remove, {
+        userId,
+        id,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
+      return err(message, 404);
+    }
+  }),
 });
 
 // ── Feedback ────────────────────────────────────────

@@ -20,6 +20,8 @@ import { triggerCommand } from './commands/trigger.js';
 import { dashboardCommand } from './commands/dashboard.js';
 import { todayCommand } from './commands/today.js';
 import { feedbackCommand } from './commands/feedback.js';
+import { identityCommand } from './commands/identity.js';
+import { visionCommand } from './commands/vision.js';
 import { registerSkillsCommands } from './commands/skills.js';
 import { printUpdateNotice } from './update-check.js';
 
@@ -76,6 +78,8 @@ program.addCommand(triggerCommand);
 program.addCommand(dashboardCommand);
 program.addCommand(todayCommand);
 program.addCommand(feedbackCommand);
+program.addCommand(identityCommand);
+program.addCommand(visionCommand);
 registerSkillsCommands(program);
 
 // Print update notice after command completes

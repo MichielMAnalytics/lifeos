@@ -254,6 +254,27 @@ export interface NetWorthSnapshot {
   createdAt?: string;
 }
 
+export interface Identity {
+  id: string;
+  _id?: string;
+  statement: string;
+  updated_at?: number;
+  updatedAt?: number;
+  created_at?: string;
+  createdAt?: string;
+}
+
+export interface VisionBoardItem {
+  id: string;
+  _id?: string;
+  image_url?: string;
+  imageUrl?: string;
+  caption?: string | null;
+  position: number;
+  created_at?: string;
+  createdAt?: string;
+}
+
 export interface MutationLogEntry {
   id: string;
   _id?: string;

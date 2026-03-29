@@ -85,7 +85,7 @@ export const _get = internalQuery({
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .first();
 
-    return row ? { statement: row.statement, updatedAt: row.updatedAt } : null;
+    return { data: row };
   },
 });
 
@@ -105,6 +105,7 @@ export const _upsert = internalMutation({
         statement: args.statement,
         updatedAt: Date.now(),
       });
+      const updated = await ctx.db.get(existing._id);
 
       await ctx.db.insert("mutationLog", {
         userId: args.userId,
@@ -112,10 +113,10 @@ export const _upsert = internalMutation({
         tableName: "identity",
         recordId: existing._id,
         beforeData: existing,
-        afterData: { ...existing, statement: args.statement, updatedAt: Date.now() },
+        afterData: updated,
       });
 
-      return existing._id;
+      return updated;
     } else {
       const id = await ctx.db.insert("identity", {
         userId: args.userId,
@@ -134,7 +135,7 @@ export const _upsert = internalMutation({
         afterData: row,
       });
 
-      return id;
+      return row;
     }
   },
 });
