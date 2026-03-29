@@ -9,6 +9,7 @@
  */
 
 import type * as adminCleanup from "../adminCleanup.js";
+import type * as adminExportImport from "../adminExportImport.js";
 import type * as apiKeyAuth from "../apiKeyAuth.js";
 import type * as auth from "../auth.js";
 import type * as authHelpers from "../authHelpers.js";
@@ -54,6 +55,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   adminCleanup: typeof adminCleanup;
+  adminExportImport: typeof adminExportImport;
   apiKeyAuth: typeof apiKeyAuth;
   auth: typeof auth;
   authHelpers: typeof authHelpers;
