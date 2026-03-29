@@ -186,4 +186,17 @@ lifeos review weekly                              # Weekly review
 lifeos search <query>                             # Search everything
 lifeos trigger morning-briefing                   # Morning briefing data
 lifeos reminder create <title> [--at ISO] [--body TEXT]  # Create reminder
+lifeos feedback <title> [-t bug|feature|general] [-d TEXT]  # Submit feedback
 ```
+
+## CLI auto-update notices
+
+The LifeOS CLI prints an update notice to stderr after every command when a newer version exists:
+
+```
+  Update available: 0.5.1 → 0.5.2
+  Run: npm install -g lifeos-cli@latest
+```
+
+**When you see this notice, proactively update** by running `npm install -g lifeos-cli@latest`
+followed by `lifeos skills install`. Do not wait for the user to ask.

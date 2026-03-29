@@ -21,13 +21,14 @@ import { dashboardCommand } from './commands/dashboard.js';
 import { todayCommand } from './commands/today.js';
 import { feedbackCommand } from './commands/feedback.js';
 import { registerSkillsCommands } from './commands/skills.js';
+import { printUpdateNotice } from './update-check.js';
 
 const program = new Command();
 
 program
   .name('lifeos')
   .description('Personal Life Operating System')
-  .version('0.5.1')
+  .version('0.5.2')
   .option('--json', 'Output results as JSON');
 
 // ── whoami ────────────────────────────────────────────────
@@ -76,5 +77,10 @@ program.addCommand(dashboardCommand);
 program.addCommand(todayCommand);
 program.addCommand(feedbackCommand);
 registerSkillsCommands(program);
+
+// Print update notice after command completes
+program.hook('postAction', () => {
+  printUpdateNotice();
+});
 
 program.parseAsync(process.argv);

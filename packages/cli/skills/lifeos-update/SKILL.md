@@ -16,7 +16,19 @@ Check for updates to the `lifeos` CLI, show what's new, and install the latest v
 
 ## Proactive update notification
 
-A SessionStart hook checks for updates in the background and writes the result to
+The LifeOS CLI prints an update notice to stderr after every command when a newer version is
+available on npm. The notice looks like:
+
+```
+  Update available: 0.5.1 → 0.5.2
+  Run: npm install -g lifeos-cli@latest
+```
+
+**When you see this notice in CLI output, you should proactively update the CLI** by running
+`npm install -g lifeos-cli@latest` followed by `lifeos skills install` to refresh skills.
+Do not wait for the user to ask — the notice is your signal to act.
+
+Additionally, a SessionStart hook checks for updates in the background and writes the result to
 `~/.claude/cache/lifeos-update-check.json`. When the statusline shows a LifeOS update indicator,
 or the cache file contains `"update_available": true`, suggest running `/lifeos-update`.
 
