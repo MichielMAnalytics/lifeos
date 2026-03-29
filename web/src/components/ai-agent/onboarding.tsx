@@ -93,30 +93,34 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
           </div>
 
           <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={() => setIsByok(false)}
-              className={cn(
-                "flex-1 py-2 text-[10px] uppercase tracking-wider border rounded-md transition-colors cursor-pointer",
-                !isByok
-                  ? "bg-text text-bg border-text"
-                  : "bg-transparent text-text-muted border-border hover:border-text/30",
-              )}
-            >
-              Use our API keys
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsByok(true)}
-              className={cn(
-                "flex-1 py-2 text-[10px] uppercase tracking-wider border rounded-md transition-colors cursor-pointer",
-                isByok
-                  ? "bg-text text-bg border-text"
-                  : "bg-transparent text-text-muted border-border hover:border-text/30",
-              )}
-            >
-              Bring your own keys
-            </button>
+            {preferredPlan === "byok" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsByok(false)}
+                  className={cn(
+                    "flex-1 py-2 text-[10px] uppercase tracking-wider border rounded-md transition-colors cursor-pointer",
+                    !isByok
+                      ? "bg-text text-bg border-text"
+                      : "bg-transparent text-text-muted border-border hover:border-text/30",
+                  )}
+                >
+                  Use our API keys
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsByok(true)}
+                  className={cn(
+                    "flex-1 py-2 text-[10px] uppercase tracking-wider border rounded-md transition-colors cursor-pointer",
+                    isByok
+                      ? "bg-text text-bg border-text"
+                      : "bg-transparent text-text-muted border-border hover:border-text/30",
+                  )}
+                >
+                  Bring your own keys
+                </button>
+              </>
+            ) : null}
           </div>
 
           {isByok && (
