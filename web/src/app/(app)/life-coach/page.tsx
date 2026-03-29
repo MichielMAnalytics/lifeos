@@ -710,13 +710,18 @@ export default function LifeCoachPage() {
 
   const toggleStt = useCallback(() => {
     if (sttRecording) {
+      console.log('[STT] Stopping recording');
       recognitionRef.current?.stop();
       setSttRecording(false);
       setSttInterim('');
       return;
     }
     const SpeechRecognition = (window as unknown as Record<string, unknown>).SpeechRecognition ?? (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    if (!SpeechRecognition) {
+      console.error('[STT] SpeechRecognition API not available in this browser');
+      return;
+    }
+    console.log('[STT] Starting recording, lang:', navigator.language || 'en-US');
     const recognition = new (SpeechRecognition as new () => SpeechRecognition)();
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -725,20 +730,27 @@ export default function LifeCoachPage() {
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const text = e.results[i][0].transcript;
+        const confidence = e.results[i][0].confidence;
         if (e.results[i].isFinal) {
+          console.log('[STT] Final transcript:', text, 'confidence:', confidence.toFixed(2));
           setInput((prev) => {
             const sep = prev && !prev.endsWith(' ') ? ' ' : '';
             return prev + sep + text;
           });
           setSttInterim('');
         } else {
+          console.log('[STT] Interim:', text);
           interim += text;
         }
       }
       if (interim) setSttInterim(interim);
     };
-    recognition.onend = () => { setSttRecording(false); setSttInterim(''); };
-    recognition.onerror = () => { setSttRecording(false); setSttInterim(''); };
+    recognition.onstart = () => { console.log('[STT] Recognition started'); };
+    recognition.onaudiostart = () => { console.log('[STT] Audio capture started'); };
+    recognition.onspeechstart = () => { console.log('[STT] Speech detected'); };
+    recognition.onspeechend = () => { console.log('[STT] Speech ended'); };
+    recognition.onend = () => { console.log('[STT] Recognition ended'); setSttRecording(false); setSttInterim(''); };
+    recognition.onerror = (e) => { console.error('[STT] Error:', e.error, e.message); setSttRecording(false); setSttInterim(''); };
     recognition.start();
     recognitionRef.current = recognition;
     setSttRecording(true);
