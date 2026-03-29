@@ -1,12 +1,48 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
 import { useTodayDate } from '@/lib/today-date-context';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+
+// ── Confetti ─────────────────────────────────────────────
+
+function Confetti() {
+  const particles = Array.from({ length: 30 }, (_, i) => {
+    const angle = (i / 30) * 360;
+    const distance = 60 + Math.random() * 80;
+    const x = Math.cos((angle * Math.PI) / 180) * distance;
+    const y = Math.sin((angle * Math.PI) / 180) * distance - 40;
+    const color = ['#00dc82', '#529cca', '#cc8833', '#e06c60', '#9b59b6', '#f5a623'][i % 6];
+    const size = 4 + Math.random() * 4;
+    const delay = Math.random() * 0.2;
+    return { x, y, color, size, delay };
+  });
+
+  return (
+    <div className="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center">
+      {particles.map((p, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full"
+          style={
+            {
+              width: p.size,
+              height: p.size,
+              backgroundColor: p.color,
+              animation: `confetti-burst 0.8s ease-out ${p.delay}s forwards`,
+              '--tx': `${p.x}px`,
+              '--ty': `${p.y}px`,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
+}
 
 // ── Types ────────────────────────────────────────────────
 
@@ -241,6 +277,7 @@ function PriorityRow({
 }) {
   const task = useQuery(api.tasks.get, taskId ? { id: taskId } : 'skip');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const title = task?.title ?? (taskId ? 'Loading...' : 'Not assigned');
   const isLoading = taskId !== undefined && task === undefined;
@@ -248,8 +285,52 @@ function PriorityRow({
   // Filter out tasks already assigned to other priority slots
   const availableTasks = allTasks?.filter((t) => !assignedIds.has(t._id)) ?? [];
 
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  // Close picker when clicking outside the entire row
+  useEffect(() => {
+    if (!pickerOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (rowRef.current && !rowRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [pickerOpen]);
+
+  // Drag-and-drop handlers for accepting tasks
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('application/x-task-id')) {
+      e.preventDefault();
+      setIsDragOver(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const droppedTaskId = e.dataTransfer.getData('application/x-task-id');
+    if (droppedTaskId) {
+      onAssign(droppedTaskId as Id<'tasks'>);
+    }
+  }, [onAssign]);
+
   return (
-    <div className="relative flex items-center gap-4 py-3 group">
+    <div
+      ref={rowRef}
+      className={cn(
+        'relative flex items-center gap-4 py-3 group transition-all',
+        isDragOver && 'bg-accent/5 ring-1 ring-accent/30 rounded-lg',
+      )}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* Checkbox */}
       <button
         onClick={onToggle}
@@ -257,7 +338,7 @@ function PriorityRow({
         className={cn(
           'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200',
           done
-            ? config.checkClass + ' text-white'
+            ? config.checkClass + ' text-white animate-check-pop'
             : 'border-text-muted/40 hover:border-text',
           !taskId && 'opacity-40 cursor-not-allowed',
         )}
@@ -279,17 +360,18 @@ function PriorityRow({
         )}
       </button>
 
-      {/* Label badge */}
-      <span
+      {/* Label badge - clickable to open picker */}
+      <button
+        onClick={() => setPickerOpen((v) => !v)}
         className={cn(
-          'text-xs font-bold uppercase tracking-widest shrink-0 w-8',
+          'text-xs font-bold uppercase tracking-widest shrink-0 w-8 cursor-pointer hover:opacity-80 transition-opacity',
           config.colorClass,
         )}
       >
         {config.label}
-      </span>
+      </button>
 
-      {/* Task title - clickable to reassign */}
+      {/* Task title - clickable to open picker */}
       <button
         onClick={() => setPickerOpen((v) => !v)}
         className={cn(
@@ -297,7 +379,7 @@ function PriorityRow({
           isLoading && 'animate-pulse text-text-muted',
           taskId
             ? (done ? 'line-through text-text-muted' : 'text-text hover:text-accent')
-            : 'text-text-muted italic',
+            : 'text-text-muted italic hover:text-accent cursor-pointer',
         )}
       >
         {title}
@@ -353,6 +435,24 @@ export function PrioritiesChecklist() {
   // Fetch ALL todo tasks for the task picker dropdown
   const allTasks = useQuery(api.tasks.list, { status: 'todo' });
 
+  // Confetti when all 3 priorities are completed
+  const completedCount = [
+    dayPlan?.mitDone ?? false,
+    dayPlan?.p1Done ?? false,
+    dayPlan?.p2Done ?? false,
+  ].filter(Boolean).length;
+
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevCompletedRef = useRef(completedCount);
+
+  useEffect(() => {
+    if (completedCount === 3 && prevCompletedRef.current < 3) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 1500);
+    }
+    prevCompletedRef.current = completedCount;
+  }, [completedCount]);
+
   if (dayPlan === undefined) {
     return (
       <div className="rounded-xl border border-border">
@@ -376,12 +476,6 @@ export function PrioritiesChecklist() {
     void upsert({ date, [taskIdField]: taskId });
   };
 
-  const completedCount = [
-    dayPlan?.mitDone ?? false,
-    dayPlan?.p1Done ?? false,
-    dayPlan?.p2Done ?? false,
-  ].filter(Boolean).length;
-
   // Collect IDs already assigned to priority slots
   const assignedIds = new Set(
     [dayPlan?.mitTaskId, dayPlan?.p1TaskId, dayPlan?.p2TaskId].filter(Boolean) as string[],
@@ -393,6 +487,8 @@ export function PrioritiesChecklist() {
     : 0;
 
   return (
+    <>
+    {showConfetti && <Confetti />}
     <div className="rounded-xl border border-border">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
         <h2 className="text-sm font-bold text-text uppercase tracking-wide">
@@ -403,48 +499,22 @@ export function PrioritiesChecklist() {
         </span>
       </div>
 
-      {dayPlan ? (
-        <div className="px-6 py-2 divide-y divide-border/50">
-          {PRIORITIES.map((config) => (
-            <PriorityRow
-              key={config.key}
-              config={config}
-              taskId={dayPlan[config.taskIdField] ?? undefined}
-              done={dayPlan[config.doneField]}
-              onToggle={() =>
-                handleToggle(config.doneField, dayPlan[config.doneField])
-              }
-              allTasks={allTasks}
-              assignedIds={assignedIds}
-              onAssign={(taskId) => handleAssign(config.taskIdField, taskId)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="px-6 py-2">
-          {/* Ghost priority rows */}
-          <div className="divide-y divide-border/30">
-            {[
-              { label: 'MIT', colorClass: 'text-accent/40', placeholder: 'Set your most important task' },
-              { label: 'P1', colorClass: 'text-purple-500/40', placeholder: 'Set your second priority' },
-              { label: 'P2', colorClass: 'text-indigo-500/40', placeholder: 'Set your third priority' },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-4 py-3 opacity-40">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-text-muted/40" />
-                <span className={cn('text-xs font-bold uppercase tracking-widest shrink-0 w-8', item.colorClass)}>
-                  {item.label}
-                </span>
-                <span className="flex-1 text-sm text-text-muted italic truncate">
-                  {item.placeholder}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-xs text-text-muted/70 mt-4 mb-2">
-            Set your priorities to start your day
-          </p>
-        </div>
-      )}
+      <div className="px-6 py-2 divide-y divide-border/50">
+        {PRIORITIES.map((config) => (
+          <PriorityRow
+            key={config.key}
+            config={config}
+            taskId={dayPlan?.[config.taskIdField] ?? undefined}
+            done={dayPlan?.[config.doneField] ?? false}
+            onToggle={() =>
+              handleToggle(config.doneField, dayPlan?.[config.doneField] ?? false)
+            }
+            allTasks={allTasks}
+            assignedIds={assignedIds}
+            onAssign={(taskId) => handleAssign(config.taskIdField, taskId)}
+          />
+        ))}
+      </div>
 
       {/* Extra tasks link */}
       {extraTaskCount > 0 && (
@@ -459,5 +529,6 @@ export function PrioritiesChecklist() {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -83,7 +83,7 @@ async function parseBody<T = Record<string, unknown>>(request: Request): Promise
  */
 type ResolvableTable =
   | "tasks" | "goals" | "projects" | "reminders"
-  | "reviews" | "resources" | "ideas" | "thoughts" | "apiKeys";
+  | "reviews" | "resources" | "ideas" | "thoughts" | "wins" | "apiKeys";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const RESOLVER_MAP: Record<ResolvableTable, any> = {
@@ -95,6 +95,7 @@ const RESOLVER_MAP: Record<ResolvableTable, any> = {
   resources: internal.resolveId.resolveResource,
   ideas: internal.resolveId.resolveIdea,
   thoughts: internal.resolveId.resolveThought,
+  wins: internal.resolveId.resolveWin,
   apiKeys: internal.resolveId.resolveApiKey,
 };
 
@@ -762,6 +763,25 @@ http.route({
   }),
 });
 
+http.route({
+  pathPrefix: "/api/v1/journal/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const date = extractId(url, "/api/v1/journal");
+    if (!date) return err("Missing date", 400);
+    try {
+      const result = await ctx.runMutation(internal.journals._remove, { userId, entryDate: date });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
+      return err(message, 404);
+    }
+  }),
+});
+
 // ════════════════════════════════════════════════════════
 // DAY PLANS
 // ════════════════════════════════════════════════════════
@@ -1148,6 +1168,32 @@ http.route({
   }),
 });
 
+http.route({
+  pathPrefix: "/api/v1/thoughts/",
+  method: "PATCH",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/thoughts");
+    if (!rawId) return err("Missing thought id", 400);
+    const id = await resolveEntityId(ctx, userId, "thoughts", rawId);
+    if (!id) return err("Thought not found", 404);
+    const body = await parseBody(request);
+    try {
+      const result = await ctx.runMutation(internal.thoughts._update, {
+        userId, id,
+        content: (body.content ?? undefined) as string | undefined,
+        title: (body.title ?? undefined) as string | undefined,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 404);
+    }
+  }),
+});
+
 // ════════════════════════════════════════════════════════
 // WINS
 // ════════════════════════════════════════════════════════
@@ -1187,6 +1233,33 @@ http.route({
       entryDate: ((body.entryDate ?? body.entry_date) ?? undefined) as string | undefined,
     });
     return json({ data: win }, 201);
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/wins/",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/wins/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/wins");
+    if (!rawId) return err("Missing win id", 400);
+    const id = await resolveEntityId(ctx, userId, "wins", rawId);
+    if (!id) return err("Win not found", 404);
+    try {
+      const result = await ctx.runMutation(internal.wins._remove, { userId, id });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
+      return err(message, 404);
+    }
   }),
 });
 
@@ -1356,6 +1429,27 @@ http.route({
     const review = await ctx.runQuery(internal.reviews._get, { userId, id });
     if (!review) return err("Review not found", 404);
     return json({ data: review });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/reviews/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/reviews");
+    if (!rawId) return err("Missing review id", 400);
+    const id = await resolveEntityId(ctx, userId, "reviews", rawId);
+    if (!id) return err("Review not found", 404);
+    try {
+      const result = await ctx.runMutation(internal.reviews._remove, { userId, id });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
+      return err(message, 404);
+    }
   }),
 });
 

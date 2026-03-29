@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
@@ -135,6 +135,8 @@ export function CalendarWeekly() {
   const today = useMemo(() => new Date(), []);
   const [weekStart, setWeekStart] = useState(() => getMonday(today));
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   // Update "now" every minute for the red line
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60_000);
@@ -157,6 +159,17 @@ export function CalendarWeekly() {
   const goToNextWeek = () => setWeekStart((prev) => addDays(prev, 7));
   const goToThisWeek = () => setWeekStart(getMonday(new Date()));
   const isThisWeek = isSameDay(weekStart, getMonday(today));
+
+  // Auto-scroll to 2 hours before current time on mount
+  useEffect(() => {
+    if (scrollRef.current && isThisWeek) {
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const twoHoursBefore = currentMinutes - 120;
+      const scrollPosition = ((twoHoursBefore - GRID_START_HOUR * 60) / 60) * HOUR_HEIGHT;
+      scrollRef.current.scrollTop = Math.max(0, scrollPosition);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isThisWeek]);
 
   // Build positioned blocks per day
   const dayData = useMemo(() => {
@@ -297,24 +310,6 @@ export function CalendarWeekly() {
           </svg>
           Scheduled Job
         </span>
-        <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-          {/* Pause icon */}
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted">
-            <rect x="6" y="4" width="4" height="16" />
-            <rect x="14" y="4" width="4" height="16" />
-          </svg>
-          Break
-        </span>
-        <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-          {/* Calendar icon */}
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          Event
-        </span>
       </div>
 
       {/* Loading state */}
@@ -331,7 +326,7 @@ export function CalendarWeekly() {
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div ref={scrollRef} className="overflow-x-auto overflow-y-auto max-h-[660px]">
           {/* Day headers row */}
           <div className="flex border-b border-border bg-bg sticky top-0 z-10">
             {/* Hour gutter spacer */}

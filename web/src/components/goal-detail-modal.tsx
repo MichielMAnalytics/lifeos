@@ -5,6 +5,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
+import { CalendarDatePicker } from '@/components/calendar-date-picker';
 
 type GoalStatus = 'active' | 'completed' | 'dropped';
 
@@ -40,6 +41,7 @@ export function GoalDetailModal({
   const [quarterValue, setQuarterValue] = useState('');
   const [targetDateValue, setTargetDateValue] = useState('');
   const [statusOpen, setStatusOpen] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [addingTask, setAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -144,15 +146,16 @@ export function GoalDetailModal({
     }
   }, [quarterValue, goalDetail, goalId, updateGoal]);
 
-  const handleTargetDateBlur = useCallback(async () => {
-    if (goalDetail && targetDateValue !== (goalDetail.targetDate ?? '')) {
-      try {
-        await updateGoal({ id: goalId, targetDate: targetDateValue });
-      } catch (err) {
-        console.error('Failed to update goal target date:', err);
-      }
+  const handleTargetDateSelect = useCallback(async (date: string | null) => {
+    setDatePickerOpen(false);
+    const newValue = date ?? '';
+    setTargetDateValue(newValue);
+    try {
+      await updateGoal({ id: goalId, targetDate: newValue });
+    } catch (err) {
+      console.error('Failed to update goal target date:', err);
     }
-  }, [targetDateValue, goalDetail, goalId, updateGoal]);
+  }, [goalId, updateGoal]);
 
   const handleCompleteTask = useCallback(async (taskId: Id<'tasks'>) => {
     try {
@@ -466,13 +469,37 @@ export function GoalDetailModal({
             {/* Target Date */}
             <div className="space-y-1.5">
               <span className="text-[11px] font-medium text-text-muted uppercase tracking-wider">Target Date</span>
-              <input
-                type="date"
-                value={targetDateValue}
-                onChange={(e) => setTargetDateValue(e.target.value)}
-                onBlur={handleTargetDateBlur}
-                className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none px-2.5 py-2 rounded-lg hover:bg-surface-hover focus:bg-surface-hover transition-colors [color-scheme:dark]"
-              />
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setDatePickerOpen((prev) => !prev)}
+                  className={cn(
+                    'flex items-center gap-2 w-full text-left text-sm rounded-lg px-2.5 py-2 transition-colors',
+                    targetDateValue
+                      ? 'text-text hover:bg-surface-hover'
+                      : 'text-text-muted hover:bg-surface-hover',
+                  )}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 shrink-0">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  <span>
+                    {targetDateValue
+                      ? new Date(targetDateValue + 'T00:00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+                      : 'No date'}
+                  </span>
+                </button>
+                {datePickerOpen && (
+                  <CalendarDatePicker
+                    currentDate={targetDateValue || undefined}
+                    onSelect={handleTargetDateSelect}
+                    onClose={() => setDatePickerOpen(false)}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Health */}

@@ -13,6 +13,7 @@ import {
   isJsonMode,
   printError,
   printJson,
+  printSuccess,
   printTable,
   shortId,
 } from '../output.js';
@@ -160,6 +161,20 @@ reviewCommand
       console.log(`Created: ${formatDate(r.createdAt ?? r.created_at ?? null)}`);
       console.log('Content:');
       console.log(JSON.stringify(r.content, null, 2));
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+reviewCommand
+  .command('delete <id>')
+  .description('Delete a review')
+  .action(async (id: string) => {
+    try {
+      const client = createClient();
+      await client.del(`/api/v1/reviews/${id}`);
+      printSuccess('Review deleted.');
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;

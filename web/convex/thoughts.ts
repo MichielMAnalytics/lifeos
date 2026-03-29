@@ -52,6 +52,32 @@ export const create = mutation({
   },
 });
 
+// ── update ────────────────────────────────────────────
+
+export const update = mutation({
+  args: {
+    id: v.id("thoughts"),
+    content: v.optional(v.string()),
+    title: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== userId) throw new Error("Thought not found");
+    const updates: Record<string, unknown> = {};
+    if (args.content !== undefined) updates.content = args.content;
+    if (args.title !== undefined) updates.title = args.title;
+    await ctx.db.patch(args.id, updates);
+    const updated = await ctx.db.get(args.id);
+    await ctx.db.insert("mutationLog", {
+      userId, action: "update", tableName: "thoughts",
+      recordId: args.id, beforeData: existing, afterData: updated,
+    });
+    return updated;
+  },
+});
+
 // ── remove ────────────────────────────────────────────
 
 export const remove = mutation({
@@ -124,6 +150,29 @@ export const _create = internalMutation({
     });
 
     return thought;
+  },
+});
+
+export const _update = internalMutation({
+  args: {
+    userId: v.id("users"),
+    id: v.id("thoughts"),
+    content: v.optional(v.string()),
+    title: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== args.userId) throw new Error("Thought not found");
+    const updates: Record<string, unknown> = {};
+    if (args.content !== undefined) updates.content = args.content;
+    if (args.title !== undefined) updates.title = args.title;
+    await ctx.db.patch(args.id, updates);
+    const updated = await ctx.db.get(args.id);
+    await ctx.db.insert("mutationLog", {
+      userId: args.userId, action: "update", tableName: "thoughts",
+      recordId: args.id, beforeData: existing, afterData: updated,
+    });
+    return updated;
   },
 });
 

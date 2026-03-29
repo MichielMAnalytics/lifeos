@@ -30,10 +30,9 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       sections: [
         { id: "day-nav", label: "Date Navigation", span: "full" },
         { id: "task-status-bar", label: "Task Status", span: "full" },
-        { id: "priorities-checklist", label: "Priorities", span: "full" },
-        { id: "day-timeline", label: "Timeline", span: "half" },
+        { id: "priorities-checklist", label: "Priorities", span: "half" },
         { id: "quotes", label: "Daily Quote", span: "half" },
-        { id: "quick-capture", label: "Quick Capture", span: "full" },
+        { id: "day-timeline", label: "Day Plan", span: "full" },
       ],
     },
     solopreneur: {
@@ -43,9 +42,8 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
         { id: "day-nav", label: "Date Navigation", span: "full" },
         { id: "task-status-bar", label: "Task Status", span: "full" },
         { id: "priorities-checklist", label: "Priorities", span: "full" },
-        { id: "day-timeline", label: "Timeline", span: "half" },
+        { id: "day-timeline", label: "Day Plan", span: "half" },
         { id: "goals-at-risk", label: "Goals at Risk", span: "half" },
-        { id: "quick-capture", label: "Quick Capture", span: "full" },
       ],
     },
     "content-creator": {
@@ -56,7 +54,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
         { id: "task-status-bar", label: "Task Status", span: "full" },
         { id: "priorities-checklist", label: "Priorities", span: "full" },
         { id: "ideas-pipeline", label: "Ideas Pipeline", span: "half" },
-        { id: "day-timeline", label: "Timeline", span: "half" },
+        { id: "day-timeline", label: "Day Plan", span: "half" },
       ],
     },
     developer: {
@@ -66,7 +64,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
         { id: "day-nav", label: "Date Navigation", span: "full" },
         { id: "task-status-bar", label: "Task Status", span: "full" },
         { id: "priorities-checklist", label: "Priorities", span: "full" },
-        { id: "day-timeline", label: "Timeline", span: "full" },
+        { id: "day-timeline", label: "Day Plan", span: "full" },
       ],
     },
     executive: {
@@ -77,7 +75,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
         { id: "task-status-bar", label: "Task Status", span: "full" },
         { id: "priorities-checklist", label: "Priorities", span: "full" },
         { id: "weekly-theme", label: "Weekly Theme", span: "half" },
-        { id: "day-timeline", label: "Timeline", span: "half" },
+        { id: "day-timeline", label: "Day Plan", span: "half" },
       ],
     },
     minimalist: {
@@ -85,7 +83,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       description: "Just the essentials",
       sections: [
         { id: "priorities-checklist", label: "Priorities", span: "full" },
-        { id: "day-timeline", label: "Timeline", span: "full" },
+        { id: "day-timeline", label: "Day Plan", span: "full" },
       ],
     },
     journaler: {

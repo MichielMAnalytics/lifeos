@@ -116,7 +116,7 @@ function GoalRow({ goal, onSelect }: { goal: Doc<'goals'>; onSelect: (goalId: Id
         <span className={cn('h-2 w-2 rounded-full shrink-0', dot)} title={health?.status ?? 'unknown'} />
 
         {/* Task count */}
-        <span className="text-xs font-mono text-text-muted shrink-0 w-14 text-right">
+        <span className="text-xs text-text-muted shrink-0 w-14 text-right">
           {taskCount} tasks
         </span>
       </div>
@@ -153,7 +153,7 @@ function GoalRow({ goal, onSelect }: { goal: Doc<'goals'>; onSelect: (goalId: Id
                     {task.title}
                   </span>
                   {task.dueDate && (
-                    <span className="text-xs text-text-muted ml-auto font-mono">
+                    <span className="text-xs text-text-muted ml-auto">
                       {task.dueDate}
                     </span>
                   )}
@@ -172,6 +172,23 @@ function GoalRow({ goal, onSelect }: { goal: Doc<'goals'>; onSelect: (goalId: Id
   );
 }
 
+// ── Quarter colors ──────────────────────────────────
+
+const QUARTER_COLORS: Record<string, string> = {
+  'Q1': 'border-l-4 border-l-blue-500/40',
+  'Q2': 'border-l-4 border-l-emerald-500/40',
+  'Q3': 'border-l-4 border-l-amber-500/40',
+  'Q4': 'border-l-4 border-l-purple-500/40',
+};
+
+function getQuarterColorClass(quarter: string): string {
+  const match = quarter.match(/Q([1-4])/);
+  if (match) {
+    return QUARTER_COLORS[`Q${match[1]}`] ?? '';
+  }
+  return '';
+}
+
 // ── QuarterSection ───────────────────────────────────
 
 function QuarterSection({
@@ -188,11 +205,14 @@ function QuarterSection({
   const activeCount = goals.filter((g) => g.status === 'active').length;
   const completedCount = goals.filter((g) => g.status === 'completed').length;
 
+  const quarterColor = getQuarterColorClass(quarter);
+
   return (
     <div
       className={cn(
         'border overflow-hidden',
         isCurrent ? 'border-accent/40' : 'border-border',
+        quarterColor,
       )}
     >
       {/* Quarter header */}
@@ -203,7 +223,7 @@ function QuarterSection({
         )}
       >
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-bold text-text uppercase tracking-wide font-mono">
+          <h3 className="text-sm font-bold text-text uppercase tracking-wide">
             {quarter}
           </h3>
           {isCurrent && (
@@ -252,8 +272,8 @@ export function QuarterlyGoals() {
       }
     }
 
-    // Sort quarters in reverse chronological order (newest first)
-    const sorted = Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+    // Sort quarters in ascending chronological order (earliest first)
+    const sorted = Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
     return { sorted, unassigned };
   }, [allGoals]);
@@ -281,7 +301,7 @@ export function QuarterlyGoals() {
             {/* Quarter header */}
             <div className="flex items-baseline justify-between px-4 py-3 border-b border-border/30 bg-accent/5 opacity-60">
               <div className="flex items-center gap-3">
-                <h3 className="text-sm font-bold text-text-muted uppercase tracking-wide font-mono">
+                <h3 className="text-sm font-bold text-text-muted uppercase tracking-wide">
                   {currentQuarter}
                 </h3>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-accent/60">
@@ -321,7 +341,7 @@ export function QuarterlyGoals() {
                 <span className="h-2 w-2 rounded-full shrink-0 bg-text-muted/50" />
 
                 {/* Task count */}
-                <span className="text-xs font-mono text-text-muted shrink-0 w-14 text-right">
+                <span className="text-xs text-text-muted shrink-0 w-14 text-right">
                   {ghost.tasks} tasks
                 </span>
               </div>

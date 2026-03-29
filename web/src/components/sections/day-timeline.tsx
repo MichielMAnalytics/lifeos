@@ -5,7 +5,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
 import { useTodayDate } from '@/lib/today-date-context';
-import { cn } from '@/lib/utils';
+import { cn, formatRelativeDate } from '@/lib/utils';
 
 // ── Block type colors ────────────────────────────────────
 
@@ -293,21 +293,73 @@ function NowIndicator({ nowMinutes }: { nowMinutes: number }) {
 
 // ── TaskSidebarCard ──────────────────────────────────────
 
-function TaskSidebarCard({ task }: { task: { _id: Id<'tasks'>; title: string } }) {
+function TaskSidebarCard({ task }: { task: { _id: Id<'tasks'>; title: string; dueDate?: string } }) {
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('application/x-task-id', task._id);
     e.dataTransfer.setData('application/x-task-title', task.title);
     e.dataTransfer.effectAllowed = 'copy';
   };
 
+  const dueDate = task.dueDate ?? null;
+  const dateInfo = formatRelativeDate(dueDate);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isOverdue = dueDate !== null && dueDate < todayStr;
+
   return (
     <div
       draggable
       onDragStart={handleDragStart}
-      className="rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text truncate cursor-grab active:cursor-grabbing hover:border-accent/50 transition-colors"
+      className="rounded-xl border border-border bg-surface cursor-grab active:cursor-grabbing hover:border-text-muted/30 transition-all duration-150"
       title={task.title}
     >
-      {task.title}
+      <div className="px-3 py-2.5 flex items-start gap-2.5">
+        {/* Circle checkbox visual */}
+        <div
+          className={cn(
+            'mt-0.5 flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full border-[1.5px]',
+            isOverdue
+              ? 'border-danger/60'
+              : 'border-text-muted/30',
+          )}
+        />
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] text-text leading-snug truncate">
+            {task.title}
+          </p>
+
+          {/* Due date badge */}
+          {dueDate && (
+            <div className="mt-1">
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1 text-[11px] rounded-md px-1 py-0.5',
+                  dateInfo.colorClass,
+                )}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={isOverdue ? 'text-danger' : 'opacity-50'}
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                {dateInfo.text}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -322,8 +374,8 @@ function TaskSidebar({
   onSidebarDragLeave,
   onSidebarDrop,
 }: {
-  todayTasks: { _id: Id<'tasks'>; title: string }[] | undefined;
-  overdueTasks: { _id: Id<'tasks'>; title: string }[] | undefined;
+  todayTasks: { _id: Id<'tasks'>; title: string; dueDate?: string }[] | undefined;
+  overdueTasks: { _id: Id<'tasks'>; title: string; dueDate?: string }[] | undefined;
   isDragOverSidebar: boolean;
   onSidebarDragOver: (e: React.DragEvent) => void;
   onSidebarDragLeave: () => void;
@@ -412,11 +464,23 @@ export function DayTimeline() {
   const [isDragOverSidebar, setIsDragOverSidebar] = useState(false);
 
   const gridRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isToday) return;
     const interval = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(interval);
+  }, [isToday]);
+
+  // Auto-scroll to 2 hours before current time on mount
+  useEffect(() => {
+    if (scrollRef.current && isToday) {
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const twoHoursBefore = currentMinutes - 120;
+      const scrollPosition = ((twoHoursBefore - GRID_START_HOUR * 60) / 60) * HOUR_HEIGHT;
+      scrollRef.current.scrollTop = Math.max(0, scrollPosition);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isToday]);
 
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -652,7 +716,7 @@ export function DayTimeline() {
 
       {/* Calendar grid + task sidebar */}
       <div className="flex overflow-hidden">
-        <div className="flex-1 overflow-y-auto max-h-[660px]">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto max-h-[660px]">
           <div className="flex" style={{ minHeight: `${GRID_HEIGHT}px` }}>
             {/* Hour labels gutter */}
             <div

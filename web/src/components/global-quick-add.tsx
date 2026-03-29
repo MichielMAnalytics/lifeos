@@ -5,6 +5,7 @@ import { useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { useDashboardConfig } from '@/lib/dashboard-config';
 import { cn } from '@/lib/utils';
+import { CalendarDatePicker } from '@/components/calendar-date-picker';
 
 type QuickAddType = 'task' | 'idea' | 'thought' | 'win' | 'reminder';
 
@@ -89,6 +90,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 function TaskQuickForm({ onDone }: { onDone: () => void }) {
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const createTask = useMutation(api.tasks.create);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -123,12 +125,39 @@ function TaskQuickForm({ onDone }: { onDone: () => void }) {
         onChange={(e) => setTitle(e.target.value)}
         className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:border-accent focus:outline-none"
       />
-      <input
-        type="date"
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
-      />
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setDatePickerOpen((prev) => !prev)}
+          className={cn(
+            'flex items-center gap-2 w-full text-left text-sm rounded-lg border border-border bg-bg px-3 py-2 transition-colors',
+            dueDate ? 'text-text' : 'text-text-muted/50',
+            datePickerOpen && 'border-accent',
+          )}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 shrink-0">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <span>
+            {dueDate
+              ? new Date(dueDate + 'T00:00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+              : 'Due date (optional)'}
+          </span>
+        </button>
+        {datePickerOpen && (
+          <CalendarDatePicker
+            currentDate={dueDate || undefined}
+            onSelect={(date) => {
+              setDueDate(date ?? '');
+              setDatePickerOpen(false);
+            }}
+            onClose={() => setDatePickerOpen(false)}
+          />
+        )}
+      </div>
       <button
         type="submit"
         disabled={!title.trim() || saving}

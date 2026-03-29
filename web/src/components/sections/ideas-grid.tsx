@@ -142,7 +142,7 @@ function IdeaRow({ idea, index, onSelect }: IdeaRowProps) {
         </span>
 
         {/* Actionability badge - clickable */}
-        <div className="relative shrink-0">
+        <div className="relative shrink-0 w-20 text-center">
           <button
             type="button"
             onClick={(e) => {

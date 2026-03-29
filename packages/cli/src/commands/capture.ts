@@ -204,6 +204,26 @@ thoughtCommand
   });
 
 thoughtCommand
+  .command('update <id>')
+  .description('Update a thought')
+  .option('-c, --content <content>', 'New content')
+  .option('-t, --title <title>', 'New title')
+  .action(async (id: string, opts: { content?: string; title?: string }) => {
+    try {
+      const client = createClient();
+      const body: Record<string, unknown> = {};
+      if (opts.content) body.content = opts.content;
+      if (opts.title) body.title = opts.title;
+
+      await client.patch(`/api/v1/thoughts/${id}`, body);
+      printSuccess('Thought updated.');
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+thoughtCommand
   .command('delete <id>')
   .description('Delete a thought')
   .action(async (id: string) => {
@@ -219,10 +239,12 @@ thoughtCommand
 
 // ── Wins ─────────────────────────────────────────────────
 
-async function createWin(content: string) {
+async function createWin(content: string, opts: { date?: string }) {
   try {
     const client = createClient();
-    const res = await client.post<ApiResponse<Win>>('/api/v1/wins', { content });
+    const body: Record<string, unknown> = { content };
+    if (opts.date) body.entryDate = opts.date;
+    const res = await client.post<ApiResponse<Win>>('/api/v1/wins', body);
     if (isJsonMode()) { printJson(res); return; }
     printSuccess(`Win recorded (${shortId(res.data)}).`);
   } catch (err) {
@@ -234,13 +256,15 @@ async function createWin(content: string) {
 export const winCommand = new Command('win')
   .description('Manage wins')
   .argument('[content]', 'Quick capture (shorthand for "win create")')
-  .action(async (content: string | undefined) => {
-    if (content) await createWin(content);
+  .option('-d, --date <date>', 'Entry date (YYYY-MM-DD, default today)')
+  .action(async (content: string | undefined, opts: { date?: string }) => {
+    if (content) await createWin(content, opts);
   });
 
 winCommand
   .command('create <content>')
   .description('Record a win')
+  .option('-d, --date <date>', 'Entry date (YYYY-MM-DD, default today)')
   .action(createWin);
 
 winCommand
@@ -273,6 +297,20 @@ winCommand
         formatDate(w.entryDate ?? w.entry_date ?? null),
       ]);
       printTable(['ID', 'Content', 'Date'], rows);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+winCommand
+  .command('delete <id>')
+  .description('Delete a win')
+  .action(async (id: string) => {
+    try {
+      const client = createClient();
+      await client.del(`/api/v1/wins/${id}`);
+      printSuccess('Win deleted.');
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;

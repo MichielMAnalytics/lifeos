@@ -5,8 +5,10 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import type { Id, Doc } from '@/lib/convex-api';
 import { TaskDetailModal } from '@/components/task-detail-modal';
+import { CalendarDatePicker } from '@/components/calendar-date-picker';
 import { HoverActionsMenu, type HoverAction } from '@/components/hover-actions-menu';
 import { ContextMenu, type ContextMenuItem } from '@/components/context-menu';
+import { formatRelativeDate } from '@/lib/utils';
 
 // ── Date helpers ─────────────────────────────────────
 
@@ -32,28 +34,10 @@ function sevenDaysFromNowISO(): string {
   return d.toISOString().slice(0, 10);
 }
 
-function nextMondayISO(): string {
-  const d = new Date();
-  const day = d.getDay();
-  const daysUntilMonday = day === 0 ? 1 : 8 - day;
-  d.setDate(d.getDate() + daysUntilMonday);
-  return d.toISOString().slice(0, 10);
-}
-
-function nextWeekISO(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 7);
-  return d.toISOString().slice(0, 10);
-}
 
 function weekdayName(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
   return d.toLocaleDateString('en-US', { weekday: 'long' });
-}
-
-function formatDateLabel(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function shortDate(dateStr: string | undefined | null): string {
@@ -67,10 +51,6 @@ function columnHeaderDate(dateStr: string): string {
   const day = d.getDate();
   const month = d.toLocaleDateString('en-US', { month: 'short' });
   return `${day} ${month}`;
-}
-
-function toISO(year: number, month: number, day: number): string {
-  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
 // ── Bucket types ─────────────────────────────────────
@@ -167,236 +147,6 @@ function bucketTasks(tasks: Task[]): TaskBucket[] {
   return buckets;
 }
 
-// ── Calendar Date Picker ─────────────────────────────
-
-interface CalendarDatePickerProps {
-  currentDate: string | undefined;
-  onSelect: (date: string | null) => void;
-  onClose: () => void;
-}
-
-function CalendarDatePicker({ currentDate, onSelect, onClose }: CalendarDatePickerProps) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  const todayStr = todayISO();
-  const todayDate = new Date(todayStr + 'T00:00:00');
-
-  const [viewYear, setViewYear] = useState(() => {
-    if (currentDate) {
-      const d = new Date(currentDate + 'T00:00:00');
-      return d.getFullYear();
-    }
-    return todayDate.getFullYear();
-  });
-  const [viewMonth, setViewMonth] = useState(() => {
-    if (currentDate) {
-      const d = new Date(currentDate + 'T00:00:00');
-      return d.getMonth();
-    }
-    return todayDate.getMonth();
-  });
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
-
-  const goToPrevMonth = () => {
-    if (viewMonth === 0) {
-      setViewMonth(11);
-      setViewYear(viewYear - 1);
-    } else {
-      setViewMonth(viewMonth - 1);
-    }
-  };
-
-  const goToNextMonth = () => {
-    if (viewMonth === 11) {
-      setViewMonth(0);
-      setViewYear(viewYear + 1);
-    } else {
-      setViewMonth(viewMonth + 1);
-    }
-  };
-
-  const goToToday = () => {
-    setViewYear(todayDate.getFullYear());
-    setViewMonth(todayDate.getMonth());
-  };
-
-  // Build calendar grid
-  const firstDayOfMonth = new Date(viewYear, viewMonth, 1);
-  // Monday = 0, Sunday = 6
-  let startDow = firstDayOfMonth.getDay() - 1;
-  if (startDow < 0) startDow = 6;
-
-  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
-
-  const calendarDays: Array<{ day: number; month: number; year: number; isCurrentMonth: boolean }> = [];
-
-  // Previous month fill
-  for (let i = startDow - 1; i >= 0; i--) {
-    const prevMonth = viewMonth === 0 ? 11 : viewMonth - 1;
-    const prevYear = viewMonth === 0 ? viewYear - 1 : viewYear;
-    calendarDays.push({ day: daysInPrevMonth - i, month: prevMonth, year: prevYear, isCurrentMonth: false });
-  }
-
-  // Current month
-  for (let d = 1; d <= daysInMonth; d++) {
-    calendarDays.push({ day: d, month: viewMonth, year: viewYear, isCurrentMonth: true });
-  }
-
-  // Next month fill (to complete 6 rows max, or at least fill the last row)
-  const remaining = 7 - (calendarDays.length % 7);
-  if (remaining < 7) {
-    const nextMonth = viewMonth === 11 ? 0 : viewMonth + 1;
-    const nextYear = viewMonth === 11 ? viewYear + 1 : viewYear;
-    for (let d = 1; d <= remaining; d++) {
-      calendarDays.push({ day: d, month: nextMonth, year: nextYear, isCurrentMonth: false });
-    }
-  }
-
-  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const weekDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-
-  const quickOptions = [
-    { label: 'Today', date: todayISO(), icon: '☀' },
-    { label: 'Tomorrow', date: tomorrowISO(), icon: '→' },
-    { label: 'Next Monday', date: nextMondayISO(), icon: '📅' },
-    { label: 'Next Week', date: nextWeekISO(), icon: '⏭' },
-    { label: 'No Date', date: null, icon: '✕' },
-  ];
-
-  return (
-    <div
-      ref={ref}
-      className="absolute z-50 top-full left-0 mt-1 w-[280px] border border-border bg-surface rounded-xl shadow-xl overflow-hidden"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Month header */}
-      <div className="flex items-center justify-between px-3 pt-3 pb-2">
-        <button
-          type="button"
-          onClick={goToPrevMonth}
-          className="p-1 rounded-md text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
-          aria-label="Previous month"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-text">{monthLabel}</span>
-          <button
-            type="button"
-            onClick={goToToday}
-            className="text-[10px] text-text-muted hover:text-accent px-1.5 py-0.5 rounded-md hover:bg-surface-hover transition-colors"
-          >
-            Today
-          </button>
-        </div>
-        <button
-          type="button"
-          onClick={goToNextMonth}
-          className="p-1 rounded-md text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
-          aria-label="Next month"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 px-3 pb-1">
-        {weekDays.map((wd) => (
-          <div key={wd} className="text-center text-[10px] font-medium text-text-muted/50 py-1">
-            {wd}
-          </div>
-        ))}
-      </div>
-
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 px-3 pb-2">
-        {calendarDays.map((cd, idx) => {
-          const dateStr = toISO(cd.year, cd.month, cd.day);
-          const isToday = dateStr === todayStr;
-          const isSelected = dateStr === currentDate;
-
-          return (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => onSelect(dateStr)}
-              className={`
-                h-8 w-full flex items-center justify-center text-[11px] rounded-lg transition-all duration-100
-                ${!cd.isCurrentMonth ? 'text-text-muted/25' : ''}
-                ${cd.isCurrentMonth && !isToday && !isSelected ? 'text-text hover:bg-surface-hover' : ''}
-                ${isToday && !isSelected ? 'text-accent font-bold bg-accent/10' : ''}
-                ${isSelected ? 'bg-accent text-bg font-bold' : ''}
-              `}
-            >
-              {cd.day}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Divider */}
-      <div className="border-t border-border/40" />
-
-      {/* Quick options */}
-      <div className="p-2 space-y-0.5">
-        {quickOptions.map((opt) => {
-          const isActive = opt.date === (currentDate ?? null);
-          return (
-            <button
-              key={opt.label}
-              type="button"
-              onClick={() => onSelect(opt.date)}
-              className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition-colors flex items-center gap-2 ${
-                isActive
-                  ? 'bg-accent/10 text-accent font-medium'
-                  : 'text-text hover:bg-surface-hover'
-              }`}
-            >
-              <span className="text-[11px] w-4 text-center opacity-60">{opt.icon}</span>
-              <span>{opt.label}</span>
-              {opt.date && (
-                <span className="ml-auto text-text-muted font-mono text-[10px]">
-                  {shortDate(opt.date)}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Clear button */}
-      {currentDate && (
-        <>
-          <div className="border-t border-border/40" />
-          <div className="p-2">
-            <button
-              type="button"
-              onClick={() => onSelect(null)}
-              className="w-full text-center text-xs text-text-muted hover:text-danger py-1.5 rounded-lg hover:bg-surface-hover transition-colors"
-            >
-              Clear date
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 // ── Calendar Icon ───────────────────────────────────
 
 function CalendarIcon({ className }: { className?: string }) {
@@ -407,6 +157,46 @@ function CalendarIcon({ className }: { className?: string }) {
       <line x1="8" y1="2" x2="8" y2="6" />
       <line x1="3" y1="10" x2="21" y2="10" />
     </svg>
+  );
+}
+
+// ── Date Badge ─────────────────────────────────────
+
+function DateBadge({
+  dueDate,
+  isOverdue,
+  datePickerOpen,
+  onTogglePicker,
+  onDateSelect,
+  onClosePicker,
+}: {
+  dueDate: string | null;
+  isOverdue: boolean;
+  datePickerOpen: boolean;
+  onTogglePicker: (e: React.MouseEvent) => void;
+  onDateSelect: (date: string | null) => Promise<void>;
+  onClosePicker: () => void;
+}) {
+  const dateInfo = formatRelativeDate(dueDate);
+
+  return (
+    <div className="relative mt-1.5">
+      <button
+        type="button"
+        onClick={onTogglePicker}
+        className={`inline-flex items-center gap-1 text-[11px] transition-colors rounded-md px-1 py-0.5 -ml-1 hover:bg-surface-hover ${dateInfo.colorClass}`}
+      >
+        <CalendarIcon className={isOverdue ? 'text-danger' : 'opacity-50'} />
+        <span className={dateInfo.colorClass}>{dateInfo.text}</span>
+      </button>
+      {datePickerOpen && (
+        <CalendarDatePicker
+          currentDate={dueDate ?? undefined}
+          onSelect={onDateSelect}
+          onClose={onClosePicker}
+        />
+      )}
+    </div>
   );
 }
 
@@ -660,6 +450,8 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
         onDragStart={(e) => onDragStart(e, task._id, bucketKey)}
         onClick={onClick}
         className={`group relative rounded-xl border transition-all duration-150 cursor-grab active:cursor-grabbing ${
+          completing ? 'animate-task-fade-out' : ''
+        } ${
           isSelected
             ? 'border-accent/40 bg-surface ring-2 ring-accent/40'
             : editing
@@ -687,7 +479,7 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
             disabled={completing}
             className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-[1.5px] transition-all duration-150 ${
               completing
-                ? 'border-success bg-success/20'
+                ? 'border-success bg-success/20 animate-check-pop'
                 : isOverdue
                   ? 'border-danger/60 hover:border-danger hover:bg-danger/10'
                   : 'border-text-muted/30 hover:border-accent hover:bg-accent/10'
@@ -718,7 +510,7 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
               />
             ) : (
               <p
-                className="text-[13px] text-text leading-snug cursor-text"
+                className={`text-[13px] text-text leading-snug cursor-text ${completing ? 'animate-strikethrough text-text-muted' : ''}`}
                 onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); setEditTitle(task.title); }}
               >
                 {task.title}
@@ -730,30 +522,17 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
 
             {/* Date badge - clickable */}
             {showDate && (
-              <div className="relative mt-1.5">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDatePickerOpen((prev) => !prev);
-                  }}
-                  className={`inline-flex items-center gap-1 text-[11px] transition-colors rounded-md px-1 py-0.5 -ml-1 ${
-                    isOverdue
-                      ? 'text-danger hover:bg-danger/10'
-                      : 'text-text-muted hover:text-accent hover:bg-surface-hover'
-                  }`}
-                >
-                  <CalendarIcon className={isOverdue ? 'text-danger' : 'opacity-50'} />
-                  {dueDate ? formatDateLabel(dueDate) : 'No date'}
-                </button>
-                {datePickerOpen && (
-                  <CalendarDatePicker
-                    currentDate={dueDate ?? undefined}
-                    onSelect={handleDateSelect}
-                    onClose={() => setDatePickerOpen(false)}
-                  />
-                )}
-              </div>
+              <DateBadge
+                dueDate={dueDate}
+                isOverdue={!!isOverdue}
+                datePickerOpen={datePickerOpen}
+                onTogglePicker={(e) => {
+                  e.stopPropagation();
+                  setDatePickerOpen((prev) => !prev);
+                }}
+                onDateSelect={handleDateSelect}
+                onClosePicker={() => setDatePickerOpen(false)}
+              />
             )}
           </div>
         </div>
@@ -902,6 +681,20 @@ interface BucketColumnProps {
 function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOver, onDragLeave, onDrop, onReorder, onTaskClick, onTaskComplete, onTaskDelete, onTaskReschedule, onTaskRemoveDate }: BucketColumnProps) {
   const isDragOver = dragOverKey === bucket.key;
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [rescheduling, setRescheduling] = useState(false);
+
+  const handleRescheduleAll = useCallback(async () => {
+    if (rescheduling || bucket.key !== 'overdue') return;
+    setRescheduling(true);
+    const today = todayISO();
+    try {
+      for (const task of bucket.tasks) {
+        await onTaskReschedule(task._id, today);
+      }
+    } finally {
+      setRescheduling(false);
+    }
+  }, [rescheduling, bucket, onTaskReschedule]);
 
   const handleTaskDragOver = useCallback((e: React.DragEvent, index: number) => {
     e.preventDefault();
@@ -987,9 +780,14 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOve
           {bucket.count}
         </span>
         {bucket.variant === 'danger' && bucket.count > 0 && (
-          <span className="text-[11px] text-danger/70 font-medium ml-auto cursor-default">
-            Reschedule
-          </span>
+          <button
+            type="button"
+            onClick={() => void handleRescheduleAll()}
+            disabled={rescheduling}
+            className="text-[11px] text-danger/70 font-medium ml-auto hover:text-danger transition-colors disabled:opacity-50"
+          >
+            {rescheduling ? 'Rescheduling...' : 'Reschedule'}
+          </button>
         )}
       </div>
 
@@ -1007,7 +805,7 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOve
             )}
             <TaskCard
               task={task}
-              showDate={bucket.key === 'nodate' || bucket.key === 'overdue' || bucket.key === 'later' || bucket.key === 'next7d'}
+              showDate={true}
               bucketKey={bucket.key}
               isSelected={selectedIds.has(task._id)}
               onDragStart={onDragStart}

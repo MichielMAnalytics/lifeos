@@ -82,6 +82,24 @@ export const create = mutation({
   },
 });
 
+// ── remove ────────────────────────────────────────────
+
+export const remove = mutation({
+  args: { id: v.id("reviews") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== userId) throw new Error("Review not found");
+    await ctx.db.delete(args.id);
+    await ctx.db.insert("mutationLog", {
+      userId, action: "delete", tableName: "reviews",
+      recordId: args.id, beforeData: existing, afterData: null,
+    });
+    return { id: args.id };
+  },
+});
+
 // ── Internal functions (for HTTP router) ─────────────
 
 export const _list = internalQuery({
@@ -149,5 +167,19 @@ export const _create = internalMutation({
     });
 
     return review;
+  },
+});
+
+export const _remove = internalMutation({
+  args: { userId: v.id("users"), id: v.id("reviews") },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== args.userId) throw new Error("Review not found");
+    await ctx.db.delete(args.id);
+    await ctx.db.insert("mutationLog", {
+      userId: args.userId, action: "delete", tableName: "reviews",
+      recordId: args.id, beforeData: existing, afterData: null,
+    });
+    return { id: args.id };
   },
 });

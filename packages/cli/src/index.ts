@@ -18,6 +18,7 @@ import { searchCommand } from './commands/search.js';
 import { undoCommand } from './commands/undo.js';
 import { triggerCommand } from './commands/trigger.js';
 import { dashboardCommand } from './commands/dashboard.js';
+import { todayCommand } from './commands/today.js';
 import { registerSkillsCommands } from './commands/skills.js';
 
 const program = new Command();
@@ -71,6 +72,7 @@ program.addCommand(searchCommand);
 program.addCommand(undoCommand);
 program.addCommand(triggerCommand);
 program.addCommand(dashboardCommand);
+program.addCommand(todayCommand);
 registerSkillsCommands(program);
 
 program.parseAsync(process.argv);

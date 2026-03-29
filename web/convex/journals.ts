@@ -129,6 +129,27 @@ export const upsert = mutation({
   },
 });
 
+// ── remove ────────────────────────────────────────────
+
+export const remove = mutation({
+  args: { date: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const entry = await ctx.db
+      .query("journals")
+      .withIndex("by_userId_entryDate", (q) => q.eq("userId", userId).eq("entryDate", args.date))
+      .unique();
+    if (!entry) throw new Error("Journal entry not found");
+    await ctx.db.delete(entry._id);
+    await ctx.db.insert("mutationLog", {
+      userId, action: "delete", tableName: "journals",
+      recordId: entry._id, beforeData: entry, afterData: null,
+    });
+    return { id: entry._id };
+  },
+});
+
 // ── Internal functions (for HTTP router) ─────────────
 
 export const _list = internalQuery({
@@ -220,5 +241,22 @@ export const _upsert = internalMutation({
 
       return { ...entry, _wasCreated: true };
     }
+  },
+});
+
+export const _remove = internalMutation({
+  args: { userId: v.id("users"), entryDate: v.string() },
+  handler: async (ctx, args) => {
+    const entry = await ctx.db
+      .query("journals")
+      .withIndex("by_userId_entryDate", (q) => q.eq("userId", args.userId).eq("entryDate", args.entryDate))
+      .unique();
+    if (!entry) throw new Error("Journal entry not found");
+    await ctx.db.delete(entry._id);
+    await ctx.db.insert("mutationLog", {
+      userId: args.userId, action: "delete", tableName: "journals",
+      recordId: entry._id, beforeData: entry, afterData: null,
+    });
+    return { id: entry._id };
   },
 });

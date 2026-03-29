@@ -16,7 +16,7 @@ function applyTheme(t: ThemeKey) {
 
 function getSystemTheme(): ThemeKey {
   if (typeof window === 'undefined') return defaultTheme;
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'midnight';
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -47,7 +47,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const handler = () => {
       const current = localStorage.getItem('lifeos-theme');
       if (current === 'system' || !current) {
-        applyTheme(mq.matches ? 'light' : 'midnight');
+        applyTheme(mq.matches ? 'light' : 'dark');
       }
     };
     mq.addEventListener('change', handler);
