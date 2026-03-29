@@ -694,6 +694,12 @@ run_test "win list contains captured win" \
 run_ok "win list with date range" \
   "win list --from $TODAY --to $TODAY"
 
+if [ -n "$CREATED_WIN_ID" ]; then
+  run_test "win update content" \
+    "win update $CREATED_WIN_ID --content 'Updated E2E win'" \
+    "updated"
+fi
+
 run_json_valid "win list --json is valid JSON" \
   "win list"
 
@@ -780,6 +786,10 @@ run_test "plan complete-p2" \
 run_json_valid "plan today --json is valid JSON" \
   "plan today"
 
+run_test "plan delete E2E plan" \
+  "plan delete $E2E_PLAN_DATE" \
+  "deleted"
+
 # ══════════════════════════════════════════════════════════════════════════════
 # 10. WEEK (show, create, score)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -798,6 +808,15 @@ run_test "week score" \
 
 run_json_valid "week --json is valid JSON" \
   "week"
+
+# Re-create a weekly plan so we can test delete
+run_test "week create for delete test" \
+  "week create --theme 'E2E Delete Week'" \
+  "weekly plan created"
+
+run_test "week delete current week plan" \
+  "week delete" \
+  "deleted"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 11. REVIEW (list, daily, weekly, show)
@@ -1199,12 +1218,12 @@ fi
 # Identity statement was set -- note it (no delete, only overwrite).
 echo "  ${DIM}NOTE${RESET} identity statement was set (overwrite manually if needed)"
 
-# Day plan for E2E_PLAN_DATE and today were created -- note them (no delete endpoint for plans).
-echo "  ${DIM}NOTE${RESET} day plan for $E2E_PLAN_DATE was created (no plan delete command)"
-echo "  ${DIM}NOTE${RESET} day plan for $TODAY was created/updated (no plan delete command)"
+# Day plan for today was created/updated -- clean it up.
+cleanup_ok "day plan $TODAY" "plan delete $TODAY"
 
-# Weekly plan theme was set for the current week (no delete endpoint).
-echo "  ${DIM}NOTE${RESET} weekly plan for current week was created/updated (no week delete command)"
+# Weekly plan for current week was already deleted during Week tests.
+# If it was recreated (e.g. by week score), clean it up.
+cleanup_ok "weekly plan (current week)" "week delete"
 
 # Dashboard was reset to defaults at end of dashboard tests, so it is clean.
 echo "  ${DIM}cleaned up${RESET} dashboard config (reset to defaults)"

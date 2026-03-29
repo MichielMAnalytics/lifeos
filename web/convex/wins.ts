@@ -139,6 +139,37 @@ export const _create = internalMutation({
   },
 });
 
+export const _update = internalMutation({
+  args: {
+    userId: v.id("users"),
+    id: v.id("wins"),
+    content: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== args.userId) {
+      throw new Error("Win not found");
+    }
+
+    const updates: Record<string, unknown> = {};
+    if (args.content !== undefined) updates.content = args.content;
+
+    await ctx.db.patch(args.id, updates);
+    const updated = await ctx.db.get(args.id);
+
+    await ctx.db.insert("mutationLog", {
+      userId: args.userId,
+      action: "update",
+      tableName: "wins",
+      recordId: args.id,
+      beforeData: existing,
+      afterData: updated,
+    });
+
+    return updated;
+  },
+});
+
 export const _remove = internalMutation({
   args: { userId: v.id("users"), id: v.id("wins") },
   handler: async (ctx, args) => {

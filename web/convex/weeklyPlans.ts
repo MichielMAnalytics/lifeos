@@ -173,6 +173,38 @@ export const _getByWeekStart = internalQuery({
   },
 });
 
+export const _remove = internalMutation({
+  args: {
+    userId: v.id("users"),
+    weekStart: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("weeklyPlans")
+      .withIndex("by_userId_weekStart", (q) =>
+        q.eq("userId", args.userId).eq("weekStart", args.weekStart),
+      )
+      .unique();
+
+    if (!existing) {
+      throw new Error("Weekly plan not found");
+    }
+
+    await ctx.db.delete(existing._id);
+
+    await ctx.db.insert("mutationLog", {
+      userId: args.userId,
+      action: "delete",
+      tableName: "weeklyPlans",
+      recordId: existing._id,
+      beforeData: existing,
+      afterData: null,
+    });
+
+    return { id: existing._id };
+  },
+});
+
 export const _upsert = internalMutation({
   args: {
     userId: v.id("users"),

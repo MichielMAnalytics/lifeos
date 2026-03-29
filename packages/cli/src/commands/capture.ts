@@ -304,6 +304,30 @@ winCommand
   });
 
 winCommand
+  .command('update <id>')
+  .description('Update a win')
+  .requiredOption('-c, --content <content>', 'New content')
+  .action(async (id: string, opts: { content: string }) => {
+    try {
+      const client = createClient();
+      const body: Record<string, unknown> = {};
+      if (opts.content) body.content = opts.content;
+
+      const res = await client.patch<ApiResponse<Win>>(`/api/v1/wins/${id}`, body);
+
+      if (isJsonMode()) {
+        printJson(res);
+        return;
+      }
+
+      printSuccess(`Win updated (${shortId(res.data)}).`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+winCommand
   .command('delete <id>')
   .description('Delete a win')
   .action(async (id: string) => {

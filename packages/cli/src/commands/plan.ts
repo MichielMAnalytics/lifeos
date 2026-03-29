@@ -125,6 +125,26 @@ planCommand
   });
 
 planCommand
+  .command('delete <date>')
+  .description('Delete a day plan')
+  .action(async (date: string) => {
+    try {
+      const client = createClient();
+      await client.del(`/api/v1/day-plans/${date}`);
+
+      if (isJsonMode()) {
+        printJson({ data: { deleted: true, date } });
+        return;
+      }
+
+      printSuccess(`Day plan for ${date} deleted.`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+planCommand
   .command('complete-mit')
   .description('Mark MIT as done for today')
   .action(async () => {

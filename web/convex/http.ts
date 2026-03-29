@@ -877,6 +877,28 @@ http.route({
   }),
 });
 
+http.route({
+  pathPrefix: "/api/v1/day-plans/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const date = extractId(url, "/api/v1/day-plans");
+    if (!date) return err("Missing date", 400);
+    try {
+      const result = await ctx.runMutation(internal.dayPlans._remove, {
+        userId,
+        planDate: date,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
+      return err(message, 404);
+    }
+  }),
+});
+
 // ════════════════════════════════════════════════════════
 // WEEKLY PLANS
 // ════════════════════════════════════════════════════════
@@ -967,6 +989,28 @@ http.route({
       return json({ data: result });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 404);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/weekly-plans/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const weekStart = extractId(url, "/api/v1/weekly-plans");
+    if (!weekStart) return err("Missing week_start", 400);
+    try {
+      const result = await ctx.runMutation(internal.weeklyPlans._remove, {
+        userId,
+        weekStart,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
       return err(message, 404);
     }
   }),
@@ -1242,6 +1286,32 @@ http.route({
   pathPrefix: "/api/v1/wins/",
   method: "OPTIONS",
   handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/wins/",
+  method: "PATCH",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/wins");
+    if (!rawId) return err("Missing win id", 400);
+    const id = await resolveEntityId(ctx, userId, "wins", rawId);
+    if (!id) return err("Win not found", 404);
+    const body = await parseBody(request);
+    try {
+      const win = await ctx.runMutation(internal.wins._update, {
+        userId,
+        id,
+        content: (body.content ?? undefined) as string | undefined,
+      });
+      return json({ data: win });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 404);
+    }
+  }),
 });
 
 http.route({

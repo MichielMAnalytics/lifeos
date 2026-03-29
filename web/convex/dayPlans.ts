@@ -287,6 +287,38 @@ export const _upsert = internalMutation({
   },
 });
 
+export const _remove = internalMutation({
+  args: {
+    userId: v.id("users"),
+    planDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("dayPlans")
+      .withIndex("by_userId_planDate", (q) =>
+        q.eq("userId", args.userId).eq("planDate", args.planDate),
+      )
+      .unique();
+
+    if (!existing) {
+      throw new Error("Day plan not found");
+    }
+
+    await ctx.db.delete(existing._id);
+
+    await ctx.db.insert("mutationLog", {
+      userId: args.userId,
+      action: "delete",
+      tableName: "dayPlans",
+      recordId: existing._id,
+      beforeData: existing,
+      afterData: null,
+    });
+
+    return { id: existing._id };
+  },
+});
+
 export const _patch = internalMutation({
   args: {
     userId: v.id("users"),

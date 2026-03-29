@@ -78,6 +78,27 @@ weekCommand
   });
 
 weekCommand
+  .command('delete [weekStart]')
+  .description('Delete a weekly plan (default: current week)')
+  .action(async (weekStart?: string) => {
+    try {
+      const client = createClient();
+      const ws = weekStart ?? currentWeekStart();
+      await client.del(`/api/v1/weekly-plans/${ws}`);
+
+      if (isJsonMode()) {
+        printJson({ data: { deleted: true, weekStart: ws } });
+        return;
+      }
+
+      printSuccess(`Weekly plan for ${ws} deleted.`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+weekCommand
   .command('score <score>')
   .description('Set the review score for this week (1-10)')
   .action(async (score: string) => {
