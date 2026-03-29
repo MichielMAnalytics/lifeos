@@ -16,4 +16,6 @@ config:
       convexSiteUrl: "https://calculating-hornet-639.convex.site"
   lifeos:anthropicApiKey:
     secure: v1:DSVq7UyAA3k/vqag:y0+g6MvbXibZkHzzOvBl7L1gTZRSqA7s4MjZ7M+EA89HzpVBFWYhxPyNwtB3A5Y27L2UNXFtN4fEhUwSW5Ir85qkKTertXhV4WYWYya355utFl5Xqod4tIlmvK7CpoMTEaphwiszL65mDV7ITXfEL73dfKHxGfxs/KsiLQ==
+  lifeos:openaiApiKey:
+    secure: v1:53mVFoV8A1QM25im:usGEILKKnTsM4Jf5rw7GFjTPq4h2Do8/aaKJiVSIBKwDwj/Vv7s9bqo5OuOPMZub0GShBZw40ldD5s996H0919kyxM3ELa77fa59M1vtuBVwN4cbJSdkTLr2dqP/911sUTvPoq03BBK7aGAPYusPofhNs0tTW5yQ4gQ0Os12tc+poYisDEHdltv+wz0Dj2Fp0NmY3ABtN1C+WowsP1XDnoqQkfKjPvAzrskYfBwMbP5/Xkph
 encryptionsalt: v1:96XSPyZBR9g=:v1:GNPag+zpFYmZyoy5:qKEEgB5X1r/BEmP8goyew3XzD0ILUw==

@@ -15,4 +15,6 @@ config:
     secure: v1:Rfp+wfsSKuyI/j/o:Nh9iZu60wGm2PJtOEP2flMwB9j8vdDDz/g50ciAZO7jq2vxFKg1wc0ICQzLnwuZn
   lifeos:anthropicApiKey:
     secure: v1:2NpfOD9wbzZlAdyq:2RtP6rM8UEoHQAbpBPgEtI1OKC04eM8O2Qm3rAXfVrpU0cgYdYHMM+akyH6Z4ogsG+t8LVed4VkVpyyTZpx4ErnFxcnFCXHl9TgHod2CC72/qne0H9spS1cgsivmIaMz834oo6DAxdEsRKEPInUlXEruTzPs57Nb3+asyw==
+  lifeos:openaiApiKey:
+    secure: v1:5yXuaVyuG0onUwJ4:5HmfmRbh5CavYH7ELPuq2bOuGekgwWHY5fUzY1OfCIsatUtowv28flfXCGgYaNslcJn0LBiUmnapVmuiQIAgGCEoyozg8UQvCZv0Uht6HeO+lU0SSboSOlGhH7ldG6MdEW9JC4U5Xmux7jl84wKxo8ri55cYEnKynRvWxUYFfc11SjrrOVvTWXYvzpdG3VM1KpmDPAskcWvI56Rg9NOm7vAuYdNUS1hkXVCKckS4n64jJq56
 encryptionsalt: v1:F+Lr6Wq9yNo=:v1:zh5CqyFmdQce09u7:OUXJzIDTZ+RZdlwaAqeoWI6pPdlUAg==

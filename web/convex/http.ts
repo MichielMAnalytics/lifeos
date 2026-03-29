@@ -2115,6 +2115,35 @@ registerRoutes(http, components.stripe, {
   },
 });
 
+// ── Feedback ────────────────────────────────────────
+
+http.route({
+  path: "/api/v1/feedback",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/feedback",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody<{ title?: string; type?: string; description?: string; context?: string }>(request);
+    if (!body.title) return err("title is required");
+    if (!body.description) return err("description is required");
+    const feedbackType = ["bug", "feature", "general"].includes(body.type ?? "") ? body.type! : "general";
+    const result = await ctx.runAction(internal.feedback.submitFeedback, {
+      userId,
+      title: body.title,
+      feedbackType,
+      description: body.description,
+      context: body.context,
+    });
+    return json({ data: result });
+  }),
+});
+
 // ── Pod Registration (init container callback) ───────
 http.route({
   path: "/api/registerPod",

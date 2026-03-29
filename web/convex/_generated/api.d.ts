@@ -22,6 +22,7 @@ import type * as deploymentEnv from "../deploymentEnv.js";
 import type * as deploymentHealthCheck from "../deploymentHealthCheck.js";
 import type * as deploymentQueries from "../deploymentQueries.js";
 import type * as deploymentSettings from "../deploymentSettings.js";
+import type * as feedback from "../feedback.js";
 import type * as gatewayBridge from "../gatewayBridge.js";
 import type * as goals from "../goals.js";
 import type * as http from "../http.js";
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   deploymentHealthCheck: typeof deploymentHealthCheck;
   deploymentQueries: typeof deploymentQueries;
   deploymentSettings: typeof deploymentSettings;
+  feedback: typeof feedback;
   gatewayBridge: typeof gatewayBridge;
   goals: typeof goals;
   http: typeof http;

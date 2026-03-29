@@ -19,6 +19,7 @@ import { undoCommand } from './commands/undo.js';
 import { triggerCommand } from './commands/trigger.js';
 import { dashboardCommand } from './commands/dashboard.js';
 import { todayCommand } from './commands/today.js';
+import { feedbackCommand } from './commands/feedback.js';
 import { registerSkillsCommands } from './commands/skills.js';
 
 const program = new Command();
@@ -73,6 +74,7 @@ program.addCommand(undoCommand);
 program.addCommand(triggerCommand);
 program.addCommand(dashboardCommand);
 program.addCommand(todayCommand);
+program.addCommand(feedbackCommand);
 registerSkillsCommands(program);
 
 program.parseAsync(process.argv);

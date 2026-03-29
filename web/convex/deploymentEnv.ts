@@ -21,6 +21,7 @@ const serverEnvSchema = z.object({
   OPENCLAW_IMAGE_TAG: z.string().optional(),
   GCP_PROJECT_ID: z.string().optional(),
   LIFEOS_DOMAIN: z.string().default("lifeos.zone"),
+  GITHUB_FEEDBACK_TOKEN: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
