@@ -130,7 +130,8 @@ planCommand
   .option('--p1 <taskIdOrTitle>', 'P1 task ID or title')
   .option('--p2 <taskIdOrTitle>', 'P2 task ID or title')
   .option('--schedule <json>', 'Schedule blocks as JSON array')
-  .action(async (date: string, opts: { wake?: string; mit?: string; p1?: string; p2?: string; schedule?: string }) => {
+  .option('--block <block...>', 'Time block: "HH:MM-HH:MM Description" or "HH:MM Description" (repeatable)')
+  .action(async (date: string, opts: { wake?: string; mit?: string; p1?: string; p2?: string; schedule?: string; block?: string[] }) => {
     try {
       const client = createClient();
       const body: Record<string, unknown> = {};
@@ -146,6 +147,47 @@ planCommand
           process.exitCode = 1;
           return;
         }
+      }
+
+      // Parse --block flags into schedule array
+      if (opts.block && opts.block.length > 0) {
+        const blocks: { start: string; end: string; label: string; type: string }[] = [];
+        for (const raw of opts.block) {
+          // Format: "HH:MM-HH:MM Description" or "HH:MM Description"
+          const rangeMatch = raw.match(/^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})\s+(.+)$/);
+          const singleMatch = raw.match(/^(\d{1,2}:\d{2})\s+(.+)$/);
+
+          if (rangeMatch) {
+            blocks.push({
+              start: rangeMatch[1].padStart(5, '0'),
+              end: rangeMatch[2].padStart(5, '0'),
+              label: rangeMatch[3],
+              type: 'other',
+            });
+          } else if (singleMatch) {
+            // Single time = marker block (15 min default)
+            const startStr = singleMatch[1].padStart(5, '0');
+            const [h, m] = startStr.split(':').map(Number);
+            const endMin = h * 60 + m + 15;
+            const endH = Math.floor(endMin / 60);
+            const endM = endMin % 60;
+            const endStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+            blocks.push({
+              start: startStr,
+              end: endStr,
+              label: singleMatch[2],
+              type: 'other',
+            });
+          } else {
+            printError(`Invalid block format: "${raw}". Use "HH:MM-HH:MM Description" or "HH:MM Description"`);
+            process.exitCode = 1;
+            return;
+          }
+        }
+
+        // Merge with existing schedule from --schedule flag, or use alone
+        const existing = (body.schedule as unknown[]) ?? [];
+        body.schedule = [...existing, ...blocks];
       }
 
       const res = await client.put<ApiResponse<DayPlan>>(`/api/v1/day-plans/${date}`, body);
