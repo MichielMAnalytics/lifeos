@@ -20,12 +20,16 @@ taskCommand
   .description('List tasks')
   .option('-s, --status <status>', 'Filter by status (todo, done, dropped)')
   .option('-d, --due <due>', 'Filter by due date (today, tomorrow, week, overdue, all)')
-  .action(async (opts: { status?: string; due?: string }) => {
+  .option('--due-before <date>', 'Due on or before date (YYYY-MM-DD)')
+  .option('--due-after <date>', 'Due on or after date (YYYY-MM-DD)')
+  .action(async (opts: { status?: string; due?: string; dueBefore?: string; dueAfter?: string }) => {
     try {
       const client = createClient();
       const params: Record<string, string> = {};
       if (opts.status) params.status = opts.status;
       if (opts.due) params.due = opts.due;
+      if (opts.dueBefore) params.dueBefore = opts.dueBefore;
+      if (opts.dueAfter) params.dueAfter = opts.dueAfter;
 
       const res = await client.get<ApiListResponse<Task>>('/api/v1/tasks', params);
 
@@ -142,7 +146,9 @@ taskCommand
   .option('-d, --due <date>', 'Due date (YYYY-MM-DD)')
   .option('-n, --notes <notes>', 'Notes')
   .option('-g, --goal <id>', 'Goal ID')
-  .action(async (id: string, opts: { title?: string; due?: string; notes?: string; goal?: string }) => {
+  .option('-s, --status <status>', 'Status (todo, done, dropped)')
+  .option('-p, --project <id>', 'Project ID')
+  .action(async (id: string, opts: { title?: string; due?: string; notes?: string; goal?: string; status?: string; project?: string }) => {
     try {
       const client = createClient();
       const body: Record<string, unknown> = {};
@@ -150,6 +156,8 @@ taskCommand
       if (opts.due) body.dueDate = opts.due;
       if (opts.notes) body.notes = opts.notes;
       if (opts.goal) body.goalId = opts.goal;
+      if (opts.status) body.status = opts.status;
+      if (opts.project) body.projectId = opts.project;
 
       const res = await client.patch<ApiResponse<Task>>(`/api/v1/tasks/${id}`, body);
 

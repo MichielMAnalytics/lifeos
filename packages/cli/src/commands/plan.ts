@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import type { ApiResponse, DayPlan } from '@lifeos/shared';
-import { createClient } from '../api-client.js';
+import { createClient, type ApiClient } from '../api-client.js';
 import {
   isJsonMode,
   printError,
@@ -8,6 +8,34 @@ import {
   printSuccess,
 } from '../output.js';
 import chalk from 'chalk';
+
+async function resolveTaskId(client: ApiClient, value: string): Promise<string> {
+  // If it looks like a Convex ID (starts with letter, no spaces, 8+ alphanumeric chars), use as-is
+  if (/^[a-z][a-z0-9]{7,}$/i.test(value)) {
+    return value;
+  }
+
+  // Search by title
+  try {
+    const searchRes = await client.get<{ data: Record<string, unknown[]> }>('/api/v1/search', { q: value, type: 'tasks' });
+    const tasks = searchRes.data.tasks ?? [];
+    if (tasks.length > 0) {
+      const match = tasks[0] as { _id: string; title: string };
+      if (tasks.length > 1) {
+        console.log(`  Note: multiple matches for "${value}", using "${match.title}"`);
+      }
+      return match._id;
+    }
+  } catch {
+    // search failed, fall through to create
+  }
+
+  // No match - create a new task
+  const today = new Date().toISOString().slice(0, 10);
+  const newTask = await client.post<{ data: { _id: string } }>('/api/v1/tasks', { title: value, dueDate: today });
+  console.log(`  Created task: "${value}"`);
+  return newTask.data._id;
+}
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
@@ -98,17 +126,27 @@ planCommand
   .command('set <date>')
   .description('Create or update a day plan')
   .option('-w, --wake <time>', 'Wake time (HH:MM)')
-  .option('--mit <taskId>', 'MIT task ID')
-  .option('--p1 <taskId>', 'P1 task ID')
-  .option('--p2 <taskId>', 'P2 task ID')
-  .action(async (date: string, opts: { wake?: string; mit?: string; p1?: string; p2?: string }) => {
+  .option('--mit <taskIdOrTitle>', 'MIT task ID or title')
+  .option('--p1 <taskIdOrTitle>', 'P1 task ID or title')
+  .option('--p2 <taskIdOrTitle>', 'P2 task ID or title')
+  .option('--schedule <json>', 'Schedule blocks as JSON array')
+  .action(async (date: string, opts: { wake?: string; mit?: string; p1?: string; p2?: string; schedule?: string }) => {
     try {
       const client = createClient();
       const body: Record<string, unknown> = {};
       if (opts.wake) body.wakeTime = opts.wake;
-      if (opts.mit) body.mitTaskId = opts.mit;
-      if (opts.p1) body.p1TaskId = opts.p1;
-      if (opts.p2) body.p2TaskId = opts.p2;
+      if (opts.mit) body.mitTaskId = await resolveTaskId(client, opts.mit);
+      if (opts.p1) body.p1TaskId = await resolveTaskId(client, opts.p1);
+      if (opts.p2) body.p2TaskId = await resolveTaskId(client, opts.p2);
+      if (opts.schedule) {
+        try {
+          body.schedule = JSON.parse(opts.schedule);
+        } catch {
+          printError('Invalid schedule JSON. Format: [{"start":"09:00","end":"10:00","label":"Focus","type":"task"}]');
+          process.exitCode = 1;
+          return;
+        }
+      }
 
       const res = await client.put<ApiResponse<DayPlan>>(`/api/v1/day-plans/${date}`, body);
 

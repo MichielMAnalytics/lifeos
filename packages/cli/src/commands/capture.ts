@@ -343,12 +343,13 @@ winCommand
 
 // ── Resources ────────────────────────────────────────────
 
-async function createResource(title: string, opts: { url?: string; type?: string }) {
+async function createResource(title: string, opts: { url?: string; type?: string; content?: string }) {
   try {
     const client = createClient();
     const body: Record<string, unknown> = { title };
     if (opts.url) body.url = opts.url;
     if (opts.type) body.type = opts.type;
+    if (opts.content) body.content = opts.content;
     const res = await client.post<ApiResponse<Resource>>('/api/v1/resources', body);
     if (isJsonMode()) { printJson(res); return; }
     printSuccess(`Resource saved: ${res.data.title} (${shortId(res.data)}).`);
@@ -363,7 +364,8 @@ export const resourceCommand = new Command('resource')
   .argument('[title]', 'Quick capture (shorthand for "resource create")')
   .option('-u, --url <url>', 'URL')
   .option('-t, --type <type>', 'Type (article, tool, book, video, other)')
-  .action(async (title: string | undefined, opts: { url?: string; type?: string }) => {
+  .option('-c, --content <text>', 'Description/notes')
+  .action(async (title: string | undefined, opts: { url?: string; type?: string; content?: string }) => {
     if (title) await createResource(title, opts);
   });
 
@@ -372,6 +374,7 @@ resourceCommand
   .description('Save a resource')
   .option('-u, --url <url>', 'URL')
   .option('-t, --type <type>', 'Type (article, tool, book, video, other)')
+  .option('-c, --content <text>', 'Description/notes')
   .action(createResource);
 
 resourceCommand

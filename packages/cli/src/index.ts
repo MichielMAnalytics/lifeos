@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import type { ApiResponse, User } from '@lifeos/shared';
 import { createClient } from './api-client.js';
-import { isJsonMode, printError, printJson } from './output.js';
+import { isJsonMode, printError, printJson, printSuccess } from './output.js';
 import { configCommand } from './commands/config.js';
 import { taskCommand } from './commands/task.js';
 import { projectCommand } from './commands/project.js';
@@ -58,7 +58,26 @@ program
     }
   });
 
+// ── profile ──────────────────────────────────────────────
+const profileCommand = new Command('profile')
+  .description('Manage user profile');
+
+profileCommand
+  .command('set-timezone <timezone>')
+  .description('Set your timezone (e.g., Asia/Makassar)')
+  .action(async (timezone: string) => {
+    try {
+      const client = createClient();
+      await client.patch('/api/v1/auth/me', { timezone });
+      printSuccess(`Timezone set to ${timezone}.`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
 // ── Register subcommands ─────────────────────────────────
+program.addCommand(profileCommand);
 program.addCommand(configCommand);
 program.addCommand(taskCommand);
 program.addCommand(projectCommand);

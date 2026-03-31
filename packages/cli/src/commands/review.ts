@@ -168,6 +168,39 @@ reviewCommand
   });
 
 reviewCommand
+  .command('import')
+  .description('Import/backfill a review')
+  .option('--type <type>', 'Review type (daily, weekly, monthly, quarterly)', 'weekly')
+  .option('--start <date>', 'Period start (YYYY-MM-DD)')
+  .option('--end <date>', 'Period end (YYYY-MM-DD)')
+  .option('--content <text>', 'Review content')
+  .option('--score <n>', 'Score (1-10)')
+  .action(async (opts: { type: string; start?: string; end?: string; content?: string; score?: string }) => {
+    try {
+      const client = createClient();
+      const body: Record<string, unknown> = {
+        reviewType: opts.type,
+        periodStart: opts.start,
+        periodEnd: opts.end,
+        content: opts.content ?? '',
+      };
+      if (opts.score) body.score = parseInt(opts.score, 10);
+
+      const res = await client.post<ApiResponse<Review>>('/api/v1/reviews', body);
+
+      if (isJsonMode()) {
+        printJson(res);
+        return;
+      }
+
+      printSuccess('Review imported.');
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+reviewCommand
   .command('delete <id>')
   .description('Delete a review')
   .action(async (id: string) => {

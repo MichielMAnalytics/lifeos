@@ -54,7 +54,8 @@ journalCommand
   .option('--p1 <text>', 'Priority 1')
   .option('--p2 <text>', 'Priority 2')
   .option('--notes <text>', 'Notes')
-  .action(async (opts: { date?: string; mit?: string; p1?: string; p2?: string; notes?: string }) => {
+  .option('--wins <text...>', 'Wins to record (repeatable)')
+  .action(async (opts: { date?: string; mit?: string; p1?: string; p2?: string; notes?: string; wins?: string[] }) => {
     try {
       const client = createClient();
       const body: Record<string, unknown> = {};
@@ -62,6 +63,7 @@ journalCommand
       if (opts.p1) body.p1 = opts.p1;
       if (opts.p2) body.p2 = opts.p2;
       if (opts.notes) body.notes = opts.notes;
+      if (opts.wins && opts.wins.length > 0) body.wins = opts.wins;
 
       const d = opts.date ?? todayStr();
       const res = await client.put<ApiResponse<Journal>>(`/api/v1/journal/${d}`, body);
