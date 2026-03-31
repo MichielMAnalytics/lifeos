@@ -18,7 +18,7 @@ export function WeeklyTheme() {
   return (
     <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Weekly Theme
         </h2>
         <Link
@@ -53,8 +53,8 @@ export function WeeklyTheme() {
                       key={i}
                       className="flex items-center gap-3"
                     >
-                      <span className="text-xs font-mono text-text-muted w-6 shrink-0">
-                        [{String(i + 1).padStart(2, '0')}]
+                      <span className="text-xs text-text-muted w-6 shrink-0 tabular-nums">
+                        {String(i + 1).padStart(2, '0')}
                       </span>
                       {isDone ? (
                         <svg
@@ -88,7 +88,7 @@ export function WeeklyTheme() {
           <p className="text-sm text-text-muted">No weekly plan yet</p>
           <Link
             href="/weekly"
-            className="mt-3 text-xs text-text-muted hover:text-text transition-colors border border-border px-4 py-2"
+            className="mt-3 text-xs text-text-muted hover:text-text transition-colors border border-border px-4 py-2 rounded-lg"
           >
             Create plan
           </Link>

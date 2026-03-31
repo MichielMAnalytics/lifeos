@@ -28,7 +28,7 @@ export function OverdueAlert() {
       </div>
       <Link
         href="/tasks?filter=overdue"
-        className="shrink-0 bg-white text-black px-4 py-2 text-xs font-medium uppercase tracking-wide hover:bg-white/90 transition-colors"
+        className="shrink-0 bg-accent text-white px-4 py-2 rounded-lg text-xs font-medium uppercase tracking-wide hover:bg-accent-hover transition-colors"
       >
         View all
       </Link>

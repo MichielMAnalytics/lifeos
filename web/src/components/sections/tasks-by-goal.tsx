@@ -61,10 +61,9 @@ export function TasksByGoal() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Tasks by Goal
         </span>
-        <span className="text-xs font-mono text-text-muted">[ {tasks.length} ]</span>
       </div>
 
       {sections.length === 0 ? (
@@ -78,7 +77,7 @@ export function TasksByGoal() {
             <div key={section.key}>
               {/* Section header */}
               <div className="flex items-center gap-4 px-6 py-3 bg-surface">
-                <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
+                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
                   {section.label}
                 </span>
                 <div className="flex-1 h-px bg-border" />

@@ -61,7 +61,7 @@ export default function TaskDetailPage() {
               <div className="mt-2 flex items-center gap-2">
                 <Badge variant={statusVariant}>{task.status}</Badge>
                 {dueDate && (
-                  <Badge variant="muted">{formatDate(dueDate)}</Badge>
+                  <Badge variant="default">{formatDate(dueDate)}</Badge>
                 )}
               </div>
             </div>

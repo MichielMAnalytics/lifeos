@@ -40,7 +40,7 @@ function GoalCard({ goal }: { goal: Doc<"goals"> }) {
 
   return (
     <Link key={goal._id} href={`/goals/${goal._id}`}>
-      <div className="border border-border rounded-xl p-6 transition-colors hover:border-text/30 group h-full flex flex-col">
+      <div className="border border-border rounded-xl p-6 transition-all duration-200 ease-out hover:border-text/30 hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:-translate-y-[1px] group h-full flex flex-col">
         {/* Top row: title + health dot */}
         <div className="flex items-start justify-between gap-4 mb-3">
           <h3 className="text-lg font-bold text-text group-hover:text-accent transition-colors leading-snug">
@@ -61,10 +61,10 @@ function GoalCard({ goal }: { goal: Doc<"goals"> }) {
 
         {/* Progress bar */}
         <div className="mb-4 mt-auto">
-          <div className="h-px w-full bg-border overflow-hidden">
+          <div className="h-1 w-full bg-border rounded-full overflow-hidden">
             <div
-              className={`h-full ${barColor} transition-all duration-500`}
-              style={{ width: `${progress}%`, height: '2px', marginTop: '-0.5px' }}
+              className={`h-full rounded-full ${barColor} transition-all duration-700 ease-out`}
+              style={{ width: `${progress}%` }}
             />
           </div>
         </div>
@@ -72,12 +72,12 @@ function GoalCard({ goal }: { goal: Doc<"goals"> }) {
         {/* Footer */}
         <div className="flex items-center justify-between text-xs text-text-muted">
           {goal.quarter ? (
-            <span className="font-mono">[ {goal.quarter} ]</span>
+            <span>{goal.quarter}</span>
           ) : (
             <span />
           )}
           {health && (
-            <span className="font-mono">
+            <span className="tabular-nums">
               {health.doneTasks}/{health.totalTasks} tasks
             </span>
           )}
@@ -102,8 +102,8 @@ export function GoalsGrid() {
     <div className="max-w-none space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-text">
-          Goals <span className="text-text-muted font-normal">[ {goals.length} ]</span>
+        <h1 className="text-2xl font-bold tracking-tight text-text">
+          Goals
         </h1>
         <GoalForm />
       </div>

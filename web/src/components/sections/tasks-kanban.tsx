@@ -15,7 +15,6 @@ export function TasksKanban() {
 
   const columns = [
     { key: 'todo', label: 'To Do', tasks: todoTasks },
-    { key: 'in-progress', label: 'In Progress', tasks: [] as typeof todoTasks },
     { key: 'done', label: 'Done', tasks: doneTasks.slice(0, 20) },
   ];
 
@@ -24,21 +23,21 @@ export function TasksKanban() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Kanban Board
         </span>
-        <span className="text-xs font-mono text-text-muted">[ {totalCount} ]</span>
+        <span className="text-xs text-text-muted tabular-nums">{totalCount} total</span>
       </div>
 
-      <div className="grid grid-cols-3 divide-x divide-border min-h-[200px]">
+      <div className="grid grid-cols-2 divide-x divide-border min-h-[200px]">
         {columns.map((col) => (
           <div key={col.key} className="flex flex-col">
             {/* Column header */}
             <div className="px-4 py-3 border-b border-border bg-surface flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
+              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
                 {col.label}
               </span>
-              <span className="text-xs font-mono text-text-muted">
+              <span className="text-xs text-text-muted tabular-nums">
                 {col.tasks.length}
               </span>
             </div>
@@ -47,7 +46,7 @@ export function TasksKanban() {
             {col.tasks.length === 0 ? (
               <div className="flex-1 flex items-center justify-center p-4">
                 <span className="text-xs text-text-muted/60">
-                  {col.key === 'in-progress' ? 'Not yet supported' : 'Empty'}
+                  Empty
                 </span>
               </div>
             ) : (
@@ -56,21 +55,21 @@ export function TasksKanban() {
                   <Link
                     key={task._id}
                     href={`/tasks/${task._id}`}
-                    className="group block border border-border p-3 transition-colors hover:border-text/30 hover:bg-surface-hover"
+                    className="group block border border-border p-3 rounded-xl transition-colors hover:border-text/30 hover:bg-surface-hover"
                   >
                     <span className="text-sm text-text group-hover:text-accent transition-colors line-clamp-2">
                       {task.title}
                     </span>
                     <div className="flex items-center justify-between mt-2">
                       {task.dueDate ? (
-                        <span className="text-xs font-mono text-text-muted">
+                        <span className="text-xs text-text-muted">
                           {formatDate(task.dueDate)}
                         </span>
                       ) : (
                         <span />
                       )}
                       {task.goalId && (
-                        <span className="text-xs text-text-muted">[ goal ]</span>
+                        <span className="text-xs text-text-muted">Goal</span>
                       )}
                     </div>
                   </Link>

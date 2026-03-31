@@ -2,10 +2,25 @@
 
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
+import type { Id } from '@/lib/convex-api';
 import { ProgressRing } from '@/components/progress-ring';
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function TaskLabel({ taskId }: { taskId: Id<'tasks'> | null }) {
+  const task = useQuery(api.tasks.get, taskId ? { id: taskId } : 'skip');
+
+  if (!taskId) return <span className="text-xs text-text-muted">Not set</span>;
+  if (task === undefined) return <span className="text-xs text-text-muted animate-pulse">Loading...</span>;
+  if (task === null) return <span className="text-xs text-text-muted">Task</span>;
+
+  return (
+    <span className="text-xs text-text-muted truncate max-w-full" title={task.title}>
+      {task.title}
+    </span>
+  );
 }
 
 export function FocusRings() {
@@ -21,9 +36,9 @@ export function FocusRings() {
   const p2Done = dayPlan?.p2Done ?? false;
 
   const focusItems = [
-    { label: 'MIT', done: mitDone, taskId: dayPlan?.mitTaskId ?? null },
-    { label: 'P1', done: p1Done, taskId: dayPlan?.p1TaskId ?? null },
-    { label: 'P2', done: p2Done, taskId: dayPlan?.p2TaskId ?? null },
+    { label: 'MIT', done: mitDone, taskId: (dayPlan?.mitTaskId ?? null) as Id<'tasks'> | null },
+    { label: 'P1', done: p1Done, taskId: (dayPlan?.p1TaskId ?? null) as Id<'tasks'> | null },
+    { label: 'P2', done: p2Done, taskId: (dayPlan?.p2TaskId ?? null) as Id<'tasks'> | null },
   ];
 
   const focusCompleted = [mitDone, p1Done, p2Done].filter(Boolean).length;
@@ -53,9 +68,7 @@ export function FocusRings() {
               size={76}
               strokeWidth={4}
             />
-            <span className="text-xs text-text-muted truncate max-w-full">
-              {item.taskId ? `${String(item.taskId).slice(0, 8)}...` : 'Not set'}
-            </span>
+            <TaskLabel taskId={item.taskId} />
           </div>
         ))}
       </div>

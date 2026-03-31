@@ -70,11 +70,11 @@ function ProjectCreateModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start pt-[12vh] justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-start pt-[12vh] justify-center bg-black/60 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4 animate-scale-in"
+        className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4 animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -138,12 +138,12 @@ export function ProjectsGrid() {
     <div className="max-w-none space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-text">
-          Projects <span className="text-text-muted font-normal">[ {projects.length} ]</span>
+        <h1 className="text-2xl font-bold tracking-tight text-text">
+          Projects
         </h1>
         <button
           onClick={() => setShowCreate(true)}
-          className="bg-white text-black px-5 py-2.5 text-sm font-medium uppercase tracking-wide hover:bg-white/90 transition-colors rounded-xl"
+          className="bg-accent text-white px-5 py-2.5 text-sm font-medium uppercase tracking-wide hover:bg-accent-hover transition-colors rounded-xl"
         >
           New Project
         </button>
@@ -185,7 +185,7 @@ export function ProjectsGrid() {
                   {ghost.desc}
                 </p>
                 <div className="mt-auto pt-4 border-t border-border/30">
-                  <span className="text-xs font-mono text-text-muted">Today</span>
+                  <span className="text-xs text-text-muted">Today</span>
                 </div>
               </div>
             ))}
@@ -203,13 +203,13 @@ export function ProjectsGrid() {
             return (
               <div
                 key={project._id}
-                className="border border-border rounded-xl p-6 transition-colors hover:border-text/30 group h-full flex flex-col cursor-pointer"
+                className="border border-border rounded-xl p-6 transition-all duration-200 ease-out hover:border-text/30 hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:-translate-y-[1px] group h-full flex flex-col cursor-pointer"
                 onClick={() => setSelectedProjectId(project._id)}
               >
                   {/* Index + Status */}
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-mono text-text-muted">
-                      [{String(idx + 1).padStart(2, '0')}]
+                    <span className="text-xs text-text-muted tabular-nums">
+                      {String(idx + 1).padStart(2, '0')}
                     </span>
                     <div className="flex items-center gap-2">
                       <span className={`h-2 w-2 rounded-full ${statusColor(project.status)}`} />
@@ -231,7 +231,7 @@ export function ProjectsGrid() {
 
                   {/* Footer */}
                   <div className="mt-auto pt-4 border-t border-border">
-                    <span className="text-xs font-mono text-text-muted">
+                    <span className="text-xs text-text-muted">
                       {formatDate(createdDate)}
                     </span>
                   </div>

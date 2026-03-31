@@ -26,10 +26,9 @@ export function JournalList() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Journal Entries
         </span>
-        <span className="text-xs font-mono text-text-muted">[ {entries.length} ]</span>
       </div>
 
       {entries.length === 0 ? (
@@ -46,7 +45,7 @@ export function JournalList() {
             >
               {/* Date */}
               <div className="shrink-0 w-20">
-                <span className="text-xs font-mono text-text-muted">
+                <span className="text-xs text-text-muted">
                   {formatShortDate(entry.entryDate)}
                 </span>
                 <span className="text-xs text-text-muted/60 ml-1">
@@ -62,17 +61,17 @@ export function JournalList() {
               {/* Indicators */}
               <div className="flex items-center gap-2 shrink-0">
                 {entry.mit && (
-                  <span className="text-xs font-mono text-text-muted border border-border px-1.5 py-0.5">
+                  <span className="text-xs text-text-muted border border-border px-1.5 py-0.5 rounded">
                     MIT
                   </span>
                 )}
                 {entry.wins && entry.wins.length > 0 && (
-                  <span className="text-xs font-mono text-success border border-success/30 px-1.5 py-0.5">
+                  <span className="text-xs text-success border border-success/30 px-1.5 py-0.5 rounded tabular-nums">
                     {entry.wins.length}W
                   </span>
                 )}
                 {entry.notes && (
-                  <span className="text-xs font-mono text-text-muted/60 border border-border/60 px-1.5 py-0.5">
+                  <span className="text-xs text-text-muted/60 border border-border/60 px-1.5 py-0.5 rounded">
                     N
                   </span>
                 )}

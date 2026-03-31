@@ -18,7 +18,7 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
   const allPresets = getPresetsForPage(page);
 
   return (
-    <div className="max-w-none animate-fade-in">
+    <div className="max-w-7xl mx-auto animate-fade-in">
       {/* Configure mode toolbar */}
 
       {/* Config mode: preset selector */}
@@ -31,8 +31,8 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
         {preset.sections.map((section, index) => (
           <div
             key={section.id}
-            className={`animate-fade-in ${section.span === 'full' ? 'lg:col-span-2' : ''}`}
-            style={{ animationDelay: `${index * 50}ms` }}
+            className={`animate-fade-in transition-[border-color,box-shadow,background-color] duration-200 ease-out ${section.span === 'full' ? 'lg:col-span-2' : ''}`}
+            style={{ animationDelay: `${index * 40}ms`, animationFillMode: 'both' }}
           >
             <SectionRenderer section={section} />
           </div>

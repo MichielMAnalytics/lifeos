@@ -19,7 +19,7 @@ export function Greeting() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold tracking-tight text-text">
+      <h1 className="text-2xl font-bold tracking-tight text-text">
         {getGreeting()}
       </h1>
       <p className="mt-2 text-sm text-text-muted">{dateLabel}</p>

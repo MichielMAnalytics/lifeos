@@ -64,7 +64,7 @@ export function GoalsAtRisk() {
     return (
       <div className="border border-border rounded-xl p-6">
         <div className="flex items-baseline justify-between mb-4">
-          <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
             Goals at Risk
           </h2>
         </div>
@@ -76,7 +76,7 @@ export function GoalsAtRisk() {
   return (
     <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Goals at Risk
         </h2>
         <Link

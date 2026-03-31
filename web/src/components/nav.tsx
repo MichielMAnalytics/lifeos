@@ -106,7 +106,7 @@ export function Nav() {
       onMouseLeave={() => setHovered(false)}
       className={cn(
         'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-border/60 bg-bg transition-all duration-200',
-        showExpanded ? 'w-56' : 'w-14',
+        showExpanded ? 'w-60' : 'w-14',
       )}
     >
       {/* Logo + toggle */}
@@ -193,7 +193,7 @@ export function Nav() {
             <div key={group.category ?? `g-${gi}`} className="mb-1">
               {group.category && showExpanded && (
                 <div className="px-2 pt-3 pb-1.5 first:pt-0">
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted/50">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/40">
                     {group.category}
                   </span>
                 </div>
@@ -329,13 +329,13 @@ function NavItem({
         href={href}
         title={showExpanded ? undefined : label}
         className={cn(
-          'group relative flex h-8 items-center transition-all duration-150 flex-1',
+          'group relative flex h-[34px] items-center transition-all duration-150 flex-1',
           showExpanded
             ? (isConfigMode ? 'px-1 gap-2.5 rounded-lg' : 'px-2.5 gap-2.5 rounded-lg')
             : 'justify-center w-10 mx-auto rounded-lg',
           hidden && 'opacity-40',
           isActive
-            ? 'bg-surface-hover text-text'
+            ? 'before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[3px] before:rounded-full before:bg-accent bg-surface-hover/50 text-text'
             : 'text-text-muted hover:bg-surface-hover hover:text-text',
           isConfigMode && dragKey === itemKey && 'opacity-30',
         )}

@@ -161,7 +161,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
     <div className="border border-border rounded-xl">
       {/* Header */}
       <div className="px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Weekly Review: {formatDateLong(start)} &ndash; {formatDateLong(end)}
         </h2>
       </div>
@@ -177,7 +177,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
         <div className="p-6 space-y-8">
           {/* Highlights */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
               Highlights
             </label>
             {prefilledWins.length > 0 && (
@@ -206,7 +206,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
 
           {/* Challenges */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
               Challenges
             </label>
             <textarea
@@ -221,7 +221,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
           {/* Goal Updates */}
           {goals && goals.length > 0 && (
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+              <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
                 Goal Updates
               </label>
               <span className="text-xs text-text-muted block mb-3">Pre-filled from active goals:</span>
@@ -249,7 +249,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
 
           {/* Next Week Priorities */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
               Next Week Priorities
             </label>
             <div className="space-y-2">
@@ -288,7 +288,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
 
           {/* Score */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
               Score (1-10)
             </label>
             <input
@@ -307,7 +307,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
             <button
               onClick={handleSave}
               disabled={saving || !score || parseInt(score, 10) < 1 || parseInt(score, 10) > 10}
-              className="px-6 py-2.5 text-sm font-bold uppercase tracking-wide bg-accent text-bg rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 text-sm font-bold uppercase tracking-wide bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : 'Save Review'}
             </button>

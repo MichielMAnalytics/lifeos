@@ -6,6 +6,7 @@ import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
 import { useTodayDate } from '@/lib/today-date-context';
 import { cn, formatRelativeDate } from '@/lib/utils';
+import { CalendarDatePicker } from '@/components/calendar-date-picker';
 
 // ── Block type colors ────────────────────────────────────
 
@@ -294,11 +295,23 @@ function NowIndicator({ nowMinutes }: { nowMinutes: number }) {
 // ── TaskSidebarCard ──────────────────────────────────────
 
 function TaskSidebarCard({ task }: { task: { _id: Id<'tasks'>; title: string; dueDate?: string } }) {
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const updateTask = useMutation(api.tasks.update);
+
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('application/x-task-id', task._id);
     e.dataTransfer.setData('application/x-task-title', task.title);
     e.dataTransfer.effectAllowed = 'copy';
   };
+
+  const handleDateSelect = useCallback(async (date: string | null) => {
+    setDatePickerOpen(false);
+    try {
+      await updateTask({ id: task._id, dueDate: date ?? '' });
+    } catch (err) {
+      console.error('Failed to update task date:', err);
+    }
+  }, [updateTask, task._id]);
 
   const dueDate = task.dueDate ?? null;
   const dateInfo = formatRelativeDate(dueDate);
@@ -329,35 +342,47 @@ function TaskSidebarCard({ task }: { task: { _id: Id<'tasks'>; title: string; du
             {task.title}
           </p>
 
-          {/* Due date badge */}
-          {dueDate && (
-            <div className="mt-1">
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 text-[11px] rounded-md px-1 py-0.5',
-                  dateInfo.colorClass,
-                )}
+          {/* Due date badge - clickable to open calendar */}
+          <div className="relative mt-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDatePickerOpen((prev) => !prev);
+              }}
+              className={cn(
+                'inline-flex items-center gap-1 text-[11px] rounded-md px-1 py-0.5 transition-colors',
+                isOverdue
+                  ? 'text-danger hover:bg-danger/10'
+                  : 'text-text-muted hover:text-accent hover:bg-surface-hover',
+              )}
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={isOverdue ? 'text-danger' : 'opacity-50'}
               >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className={isOverdue ? 'text-danger' : 'opacity-50'}
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                {dateInfo.text}
-              </span>
-            </div>
-          )}
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              {dateInfo.text}
+            </button>
+            {datePickerOpen && (
+              <CalendarDatePicker
+                currentDate={dueDate ?? undefined}
+                onSelect={handleDateSelect}
+                onClose={() => setDatePickerOpen(false)}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -704,8 +729,8 @@ export function DayTimeline() {
     <div className="rounded-xl border border-border bg-surface overflow-hidden">
       {/* Header */}
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
-          Timeline
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          Day Plan
         </h2>
         {dayPlan?.wakeTime && (
           <span className="text-xs font-mono text-text-muted">
@@ -716,7 +741,7 @@ export function DayTimeline() {
 
       {/* Calendar grid + task sidebar */}
       <div className="flex overflow-hidden">
-        <div ref={scrollRef} className="flex-1 overflow-y-auto max-h-[660px]">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto max-h-[480px]">
           <div className="flex" style={{ minHeight: `${GRID_HEIGHT}px` }}>
             {/* Hour labels gutter */}
             <div

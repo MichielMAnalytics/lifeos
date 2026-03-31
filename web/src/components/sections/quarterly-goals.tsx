@@ -210,7 +210,7 @@ function QuarterSection({
   return (
     <div
       className={cn(
-        'border overflow-hidden',
+        'border rounded-xl overflow-hidden',
         isCurrent ? 'border-accent/40' : 'border-border',
         quarterColor,
       )}
@@ -223,7 +223,7 @@ function QuarterSection({
         )}
       >
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-bold text-text uppercase tracking-wide">
+          <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
             {quarter}
           </h3>
           {isCurrent && (
@@ -286,9 +286,8 @@ export function QuarterlyGoals() {
     <div className="max-w-none space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-text">
-          Quarterly Goals{' '}
-          <span className="text-text-muted font-normal">[ {allGoals.length} ]</span>
+        <h1 className="text-2xl font-bold tracking-tight text-text">
+          Quarterly Goals
         </h1>
         <GoalForm />
       </div>
@@ -301,7 +300,7 @@ export function QuarterlyGoals() {
             {/* Quarter header */}
             <div className="flex items-baseline justify-between px-4 py-3 border-b border-border/30 bg-accent/5 opacity-60">
               <div className="flex items-center gap-3">
-                <h3 className="text-sm font-bold text-text-muted uppercase tracking-wide">
+                <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
                   {currentQuarter}
                 </h3>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-accent/60">

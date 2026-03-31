@@ -62,7 +62,7 @@ function ActionabilityDropdown({ current, onSelect, onClose }: ActionabilityDrop
   return (
     <div
       ref={ref}
-      className="absolute z-50 top-full right-0 mt-1 w-28 border border-border bg-bg shadow-lg p-1"
+      className="absolute z-50 top-full right-0 mt-1 w-28 border border-border bg-bg shadow-lg p-1 rounded-xl"
     >
       {ACTIONABILITY_LEVELS.map((level) => {
         const config = ACTIONABILITY_CONFIG[level];
@@ -96,7 +96,6 @@ interface IdeaRowProps {
 }
 
 function IdeaRow({ idea, index, onSelect }: IdeaRowProps) {
-  const [expanded, setExpanded] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const updateIdea = useMutation(api.ideas.update);
@@ -112,9 +111,7 @@ function IdeaRow({ idea, index, onSelect }: IdeaRowProps) {
 
   const display = getActionabilityDisplay(idea.actionability);
   const createdDate = creationDateStr(idea._creationTime);
-  const nextStep = idea.nextStep ?? null;
   const contentPreview = truncate(idea.content, 60);
-  const hasMoreContent = idea.content.length > 60 || nextStep;
 
   return (
     <div className="border-b border-border last:border-b-0">
@@ -132,8 +129,8 @@ function IdeaRow({ idea, index, onSelect }: IdeaRowProps) {
         className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-surface-hover cursor-pointer group"
       >
         {/* Index */}
-        <span className="text-xs font-mono text-text-muted w-8 shrink-0">
-          [{String(index).padStart(2, '0')}]
+        <span className="text-xs text-text-muted w-8 shrink-0 tabular-nums">
+          {String(index).padStart(2, '0')}
         </span>
 
         {/* Content preview */}
@@ -163,39 +160,10 @@ function IdeaRow({ idea, index, onSelect }: IdeaRowProps) {
         </div>
 
         {/* Date */}
-        <span className="text-xs text-text-muted font-mono shrink-0 w-16 text-right">
+        <span className="text-xs text-text-muted shrink-0 w-16 text-right">
           {formatDate(createdDate)}
         </span>
-
-        {/* Expand indicator */}
-        {hasMoreContent && (
-          <span className={`text-xs text-text-muted transition-transform shrink-0 ${expanded ? 'rotate-90' : ''}`}>
-            &rsaquo;
-          </span>
-        )}
       </div>
-
-      {/* Expanded content */}
-      {expanded && (
-        <div className="px-5 pb-4 pl-[calc(2rem+2.25rem)]">
-          <div className="border-l-2 border-border pl-4 space-y-2">
-            {/* Full content */}
-            <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
-              {idea.content}
-            </p>
-
-            {/* Next step */}
-            {nextStep && (
-              <div className="pt-2 border-t border-border">
-                <p className="text-xs text-text-muted">
-                  <span className="font-bold text-text uppercase tracking-wide">Next:</span>{' '}
-                  {nextStep}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -221,14 +189,13 @@ export function IdeasGrid() {
     <div className="max-w-none space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-text">
-          Ideas{' '}
-          <span className="text-text-muted font-normal">[ {ideas.length} ]</span>
+        <h1 className="text-2xl font-bold tracking-tight text-text">
+          Ideas
         </h1>
       </div>
 
       {/* Quick Add */}
-      <div className="border border-border p-5">
+      <div className="border border-border p-5 rounded-xl">
         <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3">
           Quick Add
         </p>
@@ -257,7 +224,7 @@ export function IdeasGrid() {
                 <span className="text-xs font-medium px-2 py-0.5 rounded border border-border/50 text-text-muted shrink-0">
                   {ghost.level}
                 </span>
-                <span className="text-xs text-text-muted font-mono shrink-0 w-16 text-right">
+                <span className="text-xs text-text-muted shrink-0 w-16 text-right">
                   Today
                 </span>
               </div>
@@ -268,9 +235,9 @@ export function IdeasGrid() {
           </p>
         </div>
       ) : (
-        <div className="border border-border">
+        <div className="border border-border rounded-xl overflow-hidden">
           {/* Table header */}
-          <div className="flex items-center gap-4 px-5 py-2.5 border-b border-border bg-surface text-xs font-bold uppercase tracking-widest text-text-muted">
+          <div className="flex items-center gap-4 px-5 py-2.5 border-b border-border bg-surface text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
             <span className="w-8 shrink-0">#</span>
             <span className="flex-1">Content</span>
             <span className="shrink-0 w-20 text-center">Potential</span>

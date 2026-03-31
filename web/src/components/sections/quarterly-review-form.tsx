@@ -168,7 +168,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
     <div className="border border-border rounded-xl">
       {/* Header */}
       <div className="px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Quarterly Review: {quarter.label}
         </h2>
         <p className="text-xs text-text-muted mt-1">
@@ -187,7 +187,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
         <div className="p-6 space-y-8">
           {/* Quarter Summary */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
               Quarter Summary
             </label>
             <textarea
@@ -201,7 +201,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
 
           {/* Achievements (pre-filled from weekly reviews) */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
               Achievements
             </label>
             {weeklyHighlights.length > 0 && (
@@ -232,7 +232,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
 
           {/* Goals Completed This Quarter */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
               Goals Completed This Quarter
             </label>
             {completedGoals.length > 0 ? (
@@ -268,7 +268,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
 
           {/* What Didn't Work */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
               What Didn&apos;t Work
             </label>
             <textarea
@@ -282,7 +282,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
 
           {/* Next Quarter Goals */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
               Goals for Next Quarter
             </label>
             <textarea
@@ -296,7 +296,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
 
           {/* Score */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
               Score (1-10)
             </label>
             <input
@@ -315,7 +315,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
             <button
               onClick={handleSave}
               disabled={saving || !score || parseInt(score, 10) < 1 || parseInt(score, 10) > 10}
-              className="px-6 py-2.5 text-sm font-bold uppercase tracking-wide bg-accent text-bg rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 text-sm font-bold uppercase tracking-wide bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : 'Save Quarterly Review'}
             </button>

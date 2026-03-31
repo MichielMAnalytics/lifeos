@@ -35,14 +35,14 @@ export function IdeasPipeline() {
   return (
     <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Ideas Pipeline
         </h2>
         <Link
           href="/ideas"
           className="text-xs text-text-muted hover:text-text transition-colors"
         >
-          View all [ {ideas.length} ]
+          View all
         </Link>
       </div>
       {top5.length === 0 ? (

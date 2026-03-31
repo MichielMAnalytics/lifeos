@@ -82,11 +82,11 @@ function ThoughtAddForm({ onDone }: { onDone?: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start pt-[12vh] justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-start pt-[12vh] justify-center bg-black/60 backdrop-blur-[2px]"
       onClick={closeModal}
     >
       <div
-        className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4 animate-scale-in"
+        className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4 animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -166,8 +166,8 @@ function ThoughtRow({
         className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-surface/50"
       >
         {/* Index badge */}
-        <span className="mt-0.5 shrink-0 text-xs font-mono text-text-muted">
-          [{String(index + 1).padStart(2, '0')}]
+        <span className="mt-0.5 shrink-0 text-xs text-text-muted tabular-nums">
+          {String(index + 1).padStart(2, '0')}
         </span>
 
         {/* Title + chevron */}
@@ -232,9 +232,8 @@ export function ThoughtsList() {
     <div className="max-w-none space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-text">
-          Thoughts{' '}
-          <span className="text-text-muted font-normal">[ {thoughts.length} ]</span>
+        <h1 className="text-2xl font-bold tracking-tight text-text">
+          Thoughts
         </h1>
         <ThoughtAddForm />
       </div>
@@ -272,7 +271,7 @@ export function ThoughtsList() {
           </p>
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="border border-border rounded-xl overflow-hidden">
           {thoughts.map((thought, i) => (
             <ThoughtRow
               key={thought._id}

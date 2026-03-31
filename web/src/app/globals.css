@@ -16,6 +16,13 @@
   --color-success: #4dab9a;
   --color-warning: #cc8833;
   --color-danger: #e06c60;
+  --color-surface-2: #333333;
+  --color-border-subtle: #2a2a2a;
+  --color-overlay: rgba(0,0,0,0.6);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.2);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.3);
+  --focus-ring: rgba(82,156,202,0.4);
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -37,6 +44,13 @@
   --color-success: #5a8a6a;
   --color-warning: #c49a3e;
   --color-danger: #c45d5d;
+  --color-surface-2: #e8e2d9;
+  --color-border-subtle: #e8e0d6;
+  --color-overlay: rgba(44,36,32,0.4);
+  --shadow-sm: 0 1px 2px rgba(44,36,32,0.06);
+  --shadow-md: 0 4px 12px rgba(44,36,32,0.08);
+  --shadow-lg: 0 8px 30px rgba(44,36,32,0.12);
+  --focus-ring: rgba(196,93,62,0.3);
 }
 
 [data-theme="nord"] {
@@ -53,6 +67,13 @@
   --color-success: #a3be8c;
   --color-warning: #ebcb8b;
   --color-danger: #bf616a;
+  --color-surface-2: #4c566a;
+  --color-border-subtle: #3b4252;
+  --color-overlay: rgba(0,0,0,0.5);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.35);
+  --focus-ring: rgba(136,192,208,0.4);
 }
 
 [data-theme="sunset"] {
@@ -69,6 +90,13 @@
   --color-success: #86efac;
   --color-warning: #fcd34d;
   --color-danger: #fb7185;
+  --color-surface-2: #422d52;
+  --color-border-subtle: #2e1d38;
+  --color-overlay: rgba(26,15,30,0.6);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.35);
+  --focus-ring: rgba(245,158,11,0.4);
 }
 
 [data-theme="forest"] {
@@ -85,6 +113,13 @@
   --color-success: #4ade80;
   --color-warning: #fbbf24;
   --color-danger: #f87171;
+  --color-surface-2: #273d2f;
+  --color-border-subtle: #1a2b22;
+  --color-overlay: rgba(12,20,16,0.6);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.35);
+  --focus-ring: rgba(74,222,128,0.4);
 }
 
 [data-theme="light"] {
@@ -101,6 +136,13 @@
   --color-success: #4dab9a;
   --color-warning: #cc8833;
   --color-danger: #e06c60;
+  --color-surface-2: #eae9e6;
+  --color-border-subtle: #eeede9;
+  --color-overlay: rgba(55,53,47,0.4);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.1);
+  --focus-ring: rgba(46,170,220,0.35);
 }
 
 [data-theme="dark"] {
@@ -117,6 +159,13 @@
   --color-success: #4dab9a;
   --color-warning: #cc8833;
   --color-danger: #e06c60;
+  --color-surface-2: #333333;
+  --color-border-subtle: #2a2a2a;
+  --color-overlay: rgba(0,0,0,0.6);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.2);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.3);
+  --focus-ring: rgba(82,156,202,0.4);
 }
 
 [data-theme="midnight"] {
@@ -133,6 +182,13 @@
   --color-success: #00dc82;
   --color-warning: #f5a623;
   --color-danger: #ff4444;
+  --color-surface-2: #1e1e1e;
+  --color-border-subtle: #111111;
+  --color-overlay: rgba(0,0,0,0.7);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.5);
+  --focus-ring: rgba(255,255,255,0.2);
 }
 
 } /* end @layer theme */
@@ -174,7 +230,7 @@ body {
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
 }
 
@@ -192,7 +248,7 @@ body {
 }
 
 .animate-scale-in {
-  animation: scaleIn 0.2s ease-out forwards;
+  animation: scaleIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.05) forwards;
 }
 
 .stagger-children > * {
@@ -259,7 +315,7 @@ body {
 }
 
 .animate-check-pop {
-  animation: check-pop 0.3s ease-out;
+  animation: check-pop 0.2s ease-out;
 }
 
 .animate-strikethrough {
@@ -268,15 +324,29 @@ body {
 }
 
 .animate-task-fade-out {
-  animation: task-fade-out 0.4s ease-out 0.6s forwards;
+  animation: task-fade-out 0.4s ease-out 0.3s forwards;
 }
 
-/* ── Scrollbar ───────────────────────────────────── */
+/* ── Scrollbar (auto-hiding) ────────────────────── */
 
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; }
+*:hover > ::-webkit-scrollbar-thumb,
+*:hover::-webkit-scrollbar-thumb { background: var(--color-border); }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+
+/* ── Shimmer / Loading ──────────────────────────── */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-surface-hover) 50%, var(--color-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
 
 /* ── Selection ───────────────────────────────────── */
 

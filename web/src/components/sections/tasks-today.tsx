@@ -14,10 +14,9 @@ export function TasksToday() {
   return (
     <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Today&apos;s Tasks
         </h2>
-        <span className="text-xs text-text-muted">[ {todayTasks.length} ]</span>
       </div>
       {todayTasks.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">

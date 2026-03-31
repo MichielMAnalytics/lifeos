@@ -29,11 +29,11 @@ export function JournalEditor() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Journal -- {formatFullDate(todayStr)}
         </span>
-        <span className="text-xs font-mono text-text-muted">
-          {entry ? '[ saved ]' : '[ empty ]'}
+        <span className="text-xs text-text-muted">
+          {entry ? 'Saved' : 'Empty'}
         </span>
       </div>
 
@@ -88,8 +88,8 @@ export function JournalEditor() {
               <ul className="space-y-1.5">
                 {entry.wins.map((win: string, i: number) => (
                   <li key={i} className="flex items-start gap-3 text-sm">
-                    <span className="text-xs font-mono text-success mt-0.5">
-                      [{String(i + 1).padStart(2, '0')}]
+                    <span className="text-xs text-success mt-0.5 tabular-nums">
+                      {String(i + 1).padStart(2, '0')}
                     </span>
                     <span className="text-success">{win}</span>
                   </li>

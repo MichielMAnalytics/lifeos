@@ -87,9 +87,13 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 
 // ── Task Form ────────────────────────────────────────────
 
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function TaskQuickForm({ onDone }: { onDone: () => void }) {
   const [title, setTitle] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(todayISO());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const createTask = useMutation(api.tasks.create);

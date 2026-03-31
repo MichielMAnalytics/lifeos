@@ -30,7 +30,7 @@ export function JournalToday() {
   return (
     <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Journal
         </h2>
         {journal && (
@@ -79,8 +79,8 @@ export function JournalToday() {
                     key={i}
                     className="flex items-start gap-3 text-sm text-success/80"
                   >
-                    <span className="text-xs font-mono text-text-muted mt-0.5">
-                      [{String(i + 1).padStart(2, '0')}]
+                    <span className="text-xs text-text-muted mt-0.5 tabular-nums">
+                      {String(i + 1).padStart(2, '0')}
                     </span>
                     {win}
                   </li>
@@ -94,7 +94,7 @@ export function JournalToday() {
           <p className="text-sm text-text-muted">No journal entry yet</p>
           <Link
             href={`/journal/${todayStr}`}
-            className="mt-3 text-xs text-text-muted hover:text-text transition-colors border border-border px-4 py-2"
+            className="mt-3 text-xs text-text-muted hover:text-text transition-colors border border-border px-4 py-2 rounded-lg"
           >
             Start writing
           </Link>

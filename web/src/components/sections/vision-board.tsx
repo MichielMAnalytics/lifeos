@@ -148,11 +148,10 @@ export function VisionBoard() {
     <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Vision Board
         </h2>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-text-muted">[ {images.length} ]</span>
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}

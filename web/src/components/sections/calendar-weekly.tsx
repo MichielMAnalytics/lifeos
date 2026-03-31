@@ -268,13 +268,13 @@ export function CalendarWeekly() {
         </button>
 
         <div className="flex items-center gap-3">
-          <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
             {formatWeekRange(weekStart)}
           </h2>
           {!isThisWeek && (
             <button
               onClick={goToThisWeek}
-              className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-text transition-colors border border-accent/30 px-2 py-0.5 rounded"
+              className="text-[11px] font-medium uppercase tracking-[0.08em] text-accent hover:text-text transition-colors border border-accent/30 px-2 py-0.5 rounded"
             >
               Today
             </button>
@@ -326,7 +326,7 @@ export function CalendarWeekly() {
           </div>
         </div>
       ) : (
-        <div ref={scrollRef} className="overflow-x-auto overflow-y-auto max-h-[660px]">
+        <div ref={scrollRef} className="overflow-x-auto overflow-y-auto max-h-[480px]">
           {/* Day headers row */}
           <div className="flex border-b border-border bg-bg sticky top-0 z-10">
             {/* Hour gutter spacer */}
@@ -343,7 +343,7 @@ export function CalendarWeekly() {
                     isToday && 'bg-accent/[0.04]',
                   )}
                 >
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted block">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block">
                     {DAY_LABELS[i]}
                   </span>
                   <span

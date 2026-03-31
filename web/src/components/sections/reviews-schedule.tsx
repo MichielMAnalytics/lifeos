@@ -112,7 +112,7 @@ export function ReviewsSchedule() {
   if (!reviews) {
     return (
       <div className="border border-border rounded-xl p-6">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide mb-4">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 mb-4">
           Review Schedule
         </h2>
         <div className="animate-pulse space-y-3">
@@ -199,7 +199,7 @@ export function ReviewsSchedule() {
     <div className="border border-border rounded-xl">
       {/* Header */}
       <div className="px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Review Schedule
         </h2>
       </div>
@@ -208,7 +208,7 @@ export function ReviewsSchedule() {
       {activeForm === 'weekly' && (
         <div className="px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-accent">
               Writing Weekly Review
             </span>
             <button
@@ -224,7 +224,7 @@ export function ReviewsSchedule() {
       {activeForm === 'quarterly' && (
         <div className="px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-accent">
               Writing Quarterly Review
             </span>
             <button
@@ -241,7 +241,7 @@ export function ReviewsSchedule() {
       {/* Overdue section */}
       {hasOverdue && !activeForm && (
         <div className="px-6 py-4 border-b border-border">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-danger">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-danger">
             Overdue
           </span>
           <div className="mt-3 space-y-2">
@@ -300,7 +300,7 @@ export function ReviewsSchedule() {
       {/* Upcoming section */}
       {!activeForm && (
         <div className="px-6 py-4">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
             Upcoming
           </span>
           <div className="mt-3 space-y-2">
@@ -364,7 +364,7 @@ export function ReviewsSchedule() {
       {/* Completed section */}
       {completedReviews.length > 0 && !activeForm && (
         <div className="px-6 py-4 border-t border-border">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
             Completed
           </span>
           <div className="mt-3 space-y-1">

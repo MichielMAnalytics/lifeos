@@ -56,7 +56,7 @@ export function Quotes() {
   return (
     <div className="mt-2 border border-border rounded-xl">
       <div className="px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Daily Quote
         </h2>
       </div>

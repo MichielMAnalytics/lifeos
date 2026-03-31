@@ -84,7 +84,7 @@ export function RemindersUpcoming() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Upcoming Reminders
         </h2>
         <span className="text-xs font-mono text-text-muted">

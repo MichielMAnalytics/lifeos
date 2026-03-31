@@ -37,12 +37,12 @@ function GoalBar({ goalId, title, targetDate }: { goalId: Id<"goals">; title: st
         </div>
       </div>
 
-      <span className="text-xs font-mono text-text-muted w-10 text-right shrink-0">
+      <span className="text-xs text-text-muted tabular-nums w-10 text-right shrink-0">
         {progress}%
       </span>
 
       {targetDate && (
-        <span className="text-xs font-mono text-text-muted shrink-0">
+        <span className="text-xs text-text-muted shrink-0">
           {targetDate}
         </span>
       )}
@@ -80,10 +80,9 @@ export function GoalsTimeline() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
           Quarterly Timeline
         </span>
-        <span className="text-xs font-mono text-text-muted">[ {goals.length} ]</span>
       </div>
 
       {goals.length === 0 ? (
@@ -101,11 +100,11 @@ export function GoalsTimeline() {
               <div key={quarter}>
                 {/* Quarter header */}
                 <div className="flex items-center gap-4 px-6 py-3 bg-surface">
-                  <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
                     {label}
                   </span>
                   <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs font-mono text-text-muted">
+                  <span className="text-xs text-text-muted tabular-nums">
                     {quarterGoals.length}
                   </span>
                 </div>

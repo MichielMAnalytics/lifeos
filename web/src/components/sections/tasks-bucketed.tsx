@@ -34,6 +34,12 @@ function sevenDaysFromNowISO(): string {
   return d.toISOString().slice(0, 10);
 }
 
+function eightDaysFromNowISO(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 8);
+  return d.toISOString().slice(0, 10);
+}
+
 
 function weekdayName(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
@@ -140,7 +146,7 @@ function bucketTasks(tasks: Task[]): TaskBucket[] {
     buckets.push({ key: 'next7d', label: 'Next 7 days', count: nextSevenDays.length, variant: 'muted', tasks: nextSevenDays, defaultDate: sevenDays });
   }
   if (later.length > 0) {
-    buckets.push({ key: 'later', label: 'Later', count: later.length, variant: 'muted', tasks: later });
+    buckets.push({ key: 'later', label: 'Later', count: later.length, variant: 'muted', tasks: later, defaultDate: eightDaysFromNowISO() });
   }
   buckets.push({ key: 'nodate', label: 'No date', count: noDate.length, variant: 'muted', tasks: noDate });
 
@@ -449,7 +455,7 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
         draggable
         onDragStart={(e) => onDragStart(e, task._id, bucketKey)}
         onClick={onClick}
-        className={`group relative rounded-xl border transition-all duration-150 cursor-grab active:cursor-grabbing ${
+        className={`group relative rounded-xl border transition-all duration-150 cursor-grab active:cursor-grabbing pl-5 ${
           completing ? 'animate-task-fade-out' : ''
         } ${
           isSelected
@@ -459,6 +465,15 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
               : 'border-border bg-surface hover:border-text-muted/30'
         }`}
       >
+        {/* Drag handle indicator */}
+        <div className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
+          <svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor" className="text-text-muted">
+            <circle cx="1.5" cy="1.5" r="1" /><circle cx="4.5" cy="1.5" r="1" />
+            <circle cx="1.5" cy="5" r="1" /><circle cx="4.5" cy="5" r="1" />
+            <circle cx="1.5" cy="8.5" r="1" /><circle cx="4.5" cy="8.5" r="1" />
+          </svg>
+        </div>
+
         {/* Selection indicator */}
         {isSelected && (
           <div className="absolute top-2 left-2 h-4 w-4 rounded bg-accent flex items-center justify-center z-10">
@@ -650,7 +665,7 @@ function InlineAddTask({ defaultDate, onDone }: { defaultDate?: string; onDone?:
             type="button"
             onClick={() => void handleSubmit()}
             disabled={!title.trim() || saving}
-            className="text-[11px] font-medium bg-accent text-bg px-3 py-1 rounded-lg hover:bg-accent-hover disabled:opacity-30 transition-colors"
+            className="text-[11px] font-medium bg-accent text-white px-3 py-1 rounded-lg hover:bg-accent-hover disabled:opacity-30 transition-colors"
           >
             {saving ? '...' : 'Add'}
           </button>
@@ -776,7 +791,9 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOve
           )}
           {bucket.sublabel ?? bucket.label}
         </span>
-        <span className="text-xs text-text-muted/50 font-medium tabular-nums">
+        <span className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] tabular-nums ${
+          bucket.variant === 'danger' ? 'bg-danger/10 text-danger' : 'bg-surface px-1.5 text-text-muted'
+        }`}>
           {bucket.count}
         </span>
         {bucket.variant === 'danger' && bucket.count > 0 && (
@@ -1133,7 +1150,7 @@ export function TasksBucketed() {
         <h1 className="text-2xl font-bold tracking-tight text-text">
           Tasks
         </h1>
-        <span className="text-sm text-text-muted tabular-nums">{tasks.length} tasks</span>
+        <span className="text-sm text-text-muted">All tasks</span>
       </div>
 
       {/* Column layout */}

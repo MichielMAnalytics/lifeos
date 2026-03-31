@@ -9,7 +9,7 @@ export function TaskForm({ onDone }: { onDone?: () => void }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState('');
 
   const createTask = useMutation(api.tasks.create);
@@ -17,7 +17,7 @@ export function TaskForm({ onDone }: { onDone?: () => void }) {
   function closeModal() {
     setOpen(false);
     setTitle('');
-    setDueDate('');
+    setDueDate(new Date().toISOString().slice(0, 10));
     setNotes('');
   }
 
@@ -67,11 +67,11 @@ export function TaskForm({ onDone }: { onDone?: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start pt-[12vh] justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-start pt-[12vh] justify-center bg-black/60 backdrop-blur-[2px]"
       onClick={closeModal}
     >
       <div
-        className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4"
+        className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -106,7 +106,7 @@ export function TaskForm({ onDone }: { onDone?: () => void }) {
           />
 
           <textarea
-            placeholder="Notes (optional)"
+            placeholder="Description (optional)"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}

@@ -75,11 +75,11 @@ export function JournalForm({ onDone }: { onDone?: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start pt-[12vh] justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-start pt-[12vh] justify-center bg-black/60 backdrop-blur-[2px]"
       onClick={closeModal}
     >
       <div
-        className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4"
+        className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
