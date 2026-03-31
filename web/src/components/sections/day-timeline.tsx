@@ -413,7 +413,7 @@ function TaskSidebar({
   return (
     <div
       className={cn(
-        'shrink-0 w-[200px] border-l border-border overflow-y-auto max-h-[660px] transition-colors',
+        'md:shrink-0 md:w-[200px] md:border-l border-t md:border-t-0 border-border overflow-y-auto max-h-[300px] md:max-h-[660px] transition-colors',
         isDragOverSidebar && 'bg-danger/10 border-l-danger/50',
       )}
       onDragOver={onSidebarDragOver}
@@ -740,7 +740,7 @@ export function DayTimeline() {
       </div>
 
       {/* Calendar grid + task sidebar */}
-      <div className="flex overflow-hidden">
+      <div className="flex flex-col md:flex-row overflow-hidden">
         <div ref={scrollRef} className="flex-1 overflow-y-auto max-h-[480px]">
           <div className="flex" style={{ minHeight: `${GRID_HEIGHT}px` }}>
             {/* Hour labels gutter */}

@@ -455,7 +455,7 @@ export function GlobalQuickAdd() {
       <div
         ref={popoverRef}
         className={cn(
-          'fixed right-6 z-50',
+          'fixed right-4 md:right-6 z-50',
           isHeader ? 'top-[4.5rem]' : 'top-4',
         )}
       >
@@ -493,7 +493,7 @@ export function GlobalQuickAdd() {
 
         {/* Dropdown */}
         {open && !selectedType && (
-          <div className="absolute top-10 right-0 w-52 border border-border bg-surface rounded-xl shadow-xl animate-scale-in overflow-hidden">
+          <div className="absolute top-10 right-0 w-[calc(100vw-2rem)] sm:w-52 border border-border bg-surface rounded-xl shadow-xl animate-scale-in overflow-hidden">
             <div className="px-3 py-2.5 border-b border-border/40">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
                 Quick Add
@@ -516,7 +516,7 @@ export function GlobalQuickAdd() {
 
         {/* Form popover */}
         {open && selectedType && (
-          <div className="absolute top-10 right-0 w-72 border border-border bg-surface rounded-xl shadow-xl animate-scale-in overflow-hidden">
+          <div className="absolute top-10 right-0 w-[calc(100vw-2rem)] sm:w-72 border border-border bg-surface rounded-xl shadow-xl animate-scale-in overflow-hidden">
             {/* Header with back button */}
             <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/40">
               <button

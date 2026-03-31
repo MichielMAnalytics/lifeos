@@ -476,7 +476,7 @@ export function SearchModal() {
         if (e.target === e.currentTarget) setOpen(false);
       }}
     >
-      <div className="w-full max-w-2xl mx-4 mt-[15vh] h-fit max-h-[60vh] flex flex-col rounded-xl border border-border bg-bg shadow-2xl overflow-hidden">
+      <div className="w-full h-full md:h-fit max-h-full md:max-h-[60vh] md:max-w-2xl md:mx-4 md:mt-[15vh] flex flex-col md:rounded-xl border-0 md:border border-border bg-bg shadow-2xl overflow-hidden">
         {/* ── Search input row ─────────────────────────── */}
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <SearchIcon className="shrink-0 text-text-muted" />

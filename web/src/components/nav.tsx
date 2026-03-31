@@ -36,6 +36,7 @@ export function Nav() {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { config, isConfigMode, toggleConfigMode, togglePageVisibility, setNavOrder } = useDashboardConfig();
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
@@ -46,6 +47,21 @@ export function Nav() {
     if (stored === 'false') setExpanded(false);
     setMounted(true);
   }, []);
+
+  // Close mobile nav on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile nav is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
   if (config.navMode === 'header') {
     return <HeaderNav />;
@@ -100,159 +116,213 @@ export function Nav() {
 
   const showExpanded = expanded || hovered;
 
-  return (
-    <nav
-      onMouseEnter={() => { if (!expanded) setHovered(true); }}
-      onMouseLeave={() => setHovered(false)}
-      className={cn(
-        'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-border/60 bg-bg transition-all duration-200',
-        showExpanded ? 'w-60' : 'w-14',
-      )}
-    >
-      {/* Logo + toggle */}
-      <div
-        className={cn(
-          'flex h-14 shrink-0 items-center',
-          showExpanded ? 'justify-between px-4' : 'justify-center',
-        )}
-      >
-        {showExpanded ? (
-          <>
-            <div className="flex items-center gap-2.5">
-              <LogoMark size={24} className="opacity-80" />
-              <span className="text-sm font-semibold text-text tracking-tight">LifeOS</span>
-            </div>
-            <button
-              onClick={toggle}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
-              title={expanded ? 'Collapse sidebar' : 'Pin sidebar'}
-            >
-              {/* Notion-style toggle icon */}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {expanded ? (
-                  <>
-                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                    <line x1="9" y1="3" x2="9" y2="21" />
-                    <polyline points="14 9 12 12 14 15" />
-                  </>
-                ) : (
-                  <>
-                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                    <line x1="9" y1="3" x2="9" y2="21" />
-                    <polyline points="12 9 14 12 12 15" />
-                  </>
-                )}
-              </svg>
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={toggle}
-            className="flex shrink-0 items-center justify-center transition-colors hover:opacity-70"
-            title="Expand sidebar"
-          >
-            <LogoMark size={24} />
-          </button>
-        )}
-      </div>
-
-      {/* Main links */}
-      <div className="flex flex-1 flex-col overflow-y-auto px-2.5 pt-2 pb-2">
-        {isConfigMode ? (
-          // Config mode: flat list with drag handles (no categories)
-          <div className="flex flex-col gap-0.5">
-            {navLinks.map(({ key, href, label, abbr, hidden }) => {
-              const isActive = pathname === href || pathname.startsWith(href + '/');
-              return (
-                <NavItem
-                  key={key}
-                  itemKey={key}
-                  href={href}
-                  label={label}
-                  abbr={abbr}
-                  hidden={hidden}
-                  isActive={isActive}
-                  showExpanded={showExpanded}
-                  isConfigMode={isConfigMode}
-                  mounted={mounted}
-                  index={0}
-                  dragKey={dragKey}
-                  dragOverKey={dragOverKey}
-                  setDragKey={setDragKey}
-                  setDragOverKey={setDragOverKey}
-                  config={config}
-                  setNavOrder={setNavOrder}
-                  togglePageVisibility={togglePageVisibility}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          // Normal mode: grouped by category
-          grouped.map((group, gi) => (
-            <div key={group.category ?? `g-${gi}`} className="mb-1">
-              {group.category && showExpanded && (
-                <div className="px-2 pt-3 pb-1.5 first:pt-0">
-                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/40">
-                    {group.category}
-                  </span>
-                </div>
-              )}
-              {!showExpanded && gi > 0 && group.category && (
-                <div className="mx-auto my-2 w-5 border-t border-border/40" />
-              )}
-              <div className="flex flex-col gap-0.5">
-                {group.items.map(({ key, href, label, abbr, hidden }, index) => {
-                  const isActive = pathname === href || pathname.startsWith(href + '/');
-                  return (
-                    <NavItem
-                      key={key}
-                      itemKey={key}
-                      href={href}
-                      label={label}
-                      abbr={abbr}
-                      hidden={hidden}
-                      isActive={isActive}
-                      showExpanded={showExpanded}
-                      isConfigMode={false}
-                      mounted={mounted}
-                      index={index}
-                      dragKey={dragKey}
-                      dragOverKey={dragOverKey}
-                      setDragKey={setDragKey}
-                      setDragOverKey={setDragOverKey}
-                      config={config}
-                      setNavOrder={setNavOrder}
-                      togglePageVisibility={togglePageVisibility}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Bottom */}
-      <div className="shrink-0 border-t border-border/40 px-2.5 py-3">
-        {/* Search trigger */}
+  // Shared nav content renderer (used for both desktop and mobile)
+  const renderNavContent = (forMobile: boolean) => {
+    const navExpanded = forMobile ? true : showExpanded;
+    return (
+      <>
+        {/* Logo + toggle */}
         <div
           className={cn(
-            'group relative flex h-9 items-center transition-all duration-150 w-full',
-            showExpanded ? 'px-2.5 gap-3 rounded-lg' : 'justify-center w-10 mx-auto rounded-lg',
+            'flex h-14 shrink-0 items-center',
+            navExpanded ? 'justify-between px-4' : 'justify-center',
           )}
         >
-          {showExpanded ? (
-            <SearchTrigger variant="expanded" />
+          {navExpanded ? (
+            <>
+              <div className="flex items-center gap-2.5">
+                <LogoMark size={24} className="opacity-80" />
+                <span className="text-sm font-semibold text-text tracking-tight">LifeOS</span>
+              </div>
+              {forMobile ? (
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
+                  title="Close menu"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  onClick={toggle}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
+                  title={expanded ? 'Collapse sidebar' : 'Pin sidebar'}
+                >
+                  {/* Notion-style toggle icon */}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    {expanded ? (
+                      <>
+                        <rect x="3" y="3" width="18" height="18" rx="3" />
+                        <line x1="9" y1="3" x2="9" y2="21" />
+                        <polyline points="14 9 12 12 14 15" />
+                      </>
+                    ) : (
+                      <>
+                        <rect x="3" y="3" width="18" height="18" rx="3" />
+                        <line x1="9" y1="3" x2="9" y2="21" />
+                        <polyline points="12 9 14 12 12 15" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+              )}
+            </>
           ) : (
-            <SearchTrigger variant="icon" />
+            <button
+              onClick={toggle}
+              className="flex shrink-0 items-center justify-center transition-colors hover:opacity-70"
+              title="Expand sidebar"
+            >
+              <LogoMark size={24} />
+            </button>
           )}
         </div>
 
-        {/* Profile + menu */}
-        <ProfileBadge expanded={showExpanded} toggleConfigMode={toggleConfigMode} isConfigMode={isConfigMode} />
-      </div>
-    </nav>
+        {/* Main links */}
+        <div className="flex flex-1 flex-col overflow-y-auto px-2.5 pt-2 pb-2">
+          {isConfigMode ? (
+            // Config mode: flat list with drag handles (no categories)
+            <div className="flex flex-col gap-0.5">
+              {navLinks.map(({ key, href, label, abbr, hidden }) => {
+                const isActive = pathname === href || pathname.startsWith(href + '/');
+                return (
+                  <NavItem
+                    key={key}
+                    itemKey={key}
+                    href={href}
+                    label={label}
+                    abbr={abbr}
+                    hidden={hidden}
+                    isActive={isActive}
+                    showExpanded={navExpanded}
+                    isConfigMode={isConfigMode}
+                    mounted={mounted}
+                    index={0}
+                    dragKey={dragKey}
+                    dragOverKey={dragOverKey}
+                    setDragKey={setDragKey}
+                    setDragOverKey={setDragOverKey}
+                    config={config}
+                    setNavOrder={setNavOrder}
+                    togglePageVisibility={togglePageVisibility}
+                    onNavigate={forMobile ? () => setMobileOpen(false) : undefined}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            // Normal mode: grouped by category
+            grouped.map((group, gi) => (
+              <div key={group.category ?? `g-${gi}`} className="mb-1">
+                {group.category && navExpanded && (
+                  <div className="px-2 pt-3 pb-1.5 first:pt-0">
+                    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/40">
+                      {group.category}
+                    </span>
+                  </div>
+                )}
+                {!navExpanded && gi > 0 && group.category && (
+                  <div className="mx-auto my-2 w-5 border-t border-border/40" />
+                )}
+                <div className="flex flex-col gap-0.5">
+                  {group.items.map(({ key, href, label, abbr, hidden }, index) => {
+                    const isActive = pathname === href || pathname.startsWith(href + '/');
+                    return (
+                      <NavItem
+                        key={key}
+                        itemKey={key}
+                        href={href}
+                        label={label}
+                        abbr={abbr}
+                        hidden={hidden}
+                        isActive={isActive}
+                        showExpanded={navExpanded}
+                        isConfigMode={false}
+                        mounted={mounted}
+                        index={index}
+                        dragKey={dragKey}
+                        dragOverKey={dragOverKey}
+                        setDragKey={setDragKey}
+                        setDragOverKey={setDragOverKey}
+                        config={config}
+                        setNavOrder={setNavOrder}
+                        togglePageVisibility={togglePageVisibility}
+                        onNavigate={forMobile ? () => setMobileOpen(false) : undefined}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Bottom */}
+        <div className="shrink-0 border-t border-border/40 px-2.5 py-3">
+          {/* Search trigger */}
+          <div
+            className={cn(
+              'group relative flex h-9 items-center transition-all duration-150 w-full',
+              navExpanded ? 'px-2.5 gap-3 rounded-lg' : 'justify-center w-10 mx-auto rounded-lg',
+            )}
+          >
+            {navExpanded ? (
+              <SearchTrigger variant="expanded" />
+            ) : (
+              <SearchTrigger variant="icon" />
+            )}
+          </div>
+
+          {/* Profile + menu */}
+          <ProfileBadge expanded={navExpanded} toggleConfigMode={toggleConfigMode} isConfigMode={isConfigMode} />
+        </div>
+      </>
+    );
+  };
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="fixed top-4 left-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-surface text-text md:hidden"
+        aria-label="Open menu"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      {/* Mobile nav overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-black/40 animate-fade-in"
+            onClick={() => setMobileOpen(false)}
+          />
+          <nav className="absolute inset-y-0 left-0 w-72 bg-bg border-r border-border/60 flex flex-col animate-slide-in">
+            {renderNavContent(true)}
+          </nav>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <nav
+        onMouseEnter={() => { if (!expanded) setHovered(true); }}
+        onMouseLeave={() => setHovered(false)}
+        className={cn(
+          'fixed inset-y-0 left-0 z-40 hidden md:flex flex-col border-r border-border/60 bg-bg transition-all duration-200',
+          showExpanded ? 'w-60' : 'w-14',
+        )}
+      >
+        {renderNavContent(false)}
+      </nav>
+    </>
   );
 }
 
@@ -276,12 +346,13 @@ interface NavItemProps {
   config: { navOrder: string[] };
   setNavOrder: (order: string[]) => void;
   togglePageVisibility: (page: string, visible: boolean) => void;
+  onNavigate?: () => void;
 }
 
 function NavItem({
   itemKey, href, label, abbr, hidden, isActive, showExpanded, isConfigMode,
   mounted, index, dragKey, dragOverKey, setDragKey, setDragOverKey, config,
-  setNavOrder, togglePageVisibility,
+  setNavOrder, togglePageVisibility, onNavigate,
 }: NavItemProps) {
   return (
     <div
@@ -339,7 +410,7 @@ function NavItem({
             : 'text-text-muted hover:bg-surface-hover hover:text-text',
           isConfigMode && dragKey === itemKey && 'opacity-30',
         )}
-        onClick={isConfigMode ? (e) => e.preventDefault() : undefined}
+        onClick={isConfigMode ? (e) => e.preventDefault() : onNavigate ?? undefined}
       >
         {(() => {
           if (itemKey === 'life-coach') {

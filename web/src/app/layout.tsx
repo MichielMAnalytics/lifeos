@@ -25,12 +25,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
         <link
           href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;900&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body>
+      <body className="overflow-x-hidden">
         <script
           dangerouslySetInnerHTML={{
             __html: `try{var t=localStorage.getItem('lifeos-theme')||'system';if(t==='system'){t=window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t);var f=localStorage.getItem('lifeos-font');if(f){var m={kefa:'"Kefa"',satoshi:'"Satoshi"',inter:'"Inter"','jetbrains':'"JetBrains Mono", ui-monospace, monospace','space-grotesk':'"Space Grotesk"','dm-sans':'"DM Sans"',outfit:'"Outfit"',geist:'"Geist"','ibm-plex':'"IBM Plex Sans"','source-serif':'"Source Serif 4", Georgia, serif',system:'ui-sans-serif, system-ui, -apple-system, sans-serif'};if(m[f])document.documentElement.style.setProperty('--font-sans',m[f]+', ui-sans-serif, system-ui, sans-serif')}}catch(e){}`,

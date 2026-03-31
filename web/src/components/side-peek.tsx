@@ -34,16 +34,17 @@ export function SidePeek({ open, onClose, children, title, className }: SidePeek
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop - click to close */}
+      {/* Backdrop - click to close (hidden on mobile since panel is full-screen) */}
       <div
-        className="flex-1 bg-black/40 backdrop-blur-[1px] animate-fade-in"
+        className="flex-1 bg-black/40 backdrop-blur-[1px] animate-fade-in hidden md:block"
         onClick={onClose}
       />
 
       {/* Side panel */}
       <div
         className={cn(
-          'w-[520px] max-w-[90vw] h-full bg-bg border-l border-border flex flex-col',
+          'h-full bg-bg border-l border-border flex flex-col',
+          'w-full md:w-[520px] md:max-w-[90vw]',
           'animate-slide-in-right shadow-[-8px_0_30px_rgba(0,0,0,0.2)]',
           className,
         )}

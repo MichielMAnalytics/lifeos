@@ -172,11 +172,19 @@ export const update = mutation({
       throw new Error("Task not found");
     }
 
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
+    const now = Date.now();
+    const updates: Record<string, unknown> = { updatedAt: now };
     if (args.title !== undefined) updates.title = args.title;
     if (args.notes !== undefined) updates.notes = args.notes;
     if (args.dueDate !== undefined) updates.dueDate = args.dueDate;
-    if (args.status !== undefined) updates.status = args.status;
+    if (args.status !== undefined) {
+      updates.status = args.status;
+      if (args.status === "done") {
+        updates.completedAt = now;
+      } else if (args.status === "todo" || args.status === "dropped") {
+        updates.completedAt = undefined;
+      }
+    }
     if (args.projectId !== undefined) updates.projectId = args.projectId;
     if (args.goalId !== undefined) updates.goalId = args.goalId;
     if (args.position !== undefined) updates.position = args.position;
@@ -443,11 +451,19 @@ export const _update = internalMutation({
       throw new Error("Task not found");
     }
 
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
+    const now = Date.now();
+    const updates: Record<string, unknown> = { updatedAt: now };
     if (args.title !== undefined) updates.title = args.title;
     if (args.notes !== undefined) updates.notes = args.notes;
     if (args.dueDate !== undefined) updates.dueDate = args.dueDate;
-    if (args.status !== undefined) updates.status = args.status;
+    if (args.status !== undefined) {
+      updates.status = args.status;
+      if (args.status === "done") {
+        updates.completedAt = now;
+      } else if (args.status === "todo" || args.status === "dropped") {
+        updates.completedAt = undefined;
+      }
+    }
     if (args.projectId !== undefined) updates.projectId = args.projectId;
     if (args.goalId !== undefined) updates.goalId = args.goalId;
     if (args.position !== undefined) updates.position = args.position;

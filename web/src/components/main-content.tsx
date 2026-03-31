@@ -43,7 +43,7 @@ export function MainContent({ children }: { children: React.ReactNode }) {
         isFullHeight ? 'h-screen' : 'min-h-screen overflow-y-auto',
         isHeader
           ? (isConfigMode ? 'mt-[5.75rem]' : 'mt-14')
-          : (expanded ? 'ml-60' : 'ml-14'),
+          : (expanded ? 'ml-0 md:ml-60' : 'ml-0 md:ml-14'),
       )}
     >
       <ConfigureToolbar />
@@ -51,7 +51,7 @@ export function MainContent({ children }: { children: React.ReactNode }) {
       {isFullHeight ? (
         <div className="h-full">{children}</div>
       ) : (
-        <div className="px-8 py-8 lg:px-12 lg:py-10">{children}</div>
+        <div className="px-4 py-4 md:px-8 md:py-8 lg:px-12 lg:py-10">{children}</div>
       )}
     </main>
   );

@@ -392,11 +392,11 @@ function AddResourceModal({ onClose }: AddResourceModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start pt-[12vh] justify-center bg-black/60 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-start pt-4 md:pt-[12vh] justify-center bg-black/60 backdrop-blur-[2px]"
       onClick={handleBackdropClick}
     >
       <div
-        className="rounded-xl bg-surface border border-border shadow-2xl max-w-lg w-full mx-4 overflow-hidden animate-scale-in"
+        className="rounded-xl bg-surface border border-border shadow-2xl max-w-lg w-full mx-4 md:mx-auto overflow-hidden animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

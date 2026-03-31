@@ -316,7 +316,7 @@ export function CalendarWeekly() {
       {isLoading ? (
         <div className="p-6">
           <div className="flex gap-2">
-            <div className="w-14 shrink-0" />
+            <div className="w-10 md:w-14 shrink-0" />
             {Array.from({ length: 7 }).map((_, i) => (
               <div key={i} className="flex-1 space-y-2">
                 <div className="animate-pulse h-10 bg-surface-hover rounded" />
@@ -330,7 +330,7 @@ export function CalendarWeekly() {
           {/* Day headers row */}
           <div className="flex border-b border-border bg-bg sticky top-0 z-10">
             {/* Hour gutter spacer */}
-            <div className="shrink-0" style={{ width: LABEL_WIDTH }} />
+            <div className="shrink-0 w-10 md:w-14" />
 
             {/* Day columns */}
             {weekDays.map((date, i) => {
@@ -339,7 +339,7 @@ export function CalendarWeekly() {
                 <div
                   key={i}
                   className={cn(
-                    'flex-1 min-w-[100px] text-center py-2.5 border-l border-border',
+                    'flex-1 min-w-[60px] md:min-w-[100px] text-center py-2.5 border-l border-border',
                     isToday && 'bg-accent/[0.04]',
                   )}
                 >
@@ -365,8 +365,7 @@ export function CalendarWeekly() {
           <div className="relative flex" style={{ height: GRID_HEIGHT }}>
             {/* Hour labels gutter */}
             <div
-              className="shrink-0 relative"
-              style={{ width: LABEL_WIDTH }}
+              className="shrink-0 relative w-10 md:w-14"
             >
               {Array.from({ length: TOTAL_HOURS }).map((_, i) => {
                 const hour = GRID_START_HOUR + i;
@@ -389,7 +388,7 @@ export function CalendarWeekly() {
                 <div
                   key={day.dateStr}
                   className={cn(
-                    'flex-1 min-w-[100px] relative border-l border-border',
+                    'flex-1 min-w-[60px] md:min-w-[100px] relative border-l border-border',
                     isToday && 'bg-accent/[0.02]',
                   )}
                 >

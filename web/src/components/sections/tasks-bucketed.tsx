@@ -771,7 +771,7 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOve
 
   return (
     <div
-      className={`min-w-[260px] max-w-[320px] flex-1 flex flex-col rounded-xl transition-all duration-150 ${
+      className={`md:min-w-[260px] md:max-w-[320px] flex-1 flex flex-col rounded-xl transition-all duration-150 ${
         isDragOver ? 'bg-accent/5 ring-2 ring-accent/30 ring-inset' : ''
       }`}
       onDragOver={(e) => onDragOver(e, bucket.key)}
@@ -1154,8 +1154,8 @@ export function TasksBucketed() {
       </div>
 
       {/* Column layout */}
-      <div className="overflow-x-auto pb-4 -mx-2 px-2">
-        <div className="flex gap-4" style={{ minWidth: 'max-content' }}>
+      <div className="md:overflow-x-auto md:pb-4 md:-mx-2 md:px-2">
+        <div className="flex flex-col gap-6 md:flex-row md:gap-4 md:[min-width:max-content]">
           {buckets.map((bucket) => (
             <BucketColumn
               key={bucket.key}
