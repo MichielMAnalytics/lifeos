@@ -16,7 +16,6 @@ const LABEL_WIDTH = 56; // px for the hour label gutter
 
 // ── Block types to exclude (tasks/priorities/wake) ──────
 
-const EXCLUDED_BLOCK_TYPES = new Set(['mit', 'p1', 'p2', 'task', 'wake']);
 
 // ── Date helpers ────────────────────────────────────────
 
@@ -106,12 +105,6 @@ const blockBg: Record<string, string> = {
 
 // ── Types ───────────────────────────────────────────────
 
-interface ScheduleBlock {
-  start: string;
-  end: string;
-  label: string;
-  type: string;
-}
 
 interface PositionedBlock {
   top: number;
@@ -147,12 +140,9 @@ export function CalendarWeekly() {
     return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   }, [weekStart]);
 
-  const startDate = formatDateStr(weekDays[0]);
-  const endDate = formatDateStr(weekDays[6]);
 
-  // Fetch data -- scheduled items only, no tasks
+  // Fetch data -- reminders only
   const reminders = useQuery(api.reminders.list, {});
-  const dayPlans = useQuery(api.dayPlans.listByDateRange, { startDate, endDate });
 
   // Navigation
   const goToPrevWeek = () => setWeekStart((prev) => addDays(prev, -7));
@@ -171,34 +161,12 @@ export function CalendarWeekly() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isThisWeek]);
 
-  // Build positioned blocks per day
+  // Build positioned reminders per day
   const dayData = useMemo(() => {
     return weekDays.map((date) => {
       const dateStr = formatDateStr(date);
       const blocks: PositionedBlock[] = [];
       const reminderItems: PositionedReminder[] = [];
-
-      // Day plan schedule blocks (excluding tasks/priorities/wake)
-      const plan = dayPlans?.find((p: { planDate: string }) => p.planDate === dateStr);
-      if (plan) {
-        for (const block of plan.schedule as ScheduleBlock[]) {
-          if (EXCLUDED_BLOCK_TYPES.has(block.type)) continue;
-
-          const startMin = timeToMinutes(block.start);
-          const endMin = timeToMinutes(block.end);
-          const top = minutesToPosition(startMin);
-          const height = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT, 20);
-
-          blocks.push({
-            top,
-            height,
-            label: block.label,
-            type: block.type,
-            startTime: block.start,
-            endTime: block.end,
-          });
-        }
-      }
 
       // Reminders for this day
       if (reminders) {
@@ -235,9 +203,9 @@ export function CalendarWeekly() {
 
       return { date, dateStr, blocks, reminders: reminderItems };
     });
-  }, [weekDays, dayPlans, reminders]);
+  }, [weekDays, reminders]);
 
-  const isLoading = reminders === undefined || dayPlans === undefined;
+  const isLoading = reminders === undefined;
 
   // "Now" line position
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -326,7 +294,7 @@ export function CalendarWeekly() {
           </div>
         </div>
       ) : (
-        <div ref={scrollRef} className="overflow-x-auto overflow-y-auto max-h-[480px]">
+        <div ref={scrollRef} className="overflow-x-auto overflow-y-auto max-h-[720px]">
           {/* Day headers row */}
           <div className="flex border-b border-border bg-bg sticky top-0 z-10">
             {/* Hour gutter spacer */}

@@ -182,21 +182,9 @@ function JournalDetailModal({
             </span>
             <ul className="mt-3 space-y-2">
               {entry.wins.map((win: string, i: number) => (
-                <li key={i} className="flex items-start gap-2.5 text-sm">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="mt-0.5 shrink-0 text-success"
-                  >
-                    <polyline points="3 7 6 10 11 4" />
-                  </svg>
-                  <span className="text-success">{win}</span>
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-accent/60 shrink-0 mt-px">+</span>
+                  <span className="text-text-muted">{win}</span>
                 </li>
               ))}
             </ul>
@@ -286,21 +274,9 @@ function EntryCard({ entry, onClick }: { entry: JournalEntry; onClick: () => voi
             </span>
             <ul className="mt-2.5 space-y-1.5">
               {entry.wins.map((win: string, i: number) => (
-                <li key={i} className="flex items-start gap-2.5 text-sm">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="mt-0.5 shrink-0 text-success"
-                  >
-                    <polyline points="3 7 6 10 11 4" />
-                  </svg>
-                  <span className="text-success">{win}</span>
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-accent/60 shrink-0 mt-px">+</span>
+                  <span className="text-text-muted">{win}</span>
                 </li>
               ))}
             </ul>

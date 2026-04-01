@@ -741,7 +741,7 @@ export function DayTimeline() {
 
       {/* Calendar grid + task sidebar */}
       <div className="flex flex-col md:flex-row overflow-hidden">
-        <div ref={scrollRef} className="flex-1 overflow-y-auto max-h-[480px]">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto max-h-[720px]">
           <div className="flex" style={{ minHeight: `${GRID_HEIGHT}px` }}>
             {/* Hour labels gutter */}
             <div
