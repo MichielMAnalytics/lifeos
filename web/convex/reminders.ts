@@ -213,6 +213,18 @@ export const markDone = mutation({
 
 // ── Internal functions (for HTTP router) ─────────────
 
+export const _get = internalQuery({
+  args: {
+    userId: v.id("users"),
+    id: v.id("reminders"),
+  },
+  handler: async (ctx, args) => {
+    const reminder = await ctx.db.get(args.id);
+    if (!reminder || reminder.userId !== args.userId) return null;
+    return reminder;
+  },
+});
+
 export const _list = internalQuery({
   args: {
     userId: v.id("users"),

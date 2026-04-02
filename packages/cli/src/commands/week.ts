@@ -1,11 +1,12 @@
 import { Command } from 'commander';
-import type { ApiResponse, WeeklyPlan } from '@lifeos/shared';
+import type { ApiListResponse, ApiResponse, WeeklyPlan } from '@lifeos/shared';
 import { createClient } from '../api-client.js';
 import {
   isJsonMode,
   printError,
   printJson,
   printSuccess,
+  printTable,
 } from '../output.js';
 
 function currentWeekStart(): string {
@@ -46,6 +47,37 @@ export const weekCommand = new Command('week')
       }
 
       printWeeklyPlan(res.data);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+weekCommand
+  .command('list')
+  .description('List all weekly plans')
+  .action(async () => {
+    try {
+      const client = createClient();
+      const res = await client.get<ApiListResponse<WeeklyPlan>>('/api/v1/weekly-plans');
+
+      if (isJsonMode()) {
+        printJson(res);
+        return;
+      }
+
+      if (res.data.length === 0) {
+        console.log('No weekly plans found.');
+        return;
+      }
+
+      const rows = res.data.map((p) => [
+        p.weekStart ?? p.week_start ?? '-',
+        p.theme ?? '-',
+        String(p.reviewScore ?? p.review_score ?? '-'),
+        String(p.goals.length),
+      ]);
+      printTable(['Week', 'Theme', 'Score', 'Goals'], rows);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;

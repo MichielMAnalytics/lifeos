@@ -1066,6 +1066,23 @@ http.route({
 
 http.route({
   pathPrefix: "/api/v1/ideas/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/ideas");
+    if (!rawId) return err("Missing idea id", 400);
+    const id = await resolveEntityId(ctx, userId, "ideas", rawId);
+    if (!id) return err("Idea not found", 404);
+    const idea = await ctx.runQuery(internal.ideas._get, { userId, id });
+    if (!idea) return err("Idea not found", 404);
+    return json({ data: idea });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/ideas/",
   method: "PATCH",
   handler: httpAction(async (ctx, request) => {
     const userId = await authenticate(ctx, request);
@@ -1192,6 +1209,23 @@ http.route({
 
 http.route({
   pathPrefix: "/api/v1/thoughts/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/thoughts");
+    if (!rawId) return err("Missing thought id", 400);
+    const id = await resolveEntityId(ctx, userId, "thoughts", rawId);
+    if (!id) return err("Thought not found", 404);
+    const thought = await ctx.runQuery(internal.thoughts._get, { userId, id });
+    if (!thought) return err("Thought not found", 404);
+    return json({ data: thought });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/thoughts/",
   method: "DELETE",
   handler: httpAction(async (ctx, request) => {
     const userId = await authenticate(ctx, request);
@@ -1290,6 +1324,23 @@ http.route({
 
 http.route({
   pathPrefix: "/api/v1/wins/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/wins");
+    if (!rawId) return err("Missing win id", 400);
+    const id = await resolveEntityId(ctx, userId, "wins", rawId);
+    if (!id) return err("Win not found", 404);
+    const win = await ctx.runQuery(internal.wins._get, { userId, id });
+    if (!win) return err("Win not found", 404);
+    return json({ data: win });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/wins/",
   method: "PATCH",
   handler: httpAction(async (ctx, request) => {
     const userId = await authenticate(ctx, request);
@@ -1382,6 +1433,23 @@ http.route({
   pathPrefix: "/api/v1/resources/",
   method: "OPTIONS",
   handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/resources/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/resources");
+    if (!rawId) return err("Missing resource id", 400);
+    const id = await resolveEntityId(ctx, userId, "resources", rawId);
+    if (!id) return err("Resource not found", 404);
+    const resource = await ctx.runQuery(internal.resources._get, { userId, id });
+    if (!resource) return err("Resource not found", 404);
+    return json({ data: resource });
+  }),
 });
 
 http.route({
@@ -1571,6 +1639,23 @@ http.route({
   pathPrefix: "/api/v1/reminders/",
   method: "OPTIONS",
   handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/reminders/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/reminders");
+    if (!rawId) return err("Missing reminder id", 400);
+    const id = await resolveEntityId(ctx, userId, "reminders", rawId);
+    if (!id) return err("Reminder not found", 404);
+    const reminder = await ctx.runQuery(internal.reminders._get, { userId, id });
+    if (!reminder) return err("Reminder not found", 404);
+    return json({ data: reminder });
+  }),
 });
 
 http.route({

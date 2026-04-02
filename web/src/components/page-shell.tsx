@@ -18,7 +18,7 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
   const allPresets = getPresetsForPage(page);
 
   return (
-    <div className="max-w-7xl mx-auto animate-fade-in">
+    <div className="animate-fade-in">
       {/* Configure mode toolbar */}
 
       {/* Config mode: preset selector */}

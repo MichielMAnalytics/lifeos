@@ -51,6 +51,33 @@ reminderCommand
   });
 
 reminderCommand
+  .command('show <id>')
+  .description('Show reminder details')
+  .action(async (id: string) => {
+    try {
+      const client = createClient();
+      const res = await client.get<ApiResponse<Reminder>>(`/api/v1/reminders/${id}`);
+
+      if (isJsonMode()) {
+        printJson(res);
+        return;
+      }
+
+      const r = res.data;
+      console.log(`ID:         ${shortId(r)}`);
+      console.log(`Title:      ${r.title}`);
+      console.log(`Body:       ${r.body ?? '-'}`);
+      console.log(`Status:     ${r.status}`);
+      console.log(`Scheduled:  ${formatDate(r.scheduledAt ?? r.scheduled_at ?? null)}`);
+      console.log(`Snoozed:    ${r.snoozeCount ?? r.snooze_count ?? 0} time(s)`);
+      console.log(`Created:    ${formatDate(r.createdAt ?? r.created_at ?? null)}`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+reminderCommand
   .command('create <title>')
   .description('Create a reminder')
   .option('-a, --at <datetime>', 'Scheduled time (ISO datetime)')

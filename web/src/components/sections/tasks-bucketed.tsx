@@ -190,7 +190,7 @@ function DateBadge({
       <button
         type="button"
         onClick={onTogglePicker}
-        className={`inline-flex items-center gap-1 text-[11px] transition-colors rounded-md px-1 py-0.5 -ml-1 hover:bg-surface-hover ${dateInfo.colorClass}`}
+        className={`inline-flex items-center gap-1 text-xs transition-colors rounded-md px-1 py-0.5 -ml-1 hover:bg-surface-hover ${dateInfo.colorClass}`}
       >
         <CalendarIcon className={isOverdue ? 'text-danger' : 'opacity-50'} />
         <span className={dateInfo.colorClass}>{dateInfo.text}</span>
@@ -455,7 +455,7 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
         draggable
         onDragStart={(e) => onDragStart(e, task._id, bucketKey)}
         onClick={onClick}
-        className={`group relative rounded-xl border transition-all duration-150 cursor-grab active:cursor-grabbing pl-5 ${
+        className={`group relative rounded-xl border transition-all duration-150 cursor-pointer pl-5 ${
           completing ? 'animate-task-fade-out' : ''
         } ${
           isSelected
@@ -520,19 +520,19 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
                   if (e.key === 'Enter') void handleSave();
                   if (e.key === 'Escape') { setEditing(false); setEditTitle(task.title); }
                 }}
-                className="w-full bg-transparent text-[13px] text-text focus:outline-none"
+                className="w-full bg-transparent text-sm text-text focus:outline-none"
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
               <p
-                className={`text-[13px] text-text leading-snug cursor-text ${completing ? 'animate-strikethrough text-text-muted' : ''}`}
+                className={`text-sm text-text leading-snug ${completing ? 'animate-strikethrough text-text-muted' : ''}`}
                 onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); setEditTitle(task.title); }}
               >
                 {task.title}
               </p>
             )}
             {task.notes && (
-              <p className="text-[11px] text-text-muted mt-0.5 truncate leading-snug">{task.notes}</p>
+              <p className="text-xs text-text-muted mt-0.5 truncate leading-snug">{task.notes}</p>
             )}
 
             {/* Date badge - clickable */}
@@ -616,7 +616,7 @@ function InlineAddTask({ defaultDate, onDone }: { defaultDate?: string; onDone?:
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
         </span>
-        <span className="text-[13px]">Add task</span>
+        <span className="text-sm">Add task</span>
       </button>
     );
   }
@@ -630,14 +630,14 @@ function InlineAddTask({ defaultDate, onDone }: { defaultDate?: string; onDone?:
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="w-full bg-transparent text-[13px] text-text placeholder:text-text-muted/50 focus:outline-none"
+        className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/50 focus:outline-none"
       />
       <div className="flex items-center justify-between mt-2.5">
         <div className="relative">
           <button
             type="button"
             onClick={() => setDatePickerOpen((prev) => !prev)}
-            className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-accent transition-colors rounded-md px-1.5 py-1 hover:bg-surface-hover"
+            className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-accent transition-colors rounded-md px-1.5 py-1 hover:bg-surface-hover"
           >
             <CalendarIcon className="opacity-50" />
             {dueDate ? shortDate(dueDate) : 'Today'}
@@ -657,7 +657,7 @@ function InlineAddTask({ defaultDate, onDone }: { defaultDate?: string; onDone?:
           <button
             type="button"
             onClick={() => { setOpen(false); setTitle(''); }}
-            className="text-[11px] text-text-muted hover:text-text px-2 py-1 rounded-lg transition-colors"
+            className="text-xs text-text-muted hover:text-text px-2 py-1 rounded-lg transition-colors"
           >
             Cancel
           </button>
@@ -665,7 +665,7 @@ function InlineAddTask({ defaultDate, onDone }: { defaultDate?: string; onDone?:
             type="button"
             onClick={() => void handleSubmit()}
             disabled={!title.trim() || saving}
-            className="text-[11px] font-medium bg-accent text-white px-3 py-1 rounded-lg hover:bg-accent-hover disabled:opacity-30 transition-colors"
+            className="text-xs font-medium bg-accent text-white px-3 py-1 rounded-lg hover:bg-accent-hover disabled:opacity-30 transition-colors"
           >
             {saving ? '...' : 'Add'}
           </button>
@@ -791,7 +791,7 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOve
           )}
           {bucket.sublabel ?? bucket.label}
         </span>
-        <span className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] tabular-nums ${
+        <span className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs tabular-nums ${
           bucket.variant === 'danger' ? 'bg-danger/10 text-danger' : 'bg-surface px-1.5 text-text-muted'
         }`}>
           {bucket.count}
@@ -801,7 +801,7 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOve
             type="button"
             onClick={() => void handleRescheduleAll()}
             disabled={rescheduling}
-            className="text-[11px] text-danger/70 font-medium ml-auto hover:text-danger transition-colors disabled:opacity-50"
+            className="text-xs text-danger/70 font-medium ml-auto hover:text-danger transition-colors disabled:opacity-50"
           >
             {rescheduling ? 'Rescheduling...' : 'Reschedule'}
           </button>
@@ -850,7 +850,7 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOve
       {/* Drop indicator when empty and dragging over */}
       {isDragOver && bucket.tasks.length === 0 && (
         <div className="mx-1 h-12 rounded-xl border-2 border-dashed border-accent/30 flex items-center justify-center">
-          <span className="text-[11px] text-accent/50">Drop here</span>
+          <span className="text-xs text-accent/50">Drop here</span>
         </div>
       )}
 

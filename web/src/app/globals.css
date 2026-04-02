@@ -200,6 +200,7 @@ body {
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-weight: 500;
 }
 
 /* ── Noise Texture Utility ───────────────────────── */
@@ -277,6 +278,15 @@ body {
 @keyframes slide-in-right {
   from { opacity: 0; transform: translateX(8px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+/* Hide main scrollbar when side peek is open */
+html.sidePeekOpen::-webkit-scrollbar {
+  width: 0 !important;
+  display: none !important;
+}
+html.sidePeekOpen {
+  scrollbar-width: none !important;
 }
 
 .animate-slide-up {

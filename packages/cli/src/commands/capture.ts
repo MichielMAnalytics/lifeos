@@ -42,6 +42,27 @@ ideaCommand
   .action(createIdea);
 
 ideaCommand
+  .command('show <id>')
+  .description('Show idea details')
+  .action(async (id: string) => {
+    try {
+      const client = createClient();
+      const res = await client.get<ApiResponse<Idea>>(`/api/v1/ideas/${id}`);
+      if (isJsonMode()) { printJson(res); return; }
+      const i = res.data;
+      console.log(`ID:             ${shortId(i)}`);
+      console.log(`Content:        ${i.content}`);
+      console.log(`Actionability:  ${i.actionability ?? '-'}`);
+      console.log(`Next Step:      ${i.nextStep ?? i.next_step ?? '-'}`);
+      console.log(`Project ID:     ${i.projectId ?? i.project_id ?? '-'}`);
+      console.log(`Created:        ${formatDate(i.createdAt ?? i.created_at ?? null)}`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+ideaCommand
   .command('list')
   .description('List ideas')
   .option('-a, --actionability <level>', 'Filter by actionability (high, medium, low)')
@@ -173,6 +194,25 @@ thoughtCommand
   .action(createThought);
 
 thoughtCommand
+  .command('show <id>')
+  .description('Show thought details')
+  .action(async (id: string) => {
+    try {
+      const client = createClient();
+      const res = await client.get<ApiResponse<Thought>>(`/api/v1/thoughts/${id}`);
+      if (isJsonMode()) { printJson(res); return; }
+      const t = res.data;
+      console.log(`ID:       ${shortId(t)}`);
+      console.log(`Title:    ${t.title ?? '-'}`);
+      console.log(`Content:  ${t.content}`);
+      console.log(`Created:  ${formatDate(t.createdAt ?? t.created_at ?? null)}`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+thoughtCommand
   .command('list')
   .description('List thoughts')
   .action(async () => {
@@ -266,6 +306,25 @@ winCommand
   .description('Record a win')
   .option('-d, --date <date>', 'Entry date (YYYY-MM-DD, default today)')
   .action(createWin);
+
+winCommand
+  .command('show <id>')
+  .description('Show win details')
+  .action(async (id: string) => {
+    try {
+      const client = createClient();
+      const res = await client.get<ApiResponse<Win>>(`/api/v1/wins/${id}`);
+      if (isJsonMode()) { printJson(res); return; }
+      const w = res.data;
+      console.log(`ID:       ${shortId(w)}`);
+      console.log(`Content:  ${w.content}`);
+      console.log(`Date:     ${formatDate(w.entryDate ?? w.entry_date ?? null)}`);
+      console.log(`Created:  ${formatDate(w.createdAt ?? w.created_at ?? null)}`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
 
 winCommand
   .command('list')
@@ -376,6 +435,27 @@ resourceCommand
   .option('-t, --type <type>', 'Type (article, tool, book, video, other)')
   .option('-c, --content <text>', 'Description/notes')
   .action(createResource);
+
+resourceCommand
+  .command('show <id>')
+  .description('Show resource details')
+  .action(async (id: string) => {
+    try {
+      const client = createClient();
+      const res = await client.get<ApiResponse<Resource>>(`/api/v1/resources/${id}`);
+      if (isJsonMode()) { printJson(res); return; }
+      const r = res.data;
+      console.log(`ID:       ${shortId(r)}`);
+      console.log(`Title:    ${r.title}`);
+      console.log(`Type:     ${r.type ?? '-'}`);
+      console.log(`URL:      ${r.url ?? '-'}`);
+      console.log(`Content:  ${r.content ?? '-'}`);
+      console.log(`Created:  ${formatDate(r.createdAt ?? r.created_at ?? null)}`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
 
 resourceCommand
   .command('list')

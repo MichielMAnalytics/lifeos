@@ -138,6 +138,18 @@ export const remove = mutation({
 
 // ── Internal functions (for HTTP router) ─────────────
 
+export const _get = internalQuery({
+  args: {
+    userId: v.id("users"),
+    id: v.id("resources"),
+  },
+  handler: async (ctx, args) => {
+    const resource = await ctx.db.get(args.id);
+    if (!resource || resource.userId !== args.userId) return null;
+    return resource;
+  },
+});
+
 export const _list = internalQuery({
   args: {
     userId: v.id("users"),

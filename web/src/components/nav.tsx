@@ -276,6 +276,22 @@ export function Nav() {
             )}
           </div>
 
+          {/* Trash link */}
+          <Link
+            href="/trash"
+            className={cn(
+              'group relative flex items-center transition-all duration-150 w-full text-text-muted hover:text-text',
+              navExpanded ? 'h-[34px] px-2.5 gap-2.5 rounded-lg hover:bg-surface-hover' : 'h-[34px] justify-center w-10 mx-auto rounded-lg hover:bg-surface-hover',
+            )}
+            title={navExpanded ? undefined : 'Trash'}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-60">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+            {navExpanded && <span className="text-[13px] font-medium">Trash</span>}
+          </Link>
+
           {/* Profile + menu */}
           <ProfileBadge expanded={navExpanded} toggleConfigMode={toggleConfigMode} isConfigMode={isConfigMode} />
         </div>
@@ -611,8 +627,9 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
             onClick={() => setMenuOpen(false)}
             className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors rounded-lg mx-1"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="13" x2="13" y2="3" /><circle cx="8" cy="8" r="2.5" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
             Settings
           </Link>

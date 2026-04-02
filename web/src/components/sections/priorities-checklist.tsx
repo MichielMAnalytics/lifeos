@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
@@ -61,24 +62,24 @@ const PRIORITIES: PriorityConfig[] = [
   {
     key: 'mit',
     label: 'MIT',
-    colorClass: 'text-accent',
-    checkClass: 'border-accent bg-accent',
+    colorClass: 'text-red-500',
+    checkClass: 'border-red-500 bg-red-500',
     doneField: 'mitDone',
     taskIdField: 'mitTaskId',
   },
   {
     key: 'p1',
     label: 'P1',
-    colorClass: 'text-purple-500',
-    checkClass: 'border-purple-500 bg-purple-500',
+    colorClass: 'text-amber-500',
+    checkClass: 'border-amber-500 bg-amber-500',
     doneField: 'p1Done',
     taskIdField: 'p1TaskId',
   },
   {
     key: 'p2',
     label: 'P2',
-    colorClass: 'text-indigo-500',
-    checkClass: 'border-indigo-500 bg-indigo-500',
+    colorClass: 'text-blue-500',
+    checkClass: 'border-blue-500 bg-blue-500',
     doneField: 'p2Done',
     taskIdField: 'p2TaskId',
   },
@@ -187,72 +188,108 @@ function TaskPickerDropdown({
   tasks,
   onSelect,
   onClose,
+  anchorRef,
 }: {
   tasks: TaskItem[];
   onSelect: (taskId: Id<'tasks'>) => void;
   onClose: () => void;
+  anchorRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  // Calculate position from anchor element
+  useEffect(() => {
+    if (!anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    setPos({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    });
+  }, [anchorRef]);
+
+  // Reposition on scroll/resize
+  useEffect(() => {
+    if (!anchorRef.current) return;
+    const update = () => {
+      const rect = anchorRef.current!.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    };
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [anchorRef]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (ref.current && !ref.current.contains(e.target as Node) &&
+          anchorRef.current && !anchorRef.current.contains(e.target as Node)) {
         onClose();
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
+  }, [onClose, anchorRef]);
 
   const groups = useMemo(() => groupTasks(tasks), [tasks]);
 
-  if (tasks.length === 0) {
-    return (
-      <div
-        ref={ref}
-        className="absolute left-0 right-0 top-full mt-1 z-30 rounded-xl border border-border bg-surface shadow-lg p-3"
-      >
-        <p className="text-xs text-text-muted">No tasks available</p>
-      </div>
-    );
-  }
+  if (!pos) return null;
 
-  return (
+  const dropdown = (
     <div
       ref={ref}
-      className="absolute left-0 right-0 top-full mt-1 z-30 rounded-xl border border-border bg-surface shadow-lg max-h-72 overflow-y-auto"
+      className="rounded-xl border border-border bg-surface shadow-lg max-h-[480px] overflow-y-auto animate-scale-in"
+      style={{
+        position: 'fixed',
+        top: pos.top,
+        left: pos.left,
+        width: pos.width,
+        zIndex: 9999,
+      }}
     >
-      {groups.map((group) => (
-        <div key={group.key}>
-          <div
-            className={cn(
-              'text-[10px] font-semibold uppercase tracking-widest px-3 pt-3 pb-1',
-              group.headerClass ?? 'text-text-muted/50',
-            )}
-          >
-            {group.label}
-          </div>
-          {group.tasks.map((task) => {
-            const dueDateLabel = formatDueDate(task.dueDate);
-            return (
-              <button
-                key={task._id}
-                onClick={() => onSelect(task._id)}
-                className="w-full text-left px-3 py-2 text-sm text-text hover:bg-surface-hover transition-colors flex items-center justify-between gap-2"
-              >
-                <span className="truncate">{task.title}</span>
-                {dueDateLabel && (
-                  <span className="text-[10px] text-text-muted/50 shrink-0">
-                    {dueDateLabel}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+      {tasks.length === 0 ? (
+        <div className="p-3">
+          <p className="text-xs text-text-muted">No tasks available</p>
         </div>
-      ))}
+      ) : (
+        groups.map((group) => (
+          <div key={group.key}>
+            <div
+              className={cn(
+                'text-[10px] font-semibold uppercase tracking-widest px-3 pt-3 pb-1',
+                group.headerClass ?? 'text-text-muted/50',
+              )}
+            >
+              {group.label}
+            </div>
+            {group.tasks.map((task) => {
+              const dueDateLabel = formatDueDate(task.dueDate);
+              return (
+                <button
+                  key={task._id}
+                  onClick={() => onSelect(task._id)}
+                  className="w-full text-left px-3 py-2 text-sm text-text hover:bg-surface-hover transition-colors flex items-center justify-between gap-2"
+                >
+                  <span className="truncate">{task.title}</span>
+                  {dueDateLabel && (
+                    <span className="text-[10px] text-text-muted/50 shrink-0">
+                      {dueDateLabel}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ))
+      )}
     </div>
   );
+
+  return createPortal(dropdown, document.body);
 }
 
 // ── PriorityRow sub-component ────────────────────────────
@@ -372,18 +409,33 @@ function PriorityRow({
       </button>
 
       {/* Task title - clickable to open picker */}
-      <button
-        onClick={() => setPickerOpen((v) => !v)}
-        className={cn(
-          'flex-1 text-left text-sm transition-colors truncate',
-          isLoading && 'animate-pulse text-text-muted',
-          taskId
-            ? (done ? 'line-through text-text-muted' : 'text-text hover:text-accent')
-            : 'text-text-muted italic hover:text-accent cursor-pointer',
-        )}
-      >
-        {title}
-      </button>
+      {taskId ? (
+        <button
+          onClick={() => setPickerOpen((v) => !v)}
+          className={cn(
+            'flex-1 text-left text-sm transition-colors truncate',
+            isLoading && 'animate-pulse text-text-muted',
+            done ? 'line-through text-text-muted' : 'text-text hover:text-accent',
+          )}
+        >
+          {title}
+        </button>
+      ) : (
+        <button
+          onClick={() => setPickerOpen((v) => !v)}
+          className="flex-1 flex items-center gap-2 text-left text-sm text-text-muted/60 hover:text-accent border border-dashed border-border hover:border-accent/40 rounded-lg px-3 py-1.5 transition-all cursor-pointer"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-50">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="16" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+          <span>Select a task...</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto shrink-0 opacity-40">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      )}
 
       {/* Change indicator */}
       {taskId && !done && (
@@ -407,10 +459,11 @@ function PriorityRow({
         </span>
       )}
 
-      {/* Task picker dropdown */}
+      {/* Task picker dropdown (portal) */}
       {pickerOpen && (
         <TaskPickerDropdown
           tasks={availableTasks}
+          anchorRef={rowRef}
           onSelect={(id) => {
             onAssign(id);
             setPickerOpen(false);

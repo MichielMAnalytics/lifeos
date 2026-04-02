@@ -5,9 +5,9 @@ import { api } from '@/lib/convex-api';
 import { cn, formatDate } from '@/lib/utils';
 
 const blockBorder: Record<string, string> = {
-  mit: 'border-l-accent',
-  p1: 'border-l-purple-500',
-  p2: 'border-l-indigo-500',
+  mit: 'border-l-red-500',
+  p1: 'border-l-amber-500',
+  p2: 'border-l-blue-500',
   event: 'border-l-warning',
   break: 'border-l-text-muted',
   lunch: 'border-l-text-muted',

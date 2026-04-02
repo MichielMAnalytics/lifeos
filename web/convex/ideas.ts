@@ -181,6 +181,18 @@ export const promote = mutation({
 
 // ── Internal functions (for HTTP router) ─────────────
 
+export const _get = internalQuery({
+  args: {
+    userId: v.id("users"),
+    id: v.id("ideas"),
+  },
+  handler: async (ctx, args) => {
+    const idea = await ctx.db.get(args.id);
+    if (!idea || idea.userId !== args.userId) return null;
+    return idea;
+  },
+});
+
 export const _list = internalQuery({
   args: {
     userId: v.id("users"),

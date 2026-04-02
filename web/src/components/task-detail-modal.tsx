@@ -29,6 +29,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
 
   const updateTask = useMutation(api.tasks.update);
   const completeTask = useMutation(api.tasks.complete);
+  const removeTask = useMutation(api.tasks.remove);
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState('');
@@ -154,9 +155,30 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
 
   if (!task) {
     return (
-      <SidePeek open={true} onClose={onClose} title="Task">
-        <div className="flex items-center justify-center py-20">
-          <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <SidePeek open={true} onClose={onClose} title="Task" onOpenFullPage={() => { onClose(); window.open(`/tasks/${taskId}`, '_self'); }}>
+        <div className="px-8 py-6">
+          {/* Skeleton: title */}
+          <div className="flex items-start gap-3 mb-6">
+            <div className="mt-1.5 h-5 w-5 rounded-full bg-surface-hover animate-shimmer shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-6 w-3/4 bg-surface-hover rounded animate-shimmer" />
+              <div className="h-4 w-1/2 bg-surface-hover rounded animate-shimmer" />
+            </div>
+          </div>
+          {/* Skeleton: properties */}
+          <div className="space-y-4 mb-8">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="h-4 w-24 bg-surface-hover rounded animate-shimmer" />
+                <div className="h-4 w-32 bg-surface-hover rounded animate-shimmer" />
+              </div>
+            ))}
+          </div>
+          {/* Skeleton: description */}
+          <div className="border-t border-border/40 pt-6">
+            <div className="h-4 w-full bg-surface-hover rounded animate-shimmer mb-2" />
+            <div className="h-4 w-2/3 bg-surface-hover rounded animate-shimmer" />
+          </div>
         </div>
       </SidePeek>
     );
@@ -172,7 +194,14 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
   });
 
   return (
-    <SidePeek open={true} onClose={onClose} title="Task">
+    <SidePeek
+      open={true}
+      onClose={onClose}
+      title="Task"
+      onOpenFullPage={() => { onClose(); window.open(`/tasks/${taskId}`, '_self'); }}
+      onMoveToTrash={async () => { await updateTask({ id: taskId, status: 'dropped' }); onClose(); }}
+      onDelete={async () => { await removeTask({ id: taskId }); onClose(); }}
+    >
       <div className="px-8 py-6">
         {/* Title - large, editable */}
         <div className="flex items-start gap-3 mb-6">
@@ -244,7 +273,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
         <div className="space-y-3 mb-8">
           {/* Date */}
           <div className="flex items-center gap-3 py-1.5 group">
-            <span className="text-[13px] text-text-muted w-28 shrink-0 flex items-center gap-2">
+            <span className="text-sm text-text-muted w-28 shrink-0 flex items-center gap-2">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 opacity-40">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
@@ -253,7 +282,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
               </svg>
               Date
             </span>
-            <span className="text-[13px] text-text flex-1 relative">
+            <span className="text-sm text-text flex-1 relative">
               <button
                 type="button"
                 onClick={() => setDatePickerOpen((prev) => !prev)}
@@ -276,20 +305,20 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
 
           {/* Project */}
           <div className="flex items-center gap-3 py-1.5 group">
-            <span className="text-[13px] text-text-muted w-28 shrink-0 flex items-center gap-2">
+            <span className="text-sm text-text-muted w-28 shrink-0 flex items-center gap-2">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 opacity-40">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
               </svg>
               Project
             </span>
-            <span className={cn('text-[13px] flex-1', task.projectId ? 'text-text' : 'text-text-muted')}>
+            <span className={cn('text-sm flex-1', task.projectId ? 'text-text' : 'text-text-muted')}>
               {project?.title ?? (task.projectId ? 'Loading...' : 'No project')}
             </span>
           </div>
 
           {/* Goal */}
           <div className="flex items-center gap-3 py-1.5 group">
-            <span className="text-[13px] text-text-muted w-28 shrink-0 flex items-center gap-2">
+            <span className="text-sm text-text-muted w-28 shrink-0 flex items-center gap-2">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 opacity-40">
                 <circle cx="12" cy="12" r="10" />
                 <circle cx="12" cy="12" r="6" />
@@ -297,21 +326,21 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
               </svg>
               Goal
             </span>
-            <span className={cn('text-[13px] flex-1', task.goalId ? 'text-text' : 'text-text-muted')}>
+            <span className={cn('text-sm flex-1', task.goalId ? 'text-text' : 'text-text-muted')}>
               {goal?.title ?? (task.goalId ? 'Loading...' : 'No goal')}
             </span>
           </div>
 
           {/* Status */}
           <div className="flex items-center gap-3 py-1.5 group">
-            <span className="text-[13px] text-text-muted w-28 shrink-0 flex items-center gap-2">
+            <span className="text-sm text-text-muted w-28 shrink-0 flex items-center gap-2">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 opacity-40">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
               Status
             </span>
-            <span className="text-[13px] text-text flex-1 flex items-center gap-2">
+            <span className="text-sm text-text flex-1 flex items-center gap-2">
               <span
                 className={cn(
                   'h-2 w-2 rounded-full shrink-0',
@@ -326,14 +355,14 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
 
           {/* Created */}
           <div className="flex items-center gap-3 py-1.5 group">
-            <span className="text-[13px] text-text-muted w-28 shrink-0 flex items-center gap-2">
+            <span className="text-sm text-text-muted w-28 shrink-0 flex items-center gap-2">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 opacity-40">
                 <path d="M12 20h9" />
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
               </svg>
               Created
             </span>
-            <span className="text-[13px] text-text-muted flex-1">
+            <span className="text-sm text-text-muted flex-1">
               {createdDate}
             </span>
           </div>

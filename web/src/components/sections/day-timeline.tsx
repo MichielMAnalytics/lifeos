@@ -11,9 +11,9 @@ import { CalendarDatePicker } from '@/components/calendar-date-picker';
 // ── Block type colors ────────────────────────────────────
 
 const blockBorder: Record<string, string> = {
-  mit: 'border-l-accent',
-  p1: 'border-l-purple-500',
-  p2: 'border-l-indigo-500',
+  mit: 'border-l-red-500',
+  p1: 'border-l-amber-500',
+  p2: 'border-l-blue-500',
   event: 'border-l-warning',
   break: 'border-l-text-muted',
   lunch: 'border-l-text-muted',
@@ -23,9 +23,9 @@ const blockBorder: Record<string, string> = {
 };
 
 const blockBg: Record<string, string> = {
-  mit: 'bg-accent/10',
-  p1: 'bg-purple-500/10',
-  p2: 'bg-indigo-500/10',
+  mit: 'bg-red-500/10',
+  p1: 'bg-amber-500/10',
+  p2: 'bg-blue-500/10',
   event: 'bg-warning/10',
   break: 'bg-text-muted/5',
   lunch: 'bg-text-muted/5',
@@ -338,7 +338,7 @@ function TaskSidebarCard({ task }: { task: { _id: Id<'tasks'>; title: string; du
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] text-text leading-snug truncate">
+          <p className="text-sm text-text leading-snug truncate">
             {task.title}
           </p>
 
@@ -351,7 +351,7 @@ function TaskSidebarCard({ task }: { task: { _id: Id<'tasks'>; title: string; du
                 setDatePickerOpen((prev) => !prev);
               }}
               className={cn(
-                'inline-flex items-center gap-1 text-[11px] rounded-md px-1 py-0.5 transition-colors',
+                'inline-flex items-center gap-1 text-xs rounded-md px-1 py-0.5 transition-colors',
                 isOverdue
                   ? 'text-danger hover:bg-danger/10'
                   : 'text-text-muted hover:text-accent hover:bg-surface-hover',
@@ -413,7 +413,7 @@ function TaskSidebar({
   return (
     <div
       className={cn(
-        'md:shrink-0 md:w-[200px] md:border-l border-t md:border-t-0 border-border overflow-y-auto max-h-[300px] md:max-h-[660px] transition-colors',
+        'md:shrink-0 md:w-[400px] md:border-l border-t md:border-t-0 border-border overflow-y-auto max-h-[300px] md:max-h-[660px] transition-colors',
         isDragOverSidebar && 'bg-danger/10 border-l-danger/50',
       )}
       onDragOver={onSidebarDragOver}
@@ -511,6 +511,13 @@ export function DayTimeline() {
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
   const schedule: ScheduleBlock[] = dayPlan?.schedule ?? [];
+
+  // Filter out tasks already on the schedule (Akiflow-style: drag removes from sidebar)
+  const scheduledTaskIds = new Set(
+    schedule.filter((b) => b.taskId).map((b) => b.taskId!),
+  );
+  const filteredTodayTasks = todayTasks?.filter((t) => !scheduledTaskIds.has(t._id));
+  const filteredOverdueTasks = overdueTasks?.filter((t) => !scheduledTaskIds.has(t._id));
 
   // ── Resize handlers (native mouse events) ──────────────
 
@@ -861,8 +868,8 @@ export function DayTimeline() {
 
         {/* Task sidebar */}
         <TaskSidebar
-          todayTasks={todayTasks}
-          overdueTasks={overdueTasks}
+          todayTasks={filteredTodayTasks}
+          overdueTasks={filteredOverdueTasks}
           isDragOverSidebar={isDragOverSidebar}
           onSidebarDragOver={handleSidebarDragOver}
           onSidebarDragLeave={handleSidebarDragLeave}
