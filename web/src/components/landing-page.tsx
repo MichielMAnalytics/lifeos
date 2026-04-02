@@ -43,7 +43,7 @@ const PRICING_TIERS = [
   {
     id: "byok",
     name: "BYOK",
-    price: 20,
+    price: 30,
     badge: "7 days free",
     description: "Bring your own API keys -- no markup on AI costs.",
     cta: "Start 7-day trial",
@@ -63,16 +63,16 @@ const PRICING_TIERS = [
     name: "Standard",
     price: 45,
     badge: "Popular",
-    description: "Includes EUR 25 in model credits each month.",
+    description: "Includes EUR 15 in model credits each month.",
     cta: "Subscribe",
     popular: true,
   },
   {
     id: "premium",
     name: "Premium",
-    price: 75,
+    price: 95,
     badge: null,
-    description: "Includes EUR 55 in model credits each month.",
+    description: "Includes EUR 40 in model credits each month.",
     cta: "Subscribe",
     popular: false,
   },
@@ -95,7 +95,7 @@ type ProviderValues = Record<string, string>;
 
 const FIXED_PROVIDERS: { id: string; name: string; highlight?: boolean; values: ProviderValues }[] = [
   { id: "selfhost", name: "Self-host", values: { setup: "4\u20136 hours", secret_mgmt: ".env files", encryption: "no", isolation: "no", patching: "Manual", access: "no", audit: "no", byok: "yes", integrations: "All (manual setup)", price: "$0 + your time" } },
-  { id: "azin", name: "LifeOS", highlight: true, values: { setup: "120 seconds", secret_mgmt: "Secret Manager + CMEK", encryption: "yes", isolation: "yes", patching: "Automatic (GKE)", access: "Google OAuth", audit: "yes", byok: "yes", integrations: "All channels + full UI", price: "From \u20AC20" } },
+  { id: "azin", name: "LifeOS", highlight: true, values: { setup: "120 seconds", secret_mgmt: "Secret Manager + CMEK", encryption: "yes", isolation: "yes", patching: "Automatic (GKE)", access: "Google OAuth", audit: "yes", byok: "yes", integrations: "All channels + full UI", price: "From \u20AC30" } },
 ];
 
 const OPTIONAL_PROVIDERS: { id: string; name: string; values: ProviderValues }[] = [
@@ -137,7 +137,7 @@ const FAQ_ITEMS = [
   },
   {
     question: "How much does it cost?",
-    answer: "Plans start at EUR 20/mo (BYOK) and go up to EUR 75/mo (Premium with EUR 55 in credits). All plans include managed hosting, automatic updates, and full pod isolation. The BYOK plan includes a 7-day free trial. You can cancel anytime.",
+    answer: "Plans start at EUR 30/mo (BYOK) and go up to EUR 95/mo (Premium with EUR 40 in credits). All plans include managed hosting, automatic updates, and full pod isolation. The BYOK plan includes a 7-day free trial. You can cancel anytime.",
     link: { text: "View pricing", href: "#pricing" },
   },
 ];
@@ -580,6 +580,8 @@ function TestimonialsSection() {
 // ---------------------------------------------------------------------------
 
 function PricingSection() {
+  const [annual, setAnnual] = useState(false);
+
   return (
     <section className="py-24 lg:py-32 px-6 lg:px-12 border-t border-text/[0.08]" id="pricing">
       <div className="max-w-5xl mx-auto">
@@ -590,9 +592,35 @@ function PricingSection() {
           subtitle="All plans include managed hosting, automatic updates, and full isolation. Credits roll over month-to-month."
         />
 
+        {/* Monthly / Annual toggle */}
+        <div className="flex items-center justify-center gap-3 mb-10">
+          <span className={`text-sm font-heading font-medium transition-colors ${!annual ? "text-text" : "text-text-muted/50"}`}>
+            Monthly
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={annual}
+            onClick={() => setAnnual(!annual)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border border-text/10 transition-colors ${
+              annual ? "bg-accent" : "bg-text/10"
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-bg shadow-sm transition-transform ${
+                annual ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+          <span className={`text-sm font-heading font-medium transition-colors ${annual ? "text-text" : "text-text-muted/50"}`}>
+            Annual
+            <span className="ml-1.5 text-[10px] text-green-500 font-medium">20% off</span>
+          </span>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {PRICING_TIERS.map((tier) => (
-            <PricingCard key={tier.id} tier={tier} />
+            <PricingCard key={tier.id} tier={tier} annual={annual} />
           ))}
         </div>
 
@@ -604,8 +632,10 @@ function PricingSection() {
   );
 }
 
-function PricingCard({ tier }: { tier: (typeof PRICING_TIERS)[number] }) {
+function PricingCard({ tier, annual }: { tier: (typeof PRICING_TIERS)[number]; annual: boolean }) {
   const { signIn } = useAuthActions();
+  const displayPrice = annual ? Math.round(tier.price * 0.8 * 100) / 100 : tier.price;
+  const priceStr = displayPrice % 1 === 0 ? displayPrice.toString() : displayPrice.toFixed(2);
 
   const card = (
     <div
@@ -627,12 +657,16 @@ function PricingCard({ tier }: { tier: (typeof PRICING_TIERS)[number] }) {
         )}
       </div>
 
-      <div className="flex items-baseline gap-1.5 mb-3">
+      <div className="flex items-baseline gap-1.5 mb-1">
         <span className="text-3xl font-medium tracking-[-0.02em] text-text">
-          EUR {tier.price}
+          EUR {priceStr}
         </span>
         <span className="text-sm text-text-muted font-heading">EUR/mo</span>
       </div>
+      {annual && (
+        <p className="text-[10px] text-text-muted/50 font-heading mb-2">billed annually</p>
+      )}
+      {!annual && <div className="mb-3" />}
 
       <p className="text-[12px] text-text-muted font-heading leading-relaxed flex-1 mb-5">
         {tier.description}
@@ -642,7 +676,9 @@ function PricingCard({ tier }: { tier: (typeof PRICING_TIERS)[number] }) {
         type="button"
         onClick={() => {
           sessionStorage.setItem("pref_plan", tier.id);
-          capture(EVENTS.SIGNED_IN, { method: "google", plan: tier.id });
+          if (annual) sessionStorage.setItem("pref_billing", "annual");
+          else sessionStorage.removeItem("pref_billing");
+          capture(EVENTS.SIGNED_IN, { method: "google", plan: tier.id, billing: annual ? "annual" : "monthly" });
           void signIn("google");
         }}
         className={`w-full flex items-center justify-center py-2.5 rounded-md transition-all duration-150 active:scale-[0.99] cursor-pointer ${

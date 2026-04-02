@@ -10,6 +10,11 @@ const serverEnvSchema = z.object({
   STRIPE_SUB_BASIC: z.string().optional(),
   STRIPE_SUB_STANDARD: z.string().optional(),
   STRIPE_SUB_PREMIUM: z.string().optional(),
+  STRIPE_SUB_DASHBOARD_ANNUAL: z.string().optional(),
+  STRIPE_SUB_BYOK_ANNUAL: z.string().optional(),
+  STRIPE_SUB_BASIC_ANNUAL: z.string().optional(),
+  STRIPE_SUB_STANDARD_ANNUAL: z.string().optional(),
+  STRIPE_SUB_PREMIUM_ANNUAL: z.string().optional(),
   SITE_URL: z.url().default("http://localhost:5173"),
   K8S_API_URL: z.string().optional(),
   JWT_SIGNING_KEY: z.string().optional(),
@@ -62,8 +67,10 @@ export function getCreditTiersList(): Array<{
 const PLAN_DEFS = [
   {
     key: "STRIPE_SUB_DASHBOARD" as const,
+    annualKey: "STRIPE_SUB_DASHBOARD_ANNUAL" as const,
     planType: "dashboard" as const,
     priceEuroCents: 1000,
+    annualPriceEuroCents: 9600 as number | null,
     includedCreditsCents: 0,
     apiKeyMode: "none" as const,
     label: "Dashboard",
@@ -71,8 +78,10 @@ const PLAN_DEFS = [
   },
   {
     key: "STRIPE_SUB_BYOK" as const,
+    annualKey: "STRIPE_SUB_BYOK_ANNUAL" as const,
     planType: "byok" as const,
     priceEuroCents: 3000,
+    annualPriceEuroCents: 28800 as number | null,
     includedCreditsCents: 0,
     apiKeyMode: "byok" as const,
     label: "BYOK",
@@ -80,8 +89,10 @@ const PLAN_DEFS = [
   },
   {
     key: "STRIPE_SUB_BASIC" as const,
+    annualKey: "STRIPE_SUB_BASIC_ANNUAL" as const,
     planType: "basic" as const,
-    priceEuroCents: 4000,
+    priceEuroCents: 3000,
+    annualPriceEuroCents: 28800 as number | null,
     includedCreditsCents: 1000,
     apiKeyMode: "ours" as const,
     label: "Basic",
@@ -89,18 +100,22 @@ const PLAN_DEFS = [
   },
   {
     key: "STRIPE_SUB_STANDARD" as const,
+    annualKey: "STRIPE_SUB_STANDARD_ANNUAL" as const,
     planType: "standard" as const,
-    priceEuroCents: 5500,
-    includedCreditsCents: 2500,
+    priceEuroCents: 4500,
+    annualPriceEuroCents: 43200 as number | null,
+    includedCreditsCents: 1500,
     apiKeyMode: "ours" as const,
     label: "Standard",
     includesDeployment: true,
   },
   {
     key: "STRIPE_SUB_PREMIUM" as const,
+    annualKey: "STRIPE_SUB_PREMIUM_ANNUAL" as const,
     planType: "premium" as const,
-    priceEuroCents: 10500,
-    includedCreditsCents: 5000,
+    priceEuroCents: 9500,
+    annualPriceEuroCents: 91200 as number | null,
+    includedCreditsCents: 4000,
     apiKeyMode: "ours" as const,
     label: "Premium",
     includesDeployment: true,
@@ -115,14 +130,21 @@ export function getSubscriptionPlans(): Record<
   for (const plan of PLAN_DEFS) {
     const priceId = serverEnv[plan.key];
     if (priceId) plans[priceId] = plan;
+    // Also map annual price IDs to the same plan def
+    if (plan.annualKey) {
+      const annualPriceId = serverEnv[plan.annualKey as keyof ServerEnv] as string | undefined;
+      if (annualPriceId) plans[annualPriceId] = plan;
+    }
   }
   return plans;
 }
 
 export function getSubscriptionPlansList(): Array<{
   priceId: string;
+  annualPriceId: string | null;
   planType: "dashboard" | "byok" | "basic" | "standard" | "premium";
   priceEuroCents: number;
+  annualPriceEuroCents: number | null;
   includedCreditsCents: number;
   apiKeyMode: "none" | "byok" | "ours";
   label: string;
@@ -130,8 +152,12 @@ export function getSubscriptionPlansList(): Array<{
 }> {
   return PLAN_DEFS.map((plan) => ({
     priceId: serverEnv[plan.key] ?? "",
+    annualPriceId: plan.annualKey
+      ? (serverEnv[plan.annualKey as keyof ServerEnv] as string | undefined) ?? null
+      : null,
     planType: plan.planType,
     priceEuroCents: plan.priceEuroCents,
+    annualPriceEuroCents: plan.annualPriceEuroCents,
     includedCreditsCents: plan.includedCreditsCents,
     apiKeyMode: plan.apiKeyMode,
     label: plan.label,

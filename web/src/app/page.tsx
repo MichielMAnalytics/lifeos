@@ -4,12 +4,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { Authenticated, Unauthenticated, AuthLoading } from 'convex/react';
 
-// Persist ?plan= param across OAuth/login redirect (read by onboarding-flow.tsx)
+// Persist ?plan= param across OAuth/login redirect (read by onboarding route pages)
 function StoreUrlPrefs() {
   const searchParams = useSearchParams();
   const plan = searchParams.get('plan');
-  if (plan && typeof window !== 'undefined') {
-    sessionStorage.setItem('pref_plan', plan);
+  const billing = searchParams.get('billing');
+  if (typeof window !== 'undefined') {
+    if (plan) sessionStorage.setItem('pref_plan', plan);
+    if (billing) sessionStorage.setItem('pref_billing', billing);
   }
   return null;
 }

@@ -6,12 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
 
-// Persist ?plan= param across OAuth redirect
+// Persist ?plan= and ?billing= params across OAuth redirect
 function StoreUrlPrefs() {
   const searchParams = useSearchParams();
   const plan = searchParams.get('plan');
-  if (plan && typeof window !== 'undefined') {
-    sessionStorage.setItem('pref_plan', plan);
+  const billing = searchParams.get('billing');
+  if (typeof window !== 'undefined') {
+    if (plan) sessionStorage.setItem('pref_plan', plan);
+    if (billing) sessionStorage.setItem('pref_billing', billing);
   }
   return null;
 }

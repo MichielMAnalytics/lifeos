@@ -634,6 +634,32 @@ export default function LifeCoachPage() {
     );
   }
 
+  // ---- Home plan: self-managed Life Coach ----
+  const isHomePlan = subscription?.planType === 'dashboard';
+  if (isHomePlan) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full px-6 text-center animate-fade-in">
+        <Image
+          src="/openclaw-icon.png"
+          alt="Life Coach"
+          width={48}
+          height={48}
+          className="rounded-full mb-6 opacity-30"
+        />
+        <h2 className="text-lg font-semibold text-text mb-2">Self-managed Life Coach</h2>
+        <p className="text-sm text-text-muted max-w-md mb-6">
+          On the Home plan, you manage your own Life Coach instance. Head to Settings to configure the connection.
+        </p>
+        <Link
+          href="/settings"
+          className="inline-flex items-center justify-center h-9 px-6 bg-accent text-bg text-sm font-medium rounded-lg hover:bg-accent-hover transition-colors"
+        >
+          Go to Settings
+        </Link>
+      </div>
+    );
+  }
+
   // ---- No deployment: prompt to set up ----
   const hasDeployment = deployment && deployment.status !== 'deactivated';
   if (!hasDeployment) {

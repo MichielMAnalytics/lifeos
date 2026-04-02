@@ -2,13 +2,12 @@
 
 import { Authenticated, Unauthenticated, AuthLoading, useQuery } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, Suspense } from "react";
 import { api } from "@/lib/convex-api";
 import { Nav } from '@/components/nav';
 import { MainContent } from '@/components/main-content';
 import { DashboardConfigProvider } from '@/lib/dashboard-config';
 import { GatewayProvider } from '@/lib/gateway';
-import { OnboardingFlow } from '@/components/onboarding-flow';
 import { LoadingScreen } from '@/components/loading-screen';
 
 function RedirectToLogin() {
@@ -21,27 +20,50 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   const subscription = useQuery(api.stripe.getMySubscription);
   const deployment = useQuery(api.deploymentQueries.getMyDeployment);
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (subscription === undefined || deployment === undefined) return;
+
+    // No subscription at all -- redirect to onboarding
+    if (!subscription) {
+      router.replace('/onboarding/welcome');
+      return;
+    }
+
+    const isPostCheckout = searchParams.get('subscription') === 'success';
+    const isDeploymentPlan = subscription.planType !== 'dashboard';
+    const hasDeployment = deployment && deployment.status !== 'deactivated';
+
+    // Post-checkout redirect for deployment plans without a deployment
+    if (isPostCheckout && isDeploymentPlan && !hasDeployment) {
+      router.replace('/onboarding/setup?subscription=success');
+      return;
+    }
+
+    // Post-checkout redirect for Home plan
+    if (isPostCheckout && !isDeploymentPlan) {
+      const setupDone = typeof window !== 'undefined' && localStorage.getItem('lifeos-setup-complete') === 'true';
+      if (!setupDone) {
+        router.replace('/onboarding/setup?subscription=success');
+        return;
+      }
+    }
+  }, [subscription, deployment, searchParams, router]);
 
   if (subscription === undefined || deployment === undefined) return <LoadingScreen />;
 
-  // No subscription at all — show full onboarding
-  if (!subscription) return <OnboardingFlow />;
+  // While redirecting, show loading screen
+  if (!subscription) return <LoadingScreen />;
 
-  // Post-checkout redirect — show setup step
   const isPostCheckout = searchParams.get('subscription') === 'success';
-
-  // For deployment plans (not dashboard): show onboarding if no deployment exists yet
   const isDeploymentPlan = subscription.planType !== 'dashboard';
   const hasDeployment = deployment && deployment.status !== 'deactivated';
 
-  if (isPostCheckout && isDeploymentPlan && !hasDeployment) {
-    return <OnboardingFlow />;
-  }
-
-  // For Home plan post-checkout: show CLI setup if not done
+  if (isPostCheckout && isDeploymentPlan && !hasDeployment) return <LoadingScreen />;
   if (isPostCheckout && !isDeploymentPlan) {
     const setupDone = typeof window !== 'undefined' && localStorage.getItem('lifeos-setup-complete') === 'true';
-    if (!setupDone) return <OnboardingFlow />;
+    if (!setupDone) return <LoadingScreen />;
   }
 
   // Normal app
