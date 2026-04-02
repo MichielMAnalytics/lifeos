@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
-import { useQuery } from 'convex/react';
+import { useQuery, useAction } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { useGateway } from '@/lib/gateway';
 import { cn } from '@/lib/utils';
@@ -343,6 +343,7 @@ function MessageRow({ message }: { message: ChatMessage }) {
 export default function LifeCoachPage() {
   const subscription = useQuery(api.stripe.getMySubscription);
   const deployment = useQuery(api.deploymentQueries.getMyDeployment);
+  const transcribeAudio = useAction(api.transcribe.transcribeAudio);
   const { client, state: gatewayState } = useGateway();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -744,23 +745,23 @@ export default function LifeCoachPage() {
     setVoiceTranscribing(true);
 
     try {
-      const form = new FormData();
-      form.append('file', audioBlob, 'voice.webm');
-      const res = await fetch('/api/transcribe', { method: 'POST', body: form });
+      // Convert audio blob to base64 for Convex action
+      const buffer = await audioBlob.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const audioBase64 = btoa(binary);
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error((errData as { error?: string }).error ?? `Transcription failed (${res.status})`);
-      }
+      const transcript = await transcribeAudio({
+        audioBase64,
+        mimeType: audioBlob.type || 'audio/webm',
+      });
 
-      const data = await res.json() as { text?: string };
-      const transcript = data.text?.trim();
-      if (transcript) {
+      if (transcript.trim()) {
         setInput((prev) => {
           const sep = prev && !prev.endsWith(' ') ? ' ' : '';
-          return prev + sep + transcript;
+          return prev + sep + transcript.trim();
         });
-        // Focus the input so user can review / edit / send
         setTimeout(() => {
           inputRef.current?.focus();
           adjustTextareaHeight();
@@ -771,7 +772,7 @@ export default function LifeCoachPage() {
     } finally {
       setVoiceTranscribing(false);
     }
-  }, [adjustTextareaHeight]);
+  }, [adjustTextareaHeight, transcribeAudio]);
 
   const toggleVoice = useCallback(async () => {
     if (voiceRecording) {

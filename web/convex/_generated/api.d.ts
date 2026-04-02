@@ -43,6 +43,7 @@ import type * as stripe from "../stripe.js";
 import type * as stripeCheckout from "../stripeCheckout.js";
 import type * as tasks from "../tasks.js";
 import type * as thoughts from "../thoughts.js";
+import type * as transcribe from "../transcribe.js";
 import type * as triggers from "../triggers.js";
 import type * as visionBoard from "../visionBoard.js";
 import type * as weeklyPlans from "../weeklyPlans.js";
@@ -90,6 +91,7 @@ declare const fullApi: ApiFromModules<{
   stripeCheckout: typeof stripeCheckout;
   tasks: typeof tasks;
   thoughts: typeof thoughts;
+  transcribe: typeof transcribe;
   triggers: typeof triggers;
   visionBoard: typeof visionBoard;
   weeklyPlans: typeof weeklyPlans;
