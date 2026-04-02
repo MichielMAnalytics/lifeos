@@ -152,20 +152,28 @@ proxy.all("/:provider/*", async (c) => {
 
   // Parse request body (need it to extract model and potentially modify for OpenAI streaming)
   let requestBodyStr: string | undefined;
+  let requestBodyRaw: ArrayBuffer | undefined;
   let requestBody: Record<string, unknown> | undefined;
   let modelId: string | undefined;
+  const contentType = c.req.header("Content-Type") ?? "";
+  const isMultipart = contentType.includes("multipart/");
 
   if (c.req.method !== "GET" && c.req.method !== "HEAD") {
     const rawBody = await c.req.arrayBuffer();
     if (rawBody.byteLength > MAX_BODY_SIZE) {
       return c.json({ error: "Request body too large" }, 413);
     }
-    requestBodyStr = new TextDecoder().decode(rawBody);
 
-    try {
-      requestBody = JSON.parse(requestBodyStr);
-    } catch {
-      // Not JSON, pass through as-is
+    if (isMultipart) {
+      // Binary multipart data (e.g. audio/transcriptions) — keep raw to avoid corruption
+      requestBodyRaw = rawBody;
+    } else {
+      requestBodyStr = new TextDecoder().decode(rawBody);
+      try {
+        requestBody = JSON.parse(requestBodyStr);
+      } catch {
+        // Not JSON, pass through as-is
+      }
     }
   }
 
@@ -322,7 +330,12 @@ proxy.all("/:provider/*", async (c) => {
 
   // Build upstream headers
   const upstreamHeaders = new Headers();
-  upstreamHeaders.set("Content-Type", c.req.header("Content-Type") ?? "application/json");
+  // Preserve original Content-Type (critical for multipart boundary tokens)
+  if (isMultipart) {
+    upstreamHeaders.set("Content-Type", contentType);
+  } else {
+    upstreamHeaders.set("Content-Type", c.req.header("Content-Type") ?? "application/json");
+  }
 
   if (provider === "anthropic") {
     if (isAnthropicOAuth) {
@@ -347,7 +360,7 @@ proxy.all("/:provider/*", async (c) => {
     const upstreamResponse = await fetch(fullUpstreamUrl, {
       method: c.req.method,
       headers: upstreamHeaders,
-      body: requestBodyStr,
+      body: isMultipart ? requestBodyRaw : requestBodyStr,
     });
 
     // Forward response headers
@@ -381,12 +394,32 @@ proxy.all("/:provider/*", async (c) => {
       });
     }
 
+    // Multipart requests (e.g. audio transcription) don't return token usage.
+    // Deduct a flat cost and pass response through without tee/usage parsing.
+    if (isMultipart) {
+      const AUDIO_TRANSCRIPTION_COST_CENTS = 1.0; // ~$0.01 per request
+      try {
+        await deductBalance(podSecret, AUDIO_TRANSCRIPTION_COST_CENTS);
+      } catch (err) {
+        if (err instanceof InsufficientBalanceError) {
+          console.warn(`[proxy] Post-deduct insufficient balance for audio transcription pod ${podSecret.slice(0, 8)}...`);
+        } else {
+          throw err;
+        }
+      }
+      await markDirty(podSecret);
+      return new Response(upstreamResponse.body, {
+        status: upstreamResponse.status,
+        headers: responseHeaders,
+      });
+    }
+
     const isStreaming = upstreamResponse.headers.get("content-type")?.includes("text/event-stream") ?? false;
-    const contentType = upstreamResponse.headers.get("content-type") ?? "";
+    const respContentType = upstreamResponse.headers.get("content-type") ?? "";
 
     // Vertex AI sometimes returns 200 with plain text errors (e.g. "unconditional drop overload")
     // in both JSON and SSE modes. Detect and convert to 503 so clients get a proper error.
-    if (!isStreaming && !contentType.includes("application/json") && upstreamResponse.status === 200) {
+    if (!isStreaming && !respContentType.includes("application/json") && upstreamResponse.status === 200) {
       const body = await upstreamResponse.text();
       console.warn(`[proxy] Unexpected non-JSON 200 from ${provider}: ${body.slice(0, 200)}`);
       return c.json({ error: "Model temporarily unavailable, please retry", detail: body.slice(0, 200) }, 503);

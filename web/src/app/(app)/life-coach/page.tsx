@@ -730,57 +730,121 @@ export default function LifeCoachPage() {
 
   // ---- Input component (reused in both states) ----
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [sttRecording, setSttRecording] = useState(false);
-  const [sttInterim, setSttInterim] = useState('');
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [voiceRecording, setVoiceRecording] = useState(false);
+  const [voiceTranscribing, setVoiceTranscribing] = useState(false);
+  const [voiceDuration, setVoiceDuration] = useState(0);
+  const [voiceLevels, setVoiceLevels] = useState<number[]>(new Array(32).fill(0));
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const voiceTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const animFrameRef = useRef<number>(0);
 
-  const toggleStt = useCallback(() => {
-    if (sttRecording) {
-      console.log('[STT] Stopping recording');
-      recognitionRef.current?.stop();
-      setSttRecording(false);
-      setSttInterim('');
-      return;
-    }
-    const SpeechRecognition = (window as unknown as Record<string, unknown>).SpeechRecognition ?? (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.error('[STT] SpeechRecognition API not available in this browser');
-      return;
-    }
-    console.log('[STT] Starting recording, lang:', navigator.language || 'en-US');
-    const recognition = new (SpeechRecognition as new () => SpeechRecognition)();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = navigator.language || 'en-US';
-    recognition.onresult = (e: SpeechRecognitionEvent) => {
-      let interim = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const text = e.results[i][0].transcript;
-        const confidence = e.results[i][0].confidence;
-        if (e.results[i].isFinal) {
-          console.log('[STT] Final transcript:', text, 'confidence:', confidence.toFixed(2));
-          setInput((prev) => {
-            const sep = prev && !prev.endsWith(' ') ? ' ' : '';
-            return prev + sep + text;
-          });
-          setSttInterim('');
-        } else {
-          console.log('[STT] Interim:', text);
-          interim += text;
-        }
+  const transcribeToInput = useCallback(async (audioBlob: Blob) => {
+    setVoiceTranscribing(true);
+
+    try {
+      const form = new FormData();
+      form.append('file', audioBlob, 'voice.webm');
+      const res = await fetch('/api/transcribe', { method: 'POST', body: form });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error((errData as { error?: string }).error ?? `Transcription failed (${res.status})`);
       }
-      if (interim) setSttInterim(interim);
-    };
-    recognition.onstart = () => { console.log('[STT] Recognition started'); };
-    recognition.onaudiostart = () => { console.log('[STT] Audio capture started'); };
-    recognition.onspeechstart = () => { console.log('[STT] Speech detected'); };
-    recognition.onspeechend = () => { console.log('[STT] Speech ended'); };
-    recognition.onend = () => { console.log('[STT] Recognition ended'); setSttRecording(false); setSttInterim(''); };
-    recognition.onerror = (e) => { console.error('[STT] Error:', e.error, e.message); setSttRecording(false); setSttInterim(''); };
-    recognition.start();
-    recognitionRef.current = recognition;
-    setSttRecording(true);
-  }, [sttRecording]);
+
+      const data = await res.json() as { text?: string };
+      const transcript = data.text?.trim();
+      if (transcript) {
+        setInput((prev) => {
+          const sep = prev && !prev.endsWith(' ') ? ' ' : '';
+          return prev + sep + transcript;
+        });
+        // Focus the input so user can review / edit / send
+        setTimeout(() => {
+          inputRef.current?.focus();
+          adjustTextareaHeight();
+        }, 50);
+      }
+    } catch (err) {
+      console.error('Voice transcription failed:', err);
+    } finally {
+      setVoiceTranscribing(false);
+    }
+  }, [adjustTextareaHeight]);
+
+  const toggleVoice = useCallback(async () => {
+    if (voiceRecording) {
+      // Stop recording
+      mediaRecorderRef.current?.stop();
+      if (voiceTimerRef.current) clearInterval(voiceTimerRef.current);
+      voiceTimerRef.current = null;
+      cancelAnimationFrame(animFrameRef.current);
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close();
+        audioCtxRef.current = null;
+      }
+      analyserRef.current = null;
+      setVoiceRecording(false);
+      setVoiceDuration(0);
+      setVoiceLevels(new Array(32).fill(0));
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Set up audio analyser for waveform visualization
+      const audioCtx = new AudioContext();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.7;
+      source.connect(analyser);
+      audioCtxRef.current = audioCtx;
+      analyserRef.current = analyser;
+
+      // Animate waveform
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        analyser.getByteFrequencyData(dataArray);
+        // Sample 32 bars from the frequency data, normalized 0–1
+        const bars: number[] = [];
+        const step = Math.floor(dataArray.length / 32);
+        for (let i = 0; i < 32; i++) {
+          const val = dataArray[i * step] / 255;
+          bars.push(val);
+        }
+        setVoiceLevels(bars);
+        animFrameRef.current = requestAnimationFrame(tick);
+      };
+      tick();
+
+      // Set up recorder
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '';
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (chunks.length > 0) {
+          const blob = new Blob(chunks, { type: recorder.mimeType });
+          transcribeToInput(blob);
+        }
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setVoiceRecording(true);
+      setVoiceDuration(0);
+      voiceTimerRef.current = setInterval(() => setVoiceDuration((d) => d + 1), 1000);
+    } catch (err) {
+      console.error('[Voice] Microphone access denied:', err);
+    }
+  }, [voiceRecording, transcribeToInput]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -837,53 +901,89 @@ export default function LifeCoachPage() {
       )}
       <div
         className={cn(
-          'flex flex-col border border-border/40 rounded-2xl px-4 py-3 bg-surface transition-colors',
-          'focus-within:border-border/70',
+          'flex flex-col border rounded-2xl px-4 py-3 bg-surface transition-all duration-300',
+          voiceRecording
+            ? 'border-accent/40 shadow-[0_0_0_1px_var(--accent-glow),0_0_20px_var(--accent-glow)]'
+            : 'border-border/40 focus-within:border-border/70',
         )}
       >
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => {
-            setInput(e.target.value);
-            adjustTextareaHeight();
-          }}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          placeholder={sttRecording ? 'Listening...' : isDisconnectedOrConnecting ? 'Connecting...' : 'Ask anything'}
-          disabled={isDisconnectedOrConnecting && !isStreaming}
-          rows={1}
-          className={cn(
-            'w-full bg-transparent text-sm text-text placeholder:text-text-muted/40',
-            'focus:outline-none resize-none leading-relaxed',
-            'min-h-[24px] max-h-[160px]',
-            (isDisconnectedOrConnecting && !isStreaming) && 'opacity-40',
-          )}
-        />
-        {sttInterim && (
-          <p className="text-xs text-text-muted/50 italic mt-1">{sttInterim}</p>
+        {/* Waveform visualizer — replaces textarea while recording */}
+        {voiceRecording ? (
+          <div className="flex items-center gap-3 min-h-[24px] py-1">
+            <div className="flex items-center gap-[2px] flex-1 h-6">
+              {voiceLevels.map((level, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-full bg-accent/80 transition-[height] duration-75"
+                  style={{
+                    height: `${Math.max(3, level * 24)}px`,
+                    opacity: 0.4 + level * 0.6,
+                  }}
+                />
+              ))}
+            </div>
+            <span className="text-xs font-mono tabular-nums text-text-muted/60 shrink-0">
+              {Math.floor(voiceDuration / 60)}:{String(voiceDuration % 60).padStart(2, '0')}
+            </span>
+          </div>
+        ) : (
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              adjustTextareaHeight();
+            }}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            placeholder={isDisconnectedOrConnecting ? 'Connecting...' : 'Ask anything'}
+            disabled={(isDisconnectedOrConnecting && !isStreaming) || voiceTranscribing}
+            rows={1}
+            className={cn(
+              'w-full bg-transparent text-sm text-text placeholder:text-text-muted/40',
+              'focus:outline-none resize-none leading-relaxed',
+              'min-h-[24px] max-h-[160px]',
+              (isDisconnectedOrConnecting && !isStreaming) && 'opacity-40',
+              voiceTranscribing && 'opacity-40',
+            )}
+          />
+        )}
+        {voiceTranscribing && (
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex gap-1">
+              <span className="w-1 h-1 rounded-full bg-accent/60 animate-[pulse_1.4s_ease-in-out_0s_infinite]" />
+              <span className="w-1 h-1 rounded-full bg-accent/60 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+              <span className="w-1 h-1 rounded-full bg-accent/60 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+            </div>
+            <p className="text-xs text-text-muted/50">Transcribing...</p>
+          </div>
         )}
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-1">
+            {!voiceRecording && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={!canSend}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted/40 hover:text-text-muted hover:bg-text-muted/10 transition-colors disabled:opacity-30"
+                title="Attach image"
+              >
+                <PaperclipIcon />
+              </button>
+            )}
             <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={!canSend}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted/40 hover:text-text-muted hover:bg-text-muted/10 transition-colors disabled:opacity-30"
-              title="Attach image"
-            >
-              <PaperclipIcon />
-            </button>
-            <button
-              onClick={toggleStt}
+              onClick={toggleVoice}
+              disabled={voiceTranscribing}
               className={cn(
-                'w-7 h-7 flex items-center justify-center rounded-lg transition-colors',
-                sttRecording
-                  ? 'text-danger bg-danger/10'
-                  : 'text-text-muted/40 hover:text-text-muted hover:bg-text-muted/10',
+                'w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200',
+                voiceRecording
+                  ? 'text-danger bg-danger/10 hover:bg-danger/20'
+                  : voiceTranscribing
+                    ? 'text-text-muted/20 cursor-not-allowed'
+                    : 'text-text-muted/40 hover:text-text-muted hover:bg-text-muted/10',
               )}
-              title={sttRecording ? 'Stop recording' : 'Voice input'}
+              title={voiceRecording ? 'Stop recording' : voiceTranscribing ? 'Transcribing...' : 'Voice input'}
             >
-              {sttRecording ? <MicOffIcon /> : <MicIcon />}
+              {voiceRecording ? <StopIcon /> : <MicIcon />}
             </button>
           </div>
           <div className="flex items-center gap-1">
