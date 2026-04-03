@@ -4,6 +4,7 @@ import { UniversalAdd } from '@/components/universal-add';
 import { HealthMacros } from '@/components/sections/health-macros';
 import { ActiveProgramme } from '@/components/sections/active-programme';
 import { WorkoutLog } from '@/components/sections/workout-log';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 export default function HealthPage() {
   return (
@@ -21,13 +22,19 @@ export default function HealthPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Left: Macros + Food Diary */}
         <div className="space-y-4 md:space-y-6">
-          <HealthMacros />
+          <ErrorBoundary>
+            <HealthMacros />
+          </ErrorBoundary>
         </div>
 
         {/* Right: Programme + Workout Log */}
         <div className="space-y-4 md:space-y-6">
-          <ActiveProgramme />
-          <WorkoutLog />
+          <ErrorBoundary>
+            <ActiveProgramme />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <WorkoutLog />
+          </ErrorBoundary>
         </div>
       </div>
     </div>
