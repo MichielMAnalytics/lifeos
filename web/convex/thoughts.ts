@@ -20,6 +20,20 @@ export const list = query({
   },
 });
 
+// ── get ───────────────────────────────────────────────
+
+export const get = query({
+  args: { id: v.id("thoughts") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const thought = await ctx.db.get(args.id);
+    if (!thought || thought.userId !== userId) return null;
+    return thought;
+  },
+});
+
 // ── create ────────────────────────────────────────────
 
 export const create = mutation({

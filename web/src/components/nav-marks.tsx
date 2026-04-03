@@ -170,6 +170,15 @@ export function MarkAiAgent({ className }: { className?: string }) {
   );
 }
 
+// Health — heartbeat pulse line
+export function MarkHealth({ className }: { className?: string }) {
+  return (
+    <M className={className}>
+      <polyline points="1 8 4 8 6 3 8 13 10 6 12 8 15 8" />
+    </M>
+  );
+}
+
 // Settings — single diagonal line through a dot
 export function MarkSettings({ className }: { className?: string }) {
   return (
@@ -193,5 +202,6 @@ export const NAV_MARKS: Record<string, React.ComponentType<{ className?: string 
   resources: MarkResources,
   calendar: MarkCalendar,
   'life-coach': MarkAiAgent,
+  health: MarkHealth,
   settings: MarkSettings,
 };

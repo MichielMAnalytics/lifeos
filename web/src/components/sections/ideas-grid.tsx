@@ -187,21 +187,6 @@ export function IdeasGrid() {
 
   return (
     <div className="max-w-none space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-text">
-          Ideas
-        </h1>
-      </div>
-
-      {/* Quick Add */}
-      <div className="border border-border p-5 rounded-xl">
-        <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3">
-          Quick Add
-        </p>
-        <IdeaForm />
-      </div>
-
       {/* Ideas Table */}
       {sorted.length === 0 ? (
         <div className="space-y-4">

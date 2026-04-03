@@ -458,6 +458,8 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
         className={`group relative rounded-xl border transition-all duration-150 cursor-pointer pl-5 ${
           completing ? 'animate-task-fade-out' : ''
         } ${
+          datePickerOpen ? 'z-20' : ''
+        } ${
           isSelected
             ? 'border-accent/40 bg-surface ring-2 ring-accent/40'
             : editing
@@ -1145,16 +1147,8 @@ export function TasksBucketed() {
 
   return (
     <div className="max-w-none space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-text">
-          Tasks
-        </h1>
-        <span className="text-sm text-text-muted">All tasks</span>
-      </div>
-
       {/* Column layout */}
-      <div className="md:overflow-x-auto md:pb-4 md:-mx-2 md:px-2">
+      <div className="md:overflow-x-auto md:overflow-y-visible md:pb-4 md:-mx-2 md:px-2">
         <div className="flex flex-col gap-6 md:flex-row md:gap-4 md:[min-width:max-content]">
           {buckets.map((bucket) => (
             <BucketColumn

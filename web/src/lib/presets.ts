@@ -13,7 +13,7 @@ export interface PagePreset {
 }
 
 export type PresetKey = string;
-export type PageKey = "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "calendar";
+export type PageKey = "life-coach" | "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "calendar" | "health";
 
 // ═══════════════════════════════════════════════════════════
 // Every persona appears on every page.
@@ -21,6 +21,11 @@ export type PageKey = "today" | "tasks" | "projects" | "goals" | "journal" | "id
 // ═══════════════════════════════════════════════════════════
 
 export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
+
+  // ── LIFE COACH (custom page, no presets) ──────────────
+  "life-coach": {
+    default: { name: "Default", description: "Life Coach", sections: [] },
+  },
 
   // ── TODAY ─────────────────────────────────────────────
   today: {
@@ -641,12 +646,80 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       ],
     },
   },
+  // ── HEALTH ──────────────────────────────────────────────
+  health: {
+    default: {
+      name: "Default",
+      description: "Workouts, programme, and nutrition",
+      sections: [
+        { id: "active-programme", label: "Programme", span: "half" },
+        { id: "nutrition-plan", label: "Nutrition", span: "half" },
+        { id: "food-log", label: "Food Diary", span: "full" },
+        { id: "workout-log", label: "Workout Log", span: "full" },
+      ],
+    },
+    solopreneur: {
+      name: "Solopreneur",
+      description: "Quick health overview",
+      sections: [
+        { id: "active-programme", label: "Programme", span: "half" },
+        { id: "nutrition-plan", label: "Nutrition", span: "half" },
+        { id: "food-log", label: "Food Diary", span: "full" },
+        { id: "workout-log", label: "Workout Log", span: "full" },
+      ],
+    },
+    "content-creator": {
+      name: "Content Creator",
+      description: "Health and energy tracking",
+      sections: [
+        { id: "nutrition-plan", label: "Nutrition", span: "full" },
+        { id: "food-log", label: "Food Diary", span: "full" },
+        { id: "workout-log", label: "Workout Log", span: "full" },
+      ],
+    },
+    developer: {
+      name: "Developer",
+      description: "Compact health data",
+      sections: [
+        { id: "active-programme", label: "Programme", span: "half" },
+        { id: "nutrition-plan", label: "Nutrition", span: "half" },
+        { id: "food-log", label: "Food Diary", span: "full" },
+        { id: "workout-log", label: "Workout Log", span: "full" },
+      ],
+    },
+    executive: {
+      name: "Executive",
+      description: "High-level health metrics",
+      sections: [
+        { id: "active-programme", label: "Programme", span: "half" },
+        { id: "nutrition-plan", label: "Nutrition", span: "half" },
+        { id: "food-log", label: "Food Diary", span: "full" },
+        { id: "workout-log", label: "Workout Log", span: "full" },
+      ],
+    },
+    minimalist: {
+      name: "Minimalist",
+      description: "Just the essentials",
+      sections: [
+        { id: "workout-log", label: "Workout Log", span: "full" },
+      ],
+    },
+    journaler: {
+      name: "Journaler",
+      description: "Health with reflection focus",
+      sections: [
+        { id: "active-programme", label: "Programme", span: "half" },
+        { id: "nutrition-plan", label: "Nutrition", span: "half" },
+        { id: "workout-log", label: "Workout Log", span: "full" },
+      ],
+    },
+  },
 };
 
 export const ALL_PRESET_KEYS = ["default", "solopreneur", "content-creator", "developer", "executive", "minimalist", "journaler"];
 
 export const DEFAULT_NAV_ORDER: PageKey[] = [
-  "life-coach", "today", "tasks", "journal", "projects", "goals", "ideas", "thoughts", "resources", "reviews", "calendar",
+  "life-coach", "today", "tasks", "journal", "projects", "goals", "ideas", "thoughts", "resources", "reviews", "calendar", "health",
 ];
 
 export function getPreset(page: PageKey, presetKey: string): PagePreset {

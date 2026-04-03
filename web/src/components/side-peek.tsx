@@ -100,6 +100,7 @@ export function SidePeek({ open, onClose, onOpenFullPage, onMoveToTrash, onDelet
       className={cn(
         'flex flex-col bg-bg border-l border-border',
         'shadow-[-8px_0_30px_rgba(0,0,0,0.15)]',
+        'animate-slide-in-right',
         className,
       )}
       style={{

@@ -16,7 +16,7 @@ interface DashboardConfig {
 const DEFAULT_CONFIG: DashboardConfig = {
   navMode: "sidebar",
   navOrder: [...DEFAULT_NAV_ORDER],
-  navHidden: [],
+  navHidden: ["projects"],
   pagePresets: {},
 };
 

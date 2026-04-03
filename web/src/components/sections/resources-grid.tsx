@@ -464,6 +464,108 @@ function AddResourceModal({ onClose }: AddResourceModalProps) {
   );
 }
 
+// ── View mode icons ─────────────────────────────────
+
+function GridIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? 'text-accent' : 'text-text-muted'}>
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+    </svg>
+  );
+}
+
+function ListIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? 'text-accent' : 'text-text-muted'}>
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
+    </svg>
+  );
+}
+
+function TableIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? 'text-accent' : 'text-text-muted'}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="3" y1="15" x2="21" y2="15" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+    </svg>
+  );
+}
+
+// ── Resource List Row ────────────────────────────────
+
+function ResourceListRow({ resource, onClick }: { resource: Resource; onClick: () => void }) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      className="flex items-center gap-4 px-4 py-3 hover:bg-surface-hover transition-colors cursor-pointer border-b border-border/50 last:border-b-0"
+    >
+      <span className="text-sm text-text flex-1 truncate">{resource.title}</span>
+      {resource.type && (
+        <span className="text-[10px] font-medium uppercase tracking-wide text-text-muted/60 shrink-0">
+          {resource.type}
+        </span>
+      )}
+      <span className="text-[11px] text-text-muted/50 shrink-0">
+        {relativeDate(resource._creationTime)}
+      </span>
+    </div>
+  );
+}
+
+// ── Resource Table Row ───────────────────────────────
+
+function ResourceTableRow({ resource, onClick }: { resource: Resource; onClick: () => void }) {
+  return (
+    <tr
+      onClick={onClick}
+      className="hover:bg-surface-hover transition-colors cursor-pointer border-b border-border/30"
+    >
+      <td className="px-4 py-3 text-sm text-text">{resource.title}</td>
+      <td className="px-4 py-3 text-xs text-text-muted">{resource.type ?? '-'}</td>
+      <td className="px-4 py-3 text-xs text-text-muted/60 whitespace-nowrap">{relativeDate(resource._creationTime)}</td>
+      <td className="px-4 py-3 text-xs text-text-muted truncate max-w-[200px]">{resource.content ?? '-'}</td>
+    </tr>
+  );
+}
+
+// ── Sort/Group helpers ──────────────────────────────
+
+type SortBy = 'date' | 'title';
+type GroupBy = 'none' | 'date' | 'title';
+type ViewMode = 'grid' | 'list' | 'table';
+
+function groupResources(resources: Resource[], groupBy: GroupBy): { label: string; items: Resource[] }[] {
+  if (groupBy === 'none') return [{ label: '', items: resources }];
+
+  const groups = new Map<string, Resource[]>();
+  for (const r of resources) {
+    let key: string;
+    if (groupBy === 'date') {
+      const d = new Date(r._creationTime);
+      key = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    } else {
+      key = r.title.charAt(0).toUpperCase();
+    }
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(r);
+  }
+
+  return Array.from(groups.entries()).map(([label, items]) => ({ label, items }));
+}
+
 // ── Main Component ──────────────────────────────────
 
 export function ResourcesGrid() {
@@ -472,8 +574,11 @@ export function ResourcesGrid() {
   const [selectedId, setSelectedId] = useState<Id<'resources'> | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [sortBy, setSortBy] = useState<SortBy>('date');
+  const [groupBy, setGroupBy] = useState<GroupBy>('none');
 
-  // Filter + sort (newest first)
+  // Filter + sort
   const filtered = useMemo(() => {
     if (!resources) return [];
     let list = [...resources];
@@ -487,19 +592,22 @@ export function ResourcesGrid() {
       );
     }
 
-    // Newest first
-    list.sort((a, b) => b._creationTime - a._creationTime);
+    if (sortBy === 'date') {
+      list.sort((a, b) => b._creationTime - a._creationTime);
+    } else {
+      list.sort((a, b) => a.title.localeCompare(b.title));
+    }
 
     return list;
-  }, [resources, searchQuery]);
+  }, [resources, searchQuery, sortBy]);
 
-  // Find selected resource
+  const groups = useMemo(() => groupResources(filtered, groupBy), [filtered, groupBy]);
+
   const selectedResource = useMemo(() => {
     if (!selectedId || !resources) return null;
     return resources.find((r) => r._id === selectedId) ?? null;
   }, [selectedId, resources]);
 
-  // Loading state
   if (!resources) {
     return (
       <div className="space-y-6">
@@ -522,37 +630,58 @@ export function ResourcesGrid() {
 
   return (
     <div className="max-w-none space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-text">
-          Resources
-        </h1>
+      {/* Toolbar: search + controls */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/50" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search resources..."
+            className="text-sm pl-9 pr-3 py-1.5 rounded-lg border border-border bg-bg text-text focus:outline-none focus:border-accent placeholder:text-text-muted/40 w-full sm:w-56"
+          />
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text hover:border-text-muted/40 transition-colors"
-        >
-          <PlusIcon />
-          New
-        </button>
+        <div className="flex items-center gap-1 ml-auto">
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortBy)}
+            className="text-[11px] bg-transparent border border-border rounded-md px-2 py-1.5 text-text-muted focus:outline-none focus:border-accent/50 cursor-pointer"
+          >
+            <option value="date">Sort: Date</option>
+            <option value="title">Sort: Title</option>
+          </select>
+
+          {/* Group */}
+          <select
+            value={groupBy}
+            onChange={(e) => setGroupBy(e.target.value as GroupBy)}
+            className="text-[11px] bg-transparent border border-border rounded-md px-2 py-1.5 text-text-muted focus:outline-none focus:border-accent/50 cursor-pointer"
+          >
+            <option value="none">Group: None</option>
+            <option value="date">Group: Date</option>
+            <option value="title">Group: Title</option>
+          </select>
+
+          {/* View mode */}
+          <div className="flex items-center border border-border rounded-md overflow-hidden ml-1">
+            <button onClick={() => setViewMode('grid')} className={cn('p-1.5 transition-colors', viewMode === 'grid' ? 'bg-surface' : 'hover:bg-surface-hover')} title="Gallery">
+              <GridIcon active={viewMode === 'grid'} />
+            </button>
+            <button onClick={() => setViewMode('list')} className={cn('p-1.5 transition-colors', viewMode === 'list' ? 'bg-surface' : 'hover:bg-surface-hover')} title="List">
+              <ListIcon active={viewMode === 'list'} />
+            </button>
+            <button onClick={() => setViewMode('table')} className={cn('p-1.5 transition-colors', viewMode === 'table' ? 'bg-surface' : 'hover:bg-surface-hover')} title="Table">
+              <TableIcon active={viewMode === 'table'} />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/50" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search resources..."
-          className="text-sm pl-9 pr-3 py-1.5 rounded-lg border border-border bg-bg text-text focus:outline-none focus:border-accent placeholder:text-text-muted/40 w-full sm:w-56"
-        />
-      </div>
-
-      {/* Card Grid */}
+      {/* Content */}
       {isEmpty && !hasFilters ? (
-        /* Empty state: ghost cards + CTA */
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {GHOST_RESOURCES.map((ghost, i) => (
@@ -571,19 +700,68 @@ export function ResourcesGrid() {
           </div>
         </div>
       ) : filtered.length === 0 ? (
-        /* No results for filters */
         <div className="py-16 text-center">
           <p className="text-sm text-text">No resources match your search</p>
           <p className="text-xs text-text-muted mt-1">Try adjusting your search.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((resource) => (
-            <ResourceCard
-              key={resource._id}
-              resource={resource}
-              onClick={() => setSelectedId(resource._id)}
-            />
+        <div className="space-y-6">
+          {groups.map(({ label, items }) => (
+            <div key={label || '__all'}>
+              {label && (
+                <h3 className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-muted/40 mb-3">
+                  {label}
+                </h3>
+              )}
+
+              {viewMode === 'grid' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {items.map((resource) => (
+                    <ResourceCard
+                      key={resource._id}
+                      resource={resource}
+                      onClick={() => setSelectedId(resource._id)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {viewMode === 'list' && (
+                <div className="border border-border rounded-xl overflow-hidden">
+                  {items.map((resource) => (
+                    <ResourceListRow
+                      key={resource._id}
+                      resource={resource}
+                      onClick={() => setSelectedId(resource._id)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {viewMode === 'table' && (
+                <div className="border border-border rounded-xl overflow-hidden">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border bg-surface/50">
+                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted/60">Title</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted/60">Type</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted/60">Date</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted/60">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((resource) => (
+                        <ResourceTableRow
+                          key={resource._id}
+                          resource={resource}
+                          onClick={() => setSelectedId(resource._id)}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}

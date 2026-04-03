@@ -84,7 +84,7 @@ async function parseBody<T = Record<string, unknown>>(request: Request): Promise
 type ResolvableTable =
   | "tasks" | "goals" | "projects" | "reminders"
   | "reviews" | "resources" | "ideas" | "thoughts" | "wins" | "apiKeys"
-  | "visionBoard";
+  | "visionBoard" | "workouts" | "programmes" | "foodLog";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const RESOLVER_MAP: Record<ResolvableTable, any> = {
@@ -99,6 +99,9 @@ const RESOLVER_MAP: Record<ResolvableTable, any> = {
   wins: internal.resolveId.resolveWin,
   apiKeys: internal.resolveId.resolveApiKey,
   visionBoard: internal.resolveId.resolveVisionBoard,
+  workouts: internal.resolveId.resolveWorkout,
+  programmes: internal.resolveId.resolveProgramme,
+  foodLog: internal.resolveId.resolveFoodLog,
 };
 
 async function resolveEntityId<T extends ResolvableTable>(
@@ -2522,6 +2525,397 @@ http.route({
     if (!systemKey || systemKey !== serverEnv.GATEWAY_SYSTEM_KEY) return new Response("Unauthorized", { status: 401 });
     const state = await ctx.runQuery(internal.deploymentQueries.getDesiredState, {});
     return new Response(JSON.stringify(state), { status: 200, headers: { "Content-Type": "application/json" } });
+  }),
+});
+
+// ════════════════════════════════════════════════════════
+// WORKOUTS
+// ════════════════════════════════════════════════════════
+
+http.route({
+  path: "/api/v1/workouts",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/workouts/",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/workouts",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const result = await ctx.runQuery(internal.workouts._list, {
+      userId,
+      type: url.searchParams.get("type") ?? undefined,
+      from: url.searchParams.get("from") ?? undefined,
+      to: url.searchParams.get("to") ?? undefined,
+      programmeId: url.searchParams.get("programmeId") ?? url.searchParams.get("programme_id") ?? undefined,
+    });
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/api/v1/workouts",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody(request);
+    try {
+      const workout = await ctx.runMutation(internal.workouts._create, {
+        userId,
+        workoutDate: (body.workoutDate ?? body.workout_date ?? body.date) as string,
+        type: body.type as string,
+        title: body.title as string,
+        durationMinutes: (body.durationMinutes ?? body.duration_minutes ?? body.duration ?? undefined) as number | undefined,
+        exercises: (body.exercises ?? undefined) as any,
+        notes: (body.notes ?? undefined) as string | undefined,
+        programmeId: (body.programmeId ?? body.programme_id ?? undefined) as string | undefined,
+      });
+      return json({ data: workout }, 201);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Create failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/workouts/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/workouts");
+    if (!rawId) return err("Missing workout id", 400);
+    const id = await resolveEntityId(ctx, userId, "workouts", rawId);
+    if (!id) return err("Workout not found", 404);
+    const workout = await ctx.runQuery(internal.workouts._get, { userId, id });
+    if (!workout) return err("Workout not found", 404);
+    return json({ data: workout });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/workouts/",
+  method: "PATCH",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/workouts");
+    if (!rawId) return err("Missing workout id", 400);
+    const id = await resolveEntityId(ctx, userId, "workouts", rawId);
+    if (!id) return err("Workout not found", 404);
+    const body = await parseBody(request);
+    try {
+      const workout = await ctx.runMutation(internal.workouts._update, {
+        userId,
+        id,
+        workoutDate: (body.workoutDate ?? body.workout_date ?? undefined) as string | undefined,
+        type: (body.type ?? undefined) as string | undefined,
+        title: (body.title ?? undefined) as string | undefined,
+        durationMinutes: (body.durationMinutes ?? body.duration_minutes ?? undefined) as number | undefined,
+        exercises: (body.exercises ?? undefined) as any,
+        notes: (body.notes ?? undefined) as string | undefined,
+        programmeId: (body.programmeId ?? body.programme_id ?? undefined) as string | undefined,
+      });
+      return json({ data: workout });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 404);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/workouts/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/workouts");
+    if (!rawId) return err("Missing workout id", 400);
+    const id = await resolveEntityId(ctx, userId, "workouts", rawId);
+    if (!id) return err("Workout not found", 404);
+    try {
+      const result = await ctx.runMutation(internal.workouts._remove, { userId, id });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
+      return err(message, 404);
+    }
+  }),
+});
+
+// ════════════════════════════════════════════════════════
+// PROGRAMMES
+// ════════════════════════════════════════════════════════
+
+http.route({
+  path: "/api/v1/programmes",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/programmes/",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/programmes",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const result = await ctx.runQuery(internal.programmes._list, {
+      userId,
+      status: url.searchParams.get("status") ?? undefined,
+    });
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/api/v1/programmes",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody(request);
+    try {
+      const programme = await ctx.runMutation(internal.programmes._create, {
+        userId,
+        title: body.title as string,
+        description: (body.description ?? undefined) as string | undefined,
+        status: (body.status ?? undefined) as string | undefined,
+        startDate: (body.startDate ?? body.start_date) as string,
+        endDate: (body.endDate ?? body.end_date ?? undefined) as string | undefined,
+        notes: (body.notes ?? undefined) as string | undefined,
+      });
+      return json({ data: programme }, 201);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Create failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/programmes/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/programmes");
+    if (!rawId) return err("Missing programme id", 400);
+    const id = await resolveEntityId(ctx, userId, "programmes", rawId);
+    if (!id) return err("Programme not found", 404);
+    const programme = await ctx.runQuery(internal.programmes._get, { userId, id });
+    if (!programme) return err("Programme not found", 404);
+    return json({ data: programme });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/programmes/",
+  method: "PATCH",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/programmes");
+    if (!rawId) return err("Missing programme id", 400);
+    const id = await resolveEntityId(ctx, userId, "programmes", rawId);
+    if (!id) return err("Programme not found", 404);
+    const body = await parseBody(request);
+    try {
+      const programme = await ctx.runMutation(internal.programmes._update, {
+        userId,
+        id,
+        title: (body.title ?? undefined) as string | undefined,
+        description: (body.description ?? undefined) as string | undefined,
+        status: (body.status ?? undefined) as string | undefined,
+        startDate: (body.startDate ?? body.start_date ?? undefined) as string | undefined,
+        endDate: (body.endDate ?? body.end_date ?? undefined) as string | undefined,
+        notes: (body.notes ?? undefined) as string | undefined,
+      });
+      return json({ data: programme });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 404);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/programmes/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/programmes");
+    if (!rawId) return err("Missing programme id", 400);
+    const id = await resolveEntityId(ctx, userId, "programmes", rawId);
+    if (!id) return err("Programme not found", 404);
+    try {
+      const result = await ctx.runMutation(internal.programmes._remove, { userId, id });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
+      return err(message, 404);
+    }
+  }),
+});
+
+// ════════════════════════════════════════════════════════
+// FOOD LOG
+// ════════════════════════════════════════════════════════
+
+http.route({
+  path: "/api/v1/food-log",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/food-log/",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/food-log",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const result = await ctx.runQuery(internal.foodLog._list, {
+      userId,
+      entryDate: url.searchParams.get("date") ?? url.searchParams.get("entryDate") ?? undefined,
+      from: url.searchParams.get("from") ?? undefined,
+      to: url.searchParams.get("to") ?? undefined,
+    });
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/api/v1/food-log",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody(request);
+    try {
+      const entry = await ctx.runMutation(internal.foodLog._create, {
+        userId,
+        entryDate: (body.entryDate ?? body.entry_date ?? body.date) as string,
+        name: body.name as string,
+        mealType: (body.mealType ?? body.meal_type ?? undefined) as string | undefined,
+        calories: (body.calories ?? undefined) as number | undefined,
+        protein: (body.protein ?? undefined) as number | undefined,
+        carbs: (body.carbs ?? undefined) as number | undefined,
+        fat: (body.fat ?? undefined) as number | undefined,
+        quantity: (body.quantity ?? undefined) as string | undefined,
+      });
+      return json({ data: entry }, 201);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Create failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/food-log/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/food-log");
+
+    // GET /api/v1/food-log/totals?date=YYYY-MM-DD
+    if (rawId === "totals") {
+      const date = url.searchParams.get("date") ?? new Date().toISOString().split("T")[0];
+      const totals = await ctx.runQuery(internal.foodLog._dailyTotals, { userId, entryDate: date });
+      return json({ data: totals });
+    }
+
+    return err("Not found", 404);
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/food-log/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/food-log");
+    if (!rawId) return err("Missing food log id", 400);
+    const id = await resolveEntityId(ctx, userId, "foodLog", rawId);
+    if (!id) return err("Food log entry not found", 404);
+    try {
+      const result = await ctx.runMutation(internal.foodLog._remove, { userId, id });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
+      return err(message, 404);
+    }
+  }),
+});
+
+// ════════════════════════════════════════════════════════
+// HEALTH SUMMARY
+// ════════════════════════════════════════════════════════
+
+http.route({
+  path: "/api/v1/health/summary",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/health/summary",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    let weekStart = url.searchParams.get("week") ?? undefined;
+    if (!weekStart) {
+      // Default to current week's Monday
+      const now = new Date();
+      const day = now.getDay();
+      const diff = day === 0 ? 6 : day - 1;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - diff);
+      weekStart = monday.toISOString().split("T")[0];
+    }
+    const result = await ctx.runQuery(internal.workouts._summary, {
+      userId,
+      weekStart,
+    });
+    return json({ data: result });
   }),
 });
 

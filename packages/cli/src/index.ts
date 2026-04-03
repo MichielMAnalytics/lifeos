@@ -22,6 +22,10 @@ import { todayCommand } from './commands/today.js';
 import { feedbackCommand } from './commands/feedback.js';
 import { identityCommand } from './commands/identity.js';
 import { visionCommand } from './commands/vision.js';
+import { workoutCommand } from './commands/workout.js';
+import { programmeCommand } from './commands/programme.js';
+import { healthCommand } from './commands/health.js';
+import { foodCommand } from './commands/food.js';
 import { registerSkillsCommands } from './commands/skills.js';
 import { printUpdateNotice } from './update-check.js';
 
@@ -99,6 +103,10 @@ program.addCommand(todayCommand);
 program.addCommand(feedbackCommand);
 program.addCommand(identityCommand);
 program.addCommand(visionCommand);
+program.addCommand(workoutCommand);
+program.addCommand(programmeCommand);
+program.addCommand(healthCommand);
+program.addCommand(foodCommand);
 registerSkillsCommands(program);
 
 // Print update notice after command completes

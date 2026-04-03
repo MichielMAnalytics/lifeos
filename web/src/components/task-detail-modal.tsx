@@ -7,6 +7,7 @@ import type { Id } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { CalendarDatePicker } from '@/components/calendar-date-picker';
 import { SidePeek } from '@/components/side-peek';
+import { PropertyDropdown } from '@/components/property-dropdown';
 
 // ── Date helpers ───────────────────────────────────
 
@@ -26,6 +27,8 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
   const task = useQuery(api.tasks.get, { id: taskId });
   const project = useQuery(api.projects.get, task?.projectId ? { id: task.projectId } : 'skip');
   const goal = useQuery(api.goals.get, task?.goalId ? { id: task.goalId } : 'skip');
+  const allProjects = useQuery(api.projects.list, {});
+  const allGoals = useQuery(api.goals.list, { status: 'active' });
 
   const updateTask = useMutation(api.tasks.update);
   const completeTask = useMutation(api.tasks.complete);
@@ -311,9 +314,19 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
               </svg>
               Project
             </span>
-            <span className={cn('text-sm flex-1', task.projectId ? 'text-text' : 'text-text-muted')}>
-              {project?.title ?? (task.projectId ? 'Loading...' : 'No project')}
-            </span>
+            <PropertyDropdown
+              options={(allProjects ?? []).map((p) => ({ id: p._id, label: p.title }))}
+              value={task.projectId ?? null}
+              onSelect={async (id) => {
+                try {
+                  await updateTask({ id: taskId, projectId: (id ?? undefined) as Id<'projects'> | undefined });
+                } catch (err) {
+                  console.error('Failed to update project:', err);
+                }
+              }}
+              placeholder="No project"
+              loading={allProjects === undefined}
+            />
           </div>
 
           {/* Goal */}
@@ -326,9 +339,19 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
               </svg>
               Goal
             </span>
-            <span className={cn('text-sm flex-1', task.goalId ? 'text-text' : 'text-text-muted')}>
-              {goal?.title ?? (task.goalId ? 'Loading...' : 'No goal')}
-            </span>
+            <PropertyDropdown
+              options={(allGoals ?? []).map((g) => ({ id: g._id, label: g.title }))}
+              value={task.goalId ?? null}
+              onSelect={async (id) => {
+                try {
+                  await updateTask({ id: taskId, goalId: (id ?? undefined) as Id<'goals'> | undefined });
+                } catch (err) {
+                  console.error('Failed to update goal:', err);
+                }
+              }}
+              placeholder="No goal"
+              loading={allGoals === undefined}
+            />
           </div>
 
           {/* Status */}

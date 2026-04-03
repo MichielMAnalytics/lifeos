@@ -23,6 +23,7 @@ import type * as deploymentHealthCheck from "../deploymentHealthCheck.js";
 import type * as deploymentQueries from "../deploymentQueries.js";
 import type * as deploymentSettings from "../deploymentSettings.js";
 import type * as feedback from "../feedback.js";
+import type * as foodLog from "../foodLog.js";
 import type * as gatewayBridge from "../gatewayBridge.js";
 import type * as goals from "../goals.js";
 import type * as http from "../http.js";
@@ -33,12 +34,14 @@ import type * as k8s from "../k8s.js";
 import type * as lib_helpers from "../lib/helpers.js";
 import type * as modelProxy from "../modelProxy.js";
 import type * as mutationLog from "../mutationLog.js";
+import type * as programmes from "../programmes.js";
 import type * as projects from "../projects.js";
 import type * as reminders from "../reminders.js";
 import type * as resolveId from "../resolveId.js";
 import type * as resources from "../resources.js";
 import type * as reviews from "../reviews.js";
 import type * as search from "../search.js";
+import type * as seed from "../seed.js";
 import type * as stripe from "../stripe.js";
 import type * as stripeCheckout from "../stripeCheckout.js";
 import type * as tasks from "../tasks.js";
@@ -48,6 +51,7 @@ import type * as triggers from "../triggers.js";
 import type * as visionBoard from "../visionBoard.js";
 import type * as weeklyPlans from "../weeklyPlans.js";
 import type * as wins from "../wins.js";
+import type * as workouts from "../workouts.js";
 
 import type {
   ApiFromModules,
@@ -71,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   deploymentQueries: typeof deploymentQueries;
   deploymentSettings: typeof deploymentSettings;
   feedback: typeof feedback;
+  foodLog: typeof foodLog;
   gatewayBridge: typeof gatewayBridge;
   goals: typeof goals;
   http: typeof http;
@@ -81,12 +86,14 @@ declare const fullApi: ApiFromModules<{
   "lib/helpers": typeof lib_helpers;
   modelProxy: typeof modelProxy;
   mutationLog: typeof mutationLog;
+  programmes: typeof programmes;
   projects: typeof projects;
   reminders: typeof reminders;
   resolveId: typeof resolveId;
   resources: typeof resources;
   reviews: typeof reviews;
   search: typeof search;
+  seed: typeof seed;
   stripe: typeof stripe;
   stripeCheckout: typeof stripeCheckout;
   tasks: typeof tasks;
@@ -96,6 +103,7 @@ declare const fullApi: ApiFromModules<{
   visionBoard: typeof visionBoard;
   weeklyPlans: typeof weeklyPlans;
   wins: typeof wins;
+  workouts: typeof workouts;
 }>;
 
 /**

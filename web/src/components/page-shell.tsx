@@ -4,6 +4,7 @@ import { useDashboardConfig } from '@/lib/dashboard-config';
 import { type PageKey, getPresetsForPage } from '@/lib/presets';
 import { SectionRenderer } from './section-renderer';
 import { PresetSelector } from './preset-selector';
+import { UniversalAdd } from './universal-add';
 
 interface PageShellProps {
   page: PageKey;
@@ -19,7 +20,14 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
 
   return (
     <div className="animate-fade-in">
-      {/* Configure mode toolbar */}
+      {/* Page header with Add button */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-text">{title}</h1>
+          {subtitle && <p className="text-sm text-text-muted/60 mt-0.5">{subtitle}</p>}
+        </div>
+        <UniversalAdd page={page} />
+      </div>
 
       {/* Config mode: preset selector */}
       {isConfigMode && (

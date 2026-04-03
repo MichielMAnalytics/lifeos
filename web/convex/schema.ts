@@ -180,6 +180,54 @@ export default defineSchema({
   }).index("by_userId", ["userId"])
     .index("by_userId_status", ["userId", "status"]),
 
+  // ── Workouts ────────────────────────────────────────
+  workouts: defineTable({
+    userId: v.id("users"),
+    workoutDate: v.string(), // "YYYY-MM-DD"
+    type: v.string(), // "strength" | "cardio" | "mobility" | "sport" | "other"
+    title: v.string(),
+    durationMinutes: v.optional(v.float64()),
+    exercises: v.optional(v.array(v.object({
+      name: v.string(),
+      sets: v.optional(v.float64()),
+      reps: v.optional(v.float64()),
+      weight: v.optional(v.float64()),
+      unit: v.optional(v.string()), // "kg" | "lbs"
+    }))),
+    notes: v.optional(v.string()),
+    programmeId: v.optional(v.id("programmes")),
+    updatedAt: v.float64(),
+  }).index("by_userId", ["userId"])
+    .index("by_userId_workoutDate", ["userId", "workoutDate"]),
+
+  // ── Programmes ─────────────────────────────────────
+  programmes: defineTable({
+    userId: v.id("users"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    status: v.string(), // "active" | "completed" | "archived"
+    startDate: v.string(), // "YYYY-MM-DD"
+    endDate: v.optional(v.string()), // "YYYY-MM-DD"
+    notes: v.optional(v.string()),
+    updatedAt: v.float64(),
+  }).index("by_userId", ["userId"])
+    .index("by_userId_status", ["userId", "status"]),
+
+  // ── Food Log ────────────────────────────────────────
+  foodLog: defineTable({
+    userId: v.id("users"),
+    entryDate: v.string(), // "YYYY-MM-DD"
+    name: v.string(), // "Chicken breast", "Oatmeal", etc.
+    mealType: v.optional(v.string()), // "breakfast" | "lunch" | "dinner" | "snack"
+    calories: v.optional(v.float64()),
+    protein: v.optional(v.float64()), // grams
+    carbs: v.optional(v.float64()), // grams
+    fat: v.optional(v.float64()), // grams
+    quantity: v.optional(v.string()), // "200g", "1 cup", etc.
+    updatedAt: v.float64(),
+  }).index("by_userId", ["userId"])
+    .index("by_userId_entryDate", ["userId", "entryDate"]),
+
   // ── Dashboard Config ───────────────────────────────
   dashboardConfig: defineTable({
     userId: v.id("users"),

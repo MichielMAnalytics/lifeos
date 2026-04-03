@@ -126,6 +126,42 @@ export const resolveApiKey = internalQuery({
   },
 });
 
+export const resolveFoodLog = internalQuery({
+  args: { userId: v.id("users"), prefix: v.string() },
+  handler: async (ctx, { userId, prefix }) => {
+    const docs = await ctx.db
+      .query("foodLog")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .take(500);
+    const match = docs.find((d) => (d._id as string).startsWith(prefix));
+    return match?._id ?? null;
+  },
+});
+
+export const resolveWorkout = internalQuery({
+  args: { userId: v.id("users"), prefix: v.string() },
+  handler: async (ctx, { userId, prefix }) => {
+    const docs = await ctx.db
+      .query("workouts")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .take(500);
+    const match = docs.find((d) => (d._id as string).startsWith(prefix));
+    return match?._id ?? null;
+  },
+});
+
+export const resolveProgramme = internalQuery({
+  args: { userId: v.id("users"), prefix: v.string() },
+  handler: async (ctx, { userId, prefix }) => {
+    const docs = await ctx.db
+      .query("programmes")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .take(500);
+    const match = docs.find((d) => (d._id as string).startsWith(prefix));
+    return match?._id ?? null;
+  },
+});
+
 export const resolveVisionBoard = internalQuery({
   args: { userId: v.id("users"), prefix: v.string() },
   handler: async (ctx, { userId, prefix }) => {

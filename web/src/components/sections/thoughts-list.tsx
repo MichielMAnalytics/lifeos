@@ -230,14 +230,6 @@ export function ThoughtsList() {
 
   return (
     <div className="max-w-none space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-text">
-          Thoughts
-        </h1>
-        <ThoughtAddForm />
-      </div>
-
       {/* List */}
       {thoughts.length === 0 ? (
         <div className="space-y-4">

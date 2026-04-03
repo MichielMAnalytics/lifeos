@@ -275,6 +275,93 @@ export interface VisionBoardItem {
   createdAt?: string;
 }
 
+export interface Exercise {
+  name: string;
+  sets?: number | null;
+  reps?: number | null;
+  weight?: number | null;
+  unit?: string | null;
+}
+
+export interface Workout {
+  id: string;
+  _id?: string;
+  workout_date?: string;
+  workoutDate?: string;
+  type: string;
+  title: string;
+  duration_minutes?: number | null;
+  durationMinutes?: number | null;
+  exercises?: Exercise[] | null;
+  notes: string | null;
+  programme_id?: string | null;
+  programmeId?: string | null;
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
+}
+
+export interface Programme {
+  id: string;
+  _id?: string;
+  title: string;
+  description: string | null;
+  status: string;
+  start_date?: string;
+  startDate?: string;
+  end_date?: string | null;
+  endDate?: string | null;
+  notes: string | null;
+  current_week?: number;
+  currentWeek?: number;
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
+}
+
+export interface HealthSummary {
+  week_start?: string;
+  weekStart?: string;
+  week_end?: string;
+  weekEnd?: string;
+  total_workouts?: number;
+  totalWorkouts?: number;
+  total_duration_minutes?: number;
+  totalDurationMinutes?: number;
+  by_type?: Record<string, number>;
+  byType?: Record<string, number>;
+  workouts: Workout[];
+}
+
+export interface FoodLogEntry {
+  id: string;
+  _id?: string;
+  entry_date?: string;
+  entryDate?: string;
+  name: string;
+  meal_type?: string | null;
+  mealType?: string | null;
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
+  quantity?: string | null;
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
+}
+
+export interface DailyMacroTotals {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  entries: number;
+}
+
 export interface MutationLogEntry {
   id: string;
   _id?: string;

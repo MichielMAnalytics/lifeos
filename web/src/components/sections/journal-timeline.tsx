@@ -18,42 +18,140 @@ function formatDateHeader(dateStr: string): string {
   });
 }
 
-function PriorityItem({
-  label,
-  text,
-  filled,
-}: {
-  label: string;
-  text: string;
-  filled: boolean;
-}) {
+function getWeekday(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+}
+
+function getDayNum(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  return String(d.getDate());
+}
+
+function getWeekLabel(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  // Find the Monday of this week
+  const day = d.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - diff);
+  return `WEEK OF ${monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}`;
+}
+
+/** Group entries by week (Monday-based) */
+function groupByWeek(entries: JournalEntry[]): { weekLabel: string; entries: JournalEntry[] }[] {
+  const groups: Map<string, JournalEntry[]> = new Map();
+  for (const entry of entries) {
+    const label = getWeekLabel(entry.entryDate);
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label)!.push(entry);
+  }
+  return Array.from(groups.entries()).map(([weekLabel, entries]) => ({
+    weekLabel,
+    entries,
+  }));
+}
+
+/** Render notes text as readable paragraphs, splitting on sentence boundaries for long text */
+function NotesText({ text }: { text: string }) {
+  // Split on double newlines first, then render each as a paragraph
+  const paragraphs = text.split(/\n\s*\n/).filter(Boolean);
+
+  if (paragraphs.length > 1) {
+    return (
+      <div className="space-y-4">
+        {paragraphs.map((p, i) => (
+          <p key={i} className="text-sm text-text leading-relaxed">
+            {p.trim()}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
+  // Single block of text — split into ~2-3 sentence paragraphs for readability
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  if (sentences.length <= 3) {
+    return (
+      <p className="text-sm text-text leading-relaxed">
+        {text}
+      </p>
+    );
+  }
+
+  const chunks: string[] = [];
+  let current: string[] = [];
+  for (const s of sentences) {
+    current.push(s);
+    if (current.length >= 3) {
+      chunks.push(current.join(' '));
+      current = [];
+    }
+  }
+  if (current.length > 0) {
+    chunks.push(current.join(' '));
+  }
+
   return (
-    <div className="flex items-start gap-3 text-sm">
-      {/* Filled circle for MIT, empty circle for P1/P2 */}
-      <span className="mt-1 shrink-0">
-        {filled ? (
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <circle cx="5" cy="5" r="4" fill="currentColor" className="text-text" />
-          </svg>
-        ) : (
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <circle
-              cx="5"
-              cy="5"
-              r="3.5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1"
-              className="text-text-muted"
-            />
-          </svg>
-        )}
-      </span>
-      <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-text-muted w-7">
-        {label}
-      </span>
-      <span className="text-text">{text}</span>
+    <div className="space-y-4">
+      {chunks.map((chunk, i) => (
+        <p key={i} className="text-sm text-text leading-relaxed">
+          {chunk}
+        </p>
+      ))}
     </div>
+  );
+}
+
+// ── Inline Win Adder ────────────────────────────────
+
+function WinAdder({ entryDate, existingWins }: { entryDate: string; existingWins: string[] }) {
+  const upsertJournal = useMutation(api.journals.upsert);
+  const [adding, setAdding] = useState(false);
+  const [value, setValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (adding && inputRef.current) inputRef.current.focus();
+  }, [adding]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!value.trim()) return;
+    await upsertJournal({
+      date: entryDate,
+      wins: [...existingWins, value.trim()],
+    });
+    setValue('');
+    setAdding(false);
+  }
+
+  if (adding) {
+    return (
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-2">
+        <span className="text-accent/60 shrink-0">+</span>
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={() => { if (!value.trim()) setAdding(false); }}
+          onKeyDown={(e) => { if (e.key === 'Escape') setAdding(false); }}
+          placeholder="What went well?"
+          className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none"
+        />
+      </form>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setAdding(true)}
+      className="flex items-center gap-2 mt-2 text-sm text-text-muted/50 hover:text-accent/70 transition-colors"
+    >
+      <span>+</span>
+      <span>Add win</span>
+    </button>
   );
 }
 
@@ -72,7 +170,6 @@ function JournalDetailModal({
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const initializedRef = useRef(false);
 
-  // Sync notes when entry changes
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
@@ -99,69 +196,55 @@ function JournalDetailModal({
   return (
     <SidePeek open={true} onClose={onClose} title="Journal">
       <div className="px-8 py-6">
-        {/* Date as title */}
-        <h1 className="text-2xl font-bold text-text mb-1">
-          {dateHeader}
-        </h1>
+        <h1 className="text-2xl font-bold text-text mb-1">{dateHeader}</h1>
         <p className="text-xs text-text-muted mb-6">{entry.entryDate}</p>
 
-        {/* Properties section - MIT, P1, P2 */}
         {(entry.mit || entry.p1 || entry.p2) && (
           <div className="space-y-3 mb-8">
             {entry.mit && (
-              <div className="flex items-center gap-3 py-1.5 group">
+              <div className="flex items-center gap-3 py-1.5">
                 <span className="text-[13px] text-text-muted w-28 shrink-0 flex items-center gap-2">
                   <svg width="14" height="14" viewBox="0 0 10 10" className="w-4 h-4 opacity-40">
                     <circle cx="5" cy="5" r="4" fill="currentColor" />
                   </svg>
                   MIT
                 </span>
-                <span className="text-[13px] text-text flex-1">
-                  {entry.mit}
-                </span>
+                <span className="text-[13px] text-text flex-1">{entry.mit}</span>
               </div>
             )}
             {entry.p1 && (
-              <div className="flex items-center gap-3 py-1.5 group">
+              <div className="flex items-center gap-3 py-1.5">
                 <span className="text-[13px] text-text-muted w-28 shrink-0 flex items-center gap-2">
                   <svg width="14" height="14" viewBox="0 0 10 10" className="w-4 h-4 opacity-40">
                     <circle cx="5" cy="5" r="3.5" fill="none" stroke="currentColor" strokeWidth="1" />
                   </svg>
                   P1
                 </span>
-                <span className="text-[13px] text-text flex-1">
-                  {entry.p1}
-                </span>
+                <span className="text-[13px] text-text flex-1">{entry.p1}</span>
               </div>
             )}
             {entry.p2 && (
-              <div className="flex items-center gap-3 py-1.5 group">
+              <div className="flex items-center gap-3 py-1.5">
                 <span className="text-[13px] text-text-muted w-28 shrink-0 flex items-center gap-2">
                   <svg width="14" height="14" viewBox="0 0 10 10" className="w-4 h-4 opacity-40">
                     <circle cx="5" cy="5" r="3.5" fill="none" stroke="currentColor" strokeWidth="1" />
                   </svg>
                   P2
                 </span>
-                <span className="text-[13px] text-text flex-1">
-                  {entry.p2}
-                </span>
+                <span className="text-[13px] text-text flex-1">{entry.p2}</span>
               </div>
             )}
           </div>
         )}
 
-        {/* Divider */}
         <div className="border-t border-border/40 my-6" />
 
-        {/* Notes - editable */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
               Journal
             </span>
-            {saving && (
-              <span className="text-[10px] text-text-muted">Saving...</span>
-            )}
+            {saving && <span className="text-[10px] text-text-muted">Saving...</span>}
           </div>
           <textarea
             ref={notesRef}
@@ -175,11 +258,11 @@ function JournalDetailModal({
         </div>
 
         {/* Wins */}
-        {hasWins && (
-          <div>
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
-              Wins
-            </span>
+        <div>
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+            Wins
+          </span>
+          {hasWins && (
             <ul className="mt-3 space-y-2">
               {entry.wins.map((win: string, i: number) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
@@ -188,10 +271,10 @@ function JournalDetailModal({
                 </li>
               ))}
             </ul>
-          </div>
-        )}
+          )}
+          <WinAdder entryDate={entry.entryDate} existingWins={entry.wins} />
+        </div>
 
-        {/* Empty state */}
         {!entry.mit && !entry.p1 && !entry.p2 && !hasWins && !notesValue && (
           <p className="text-sm text-text-muted italic text-center py-4">
             No content for this day yet. Start writing above.
@@ -202,95 +285,100 @@ function JournalDetailModal({
   );
 }
 
-// ── Entry Card ──────────────────────────────────────
+// ── Entry Card (new cleaner format) ─────────────────
 
 function EntryCard({ entry, onClick }: { entry: JournalEntry; onClick: () => void }) {
-  const hasPriorities = entry.mit || entry.p1 || entry.p2;
   const hasNotes = entry.notes && entry.notes.trim().length > 0;
   const hasWins = entry.wins && entry.wins.length > 0;
+  const hasPriorities = entry.mit || entry.p1 || entry.p2;
+  const hasContent = hasPriorities || hasNotes || hasWins;
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      className="border border-border rounded-lg p-6 transition-colors hover:border-text/30 cursor-pointer"
-    >
-      {/* Date header */}
-      <h3 className="text-lg font-semibold text-text mb-5">
-        {formatDateHeader(entry.entryDate)}
-      </h3>
+    <div className="flex gap-6 group">
+      {/* Left: day + date */}
+      <div className="w-12 shrink-0 pt-1 text-center">
+        <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/50">
+          {getWeekday(entry.entryDate)}
+        </p>
+        <p className="text-xl font-bold text-text leading-tight">
+          {getDayNum(entry.entryDate)}
+        </p>
+        {hasContent && (
+          <div className="w-1.5 h-1.5 rounded-full bg-success mx-auto mt-1.5" />
+        )}
+      </div>
 
-      {/* Priorities section */}
-      {hasPriorities && (
-        <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
-            Priorities
-          </span>
-          <div className="mt-2.5 space-y-2">
+      {/* Right: entry content */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); }
+        }}
+        className="flex-1 border border-border rounded-xl p-6 transition-colors hover:border-text/20 cursor-pointer min-w-0"
+      >
+        {/* MIT / P1 / P2 horizontal row */}
+        {hasPriorities && (
+          <div className="flex flex-wrap gap-x-8 gap-y-2 mb-5">
             {entry.mit && (
-              <PriorityItem label="MIT" text={entry.mit} filled />
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/50 mb-0.5">MIT</p>
+                <p className="text-sm font-semibold text-text truncate">{entry.mit}</p>
+              </div>
             )}
             {entry.p1 && (
-              <PriorityItem label="P1" text={entry.p1} filled={false} />
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/50 mb-0.5">P1</p>
+                <p className="text-sm text-text truncate">{entry.p1}</p>
+              </div>
             )}
             {entry.p2 && (
-              <PriorityItem label="P2" text={entry.p2} filled={false} />
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/50 mb-0.5">P2</p>
+                <p className="text-sm text-text truncate">{entry.p2}</p>
+              </div>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Journal / Notes section */}
-      {hasNotes && (
-        <>
-          {hasPriorities && <div className="border-t border-border my-5" />}
-          <div>
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
-              Journal
-            </span>
-            <div className="mt-2.5 text-sm text-text leading-relaxed whitespace-pre-line">
-              {entry.notes}
+        {/* Notes as readable paragraphs */}
+        {hasNotes && (
+          <>
+            {hasPriorities && <div className="border-t border-border/40 my-5" />}
+            <NotesText text={entry.notes!} />
+          </>
+        )}
+
+        {/* Wins */}
+        {hasWins && (
+          <>
+            {(hasPriorities || hasNotes) && <div className="border-t border-border/40 my-5" />}
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/50 mb-2">
+                Wins
+              </p>
+              <ul className="space-y-1.5">
+                {entry.wins.map((win: string, i: number) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <span className="text-accent/60 shrink-0 mt-px">+</span>
+                    <span className="text-text-muted">{win}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
 
-      {/* Wins section */}
-      {hasWins && (
-        <>
-          {(hasPriorities || hasNotes) && (
-            <div className="border-t border-border my-5" />
-          )}
-          <div>
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
-              Wins
-            </span>
-            <ul className="mt-2.5 space-y-1.5">
-              {entry.wins.map((win: string, i: number) => (
-                <li key={i} className="flex items-start gap-2 text-sm">
-                  <span className="text-accent/60 shrink-0 mt-px">+</span>
-                  <span className="text-text-muted">{win}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </>
-      )}
-
-      {/* Guard for entirely empty entries */}
-      {!hasPriorities && !hasNotes && !hasWins && (
-        <p className="text-sm text-text-muted italic">No content for this day.</p>
-      )}
+        {!hasContent && (
+          <p className="text-sm text-text-muted/50 italic">No content for this day.</p>
+        )}
+      </div>
     </div>
   );
 }
+
+// ── Main Component ──────────────────────────────────
 
 export function JournalTimeline() {
   const entries = useQuery(api.journals.list, {});
@@ -304,20 +392,12 @@ export function JournalTimeline() {
     </div>
   );
 
+  const weeks = groupByWeek(entries);
+
   return (
     <div className="max-w-none space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-text">
-          Journal
-        </h1>
-        <JournalForm />
-      </div>
-
-      {/* Entries */}
       {entries.length === 0 ? (
         <div className="space-y-4">
-          {/* Ghost journal entry */}
           <div className="border border-dashed border-border/50 rounded-xl p-6 opacity-40">
             <h3 className="text-lg font-semibold text-text-muted mb-5">Today</h3>
             <div>
@@ -333,15 +413,6 @@ export function JournalTimeline() {
                   </span>
                   <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-text-muted w-7">MIT</span>
                   <span className="text-text-muted italic">Your most important task</span>
-                </div>
-                <div className="flex items-start gap-3 text-sm">
-                  <span className="mt-1 shrink-0">
-                    <svg width="10" height="10" viewBox="0 0 10 10">
-                      <circle cx="5" cy="5" r="3.5" fill="none" stroke="currentColor" strokeWidth="1" className="text-text-muted" />
-                    </svg>
-                  </span>
-                  <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-text-muted w-7">P1</span>
-                  <span className="text-text-muted italic">Second priority for the day</span>
                 </div>
               </div>
             </div>
@@ -360,18 +431,27 @@ export function JournalTimeline() {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {entries.map((entry) => (
-            <EntryCard
-              key={entry._id}
-              entry={entry}
-              onClick={() => setSelectedEntry(entry)}
-            />
+        <div className="space-y-10">
+          {weeks.map(({ weekLabel, entries: weekEntries }) => (
+            <div key={weekLabel}>
+              {/* Week header */}
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-muted/40 mb-5 ml-[72px]">
+                {weekLabel}
+              </p>
+              <div className="space-y-4">
+                {weekEntries.map((entry) => (
+                  <EntryCard
+                    key={entry._id}
+                    entry={entry}
+                    onClick={() => setSelectedEntry(entry)}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
 
-      {/* Detail Modal */}
       {selectedEntry && (
         <JournalDetailModal
           entry={selectedEntry}
