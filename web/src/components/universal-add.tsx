@@ -211,13 +211,7 @@ export function UniversalAdd({ page }: { page: PageKey }) {
   const createThought = useMutation(api.thoughts.create);
   const createResource = useMutation(api.resources.create);
 
-  const defaultAction = PAGE_DEFAULTS[page];
-  if (!defaultAction) return null;
-
-  const close = () => { setActiveType(null); setDropdownOpen(false); };
-
-  // Close dropdown on outside click
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // Close dropdown on outside click — must be before any conditional returns
   useEffect(() => {
     if (!dropdownOpen) return;
     function handleClick(e: MouseEvent) {
@@ -228,6 +222,11 @@ export function UniversalAdd({ page }: { page: PageKey }) {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [dropdownOpen]);
+
+  const defaultAction = PAGE_DEFAULTS[page];
+  if (!defaultAction) return null;
+
+  const close = () => { setActiveType(null); setDropdownOpen(false); };
 
   // Expanded form for the active type
   if (activeType) {
