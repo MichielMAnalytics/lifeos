@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 const STORAGE_KEY = 'lifeos-onboarding-checklist';
 
@@ -17,9 +18,9 @@ const ITEMS: ChecklistItem[] = [
   {
     id: 'coach',
     label: 'Say hello to your LifeCoach',
+    message: 'Hey! What can you help me with?',
     linkLabel: 'Open LifeCoach',
     linkHref: '/life-coach',
-    tip: 'Just say hi — your coach will introduce itself',
   },
   {
     id: 'task',
@@ -222,7 +223,7 @@ export function OnboardingChecklist() {
                   )}
 
                   {item.linkHref && (
-                    <a
+                    <Link
                       href={item.linkHref}
                       className="mt-2 inline-flex items-center gap-1 text-[11px] text-accent font-medium hover:underline underline-offset-2"
                     >
@@ -230,7 +231,7 @@ export function OnboardingChecklist() {
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="9 18 15 12 9 6" />
                       </svg>
-                    </a>
+                    </Link>
                   )}
                 </div>
               )}
