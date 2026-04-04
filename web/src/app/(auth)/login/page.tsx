@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { Authenticated, AuthLoading } from "convex/react";
+import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
@@ -24,12 +24,30 @@ function RedirectToApp() {
   return null;
 }
 
+// Auto-trigger Google sign-in when URL params indicate the user came from the website
+function AutoSignIn() {
+  const searchParams = useSearchParams();
+  const { signIn } = useAuthActions();
+  useEffect(() => {
+    const hasSigninParam = searchParams.get('signin') !== null;
+    const hasPlanParam = searchParams.get('plan') !== null;
+    const hasBillingParam = searchParams.get('billing') !== null;
+    if (hasSigninParam || hasPlanParam || hasBillingParam) {
+      void signIn("google");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
 export default function LoginPage() {
   const { signIn } = useAuthActions();
 
   return (
     <>
       <StoreUrlPrefs />
+      <Unauthenticated>
+        <AutoSignIn />
+      </Unauthenticated>
       <Authenticated>
         <RedirectToApp />
       </Authenticated>
