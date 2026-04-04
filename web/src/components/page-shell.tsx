@@ -5,6 +5,7 @@ import { type PageKey, getPresetsForPage } from '@/lib/presets';
 import { SectionRenderer } from './section-renderer';
 import { PresetSelector } from './preset-selector';
 import { UniversalAdd } from './universal-add';
+import { OnboardingChecklist } from './onboarding-checklist';
 
 interface PageShellProps {
   page: PageKey;
@@ -28,6 +29,9 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
         </div>
         <UniversalAdd page={page} />
       </div>
+
+      {/* Onboarding checklist — Today page only */}
+      {page === 'today' && <OnboardingChecklist />}
 
       {/* Config mode: preset selector */}
       {isConfigMode && (
