@@ -9,7 +9,6 @@ import { MainContent } from '@/components/main-content';
 import { DashboardConfigProvider } from '@/lib/dashboard-config';
 import { GatewayProvider } from '@/lib/gateway';
 import { LoadingScreen } from '@/components/loading-screen';
-import { OnboardingChecklist } from '@/components/onboarding-checklist';
 
 function RedirectToLogin() {
   const router = useRouter();
@@ -73,7 +72,6 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
       <div className="flex w-full min-h-screen">
         <Nav />
         <MainContent>{children}</MainContent>
-        <OnboardingChecklist />
       </div>
     </GatewayProvider>
   );
