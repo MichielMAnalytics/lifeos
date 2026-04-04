@@ -73,11 +73,11 @@ function CopyableMessage({ text }: { text: string }) {
   return (
     <div
       onClick={handleCopy}
-      className="mt-2 rounded-lg bg-surface/40 border border-border/30 px-3 py-2 cursor-pointer hover:bg-surface/60 transition-colors group relative"
+      className="mt-1.5 rounded-lg bg-surface/40 border border-border/30 px-3 py-2 cursor-pointer hover:bg-surface/60 transition-colors group flex items-center gap-3"
     >
-      <p className="text-[11px] text-text/80 font-mono leading-relaxed select-all pr-12">{text}</p>
-      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium text-text-muted/30 group-hover:text-accent transition-colors">
-        {copied ? 'Copied!' : 'Click to copy'}
+      <p className="text-[11px] text-text/80 font-mono leading-relaxed select-all flex-1">{text}</p>
+      <span className="text-[10px] font-medium text-text-muted/30 group-hover:text-accent transition-colors shrink-0">
+        {copied ? 'Copied!' : 'Copy'}
       </span>
     </div>
   );
@@ -215,7 +215,7 @@ export function OnboardingChecklist() {
 
               {/* Expanded content */}
               {isExpanded && (
-                <div className="pl-11 pr-3 pb-3 animate-fade-in">
+                <div className="pl-11 pr-3 pb-2 -mt-1 animate-fade-in">
                   {item.message && <CopyableMessage text={item.message} />}
 
                   {item.tip && (
