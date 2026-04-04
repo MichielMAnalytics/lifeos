@@ -40,7 +40,7 @@ function TrustSignal() {
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&h=48&fit=crop&crop=face',
   ];
   return (
-    <div className="mt-8 flex items-center gap-2.5 text-[11px] text-text-muted/50">
+    <div className="mt-8 flex items-center gap-2.5 text-[11px] text-text-muted/70">
       <span className="flex -space-x-2">
         {avatars.map((src, i) => (
           <img key={i} src={src} alt="" className="w-7 h-7 rounded-full border-2 border-bg object-cover" />
@@ -56,7 +56,7 @@ function CtaButton({ loading, onClick }: { loading: boolean; onClick: () => void
     <button
       onClick={onClick}
       disabled={loading}
-      className="mt-8 w-full rounded-full bg-accent px-8 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97] disabled:opacity-60"
+      className="mt-8 w-full rounded-lg bg-accent px-8 py-3 text-sm font-medium text-bg transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
     >
       {loading ? (
         <span className="flex items-center justify-center gap-1">
@@ -273,7 +273,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
             <div className="flex justify-between items-start gap-4">
               <div className="min-w-0">
                 <span className="text-text font-medium text-xs block">LifeOS + LifeCoach</span>
-                <span className="text-[10px] text-text-muted/50">Goals, tasks, journals, coaching, channels</span>
+                <span className="text-[10px] text-text-muted/70">Goals, tasks, journals, coaching, channels</span>
               </div>
               <span className="text-text font-medium shrink-0">{'\u20AC'}{platformPrice}</span>
             </div>
@@ -283,7 +283,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
                   <span className="text-text font-medium text-xs">AI credits</span>
                   <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-medium">direct to Claude</span>
                 </div>
-                <span className="text-[10px] text-text-muted/50">Unused credits roll over monthly</span>
+                <span className="text-[10px] text-text-muted/70">Unused credits roll over monthly</span>
               </div>
               <span className="text-text font-medium shrink-0">{'\u20AC'}{creditsPrice}</span>
             </div>
@@ -304,7 +304,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
         </div>
 
         <CtaButton loading={loading} onClick={handleCheckout} />
-        <p className="mt-2 text-[10px] text-text-muted/50 text-center">Cancel anytime.</p>
+        <p className="mt-2 text-[10px] text-text-muted/70 text-center">Cancel anytime.</p>
 
         <TrustSignal />
       </div>

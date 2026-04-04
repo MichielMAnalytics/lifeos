@@ -24,10 +24,10 @@ function DevSetupPage() {
         <h1 className="text-2xl font-light tracking-tight text-text">
           Setup complete <span className="text-text-muted/40">(dev preview)</span>
         </h1>
-        <p className="mt-3 text-sm text-text-muted/60">
+        <p className="mt-3 text-sm text-text-muted">
           In production, this would deploy your LifeCoach or show CLI setup.
         </p>
-        <div className="mt-6 rounded-xl border border-border/40 bg-surface/30 px-6 py-4 text-left text-xs text-text-muted/60 font-mono w-full max-w-sm">
+        <div className="mt-6 rounded-xl border border-border/40 bg-surface/30 px-6 py-4 text-left text-xs text-text-muted font-mono w-full max-w-sm">
           <p>path: {state.path ?? 'not set'}</p>
           <p>plan: {state.selectedPlanType ?? 'not set'}</p>
           <p>focus: {state.mainFocus ?? 'not set'}</p>
@@ -116,10 +116,10 @@ function LiveSetupPage() {
             <h1 className="text-2xl font-light tracking-tight text-text">
               Setting up your <span className="font-semibold">LifeCoach</span>
             </h1>
-            <p className="mt-3 text-sm text-text-muted/60">
+            <p className="mt-3 text-sm text-text-muted">
               This usually takes a couple of minutes.
             </p>
-            <p className="mt-2 text-xs text-text-muted/40">
+            <p className="mt-2 text-xs text-text-muted/70">
               {deployment?.status === 'provisioning'
                 ? 'Creating your environment...'
                 : deployment?.status === 'starting'
@@ -137,12 +137,12 @@ function LiveSetupPage() {
             <h1 className="text-2xl font-light tracking-tight text-text">
               Your LifeCoach is <span className="font-semibold">live</span>
             </h1>
-            <p className="mt-3 text-sm text-text-muted/60">
+            <p className="mt-3 text-sm text-text-muted">
               Say hello — your LifeCoach is ready to help you get organized.
             </p>
             <button
               onClick={() => { localStorage.setItem('lifeos-setup-complete', 'true'); window.location.href = '/life-coach'; }}
-              className="mt-8 rounded-full bg-accent px-8 py-3 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
+              className="mt-8 rounded-lg bg-accent px-8 py-3 text-sm font-medium text-bg transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
             >
               Meet your LifeCoach
             </button>
@@ -174,7 +174,7 @@ function LiveSetupPage() {
                   setDeploying(false);
                 });
               }}
-              className="mt-8 rounded-full bg-accent px-10 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
+              className="mt-8 rounded-lg bg-accent px-10 py-3 text-sm font-medium text-bg transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
             >
               Deploy my LifeCoach
             </button>

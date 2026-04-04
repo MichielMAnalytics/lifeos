@@ -124,7 +124,7 @@ export default function ByokKeyPage() {
                     <span>Sign in when your browser opens, then copy the token</span>
                   </li>
                 </ol>
-                <p className="mt-3 text-[10px] text-text-muted/50">Uses your existing Claude subscription — no extra costs.</p>
+                <p className="mt-3 text-[10px] text-text-muted/70">Uses your existing Claude subscription — no extra costs.</p>
               </div>
             </>
           ) : (
@@ -153,7 +153,7 @@ export default function ByokKeyPage() {
                     <span>Paste it above</span>
                   </li>
                 </ol>
-                <p className="mt-3 text-[10px] text-text-muted/50">Your key is encrypted and never stored in plain text.</p>
+                <p className="mt-3 text-[10px] text-text-muted/70">Your key is encrypted and never stored in plain text.</p>
               </div>
             </>
           )}

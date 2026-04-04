@@ -13,7 +13,7 @@ const GOOGLE_ICON = (
 );
 
 const LOGO = (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" width="36" height="50" className="opacity-40">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" width="36" height="50" className="opacity-50">
     <rect x="22" y="20" width="56" height="70" fill="none" stroke="var(--color-text)" strokeWidth="4.5" strokeLinejoin="miter" />
     <line x1="50" y1="115" x2="50" y2="25" stroke="var(--color-text)" strokeWidth="4.5" strokeLinecap="round" />
     <line x1="50" y1="85" x2="26" y2="65" stroke="var(--color-text)" strokeWidth="4" strokeLinecap="round" />
@@ -32,12 +32,6 @@ export function AuthScreen({ mode }: { mode: 'login' | 'signup' }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg">
-      {/* Ambient glow */}
-      <div
-        className="pointer-events-none fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-[0.02]"
-        style={{ background: 'radial-gradient(circle, var(--color-accent) 0%, transparent 70%)' }}
-      />
-
       <div className="flex flex-col items-center text-center w-full max-w-sm px-6">
         {/* Logo */}
         <div className="mb-6">{LOGO}</div>
@@ -52,50 +46,48 @@ export function AuthScreen({ mode }: { mode: 'login' | 'signup' }) {
         </h1>
 
         {!isLogin && (
-          <p className="mt-4 text-sm leading-relaxed text-text-muted/60 max-w-xs">
+          <p className="mt-4 text-sm leading-relaxed text-text-muted">
             Goals. Plans. Journals. Reviews.
             <br />
             All in one calm, focused space — with an AI LifeCoach to keep you on track.
           </p>
         )}
 
-        {/* Divider */}
-        <div className={`${isLogin ? 'mt-8' : 'mt-8'} w-full flex items-center gap-4`}>
-          <div className="flex-1 h-px bg-border/40" />
-          <span className="text-[11px] text-text-muted/30 uppercase tracking-wider">
-            {isLogin ? 'Sign in' : 'Get started'}
-          </span>
-          <div className="flex-1 h-px bg-border/40" />
-        </div>
+        {isLogin && (
+          <p className="mt-3 text-sm text-text-muted">
+            Sign in to continue to your dashboard.
+          </p>
+        )}
 
         {/* Google sign in */}
         <button
           onClick={() => void signIn('google')}
-          className="mt-6 w-full flex items-center justify-center gap-3 rounded-xl border border-border/60 bg-surface/30 px-6 py-3.5 text-sm font-medium text-text transition-all duration-200 hover:bg-surface/60 hover:border-text-muted/30 active:scale-[0.98]"
+          className="mt-8 w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-surface/40 px-6 py-3.5 text-sm font-medium text-text transition-all duration-200 hover:bg-surface/70 active:scale-[0.98]"
         >
           {GOOGLE_ICON}
           Continue with Google
         </button>
 
         {/* Cross-link */}
-        <p className="mt-5 text-[12px] text-text-muted/50">
+        <p className="mt-5 text-sm text-text-muted">
           {isLogin ? (
             <>Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-text-muted/70 underline underline-offset-2 hover:text-text-muted transition-colors">
+              <Link href="/signup" className="text-text underline underline-offset-2 hover:no-underline">
                 Sign up
               </Link>
             </>
           ) : (
             <>Already have an account?{' '}
-              <Link href="/login" className="text-text-muted/70 underline underline-offset-2 hover:text-text-muted transition-colors">
+              <Link href="/login" className="text-text underline underline-offset-2 hover:no-underline">
                 Log in
               </Link>
             </>
           )}
         </p>
 
-        <p className="mt-6 text-[10px] text-text-muted/20">
-          By continuing, you agree to our terms of service.
+        <p className="mt-8 text-xs text-text-muted">
+          By continuing, you agree to our{' '}
+          <a href="#" className="underline underline-offset-2">terms of service</a>.
         </p>
       </div>
     </div>

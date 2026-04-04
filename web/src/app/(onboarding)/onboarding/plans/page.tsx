@@ -112,11 +112,11 @@ export default function PlansPage() {
                       : 'border-border/40 bg-surface/10 hover:border-border/70 hover:bg-surface/30'
                   }`}
                 >
-                  <Icon className={`w-12 h-12 mb-3 transition-colors ${isSelected ? 'text-text' : 'text-text/50'}`} />
+                  <Icon className={`w-12 h-12 mb-3 transition-colors ${isSelected ? 'text-text' : 'text-text/70'}`} />
                   <span className={`text-[13px] font-semibold leading-tight transition-colors ${isSelected ? 'text-text' : 'text-text/70'}`}>
                     {p.title}
                   </span>
-                  <span className={`mt-1.5 text-[11px] leading-relaxed transition-colors ${isSelected ? 'text-text-muted' : 'text-text-muted/60'}`}>
+                  <span className={`mt-1.5 text-[11px] leading-relaxed transition-colors ${isSelected ? 'text-text-muted' : 'text-text-muted/70'}`}>
                     {p.subtitle}
                   </span>
                 </button>

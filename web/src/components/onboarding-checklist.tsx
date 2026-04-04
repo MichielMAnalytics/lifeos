@@ -76,7 +76,7 @@ function CopyableMessage({ text }: { text: string }) {
       className="mt-1.5 rounded-lg bg-surface/40 border border-border/30 px-3 py-2 cursor-pointer hover:bg-surface/60 transition-colors group flex items-center gap-3"
     >
       <p className="text-[11px] text-text/80 font-mono leading-relaxed select-all flex-1">{text}</p>
-      <span className="text-[10px] font-medium text-text-muted/30 group-hover:text-accent transition-colors shrink-0">
+      <span className="text-[10px] font-medium text-text-muted/50 group-hover:text-accent transition-colors shrink-0">
         {copied ? 'Copied!' : 'Copy'}
       </span>
     </div>
@@ -133,7 +133,7 @@ export function OnboardingChecklist() {
   if (hidden) {
     return (
       <div className="mb-4 flex items-center justify-between">
-        <button onClick={handleShow} className="flex items-center gap-2 text-xs text-text-muted/40 hover:text-text-muted transition-colors">
+        <button onClick={handleShow} className="flex items-center gap-2 text-xs text-text-muted/70 hover:text-text-muted transition-colors">
           <div className="flex gap-0.5">
             {ITEMS.map((item, i) => (
               <div key={i} className={`w-1.5 h-1.5 rounded-full ${completed.has(item.id) ? 'bg-accent' : 'bg-text/10'}`} />
@@ -154,7 +154,7 @@ export function OnboardingChecklist() {
       <div className="px-5 pt-4 pb-3 flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-text">Get started with LifeOS</p>
-          <p className="text-[11px] text-text-muted/50 mt-0.5">{doneCount} of {totalCount} completed</p>
+          <p className="text-[11px] text-text-muted/70 mt-0.5">{doneCount} of {totalCount} completed</p>
         </div>
         <button
           onClick={handleHide}
@@ -206,7 +206,7 @@ export function OnboardingChecklist() {
                 {!isDone && (
                   <svg
                     width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    className={`text-text-muted/20 transition-transform duration-200 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                    className={`text-text-muted/50 transition-transform duration-200 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
                   >
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
@@ -219,7 +219,7 @@ export function OnboardingChecklist() {
                   {item.message && <CopyableMessage text={item.message} />}
 
                   {item.tip && (
-                    <p className="mt-2 text-[11px] text-text-muted/50 leading-relaxed">{item.tip}</p>
+                    <p className="mt-2 text-[11px] text-text-muted/70 leading-relaxed">{item.tip}</p>
                   )}
 
                   {item.linkHref && (

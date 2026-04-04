@@ -231,7 +231,7 @@ export default function ChannelsPage() {
         {/* Right side — chat mockup */}
         <div className="hidden lg:block w-72 shrink-0 sticky top-24">
           <ChatMockup />
-          <p className="mt-3 text-[11px] text-text-muted/50 text-center">
+          <p className="mt-3 text-[11px] text-text-muted/70 text-center">
             Capture tasks, ideas & voice notes — your LifeCoach handles it all
           </p>
         </div>
