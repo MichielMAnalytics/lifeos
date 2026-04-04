@@ -74,8 +74,9 @@ function saveCompletedItems(items: Set<string>) {
 export function OnboardingChecklist() {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [dismissed, setDismissed] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [hovering, setHovering] = useState(false);
 
   useEffect(() => {
     setCompleted(getCompletedItems());
@@ -89,7 +90,6 @@ export function OnboardingChecklist() {
   const totalCount = ITEMS.length;
   const progress = (doneCount / totalCount) * 100;
 
-  // Hide when all done
   if (doneCount >= totalCount) return null;
 
   function toggleItem(id: string) {
@@ -107,91 +107,128 @@ export function OnboardingChecklist() {
     localStorage.setItem(STORAGE_KEY + '-dismissed', 'true');
   }
 
-  function handleAction(href: string) {
-    window.location.href = href;
+  // Collapsed: just a small pill
+  if (collapsed) {
+    return (
+      <div
+        className="fixed bottom-5 left-5 z-50 animate-fade-in"
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+      >
+        <button
+          onClick={() => setCollapsed(false)}
+          className="flex items-center gap-2.5 rounded-full border border-accent/20 bg-bg/95 backdrop-blur-sm shadow-lg px-4 py-2.5 hover:shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+        >
+          {/* Progress ring */}
+          <div className="relative w-6 h-6">
+            <svg className="w-6 h-6 -rotate-90" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" fill="none" stroke="var(--color-text)" strokeWidth="2" opacity="0.06" />
+              <circle
+                cx="12" cy="12" r="10" fill="none" stroke="var(--color-accent)" strokeWidth="2"
+                strokeDasharray={`${progress * 0.628} 100`}
+                strokeLinecap="round"
+              />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-accent">{doneCount}</span>
+          </div>
+          <span className="text-xs font-medium text-text">Setup guide</span>
+        </button>
+
+        {/* X dismiss on hover */}
+        {hovering && (
+          <button
+            onClick={(e) => { e.stopPropagation(); handleDismiss(); }}
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-bg border border-border/40 shadow-sm flex items-center justify-center text-text-muted/40 hover:text-text-muted hover:bg-surface transition-colors text-xs"
+          >
+            &times;
+          </button>
+        )}
+      </div>
+    );
   }
 
+  // Expanded panel
   return (
-    <div className="mb-6 rounded-2xl border border-accent/20 bg-accent/[0.03] p-5 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <button onClick={() => setCollapsed(!collapsed)} className="flex items-center gap-2 group">
-          <svg
-            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            className={`text-text-muted/40 transition-transform duration-200 ${collapsed ? '-rotate-90' : ''}`}
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-          <span className="text-sm font-semibold text-text">Get started with LifeOS</span>
-        </button>
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] text-text-muted/50">{doneCount} of {totalCount}</span>
-          <button
-            onClick={handleDismiss}
-            className="text-[10px] text-text-muted/30 hover:text-text-muted transition-colors"
-          >
-            Dismiss
+    <div
+      className="fixed bottom-5 left-5 z-50 w-80 animate-fade-in"
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
+      <div className="rounded-2xl border border-border/40 bg-bg/95 backdrop-blur-sm shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="px-4 py-3 flex items-center justify-between border-b border-border/30">
+          <button onClick={() => setCollapsed(true)} className="flex items-center gap-2 group">
+            <svg
+              width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              className="text-text-muted/40"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+            <span className="text-xs font-semibold text-text">Get started</span>
           </button>
+          <span className="text-[10px] text-text-muted/50">{doneCount}/{totalCount}</span>
         </div>
-      </div>
 
-      {/* Progress bar */}
-      <div className="mt-3 h-1.5 rounded-full bg-text/[0.06] overflow-hidden">
-        <div
-          className="h-full rounded-full bg-accent transition-all duration-500 ease-out"
-          style={{ width: `${Math.max(progress, 2)}%` }}
-        />
-      </div>
+        {/* Progress bar */}
+        <div className="h-1 bg-text/[0.04]">
+          <div
+            className="h-full bg-accent transition-all duration-500 ease-out"
+            style={{ width: `${Math.max(progress, 3)}%` }}
+          />
+        </div>
 
-      {/* Items */}
-      {!collapsed && (
-        <div className="mt-4 space-y-1">
+        {/* Items */}
+        <div className="py-1 max-h-80 overflow-y-auto">
           {ITEMS.map(item => {
             const isDone = completed.has(item.id);
             return (
               <div
                 key={item.id}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
-                  isDone ? 'opacity-50' : 'hover:bg-accent/[0.04] cursor-pointer'
+                className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${
+                  isDone ? '' : 'hover:bg-surface/30 cursor-pointer'
                 }`}
               >
-                {/* Checkbox */}
                 <button
                   onClick={() => toggleItem(item.id)}
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${
+                  className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${
                     isDone ? 'bg-accent border-accent' : 'border-text-muted/25 hover:border-accent/50'
                   }`}
                 >
                   {isDone && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   )}
                 </button>
 
-                {/* Text */}
-                <div className="flex-1 min-w-0" onClick={() => !isDone && handleAction(item.href)}>
-                  <span className={`text-xs block ${isDone ? 'text-text-muted/40 line-through' : 'text-text font-medium'}`}>
+                <div className="flex-1 min-w-0" onClick={() => !isDone && (window.location.href = item.href)}>
+                  <span className={`text-[11px] block leading-tight ${isDone ? 'text-text-muted/35 line-through' : 'text-text font-medium'}`}>
                     {item.label}
                   </span>
                   {!isDone && (
-                    <span className="text-[10px] text-text-muted/50">{item.desc}</span>
+                    <span className="text-[10px] text-text-muted/45 leading-tight">{item.desc}</span>
                   )}
                 </div>
 
-                {/* Action link */}
                 {!isDone && (
-                  <button
-                    onClick={() => handleAction(item.href)}
-                    className="text-[10px] text-accent font-medium shrink-0 hover:underline underline-offset-2"
-                  >
-                    {item.action}
-                  </button>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted/20 shrink-0">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 )}
               </div>
             );
           })}
         </div>
+      </div>
+
+      {/* X dismiss on hover */}
+      {hovering && (
+        <button
+          onClick={handleDismiss}
+          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-bg border border-border/40 shadow-sm flex items-center justify-center text-text-muted/40 hover:text-text-muted hover:bg-surface transition-colors text-sm"
+        >
+          &times;
+        </button>
       )}
     </div>
   );
