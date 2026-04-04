@@ -4,22 +4,32 @@
 
 const STORAGE_KEY = 'lifeos-onboarding';
 
+export type OnboardingPath = 'managed' | 'byok' | 'own-agent';
+
 export interface OnboardingState {
+  /** Which direction the customer chose */
+  path: OnboardingPath | null;
   selectedPlanType: string | null;
   anthropicAuthMethod: 'api_key' | 'setup_token';
   anthropicApiKey: string;
   anthropicSetupToken: string;
   telegramToken: string;
   discordToken: string;
+  /** Post-paywall personalization */
+  persona: string | null;
+  mainFocus: string | null;
 }
 
 const DEFAULT_STATE: OnboardingState = {
+  path: null,
   selectedPlanType: null,
   anthropicAuthMethod: 'setup_token',
   anthropicApiKey: '',
   anthropicSetupToken: '',
   telegramToken: '',
   discordToken: '',
+  persona: null,
+  mainFocus: null,
 };
 
 export function getOnboardingState(): OnboardingState {

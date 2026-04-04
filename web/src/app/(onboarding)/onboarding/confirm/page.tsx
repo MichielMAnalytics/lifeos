@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery, useAction, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { StepContainer } from '@/components/onboarding/step-container';
 import { LoadingScreen } from '@/components/loading-screen';
-import { getOnboardingState, setOnboardingState, clearOnboardingState, clearPrefs, getPrefBilling, onboardingPath } from '@/lib/onboarding-store';
+import { getOnboardingState, setOnboardingState, clearPrefs, getPrefBilling, onboardingPath } from '@/lib/onboarding-store';
 
 interface Plan {
   priceId: string;
@@ -19,103 +19,42 @@ interface Plan {
   includesDeployment: boolean;
 }
 
-export default function ConfirmPage() {
-  const router = useRouter();
-  const plans = useQuery(api.stripe.getSubscriptionPlansList);
-  const createCheckout = useAction(api.stripeCheckout.createSubscriptionCheckout);
-  const saveSettings = useMutation(api.deploymentSettings.saveSettings);
-  const setPendingDeploy = useMutation(api.deploymentSettings.setPendingDeploy);
+const isDev = process.env.NODE_ENV === 'development';
 
-  const [selectedPlanType, setSelectedPlanType] = useState<string>('standard');
-  const [annual, setAnnual] = useState(() => getPrefBilling() === 'annual');
-  const [loading, setLoading] = useState(false);
-  const isByok = selectedPlanType === 'byok';
+const MOCK_PLANS: Plan[] = [
+  { priceId: 'mock_basic', annualPriceId: 'mock_basic_yr', planType: 'basic', priceEuroCents: 900, annualPriceEuroCents: 8640, includedCreditsCents: 500, label: 'Light', includesDeployment: true },
+  { priceId: 'mock_standard', annualPriceId: 'mock_standard_yr', planType: 'standard', priceEuroCents: 1900, annualPriceEuroCents: 18240, includedCreditsCents: 1500, label: 'Regular', includesDeployment: true },
+  { priceId: 'mock_premium', annualPriceId: 'mock_premium_yr', planType: 'premium', priceEuroCents: 3900, annualPriceEuroCents: 37440, includedCreditsCents: 5000, label: 'All-in', includesDeployment: true },
+  { priceId: 'mock_byok', annualPriceId: 'mock_byok_yr', planType: 'byok', priceEuroCents: 900, annualPriceEuroCents: 8640, includedCreditsCents: 0, label: 'BYOK', includesDeployment: true },
+  { priceId: 'mock_dashboard', annualPriceId: 'mock_dashboard_yr', planType: 'dashboard', priceEuroCents: 900, annualPriceEuroCents: 8640, includedCreditsCents: 0, label: 'Home', includesDeployment: false },
+];
 
-  useEffect(() => {
-    const state = getOnboardingState();
-    if (state.selectedPlanType) {
-      setSelectedPlanType(state.selectedPlanType);
-    }
-  }, []);
+// ── Shared UI pieces ──
 
-  const getPlan = useCallback(
-    (planType: string): Plan | undefined => plans?.find((p) => p.planType === planType),
-    [plans],
-  );
-
-  const fmtPrice = (cents: number) => `\u20AC${(cents / 100).toFixed(0)}`;
-  const displayPrice = (plan: Plan) =>
-    annual && plan.annualPriceEuroCents
-      ? fmtPrice(Math.round(plan.annualPriceEuroCents / 12))
-      : fmtPrice(plan.priceEuroCents);
-  const resolvePrice = (plan: Plan) =>
-    annual && plan.annualPriceId ? plan.annualPriceId : plan.priceId;
-
-  async function handleCheckout() {
-    const plan = getPlan(selectedPlanType);
-    if (!plan?.priceId) return;
-
-    setLoading(true);
-    try {
-      const state = getOnboardingState();
-      const isByok = selectedPlanType === 'byok';
-      await saveSettings({
-        apiKeySource: isByok ? 'byok' : 'ours',
-        selectedModel: 'claude-sonnet',
-        anthropicAuthMethod: isByok ? state.anthropicAuthMethod : undefined,
-        ...(isByok && state.anthropicAuthMethod === 'api_key' && state.anthropicApiKey.trim()
-          ? { anthropicKey: state.anthropicApiKey.trim() }
-          : {}),
-        ...(isByok && state.anthropicAuthMethod === 'setup_token' && state.anthropicSetupToken.trim()
-          ? { anthropicSetupToken: state.anthropicSetupToken.trim() }
-          : {}),
-        telegramBotToken: state.telegramToken.trim() || undefined,
-        discordBotToken: state.discordToken.trim() || undefined,
-      });
-      await setPendingDeploy({ pending: true });
-
-      clearPrefs();
-      clearOnboardingState();
-      const result = await createCheckout({ priceId: resolvePrice(plan) });
-      if (result.url) window.location.href = result.url;
-    } catch (err) {
-      console.error('Checkout error:', err);
-      setLoading(false);
-    }
-  }
-
-  if (plans === undefined) return <LoadingScreen />;
-
-  const tiers = ['basic', 'standard', 'premium'] as const;
-  const active = Math.max(0, tiers.indexOf(selectedPlanType as typeof tiers[number]));
-
-  const tierMeta = [
-    { key: 'basic' as const, label: 'Light', desc: 'A few check-ins a week' },
-    { key: 'standard' as const, label: 'Regular', desc: 'Daily planning & reflection' },
-    { key: 'premium' as const, label: 'All-in', desc: 'Your always-on partner' },
+function TrustSignal() {
+  const avatars = [
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&h=48&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&h=48&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&h=48&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=48&h=48&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&h=48&fit=crop&crop=face',
   ];
+  return (
+    <div className="mt-8 flex items-center gap-2.5 text-[11px] text-text-muted/50">
+      <span className="flex -space-x-2">
+        {avatars.map((src, i) => (
+          <img key={i} src={src} alt="" className="w-7 h-7 rounded-full border-2 border-bg object-cover" />
+        ))}
+      </span>
+      Joined by 500+ people taking control of their days
+    </div>
+  );
+}
 
-  const currentPlan = isByok ? getPlan('byok') : getPlan(tierMeta[active].key);
-  if (!currentPlan) return <LoadingScreen />;
-
-  const selectTier = (idx: number) => {
-    const pt = tiers[idx];
-    setSelectedPlanType(pt);
-    setOnboardingState({ selectedPlanType: pt });
-  };
-
-  const toggleAnnual = () => {
-    const next = !annual;
-    setAnnual(next);
-    if (typeof window !== 'undefined') {
-      if (next) sessionStorage.setItem('pref_billing', 'annual');
-      else sessionStorage.removeItem('pref_billing');
-    }
-  };
-
-  const ctaButton = (
+function CtaButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
+  return (
     <button
-      onClick={handleCheckout}
+      onClick={onClick}
       disabled={loading}
       className="mt-8 w-full rounded-full bg-accent px-8 py-3.5 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97] disabled:opacity-60"
     >
@@ -133,121 +72,326 @@ export default function ConfirmPage() {
       )}
     </button>
   );
+}
 
-  // ── BYOK: simple single-plan confirm ──
-  if (isByok) {
+// ── Toggle switch ──
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className={`relative w-10 h-[22px] rounded-full transition-colors duration-200 ${checked ? 'bg-accent' : 'bg-text-muted/20'}`}
+    >
+      <div className={`absolute top-0.5 w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform duration-200 ${checked ? 'translate-x-[20px]' : 'translate-x-0.5'}`} />
+    </button>
+  );
+}
+
+// ── Pricing card ──
+
+function PricingCard({ title, subtitle, afterTrialPrice, annual, onToggleAnnual, features, loading, onCheckout }: {
+  title: string;
+  subtitle: string;
+  afterTrialPrice: string;
+  annual: boolean;
+  onToggleAnnual: (v: boolean) => void;
+  features: string[];
+  loading: boolean;
+  onCheckout: () => void;
+}) {
+  return (
+    <div className="w-full max-w-md rounded-2xl border-2 border-border/40 bg-surface/10 p-6 text-center">
+      <h2 className="text-xl font-semibold text-text">{title}</h2>
+      <p className="mt-1 text-sm text-text-muted">{subtitle}</p>
+
+      <div className="mt-6 border-t border-border/30 pt-6">
+        <p className="text-lg font-semibold text-text">7 days free</p>
+        <p className="mt-1 text-sm text-text-muted">
+          then {afterTrialPrice}/mo
+        </p>
+      </div>
+
+      {/* Annual toggle */}
+      <div className="mt-4 flex items-center justify-center gap-3">
+        <span className={`text-xs ${!annual ? 'text-text font-medium' : 'text-text-muted/60'}`}>Monthly</span>
+        <Toggle checked={annual} onChange={onToggleAnnual} />
+        <span className={`text-xs ${annual ? 'text-text font-medium' : 'text-text-muted/60'}`}>
+          Annual <span className="text-green-500 text-[10px] font-medium">-20%</span>
+        </span>
+      </div>
+
+      {/* Features */}
+      {features.length > 0 && (
+        <ul className="mt-5 border-t border-border/30 pt-4 space-y-2 text-left">
+          {features.map((f, i) => (
+            <li key={i} className="flex items-center gap-2 text-xs text-text-muted">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent shrink-0">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              {f}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <CtaButton loading={loading} onClick={onCheckout} />
+    </div>
+  );
+}
+
+// ── Core confirm UI (shared by dev + live) ──
+
+function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout: (planType: string, annual: boolean) => void; isDevMode: boolean }) {
+  const [selectedPlanType, setSelectedPlanType] = useState<string>('standard');
+  const [annual, setAnnual] = useState(() => getPrefBilling() === 'annual');
+  const [loading, setLoading] = useState(false);
+  const [path, setPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    const state = getOnboardingState();
+    setPath(state.path);
+    if (state.selectedPlanType) setSelectedPlanType(state.selectedPlanType);
+  }, []);
+
+  const isByok = path === 'byok';
+  const isOwnAgent = path === 'own-agent';
+
+  const getPlan = useCallback(
+    (planType: string): Plan | undefined => plans.find((p) => p.planType === planType),
+    [plans],
+  );
+
+  const fmtPrice = (cents: number) => `\u20AC${(cents / 100).toFixed(0)}`;
+  const afterTrialPrice = (plan: Plan) =>
+    annual && plan.annualPriceEuroCents
+      ? fmtPrice(Math.round(plan.annualPriceEuroCents / 12))
+      : fmtPrice(plan.priceEuroCents);
+
+  function handleCheckout() {
+    if (isDevMode) {
+      window.location.href = onboardingPath('/onboarding/personalize');
+      return;
+    }
+    setLoading(true);
+    onCheckout(selectedPlanType, annual);
+  }
+
+  const backPath = isOwnAgent ? '/onboarding/plans' : '/onboarding/channels';
+
+  // ── Own-agent path ──
+  if (isOwnAgent) {
+    const dashboardPlan = getPlan('dashboard');
+    if (!dashboardPlan) return <LoadingScreen />;
+
     return (
-      <StepContainer onBack={() => router.push(onboardingPath('/onboarding/channels'))}>
-        <div className="flex flex-col items-center text-center max-w-[360px] w-full animate-fade-in">
-          <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
-            Bring your own key
+      <StepContainer backHref={backPath}>
+        <div className="flex flex-col items-center w-full animate-fade-in">
+          <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl text-center">
+            Start your <span className="font-semibold">free trial</span>
           </h1>
-          <p className="mt-3 text-sm text-text-muted/60">
-            Connect your own Anthropic account for AI.
-            <br />
-            This covers your LifeOS home, Life Coach hosting, and all updates.
+          <p className="mt-3 text-sm text-text-muted text-center">
+            Full access for 7 days, then choose to continue.
           </p>
 
-          <div className="mt-8 flex flex-col items-center">
-            <div className="flex items-baseline gap-3">
-              <span className="text-sm text-text-muted/40 line-through">{displayPrice(currentPlan)}/mo</span>
-              <span className="text-4xl font-semibold tracking-tight text-text">{'\u20AC'}0</span>
-              <span className="text-sm text-text-muted/50">/mo</span>
-            </div>
-            <p className="mt-1 text-xs text-text-muted/50">AI costs go straight to your Anthropic account — no markup</p>
-            <button onClick={toggleAnnual} className="mt-3 text-xs text-text-muted/40 hover:text-text-muted transition-colors">
-              {annual ? 'Billed annually' : 'Switch to annual'}{' '}
-              {!annual && <span className="text-green-500 font-medium">save 20%</span>}
-            </button>
+          <div className="mt-8">
+            <PricingCard
+              title="LifeOS Home"
+              subtitle="Plan, track, and reflect"
+
+              afterTrialPrice={afterTrialPrice(dashboardPlan)}
+              annual={annual}
+              onToggleAnnual={setAnnual}
+              features={['Full home & all pages', 'All presets & themes', 'CLI access', 'Connect your own AI agent']}
+              loading={loading}
+              onCheckout={handleCheckout}
+            />
           </div>
 
-          <p className="mt-8 text-[11px] text-text-muted/30 flex items-center gap-1.5">
-            <span className="flex -space-x-1.5">
-              {['M', 'S', 'A', 'K'].map((letter, i) => (
-                <span key={i} className="w-5 h-5 rounded-full bg-text/[0.06] border-2 border-bg flex items-center justify-center text-[8px] font-medium text-text-muted/40">{letter}</span>
-              ))}
-            </span>
-            Joined by 500+ people taking control of their days
-          </p>
-
-          {ctaButton}
-
-          <p className="mt-3 text-[11px] text-text-muted/30">7 days free. Cancel anytime.</p>
+          <TrustSignal />
         </div>
       </StepContainer>
     );
   }
 
-  // ── Regular plans: tier selector ──
-  return (
-    <StepContainer onBack={() => router.push(onboardingPath('/onboarding/channels'))}>
-      <div className="flex flex-col items-center text-center max-w-[360px] w-full animate-fade-in">
-        <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
-          Choose your pace
-        </h1>
-        <p className="mt-3 text-sm text-text-muted/60">
-          You can change this anytime.
-        </p>
+  // ── BYOK path ──
+  if (isByok) {
+    const byokPlan = getPlan('byok');
+    if (!byokPlan) return <LoadingScreen />;
 
-        {/* Segmented control */}
-        <div className="mt-10 w-full rounded-xl bg-text/[0.04] p-1 flex gap-1">
-          {tierMeta.map((t, i) => (
-            <button
-              key={t.key}
-              onClick={() => selectTier(i)}
-              className={`flex-1 rounded-lg py-3 px-2 transition-all duration-200 ${
-                i === active
-                  ? 'bg-bg shadow-sm shadow-black/5'
-                  : 'hover:bg-bg/50'
-              }`}
-            >
-              <span className={`block text-sm font-medium transition-colors ${i === active ? 'text-text' : 'text-text-muted/50'}`}>
-                {t.label}
-              </span>
-              <span className={`block text-[10px] mt-0.5 transition-colors ${i === active ? 'text-text-muted/60' : 'text-text-muted/30'}`}>
-                {t.desc}
-              </span>
-            </button>
-          ))}
-        </div>
+    return (
+      <StepContainer backHref={backPath}>
+        <div className="flex flex-col items-center w-full animate-fade-in">
+          <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl text-center">
+            Start your <span className="font-semibold">free trial</span>
+          </h1>
+          <p className="mt-3 text-sm text-text-muted text-center">
+            Full access for 7 days, then choose to continue.
+          </p>
 
-        {/* Price + billing */}
-        <div className="mt-8 flex flex-col items-center">
-          <div className="flex items-baseline gap-3">
-            <span className="text-sm text-text-muted/40 line-through">{displayPrice(currentPlan)}/mo</span>
-            <span className="text-4xl font-semibold tracking-tight text-text">{'\u20AC'}0</span>
-            <span className="text-sm text-text-muted/50">/mo</span>
+          <div className="mt-8">
+            <PricingCard
+              title="Bring Your Own Key"
+              subtitle="Use your Anthropic account for AI"
+
+              afterTrialPrice={afterTrialPrice(byokPlan)}
+              annual={annual}
+              onToggleAnnual={setAnnual}
+              features={['LifeCoach hosting & updates', 'No AI markup — pay Anthropic directly', 'All presets & themes', 'Telegram & Discord channels']}
+              loading={loading}
+              onCheckout={handleCheckout}
+            />
           </div>
-          {currentPlan.includedCreditsCents > 0 && (
-            <p className="mt-1 text-xs text-text-muted/50">
-              includes {fmtPrice(currentPlan.includedCreditsCents)} AI credits
-            </p>
-          )}
-          <button onClick={toggleAnnual} className="mt-3 text-xs text-text-muted/40 hover:text-text-muted transition-colors">
-            {annual ? 'Billed annually' : 'Switch to annual'}{' '}
-            {!annual && <span className="text-green-500 font-medium">save 20%</span>}
-          </button>
-        </div>
 
-        {/* Trust signal */}
-        <p className="mt-8 text-[11px] text-text-muted/30 flex items-center gap-1.5">
-          <span className="flex -space-x-1.5">
-            {['M', 'S', 'A', 'K'].map((letter, i) => (
-              <span
-                key={i}
-                className="w-5 h-5 rounded-full bg-text/[0.06] border-2 border-bg flex items-center justify-center text-[8px] font-medium text-text-muted/40"
-              >
-                {letter}
-              </span>
-            ))}
-          </span>
-          Joined by 500+ people taking control of their days
+          <TrustSignal />
+        </div>
+      </StepContainer>
+    );
+  }
+
+  // ── Managed path: everyone starts on Regular ──
+  const standardPlan = getPlan('standard');
+  if (!standardPlan) return <LoadingScreen />;
+
+  const platformPrice = 20;
+  const creditsPrice = 10;
+  const totalPrice = platformPrice + creditsPrice;
+
+  return (
+    <StepContainer backHref={backPath}>
+      <div className="flex flex-col items-center w-full max-w-md animate-fade-in">
+        <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl text-center">
+          Start your <span className="font-semibold">free trial</span>
+        </h1>
+        <p className="mt-3 text-sm text-text-muted text-center">
+          Full access for 7 days. No charge today.
         </p>
 
-        {ctaButton}
+        <div className="mt-6 w-full rounded-2xl border-2 border-border/40 bg-surface/10 p-5">
+          <p className="text-center text-lg font-semibold text-text">7 days free</p>
 
-        <p className="mt-3 text-[11px] text-text-muted/30">7 days free. Cancel anytime.</p>
+          <div className="mt-4 rounded-lg bg-text/[0.03] p-4 space-y-3 text-sm">
+            <div className="flex justify-between items-start gap-4">
+              <div className="min-w-0">
+                <span className="text-text font-medium text-xs block">LifeOS + LifeCoach</span>
+                <span className="text-[10px] text-text-muted/50">Goals, tasks, journals, coaching, channels</span>
+              </div>
+              <span className="text-text font-medium shrink-0">{'\u20AC'}{platformPrice}</span>
+            </div>
+            <div className="flex justify-between items-start gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-text font-medium text-xs">AI credits</span>
+                  <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-medium">direct to Claude</span>
+                </div>
+                <span className="text-[10px] text-text-muted/50">Unused credits roll over monthly</span>
+              </div>
+              <span className="text-text font-medium shrink-0">{'\u20AC'}{creditsPrice}</span>
+            </div>
+            <div className="border-t border-border/30 pt-2 flex justify-between font-semibold text-text">
+              <span>After trial</span>
+              <span>{'\u20AC'}{totalPrice}/mo</span>
+            </div>
+          </div>
+
+          {/* Annual toggle */}
+          <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-center gap-3">
+            <span className={`text-xs ${!annual ? 'text-text font-medium' : 'text-text-muted/60'}`}>Monthly</span>
+            <Toggle checked={annual} onChange={setAnnual} />
+            <span className={`text-xs ${annual ? 'text-text font-medium' : 'text-text-muted/60'}`}>
+              Annual <span className="text-green-500 text-[10px] font-medium">-20%</span>
+            </span>
+          </div>
+        </div>
+
+        <CtaButton loading={loading} onClick={handleCheckout} />
+        <p className="mt-2 text-[10px] text-text-muted/50 text-center">Cancel anytime.</p>
+
+        <TrustSignal />
       </div>
     </StepContainer>
+  );
+}
+
+// ── Dev version (mock plans, no Stripe) ──
+
+function DevConfirmPage() {
+  return (
+    <ConfirmUI
+      plans={MOCK_PLANS}
+      isDevMode={true}
+      onCheckout={() => window.location.href = onboardingPath('/onboarding/personalize')}
+    />
+  );
+}
+
+// ── Live version (real Convex + Stripe) ──
+
+function LiveConfirmPage() {
+  const plans = useQuery(api.stripe.getSubscriptionPlansList);
+  const createCheckout = useAction(api.stripeCheckout.createSubscriptionCheckout);
+  const saveSettings = useMutation(api.deploymentSettings.saveSettings);
+  const setPendingDeploy = useMutation(api.deploymentSettings.setPendingDeploy);
+
+  if (plans === undefined) return <LoadingScreen />;
+
+  async function handleCheckout(planType: string, annual: boolean) {
+    const plan = plans!.find((p) => p.planType === planType);
+    if (!plan?.priceId) return;
+
+    try {
+      const state = getOnboardingState();
+      const isByok = state.path === 'byok';
+      const isManaged = state.path === 'managed';
+
+      if (isManaged || isByok) {
+        await saveSettings({
+          apiKeySource: isByok ? 'byok' : 'ours',
+          selectedModel: 'claude-sonnet',
+          anthropicAuthMethod: isByok ? state.anthropicAuthMethod : undefined,
+          ...(isByok && state.anthropicAuthMethod === 'api_key' && state.anthropicApiKey.trim()
+            ? { anthropicKey: state.anthropicApiKey.trim() }
+            : {}),
+          ...(isByok && state.anthropicAuthMethod === 'setup_token' && state.anthropicSetupToken.trim()
+            ? { anthropicSetupToken: state.anthropicSetupToken.trim() }
+            : {}),
+          telegramBotToken: state.telegramToken.trim() || undefined,
+          discordBotToken: state.discordToken.trim() || undefined,
+        });
+        await setPendingDeploy({ pending: true });
+      }
+
+      clearPrefs();
+      const priceId = annual && plan.annualPriceId ? plan.annualPriceId : plan.priceId;
+      const result = await createCheckout({ priceId });
+      if (result.url) window.location.href = result.url;
+    } catch (err) {
+      console.error('Checkout error:', err);
+    }
+  }
+
+  return (
+    <ConfirmUI
+      plans={plans as Plan[]}
+      isDevMode={false}
+      onCheckout={handleCheckout}
+    />
+  );
+}
+
+// ── Router ──
+
+function ConfirmPageRouter() {
+  const searchParams = useSearchParams();
+  const isDevMode = isDev && searchParams.get('dev') !== null;
+
+  if (isDevMode) return <DevConfirmPage />;
+  return <LiveConfirmPage />;
+}
+
+export default function ConfirmPage() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <ConfirmPageRouter />
+    </Suspense>
   );
 }

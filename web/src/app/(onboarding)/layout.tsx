@@ -1,16 +1,18 @@
 'use client';
 
 import { Authenticated, Unauthenticated, AuthLoading, useQuery } from 'convex/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { api } from '@/lib/convex-api';
 import { SoftGlow } from '@/components/onboarding/soft-glow';
 import { LoadingScreen } from '@/components/loading-screen';
 
+const isDev = process.env.NODE_ENV === 'development';
+
 function RedirectToLogin() {
   const router = useRouter();
-  useEffect(() => { router.replace('/login'); }, [router]);
+  useEffect(() => { router.replace('/onboarding/welcome'); }, [router]);
   return null;
 }
 
@@ -32,13 +34,11 @@ function OnboardingShellInner({ children }: { children: React.ReactNode }) {
     const isDeploymentPlan = subscription?.planType !== 'dashboard';
     const hasDeployment = deployment && deployment.status !== 'deactivated';
 
-    // Fully onboarded: has subscription + deployment, NOT post-checkout -> redirect to app
     if (hasSubscription && hasDeployment && !isPostCheckout) {
       router.replace('/life-coach');
       return;
     }
 
-    // Fully onboarded dashboard plan: has subscription + setup done, NOT post-checkout -> redirect to app
     if (hasSubscription && !isDeploymentPlan && !isPostCheckout) {
       const setupDone = typeof window !== 'undefined' && localStorage.getItem('lifeos-setup-complete') === 'true';
       if (setupDone) {
@@ -53,15 +53,12 @@ function OnboardingShellInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-bg">
       <SoftGlow />
-
-      {/* Sign out -- always visible, top-right */}
       <button
         onClick={() => void signOut()}
         className="fixed top-6 right-6 z-50 text-[11px] text-text-muted/30 hover:text-text-muted/60 transition-colors"
       >
         Sign out
       </button>
-
       {children}
     </div>
   );
@@ -75,20 +72,53 @@ function OnboardingShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
+/** Dev-only shell: no auth, no subscription checks */
+function DevShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative min-h-screen w-full overflow-hidden bg-bg">
+      <SoftGlow />
+      <div className="fixed top-6 right-6 z-50 text-[11px] text-warning/60 font-mono">dev mode</div>
+      {children}
+    </div>
+  );
+}
+
+function LayoutRouter({ children }: { children: React.ReactNode }) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const isDevMode = isDev && searchParams.get('dev') !== null;
+  const isWelcomePage = pathname === '/onboarding/welcome';
+
+  // Dev mode: bypass everything
+  if (isDevMode) {
+    return <DevShell>{children}</DevShell>;
+  }
+
+  // Welcome page handles its own auth (sign-up / sign-in page)
+  if (isWelcomePage) {
+    return <>{children}</>;
+  }
+
+  // All other onboarding pages require auth
   return (
     <>
       <AuthLoading>
         <LoadingScreen />
       </AuthLoading>
-
       <Unauthenticated>
         <RedirectToLogin />
       </Unauthenticated>
-
       <Authenticated>
         <OnboardingShell>{children}</OnboardingShell>
       </Authenticated>
     </>
+  );
+}
+
+export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <LayoutRouter>{children}</LayoutRouter>
+    </Suspense>
   );
 }
