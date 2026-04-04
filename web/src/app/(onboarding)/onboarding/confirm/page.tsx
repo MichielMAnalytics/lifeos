@@ -22,11 +22,11 @@ interface Plan {
 const isDev = process.env.NODE_ENV === 'development';
 
 const MOCK_PLANS: Plan[] = [
-  { priceId: 'mock_basic', annualPriceId: 'mock_basic_yr', planType: 'basic', priceEuroCents: 900, annualPriceEuroCents: 8640, includedCreditsCents: 500, label: 'Light', includesDeployment: true },
-  { priceId: 'mock_standard', annualPriceId: 'mock_standard_yr', planType: 'standard', priceEuroCents: 1900, annualPriceEuroCents: 18240, includedCreditsCents: 1500, label: 'Regular', includesDeployment: true },
-  { priceId: 'mock_premium', annualPriceId: 'mock_premium_yr', planType: 'premium', priceEuroCents: 3900, annualPriceEuroCents: 37440, includedCreditsCents: 5000, label: 'All-in', includesDeployment: true },
-  { priceId: 'mock_byok', annualPriceId: 'mock_byok_yr', planType: 'byok', priceEuroCents: 900, annualPriceEuroCents: 8640, includedCreditsCents: 0, label: 'BYOK', includesDeployment: true },
-  { priceId: 'mock_dashboard', annualPriceId: 'mock_dashboard_yr', planType: 'dashboard', priceEuroCents: 900, annualPriceEuroCents: 8640, includedCreditsCents: 0, label: 'Home', includesDeployment: false },
+  { priceId: 'mock_basic', annualPriceId: 'mock_basic_yr', planType: 'basic', priceEuroCents: 3000, annualPriceEuroCents: 28800, includedCreditsCents: 1000, label: 'Managed (€10)', includesDeployment: true },
+  { priceId: 'mock_standard', annualPriceId: 'mock_standard_yr', planType: 'standard', priceEuroCents: 4500, annualPriceEuroCents: 43200, includedCreditsCents: 2500, label: 'Managed (€25)', includesDeployment: true },
+  { priceId: 'mock_premium', annualPriceId: 'mock_premium_yr', planType: 'premium', priceEuroCents: 12000, annualPriceEuroCents: 115200, includedCreditsCents: 10000, label: 'Managed (€100)', includesDeployment: true },
+  { priceId: 'mock_byok', annualPriceId: 'mock_byok_yr', planType: 'byok', priceEuroCents: 2000, annualPriceEuroCents: 19200, includedCreditsCents: 0, label: 'BYOK', includesDeployment: true },
+  { priceId: 'mock_dashboard', annualPriceId: 'mock_dashboard_yr', planType: 'dashboard', priceEuroCents: 1000, annualPriceEuroCents: 9600, includedCreditsCents: 0, label: 'Home', includesDeployment: false },
 ];
 
 // ── Shared UI pieces ──
@@ -248,13 +248,16 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
     );
   }
 
-  // ── Managed path: everyone starts on Regular ──
-  const standardPlan = getPlan('standard');
-  if (!standardPlan) return <LoadingScreen />;
+  // ── Managed path: credit tier selector ──
+  const CREDIT_TIERS = [
+    { planType: 'basic' as const, credits: 10, total: 30 },
+    { planType: 'standard' as const, credits: 25, total: 45 },
+    { planType: 'premium' as const, credits: 100, total: 120 },
+  ];
 
+  const activeTier = CREDIT_TIERS.find(t => t.planType === selectedPlanType) ?? CREDIT_TIERS[0];
   const platformPrice = 20;
-  const creditsPrice = 10;
-  const totalPrice = platformPrice + creditsPrice;
+  const displayTotal = annual ? Math.round(activeTier.total * 0.8) : activeTier.total;
 
   return (
     <StepContainer backHref={backPath}>
@@ -263,13 +266,14 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
           Start your <span className="font-semibold">free trial</span>
         </h1>
         <p className="mt-3 text-sm text-text-muted text-center">
-          Full access for 7 days. No charge today.
+          Full access, no charge today
         </p>
 
         <div className="mt-6 w-full rounded-2xl border-2 border-border/40 bg-surface/10 p-5">
           <p className="text-center text-lg font-semibold text-text">7 days free</p>
 
           <div className="mt-4 rounded-lg bg-text/[0.03] p-4 space-y-3 text-sm">
+            {/* Platform line */}
             <div className="flex justify-between items-start gap-4">
               <div className="min-w-0">
                 <span className="text-text font-medium text-xs block">LifeOS + LifeCoach</span>
@@ -277,6 +281,8 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
               </div>
               <span className="text-text font-medium shrink-0">{'\u20AC'}{platformPrice}</span>
             </div>
+
+            {/* AI credits line with dropdown */}
             <div className="flex justify-between items-start gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -285,11 +291,26 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
                 </div>
                 <span className="text-[10px] text-text-muted/70">Unused credits roll over monthly</span>
               </div>
-              <span className="text-text font-medium shrink-0">{'\u20AC'}{creditsPrice}</span>
+              <select
+                value={selectedPlanType}
+                onChange={(e) => {
+                  setSelectedPlanType(e.target.value);
+                  setOnboardingState({ selectedPlanType: e.target.value });
+                }}
+                className="bg-surface/50 border border-border/40 rounded-lg px-2 py-1 text-xs text-text font-medium cursor-pointer focus:outline-none focus:border-accent/50 shrink-0"
+              >
+                {CREDIT_TIERS.map(t => (
+                  <option key={t.planType} value={t.planType}>
+                    {'\u20AC'}{t.credits}/mo
+                  </option>
+                ))}
+              </select>
             </div>
+
+            {/* Total */}
             <div className="border-t border-border/30 pt-2 flex justify-between font-semibold text-text">
               <span>After trial</span>
-              <span>{'\u20AC'}{totalPrice}/mo</span>
+              <span>{'\u20AC'}{displayTotal}/mo</span>
             </div>
           </div>
 
