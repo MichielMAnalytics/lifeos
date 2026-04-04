@@ -10,9 +10,9 @@ import { LoadingScreen } from '@/components/loading-screen';
 
 const isDev = process.env.NODE_ENV === 'development';
 
-function RedirectToLogin() {
+function RedirectToSignup() {
   const router = useRouter();
-  useEffect(() => { router.replace('/onboarding/welcome'); }, [router]);
+  useEffect(() => { router.replace('/signup'); }, [router]);
   return null;
 }
 
@@ -106,7 +106,7 @@ function LayoutRouter({ children }: { children: React.ReactNode }) {
         <LoadingScreen />
       </AuthLoading>
       <Unauthenticated>
-        <RedirectToLogin />
+        <RedirectToSignup />
       </Unauthenticated>
       <Authenticated>
         <OnboardingShell>{children}</OnboardingShell>

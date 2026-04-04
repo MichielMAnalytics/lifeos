@@ -1,6 +1,5 @@
 'use client';
 
-import { useAuthActions } from '@convex-dev/auth/react';
 import { Authenticated, Unauthenticated, AuthLoading } from 'convex/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
@@ -18,50 +17,33 @@ function StoreUrlPrefs() {
   return null;
 }
 
-function RedirectToApp() {
+function RedirectToOnboarding() {
   const router = useRouter();
-  useEffect(() => { router.replace('/life-coach'); }, [router]);
+  useEffect(() => { router.replace('/onboarding/plans'); }, [router]);
   return null;
 }
 
-function AutoSignIn() {
-  const searchParams = useSearchParams();
-  const { signIn } = useAuthActions();
-  useEffect(() => {
-    const hasSigninParam = searchParams.get('signin') !== null;
-    const hasPlanParam = searchParams.get('plan') !== null;
-    const hasBillingParam = searchParams.get('billing') !== null;
-    if (hasSigninParam || hasPlanParam || hasBillingParam) {
-      void signIn('google');
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  return null;
-}
-
-function LoginInner() {
+function SignupInner() {
   return (
     <>
       <StoreUrlPrefs />
-      <Unauthenticated>
-        <AutoSignIn />
-      </Unauthenticated>
       <Authenticated>
-        <RedirectToApp />
+        <RedirectToOnboarding />
       </Authenticated>
       <AuthLoading>
         <LoadingScreen />
       </AuthLoading>
       <Unauthenticated>
-        <AuthScreen mode="login" />
+        <AuthScreen mode="signup" />
       </Unauthenticated>
     </>
   );
 }
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <Suspense fallback={<LoadingScreen />}>
-      <LoginInner />
+      <SignupInner />
     </Suspense>
   );
 }
