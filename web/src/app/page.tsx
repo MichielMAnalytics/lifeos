@@ -24,7 +24,11 @@ function GoToApp() {
 
 function GoToLogin() {
   const router = useRouter();
-  useEffect(() => { router.replace('/login'); }, [router]);
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const qs = searchParams.toString();
+    router.replace(qs ? `/login?${qs}` : '/login');
+  }, [router, searchParams]);
   return null;
 }
 
