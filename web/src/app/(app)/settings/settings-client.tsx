@@ -40,7 +40,7 @@ interface ApiKeyEntry {
 type SettingsTab = 'account' | 'billing' | 'life-coach' | 'api-keys' | 'appearance';
 
 /* ================================================================== */
-/*  Fonts (shared with configure-toolbar)                              */
+/*  Fonts                                                              */
 /* ================================================================== */
 
 const FONT_OPTIONS = [
@@ -108,7 +108,6 @@ export function SettingsClient({
   const [activeTab, setActiveTab] = useState<SettingsTab>('account');
   const subscription = useQuery(api.stripe.getMySubscription);
 
-  // Only show Life Coach tab if subscription is loaded and is not the Home plan
   const showLifeCoach = subscription !== undefined && subscription !== null && subscription.planType !== 'dashboard';
 
   const tabs: { id: SettingsTab; label: string; icon: React.FC<{ active: boolean }> }[] = [
@@ -119,7 +118,6 @@ export function SettingsClient({
     { id: 'appearance', label: 'Appearance', icon: PaletteIcon },
   ];
 
-  // Reset active tab if it's no longer available (e.g. Life Coach tab disappears)
   const tabIds = tabs.map(t => t.id);
   useEffect(() => {
     if (!tabIds.includes(activeTab)) {
@@ -130,7 +128,7 @@ export function SettingsClient({
   return (
     <div className="max-w-none animate-fade-in">
       <div className="flex min-h-[calc(100vh-120px)]">
-        {/* Sidebar — hidden on mobile, horizontal tabs shown instead */}
+        {/* Sidebar */}
         <div className="hidden md:block w-48 flex-shrink-0 border-r border-border py-6 pr-2 space-y-0.5">
           <p className="text-[10px] uppercase tracking-widest text-text-muted/50 px-3 py-2 font-medium">
             Settings
@@ -198,16 +196,23 @@ export function SettingsClient({
 function AccountTab({ user }: { user: User | null }) {
   const [avatar, setAvatar] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [detectedTz, setDetectedTz] = useState('');
-  const [updatingTz, setUpdatingTz] = useState(false);
-  const [tzUpdated, setTzUpdated] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editTimezone, setEditTimezone] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const updateMeMutation = useMutation(api.authHelpers.updateMe);
 
   useEffect(() => {
     const stored = localStorage.getItem('lifeos-avatar');
     if (stored) setAvatar(stored);
-    setDetectedTz(getDetectedTimezone());
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.name ?? '');
+      setEditTimezone(user.timezone ?? getDetectedTimezone());
+    }
+  }, [user?.name, user?.timezone]);
 
   function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -230,16 +235,31 @@ function AccountTab({ user }: { user: User | null }) {
     localStorage.removeItem('lifeos-avatar');
   }
 
-  async function handleUpdateTimezone() {
-    setUpdatingTz(true);
+  const hasChanges = user ? (
+    editName !== (user.name ?? '') ||
+    editTimezone !== (user.timezone ?? '')
+  ) : false;
+
+  async function handleSave() {
+    if (!hasChanges) return;
+    setSaving(true);
+    setSaved(false);
     try {
-      await updateMeMutation({ timezone: detectedTz });
-      setTzUpdated(true);
+      await updateMeMutation({
+        name: editName || undefined,
+        timezone: editTimezone || undefined,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } catch {
       // silent
     } finally {
-      setUpdatingTz(false);
+      setSaving(false);
     }
+  }
+
+  function handleDetectTimezone() {
+    setEditTimezone(getDetectedTimezone());
   }
 
   if (!user) {
@@ -247,119 +267,133 @@ function AccountTab({ user }: { user: User | null }) {
       <div>
         <TabHeader title="Account" subtitle="Manage your profile and preferences" />
         <div className="border border-border p-12 text-center">
-          <div className="h-16 w-16 rounded-full border-2 border-dashed border-border mx-auto mb-4 flex items-center justify-center">
-            <UserIcon active={false} />
-          </div>
-          <p className="text-text font-medium">Loading profile...</p>
+          <p className="text-text-muted animate-pulse">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   const days = daysSince(user._creationTime);
-  const userTz = user.timezone ?? detectedTz;
-  const tzCity = userTz.split('/').pop()?.replace(/_/g, ' ') || userTz;
-  const tzMismatch = detectedTz && !tzUpdated && user.timezone && (() => {
-    try {
-      const now = new Date();
-      const detectedOffset = new Intl.DateTimeFormat('en-US', { timeZone: detectedTz, timeZoneName: 'longOffset' }).format(now);
-      const storedOffset = new Intl.DateTimeFormat('en-US', { timeZone: user.timezone!, timeZoneName: 'longOffset' }).format(now);
-      return detectedOffset !== storedOffset;
-    } catch {
-      return detectedTz !== user.timezone;
-    }
-  })();
 
   return (
     <div className="space-y-6">
       <TabHeader title="Account" subtitle="Manage your profile and preferences" />
 
-      {/* Profile card */}
+      {/* Profile header */}
       <div className="border border-border">
-        <div className="p-6 border-b border-border">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-5">
-              {/* Avatar */}
-              <div className="relative group">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarUpload}
-                />
-                {avatar ? (
-                  <img
-                    src={avatar}
-                    alt="Profile"
-                    className="h-16 w-16 rounded-full object-cover border-2 border-border"
-                  />
-                ) : (
-                  <div className="h-16 w-16 flex items-center justify-center rounded-full border-2 border-border bg-surface text-xl font-bold text-text">
-                    {(user.name || user.email || 'U')[0].toUpperCase()}
-                  </div>
-                )}
+        <div className="p-6 flex items-start justify-between">
+          <div className="flex items-center gap-5">
+            {/* Avatar */}
+            <div className="relative group">
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+              {avatar ? (
+                <img src={avatar} alt="Profile" className="h-16 w-16 rounded-full object-cover border-2 border-border" />
+              ) : (
+                <div className="h-16 w-16 flex items-center justify-center rounded-full border-2 border-border bg-surface text-xl font-bold text-text">
+                  {(user.name || user.email || 'U')[0].toUpperCase()}
+                </div>
+              )}
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              </button>
+              {avatar && (
                 <button
-                  onClick={() => fileRef.current?.click()}
-                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  onClick={removeAvatar}
+                  className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-danger text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  title="Remove photo"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
+                  x
                 </button>
-                {avatar && (
-                  <button
-                    onClick={removeAvatar}
-                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-danger text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                    title="Remove photo"
-                  >
-                    x
-                  </button>
-                )}
-              </div>
-
-              <div>
-                <p className="text-lg font-bold text-text">{user.name || user.email || 'User'}</p>
-                <p className="text-sm text-text-muted mt-0.5">{user.email ?? ''}</p>
-              </div>
+              )}
             </div>
-
-            {/* Day counter */}
-            <div className="text-right">
-              <p className="text-[10px] uppercase tracking-widest text-text-muted">Day</p>
-              <p className="text-3xl font-bold text-text tabular-nums leading-tight">{days}</p>
+            <div>
+              <p className="text-lg font-bold text-text">{user.name || user.email || 'User'}</p>
+              <p className="text-sm text-text-muted mt-0.5">{user.email ?? ''}</p>
             </div>
           </div>
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-widest text-text-muted">Day</p>
+            <p className="text-3xl font-bold text-text tabular-nums leading-tight">{days}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Editable fields */}
+      <div className="border border-border divide-y divide-border">
+        {/* Name */}
+        <div className="p-5 space-y-2">
+          <label className="text-xs font-medium text-text">Display name</label>
+          <input
+            type="text"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            placeholder="Your name"
+            className="w-full px-3 py-2 text-sm bg-transparent border border-border text-text placeholder:text-text-muted/40 focus:border-text/30 focus:outline-none"
+          />
         </div>
 
-        {/* Info rows */}
-        <div className="divide-y divide-border">
-          <InfoRow label="Timezone" value={tzUpdated ? (detectedTz.split('/').pop()?.replace(/_/g, ' ') || detectedTz) : tzCity} />
-          <InfoRow label="Joined" value={formatJoinDate(user._creationTime)} />
+        {/* Email (read-only) */}
+        <div className="p-5 space-y-2">
+          <label className="text-xs font-medium text-text">Email</label>
+          <p className="text-sm text-text-muted">{user.email ?? 'Not set'}</p>
+          <p className="text-[10px] text-text-muted/60">Managed via your Google account</p>
         </div>
 
-        {/* Timezone mismatch */}
-        {tzMismatch && (
-          <div className="px-6 py-3 border-t border-border flex items-center justify-between bg-surface/50">
-            <p className="text-xs text-text-muted">
-              Browser timezone is <span className="font-mono text-text">{detectedTz}</span>, profile is <span className="font-mono text-text">{user.timezone ?? 'not set'}</span>
-            </p>
+        {/* Timezone */}
+        <div className="p-5 space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-text">Timezone</label>
             <button
-              onClick={handleUpdateTimezone}
-              disabled={updatingTz}
-              className="text-xs text-text underline underline-offset-2 hover:opacity-70 transition-opacity disabled:opacity-50 cursor-pointer"
+              onClick={handleDetectTimezone}
+              className="text-[10px] text-text-muted hover:text-text transition-colors cursor-pointer underline underline-offset-2"
             >
-              {updatingTz ? 'Updating...' : 'Update'}
+              Detect from browser
             </button>
           </div>
-        )}
-        {tzUpdated && (
-          <div className="px-6 py-3 border-t border-border">
-            <p className="text-xs text-success">Timezone updated to {detectedTz}</p>
-          </div>
-        )}
+          <input
+            type="text"
+            value={editTimezone}
+            onChange={(e) => setEditTimezone(e.target.value)}
+            placeholder="e.g. Europe/Amsterdam"
+            className="w-full px-3 py-2 text-sm bg-transparent border border-border text-text font-mono placeholder:text-text-muted/40 focus:border-text/30 focus:outline-none"
+          />
+        </div>
+
+        {/* Joined */}
+        <div className="p-5 space-y-2">
+          <label className="text-xs font-medium text-text">Joined</label>
+          <p className="text-sm text-text-muted">{formatJoinDate(user._creationTime)}</p>
+        </div>
       </div>
+
+      {/* Save */}
+      {hasChanges && (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => void handleSave()}
+            disabled={saving}
+            className="px-4 py-2 text-xs font-medium bg-text text-bg hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+          >
+            {saving ? 'Saving...' : 'Save changes'}
+          </button>
+          <button
+            onClick={() => {
+              setEditName(user.name ?? '');
+              setEditTimezone(user.timezone ?? getDetectedTimezone());
+            }}
+            className="px-4 py-2 text-xs text-text-muted hover:text-text transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+      {saved && <p className="text-xs text-success">Profile updated</p>}
     </div>
   );
 }
@@ -449,11 +483,9 @@ function BillingTab() {
       <div className="border border-border p-5 space-y-4">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Current plan</p>
+            <p className="text-xs font-medium text-text mb-1">Current plan</p>
             {subscription ? (
-              <>
-                <p className="text-lg font-bold text-text">{planLabels[subscription.planType] ?? subscription.planType}</p>
-              </>
+              <p className="text-lg font-bold text-text">{planLabels[subscription.planType] ?? subscription.planType}</p>
             ) : (
               <p className="text-sm text-text-muted">No active subscription</p>
             )}
@@ -473,37 +505,33 @@ function BillingTab() {
             </div>
           )}
         </div>
-
         <div className="flex gap-2">
           {subscription ? (
             <button
               onClick={handleManageBilling}
               disabled={portalLoading}
-              className="px-3 py-1.5 text-[10px] uppercase tracking-wider border border-border text-text hover:bg-surface-hover transition-colors cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 text-xs border border-border text-text hover:bg-surface-hover transition-colors cursor-pointer disabled:opacity-50"
             >
               {portalLoading ? 'Loading...' : 'Manage billing'}
             </button>
           ) : (
-            <Link
-              href="/life-coach"
-              className="px-3 py-1.5 text-[10px] uppercase tracking-wider bg-text text-bg hover:opacity-90 transition-opacity"
-            >
+            <Link href="/life-coach" className="px-3 py-1.5 text-xs bg-text text-bg hover:opacity-90 transition-opacity">
               Choose a plan
             </Link>
           )}
         </div>
       </div>
 
-      {/* Payment method — managed via Stripe portal */}
+      {/* Payment method */}
       {subscription && (
         <div className="border border-border p-5 space-y-3">
-          <p className="text-[10px] uppercase tracking-widest text-text-muted">Payment method</p>
+          <p className="text-xs font-medium text-text">Payment method</p>
           <div className="flex items-center justify-between">
             <p className="text-xs text-text-muted">Managed via Stripe billing portal</p>
             <button
               onClick={handleManageBilling}
               disabled={portalLoading}
-              className="text-[10px] text-text-muted hover:text-text transition-colors cursor-pointer underline underline-offset-2 disabled:opacity-50"
+              className="text-xs text-text-muted hover:text-text transition-colors cursor-pointer underline underline-offset-2 disabled:opacity-50"
             >
               Update
             </button>
@@ -511,11 +539,11 @@ function BillingTab() {
         </div>
       )}
 
-      {/* Credits (for non-BYOK plans) */}
+      {/* Credits */}
       {subscription && subscription.planType !== 'byok' && (
         <div className="border border-border p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] uppercase tracking-widest text-text-muted">Credits balance</p>
+            <p className="text-xs font-medium text-text">Credits balance</p>
             <p className="text-sm font-bold text-text tabular-nums">EUR {((balance ?? 0) / 100).toFixed(2)}</p>
           </div>
 
@@ -526,7 +554,7 @@ function BillingTab() {
                   key={tier.priceId}
                   onClick={() => handlePurchase(tier.priceId)}
                   disabled={creditLoading !== null}
-                  className="text-[10px] px-3 py-1 border border-border text-text-muted hover:text-text hover:border-text/30 transition-colors cursor-pointer disabled:opacity-50"
+                  className="text-xs px-3 py-1 border border-border text-text-muted hover:text-text hover:border-text/30 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {creditLoading === tier.priceId ? '...' : `+${tier.label}`}
                 </button>
@@ -534,7 +562,6 @@ function BillingTab() {
             </div>
           )}
 
-          {/* Coupon */}
           <div className="flex gap-2">
             <input
               type="text"
@@ -545,15 +572,15 @@ function BillingTab() {
               className="flex-1 text-xs px-3 py-1.5 bg-transparent border border-border text-text placeholder:text-text-muted/40 focus:border-text/30 focus:outline-none"
             />
             <button
-              onClick={handleRedeemCoupon}
+              onClick={() => void handleRedeemCoupon()}
               disabled={couponLoading || !couponCode.trim()}
-              className="text-[10px] px-3 py-1.5 border border-border text-text-muted hover:text-text hover:border-text/30 transition-colors cursor-pointer disabled:opacity-50"
+              className="text-xs px-3 py-1.5 border border-border text-text-muted hover:text-text hover:border-text/30 transition-colors cursor-pointer disabled:opacity-50"
             >
               {couponLoading ? '...' : 'Redeem'}
             </button>
           </div>
           {couponResult && (
-            <p className={cn('text-[10px]', couponResult.success ? 'text-success' : 'text-danger')}>
+            <p className={cn('text-xs', couponResult.success ? 'text-success' : 'text-danger')}>
               {couponResult.message}
             </p>
           )}
@@ -564,7 +591,7 @@ function BillingTab() {
       {payments && payments.length > 0 && (
         <div className="border border-border">
           <div className="px-5 py-3 border-b border-border">
-            <p className="text-[10px] uppercase tracking-widest text-text-muted">Payment history</p>
+            <p className="text-xs font-medium text-text">Payment history</p>
           </div>
           {payments.slice(0, 10).map((payment) => (
             <div
@@ -572,19 +599,14 @@ function BillingTab() {
               className="flex items-center justify-between px-5 py-2.5 border-b border-border last:border-b-0 hover:bg-surface-hover/50 transition-colors"
             >
               <div className="flex items-center gap-4">
-                <p className="text-xs text-text font-mono w-28">
+                <p className="text-xs text-text-muted font-mono w-28">
                   {new Date(payment.created * 1000).toLocaleDateString('en-US', {
                     month: 'short', day: 'numeric', year: 'numeric',
                   })}
                 </p>
-                <p className="text-xs text-text tabular-nums">
-                  EUR {(payment.amount / 100).toFixed(2)}
-                </p>
+                <p className="text-xs text-text tabular-nums">EUR {(payment.amount / 100).toFixed(2)}</p>
               </div>
-              <span className={cn(
-                'text-[10px]',
-                payment.status === 'succeeded' ? 'text-success' : 'text-text-muted',
-              )}>
+              <span className={cn('text-xs', payment.status === 'succeeded' ? 'text-success' : 'text-text-muted')}>
                 {payment.status === 'succeeded' ? 'Paid' : payment.status}
               </span>
             </div>
@@ -593,13 +615,10 @@ function BillingTab() {
       )}
 
       {subscription && (
-        <p className="text-[10px] text-text-muted">
+        <p className="text-xs text-text-muted">
           Payment processing by Stripe.{' '}
-          <button
-            onClick={handleManageBilling}
-            className="underline underline-offset-2 hover:text-text transition-colors cursor-pointer"
-          >
-            Open Stripe billing portal
+          <button onClick={handleManageBilling} className="underline underline-offset-2 hover:text-text transition-colors cursor-pointer">
+            Open billing portal
           </button>
         </p>
       )}
@@ -621,7 +640,6 @@ function LifeCoachTab() {
 
   const [reconfiguring, setReconfiguring] = useState<'byok' | 'ours' | null>(null);
 
-  // Auto-deploy after Stripe return
   useEffect(() => {
     const hasActiveSubscription = subscription && subscription.status === 'active';
     const isDashboardOnly = subscription?.planType === 'dashboard';
@@ -643,25 +661,67 @@ function LifeCoachTab() {
 
   const hasActiveDeployment = deployment && deployment.status !== 'deactivated';
 
+  if (deployment === undefined || settings === undefined) {
+    return (
+      <div>
+        <TabHeader title="Life Coach" subtitle="Your AI agent deployment and configuration" />
+        <div className="border border-border px-6 py-8 text-center">
+          <p className="text-sm text-text-muted animate-pulse">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <TabHeader title="Life Coach" subtitle="Configure your AI agent deployment and model credentials" />
+      <TabHeader title="Life Coach" subtitle="Your AI agent deployment and configuration" />
 
       <PaymentStatus />
 
-      {deployment === undefined || settings === undefined ? (
-        <div className="border border-border px-6 py-8 text-center">
-          <p className="text-sm text-text-muted animate-pulse">Loading deployment status...</p>
-        </div>
-      ) : hasActiveDeployment ? (
-        <div className="space-y-4">
-          <DeploymentDashboard deployment={deployment} />
-          <ChannelConfig />
-          <ByokApiKeys deploymentStatus={deployment.status} />
+      {hasActiveDeployment ? (
+        <>
+          {/* Deployment status */}
+          <div className="border border-border">
+            <div className="px-5 py-3 border-b border-border">
+              <p className="text-xs font-medium text-text">Deployment</p>
+            </div>
+            <div className="p-0">
+              <DeploymentDashboard deployment={deployment} />
+            </div>
+          </div>
+
+          {/* Channels */}
+          <div className="border border-border">
+            <div className="px-5 py-3 border-b border-border">
+              <p className="text-xs font-medium text-text">Channels</p>
+            </div>
+            <div className="p-4">
+              <ChannelConfig />
+            </div>
+          </div>
+
+          {/* Model credentials */}
+          <div className="border border-border">
+            <div className="px-5 py-3 border-b border-border">
+              <p className="text-xs font-medium text-text">Model credentials</p>
+            </div>
+            <div className="p-4">
+              <ByokApiKeys deploymentStatus={deployment.status} />
+            </div>
+          </div>
+
+          {/* Instance tools */}
           {deployment.status === 'running' && (
-            <InstanceTools subdomain={deployment.subdomain} gatewayToken={deployment.gatewayToken} />
+            <div className="border border-border">
+              <div className="px-5 py-3 border-b border-border">
+                <p className="text-xs font-medium text-text">Instance tools</p>
+              </div>
+              <div className="p-4">
+                <InstanceTools subdomain={deployment.subdomain} gatewayToken={deployment.gatewayToken} />
+              </div>
+            </div>
           )}
-        </div>
+        </>
       ) : (
         <ConfigCard onRequestReconfigure={setReconfiguring} />
       )}
@@ -674,28 +734,9 @@ function LifeCoachTab() {
 /* ================================================================== */
 
 function ApiKeysTab({ apiKeys }: { apiKeys: ApiKeyEntry[] }) {
-  const [newKeyName, setNewKeyName] = useState('');
-  const [createdKey, setCreatedKey] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [deletingKeyId, setDeletingKeyId] = useState<Id<"apiKeys"> | null>(null);
   const deleteApiKeyMutation = useMutation(api.authHelpers.deleteApiKey);
   const subscription = useQuery(api.stripe.getMySubscription);
-
-  async function handleCreateKey(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newKeyName.trim()) return;
-    setCreating(true);
-    setCreatedKey(null);
-    setError(null);
-    try {
-      setError('API key creation via REST is no longer supported. Use the Convex CLI.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create key');
-    } finally {
-      setCreating(false);
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -721,31 +762,23 @@ function ApiKeysTab({ apiKeys }: { apiKeys: ApiKeyEntry[] }) {
                 <div className="flex items-center gap-4">
                   {key.lastUsedAt ? (
                     <p className="text-xs text-text-muted font-mono">
-                      {new Date(key.lastUsedAt).toISOString().split('T')[0]}
+                      {new Date(key.lastUsedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   ) : (
-                    <span className="text-xs text-text-muted/50">[ never used ]</span>
+                    <span className="text-xs text-text-muted/50">never used</span>
                   )}
                   <div className={`h-2 w-2 rounded-full ${key.lastUsedAt ? 'bg-success' : 'bg-border'}`} />
                   <button
                     onClick={async () => {
                       setDeletingKeyId(key._id);
-                      try {
-                        await deleteApiKeyMutation({ keyId: key._id });
-                      } catch {
-                        // silent
-                      } finally {
-                        setDeletingKeyId(null);
-                      }
+                      try { await deleteApiKeyMutation({ keyId: key._id }); } catch { /* silent */ } finally { setDeletingKeyId(null); }
                     }}
                     disabled={deletingKeyId === key._id}
                     className="text-text-muted/40 hover:text-danger transition-colors disabled:opacity-30 cursor-pointer"
                     title="Delete key"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 6h18" />
-                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                      <path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
                     </svg>
                   </button>
                 </div>
@@ -755,53 +788,20 @@ function ApiKeysTab({ apiKeys }: { apiKeys: ApiKeyEntry[] }) {
         ) : (
           <div className="px-6 py-8 text-center">
             <p className="text-sm text-text-muted">No API keys yet.</p>
-            <p className="text-xs text-text-muted/60 mt-1">Create one to connect the CLI or AI agent.</p>
           </div>
         )}
-
-        <div className="border-t border-border px-5 py-4">
-          {createdKey && (
-            <div className="border border-success/30 p-4 mb-4">
-              <p className="mb-2 text-xs font-bold text-success uppercase tracking-wide">
-                Key created -- copy it now, it won&apos;t be shown again
-              </p>
-              <code className="block break-all text-xs text-text font-mono select-all">{createdKey}</code>
-            </div>
-          )}
-
-          {error && <p className="text-xs text-danger mb-3">{error}</p>}
-
-          <form onSubmit={handleCreateKey} className="flex gap-3">
-            <input
-              type="text"
-              value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
-              placeholder="Key name (e.g. CLI, Mobile, Life Coach)"
-              className="flex-1 border border-border bg-transparent px-4 py-2.5 text-sm text-text placeholder:text-text-muted/50 focus:border-text focus:outline-none font-mono"
-            />
-            <button
-              type="submit"
-              disabled={creating || !newKeyName.trim()}
-              className="bg-text text-bg px-5 py-2.5 text-xs font-medium uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-            >
-              {creating ? 'Creating...' : 'Create Key'}
-            </button>
-          </form>
-        </div>
       </div>
 
       {/* CLI Setup for Home plan */}
       {subscription?.planType === 'dashboard' && (
-        <div className="border border-border p-5 space-y-4">
-          <p className="text-[10px] uppercase tracking-widest text-text-muted font-medium">CLI Setup</p>
-          <p className="text-xs text-text-muted">
-            Connect the LifeOS CLI to capture tasks, ideas, and journal entries from your terminal.
-          </p>
-          <div className="space-y-3">
+        <div className="border border-border divide-y divide-border">
+          <div className="px-5 py-3">
+            <p className="text-xs font-medium text-text">CLI Setup</p>
+            <p className="text-xs text-text-muted mt-1">Connect the LifeOS CLI to your terminal.</p>
+          </div>
+          <div className="p-5 space-y-3">
             <CliStep step={1} title="Install globally">
-              <pre className="border border-border/40 bg-surface/40 px-3 py-2 text-xs font-mono text-text/80 overflow-x-auto">
-                npm install -g lifeos-cli
-              </pre>
+              <pre className="border border-border/40 bg-surface/40 px-3 py-2 text-xs font-mono text-text/80 overflow-x-auto">npm install -g lifeos-cli</pre>
             </CliStep>
             <CliStep step={2} title="Set your API URL">
               <pre className="border border-border/40 bg-surface/40 px-3 py-2 text-xs font-mono text-text/80 overflow-x-auto">
@@ -809,14 +809,10 @@ function ApiKeysTab({ apiKeys }: { apiKeys: ApiKeyEntry[] }) {
               </pre>
             </CliStep>
             <CliStep step={3} title="Authenticate">
-              <pre className="border border-border/40 bg-surface/40 px-3 py-2 text-xs font-mono text-text/80 overflow-x-auto">
-                lifeos config set-key YOUR_API_KEY
-              </pre>
+              <pre className="border border-border/40 bg-surface/40 px-3 py-2 text-xs font-mono text-text/80 overflow-x-auto">lifeos config set-key YOUR_API_KEY</pre>
             </CliStep>
             <CliStep step={4} title="Verify">
-              <pre className="border border-border/40 bg-surface/40 px-3 py-2 text-xs font-mono text-text/80 overflow-x-auto">
-                lifeos whoami
-              </pre>
+              <pre className="border border-border/40 bg-surface/40 px-3 py-2 text-xs font-mono text-text/80 overflow-x-auto">lifeos whoami</pre>
             </CliStep>
           </div>
         </div>
@@ -870,7 +866,7 @@ function AppearanceTab() {
 
       {/* Theme */}
       <div className="border border-border p-5 space-y-4">
-        <p className="text-[10px] uppercase tracking-widest text-text-muted font-medium">Theme</p>
+        <p className="text-xs font-medium text-text">Theme</p>
         <div className="grid grid-cols-4 gap-2">
           {themeKeys.map((key) => {
             const isSystem = key === 'system';
@@ -892,13 +888,9 @@ function AppearanceTab() {
                     : { backgroundColor: t.colors.bg }
                   }
                 >
-                  <div
-                    className="h-2 w-4 rounded-sm"
-                    style={{ backgroundColor: t.colors.accent }}
-                  />
+                  <div className="h-2 w-4 rounded-sm" style={{ backgroundColor: t.colors.accent }} />
                 </div>
-                <p className="text-[10px] text-text font-medium">{t.name}</p>
-                <p className="text-[9px] text-text-muted leading-tight mt-0.5">{t.description}</p>
+                <p className={cn('text-[10px] font-medium', isActive ? 'text-text' : 'text-text-muted')}>{t.name}</p>
               </button>
             );
           })}
@@ -907,7 +899,7 @@ function AppearanceTab() {
 
       {/* Font */}
       <div className="border border-border p-5 space-y-4">
-        <p className="text-[10px] uppercase tracking-widest text-text-muted font-medium">Font</p>
+        <p className="text-xs font-medium text-text">Font</p>
         <div className="grid grid-cols-3 gap-2">
           {FONT_OPTIONS.map((font) => {
             const isActive = activeFont === font.key;
@@ -930,7 +922,7 @@ function AppearanceTab() {
 
       {/* Navigation mode */}
       <div className="border border-border p-5 space-y-4">
-        <p className="text-[10px] uppercase tracking-widest text-text-muted font-medium">Navigation mode</p>
+        <p className="text-xs font-medium text-text">Navigation mode</p>
         <div className="grid grid-cols-2 gap-2">
           {(['sidebar', 'header'] as const).map((mode) => {
             const isActive = config.navMode === mode;
@@ -969,15 +961,6 @@ function TabHeader({ title, subtitle }: { title: string; subtitle: string }) {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between px-6 py-3">
-      <p className="text-xs text-text-muted">{label}</p>
-      <p className="text-xs text-text font-medium">{value}</p>
-    </div>
-  );
-}
-
 /* ================================================================== */
 /*  Icons                                                              */
 /* ================================================================== */
@@ -985,8 +968,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 function UserIcon({ active }: { active: boolean }) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} className="flex-shrink-0">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
     </svg>
   );
 }
@@ -994,8 +976,7 @@ function UserIcon({ active }: { active: boolean }) {
 function CreditCardIcon({ active }: { active: boolean }) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} className="flex-shrink-0">
-      <rect x="1" y="4" width="22" height="16" rx="2" />
-      <line x1="1" y1="10" x2="23" y2="10" />
+      <rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" />
     </svg>
   );
 }
@@ -1003,11 +984,8 @@ function CreditCardIcon({ active }: { active: boolean }) {
 function BotIcon({ active }: { active: boolean }) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} className="flex-shrink-0">
-      <rect x="3" y="11" width="18" height="10" rx="2" />
-      <circle cx="12" cy="5" r="2" />
-      <line x1="12" y1="7" x2="12" y2="11" />
-      <line x1="8" y1="16" x2="8" y2="16" strokeLinecap="round" strokeWidth="2" />
-      <line x1="16" y1="16" x2="16" y2="16" strokeLinecap="round" strokeWidth="2" />
+      <rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="12" cy="5" r="2" /><line x1="12" y1="7" x2="12" y2="11" />
+      <line x1="8" y1="16" x2="8" y2="16" strokeLinecap="round" strokeWidth="2" /><line x1="16" y1="16" x2="16" y2="16" strokeLinecap="round" strokeWidth="2" />
     </svg>
   );
 }
@@ -1023,11 +1001,8 @@ function KeyIcon({ active }: { active: boolean }) {
 function PaletteIcon({ active }: { active: boolean }) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} className="flex-shrink-0">
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="8" r="1" fill="currentColor" />
-      <circle cx="8" cy="12" r="1" fill="currentColor" />
-      <circle cx="16" cy="12" r="1" fill="currentColor" />
-      <circle cx="12" cy="16" r="1" fill="currentColor" />
+      <circle cx="12" cy="12" r="10" /><circle cx="12" cy="8" r="1" fill="currentColor" />
+      <circle cx="8" cy="12" r="1" fill="currentColor" /><circle cx="16" cy="12" r="1" fill="currentColor" /><circle cx="12" cy="16" r="1" fill="currentColor" />
     </svg>
   );
 }

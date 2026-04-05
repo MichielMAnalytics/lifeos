@@ -21,9 +21,12 @@ export function shortId(id: string): string {
 export function formatRelativeDate(dateStr: string | undefined | null): { text: string; colorClass: string } {
   if (!dateStr) return { text: 'No date', colorClass: 'text-text-muted' };
 
-  const today = new Date().toISOString().slice(0, 10);
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const tmrw = new Date(now); tmrw.setDate(tmrw.getDate() + 1);
+  const tomorrow = `${tmrw.getFullYear()}-${String(tmrw.getMonth() + 1).padStart(2, '0')}-${String(tmrw.getDate()).padStart(2, '0')}`;
+  const yest = new Date(now); yest.setDate(yest.getDate() - 1);
+  const yesterday = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, '0')}-${String(yest.getDate()).padStart(2, '0')}`;
 
   if (dateStr === today) return { text: 'Today', colorClass: 'text-accent' };
   if (dateStr === tomorrow) return { text: 'Tomorrow', colorClass: 'text-text' };

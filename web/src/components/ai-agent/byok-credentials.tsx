@@ -20,8 +20,6 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
   const [anthropicSetupToken, setAnthropicSetupToken] = useState("");
   const [openaiKey, setOpenaiKey] = useState("");
   const [googleKey, setGoogleKey] = useState("");
-  const [moonshotKey, setMoonshotKey] = useState("");
-  const [minimaxKey, setMinimaxKey] = useState("");
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -42,7 +40,7 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
     });
   };
 
-  const hasChanges = !!(anthropicKey || anthropicSetupToken || openaiKey || googleKey || moonshotKey || minimaxKey
+  const hasChanges = !!(anthropicKey || anthropicSetupToken || openaiKey || googleKey
     || anthropicAuthMethod !== (settings?.anthropicAuthMethod ?? "api_key")
     || pendingDeletes.size > 0);
 
@@ -60,16 +58,12 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
           : { anthropicSetupToken: anthropicSetupToken || undefined }),
         openaiKey: openaiKey || undefined,
         googleKey: googleKey || undefined,
-        moonshotKey: moonshotKey || undefined,
-        minimaxKey: minimaxKey || undefined,
         keysToDelete: pendingDeletes.size > 0 ? Array.from(pendingDeletes) : undefined,
       });
       setAnthropicKey("");
       setAnthropicSetupToken("");
       setOpenaiKey("");
       setGoogleKey("");
-      setMoonshotKey("");
-      setMinimaxKey("");
       setPendingDeletes(new Set());
       setSaved(true);
       capture(EVENTS.CREDENTIALS_UPDATED);
@@ -172,38 +166,6 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
           onChange={setGoogleKey}
           onDelete={settings?.googleKeyLength ? () => togglePendingDelete("google") : undefined}
           pendingDelete={pendingDeletes.has("google")}
-        />
-      </div>
-
-      {/* Moonshot (Kimi) */}
-      <div className="space-y-1.5">
-        <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-text-muted">
-          <img src="/kimi-icon.png" alt="Moonshot" className="h-3.5 w-auto opacity-70" aria-hidden="true" />
-          Moonshot (Kimi) API Key
-        </label>
-        <SecretInput
-          storedLength={settings?.moonshotKeyLength}
-          placeholder="sk-..."
-          value={moonshotKey}
-          onChange={setMoonshotKey}
-          onDelete={settings?.moonshotKeyLength ? () => togglePendingDelete("moonshot") : undefined}
-          pendingDelete={pendingDeletes.has("moonshot")}
-        />
-      </div>
-
-      {/* MiniMax */}
-      <div className="space-y-1.5">
-        <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-text-muted">
-          <img src="/minimax-icon.png" alt="MiniMax" className="h-3.5 w-auto opacity-70" aria-hidden="true" />
-          MiniMax API Key
-        </label>
-        <SecretInput
-          storedLength={settings?.minimaxKeyLength}
-          placeholder="eyJ..."
-          value={minimaxKey}
-          onChange={setMinimaxKey}
-          onDelete={settings?.minimaxKeyLength ? () => togglePendingDelete("minimax") : undefined}
-          pendingDelete={pendingDeletes.has("minimax")}
         />
       </div>
 
