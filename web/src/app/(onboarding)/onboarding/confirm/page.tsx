@@ -236,7 +236,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
               afterTrialPrice={afterTrialPrice(byokPlan)}
               annual={annual}
               onToggleAnnual={setAnnual}
-              features={['LifeCoach hosting & updates', 'Use your own Anthropic API key', 'All presets & themes', 'Telegram & Discord channels']}
+              features={['LifeCoach hosting & updates', 'No AI markup — pay Anthropic directly', 'All presets & themes', 'Telegram & Discord channels']}
               loading={loading}
               onCheckout={handleCheckout}
             />

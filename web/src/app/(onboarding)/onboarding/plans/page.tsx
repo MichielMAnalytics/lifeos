@@ -17,8 +17,8 @@ const PATHS: {
   },
   {
     key: 'byok',
-    title: 'Bring my own API key',
-    subtitle: 'Connect your Anthropic API key.',
+    title: 'Use my Claude subscription',
+    subtitle: 'Bring your own Anthropic account.',
   },
   {
     key: 'managed',
