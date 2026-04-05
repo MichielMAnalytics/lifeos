@@ -13,17 +13,17 @@ const PATHS: {
   {
     key: 'own-agent',
     title: 'I have my own AI agent',
-    subtitle: 'Connect your own agent separately.',
+    subtitle: 'Use OpenClaw, Claude Code, or another agent.',
   },
   {
     key: 'byok',
-    title: 'Use my Claude subscription',
-    subtitle: 'Bring your own Anthropic account.',
+    title: 'Bring my own API key',
+    subtitle: 'Connect your Anthropic API key.',
   },
   {
     key: 'managed',
     title: 'Set up everything for me',
-    subtitle: 'We handle the AI, hosting, and updates.',
+    subtitle: 'We handle AI, hosting, and updates.',
   },
 ];
 

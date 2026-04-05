@@ -1,7 +1,7 @@
 'use client';
 
 import { Authenticated, Unauthenticated, AuthLoading, useQuery } from 'convex/react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { api } from '@/lib/convex-api';
@@ -85,18 +85,10 @@ function DevShell({ children }: { children: React.ReactNode }) {
 
 function LayoutRouter({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
-  const pathname = usePathname();
   const isDevMode = isDev && searchParams.get('dev') !== null;
-  const isWelcomePage = pathname === '/onboarding/welcome';
-
   // Dev mode: bypass everything
   if (isDevMode) {
     return <DevShell>{children}</DevShell>;
-  }
-
-  // Welcome page handles its own auth (sign-up / sign-in page)
-  if (isWelcomePage) {
-    return <>{children}</>;
   }
 
   // All other onboarding pages require auth

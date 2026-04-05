@@ -45,11 +45,11 @@ function PersonalizeInner() {
     }
 
     setSaving(false);
-    window.location.href = onboardingPath('/onboarding/get-started');
+    window.location.href = onboardingPath('/onboarding/setup');
   }
 
   function handleSkip() {
-    window.location.href = onboardingPath('/onboarding/get-started');
+    window.location.href = onboardingPath('/onboarding/setup');
   }
 
   return (
