@@ -2919,4 +2919,54 @@ http.route({
   }),
 });
 
+// ════════════════════════════════════════════════════════
+// MACRO GOALS
+// ════════════════════════════════════════════════════════
+
+http.route({
+  path: "/api/v1/macro-goals",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/macro-goals",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const goals = await ctx.runQuery(internal.macroGoals._get, { userId });
+    return json({ data: goals });
+  }),
+});
+
+http.route({
+  path: "/api/v1/macro-goals",
+  method: "PUT",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    try {
+      const body = await request.json();
+      const toNum = (v: unknown): number | undefined => {
+        if (v == null) return undefined;
+        const n = Number(v);
+        if (!isFinite(n) || n <= 0) return undefined;
+        return n;
+      };
+      const result = await ctx.runMutation(internal.macroGoals._upsert, {
+        userId,
+        calories: toNum(body.calories),
+        protein: toNum(body.protein),
+        carbs: toNum(body.carbs),
+        fat: toNum(body.fat),
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 400);
+    }
+  }),
+});
+
 export default http;

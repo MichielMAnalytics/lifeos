@@ -228,6 +228,16 @@ export default defineSchema({
   }).index("by_userId", ["userId"])
     .index("by_userId_entryDate", ["userId", "entryDate"]),
 
+  // ── Macro Goals ────────────────────────────────────
+  macroGoals: defineTable({
+    userId: v.id("users"),
+    calories: v.float64(),
+    protein: v.float64(), // grams
+    carbs: v.float64(), // grams
+    fat: v.float64(), // grams
+    updatedAt: v.float64(),
+  }).index("by_userId", ["userId"]),
+
   // ── Dashboard Config ───────────────────────────────
   dashboardConfig: defineTable({
     userId: v.id("users"),

@@ -7,13 +7,14 @@ import { api } from '@/lib/convex-api';
 // ── Helpers ─────────────────────────────────────────
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 function shiftDate(dateStr: string, days: number): string {
-  const d = new Date(dateStr + 'T00:00:00');
+  const d = new Date(dateStr + 'T12:00:00');
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function formatDayLabel(dateStr: string): string {
@@ -228,10 +229,10 @@ export function HealthMacros() {
 
   const entries = useQuery(api.foodLog.list, { entryDate: selectedDate });
   const totals = useQuery(api.foodLog.dailyTotals, { entryDate: selectedDate });
+  const macroGoals = useQuery(api.macroGoals.get);
   const removeEntry = useMutation(api.foodLog.remove);
 
-  // Targets (configurable later)
-  const targets = { calories: 2200, carbs: 165, fat: 65, protein: 85 };
+  const targets = macroGoals ?? { calories: 2200, carbs: 200, fat: 65, protein: 150 };
 
   const current = {
     calories: totals?.calories ?? 0,

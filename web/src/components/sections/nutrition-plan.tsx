@@ -4,7 +4,8 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 function MacroRing({
@@ -56,14 +57,9 @@ function MacroRing({
 export function NutritionPlan() {
   const today = todayISO();
   const totals = useQuery(api.foodLog.dailyTotals, { entryDate: today });
+  const macroGoals = useQuery(api.macroGoals.get);
 
-  // Targets (can be made configurable later)
-  const targets = {
-    calories: 2200,
-    carbs: 165,
-    fat: 65,
-    protein: 85,
-  };
+  const targets = macroGoals ?? { calories: 2200, carbs: 200, fat: 65, protein: 150 };
 
   const current = {
     calories: totals?.calories ?? 0,

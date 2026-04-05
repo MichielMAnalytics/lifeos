@@ -112,6 +112,8 @@ All tables are defined in `convex/schema.ts`. Every user-owned table has a `user
 | `reviews` | Reviews (daily/weekly/monthly/quarterly) with period, content, and score |
 | `reminders` | Reminders with title, body, scheduledAt, status (pending/delivered/snoozed/done), snoozeCount |
 | `foodLog` | Food/nutrition entries with name, mealType (breakfast/lunch/dinner/snack), calories, protein, carbs, fat, quantity, entryDate |
+| `macroGoals` | User-configurable macro targets: calories, protein, carbs, fat (one row per user) |
+| `workouts` | Workout entries with workoutDate, type, title, durationMinutes, exercises array, notes |
 | `dashboardConfig` | Per-user dashboard layout: nav mode, nav order, hidden pages, page presets, custom theme |
 | `mutationLog` | Audit log of mutations for undo support (action, tableName, recordId, beforeData, afterData) |
 
@@ -452,6 +454,24 @@ GET    /api/v1/food-log                          # List food entries ?date=&from
 POST   /api/v1/food-log                          # Create food entry { name, entryDate?, mealType?, calories?, protein?, carbs?, fat?, quantity? }
 GET    /api/v1/food-log/totals                   # Get daily macro totals ?date= (YYYY-MM-DD, default: today)
 DELETE /api/v1/food-log/:id                      # Delete food entry
+```
+
+### Macro Goals
+
+```
+GET    /api/v1/macro-goals                       # Get current macro targets (calories, protein, carbs, fat)
+PUT    /api/v1/macro-goals                       # Set macro targets { calories?, protein?, carbs?, fat? } (partial updates OK)
+```
+
+### Workouts
+
+```
+GET    /api/v1/workouts                          # List workouts ?type=&from=&to=&programmeId=
+POST   /api/v1/workouts                          # Create workout { workoutDate, type, title, durationMinutes?, exercises?, notes? }
+GET    /api/v1/workouts/:id                      # Get workout by ID
+PATCH  /api/v1/workouts/:id                      # Update workout
+DELETE /api/v1/workouts/:id                      # Delete workout
+GET    /api/v1/health/summary                    # Weekly workout summary ?week= (YYYY-MM-DD Monday, default: current)
 ```
 
 ### Dashboard Config

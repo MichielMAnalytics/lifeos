@@ -32,6 +32,7 @@ import type * as identity from "../identity.js";
 import type * as journals from "../journals.js";
 import type * as k8s from "../k8s.js";
 import type * as lib_helpers from "../lib/helpers.js";
+import type * as macroGoals from "../macroGoals.js";
 import type * as modelProxy from "../modelProxy.js";
 import type * as mutationLog from "../mutationLog.js";
 import type * as programmes from "../programmes.js";
@@ -84,6 +85,7 @@ declare const fullApi: ApiFromModules<{
   journals: typeof journals;
   k8s: typeof k8s;
   "lib/helpers": typeof lib_helpers;
+  macroGoals: typeof macroGoals;
   modelProxy: typeof modelProxy;
   mutationLog: typeof mutationLog;
   programmes: typeof programmes;
