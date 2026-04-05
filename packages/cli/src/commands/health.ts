@@ -5,6 +5,7 @@ import {
   isJsonMode,
   printError,
   printJson,
+  printSuccess,
 } from '../output.js';
 
 export const healthCommand = new Command('health')
@@ -48,6 +49,70 @@ healthCommand
       if (total === 0) {
         console.log('\nNo workouts this week yet.');
       }
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+// ── Macro Goals ─────────────────────────────────────
+
+healthCommand
+  .command('macros')
+  .description('Show current macro goals')
+  .action(async () => {
+    try {
+      const client = createClient();
+      const res = await client.get<ApiResponse<{ calories: number; protein: number; carbs: number; fat: number }>>('/api/v1/macro-goals');
+
+      if (isJsonMode()) {
+        printJson(res);
+        return;
+      }
+
+      const g = res.data;
+      console.log(`Macro Goals:`);
+      console.log(`  Calories: ${g.calories} kcal`);
+      console.log(`  Protein:  ${g.protein}g`);
+      console.log(`  Carbs:    ${g.carbs}g`);
+      console.log(`  Fat:      ${g.fat}g`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+healthCommand
+  .command('set-macros')
+  .description('Set macro goals')
+  .option('--calories <kcal>', 'Daily calorie target')
+  .option('--protein <grams>', 'Daily protein target (grams)')
+  .option('--carbs <grams>', 'Daily carbs target (grams)')
+  .option('--fat <grams>', 'Daily fat target (grams)')
+  .action(async (opts: { calories?: string; protein?: string; carbs?: string; fat?: string }) => {
+    try {
+      const body: Record<string, number> = {};
+      if (opts.calories) body.calories = parseFloat(opts.calories);
+      if (opts.protein) body.protein = parseFloat(opts.protein);
+      if (opts.carbs) body.carbs = parseFloat(opts.carbs);
+      if (opts.fat) body.fat = parseFloat(opts.fat);
+
+      if (Object.keys(body).length === 0) {
+        printError('Provide at least one macro to set (--calories, --protein, --carbs, --fat)');
+        process.exitCode = 1;
+        return;
+      }
+
+      const client = createClient();
+      await client.put('/api/v1/macro-goals', body);
+
+      if (isJsonMode()) {
+        const res = await client.get<ApiResponse<{ calories: number; protein: number; carbs: number; fat: number }>>('/api/v1/macro-goals');
+        printJson(res);
+        return;
+      }
+
+      printSuccess('Macro goals updated');
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;

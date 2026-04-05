@@ -186,6 +186,15 @@ lifeos review weekly                              # Weekly review
 lifeos search <query>                             # Search everything
 lifeos trigger morning-briefing                   # Morning briefing data
 lifeos reminder create <title> [--at ISO] [--body TEXT]  # Create reminder
+lifeos food log <name> [--meal TYPE] [--calories N] [--protein N] [--carbs N] [--fat N] [-q QTY]  # Log food
+lifeos food list [-d DATE]                       # List food entries
+lifeos food totals [-d DATE]                     # Daily macro totals
+lifeos food delete <id>                          # Delete food entry
+lifeos workout log <title> --type TYPE [--duration MIN] [-d DATE]  # Log workout
+lifeos workout list [--from DATE] [--to DATE]    # List workouts
+lifeos health summary [-w WEEK]                  # Weekly health summary
+lifeos health macros                             # Show macro goals
+lifeos health set-macros [--calories N] [--protein N] [--carbs N] [--fat N]  # Set macro goals
 lifeos feedback <title> [-t bug|feature|general] [-d TEXT]  # Submit feedback
 ```
 
