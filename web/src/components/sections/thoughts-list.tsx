@@ -180,9 +180,6 @@ function ThoughtRow({
               {displayTitle}
             </span>
           </div>
-          {!expanded && (
-            <p className="mt-0.5 ml-5 text-xs text-text-muted">Click to expand</p>
-          )}
         </div>
 
         {/* Date */}
@@ -191,14 +188,20 @@ function ThoughtRow({
         </span>
       </button>
 
-      {/* Expanded content */}
-      {expanded && (
+      {/* Expanded content with animation */}
+      <div
+        className="overflow-hidden transition-all duration-200 ease-out"
+        style={{
+          maxHeight: expanded ? '500px' : '0px',
+          opacity: expanded ? 1 : 0,
+        }}
+      >
         <div className="px-4 pb-4 pl-14">
           <div className="text-sm text-text leading-relaxed whitespace-pre-line border-l-2 border-border pl-4">
             {thought.content}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -235,9 +238,9 @@ export function ThoughtsList() {
         <div className="space-y-4">
           <div className="border border-dashed border-border/50 rounded-xl overflow-hidden">
             {[
-              { title: "I've been thinking about...", hint: 'Click to expand' },
-              { title: 'Something that crossed my mind...', hint: 'Click to expand' },
-            ].map((ghost, idx) => (
+              "I've been thinking about...",
+              'Something that crossed my mind...',
+            ].map((title, idx) => (
               <div
                 key={idx}
                 className="flex w-full items-start gap-3 px-4 py-3 opacity-40 border-b border-border/30 last:border-b-0"
@@ -249,10 +252,9 @@ export function ThoughtsList() {
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-text-muted shrink-0">{'\u25B8'}</span>
                     <span className="text-sm font-medium text-text-muted italic truncate">
-                      {ghost.title}
+                      {title}
                     </span>
                   </div>
-                  <p className="mt-0.5 ml-5 text-xs text-text-muted/60">{ghost.hint}</p>
                 </div>
                 <span className="shrink-0 text-xs text-text-muted mt-0.5">Today</span>
               </div>

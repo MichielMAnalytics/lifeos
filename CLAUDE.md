@@ -111,6 +111,7 @@ All tables are defined in `convex/schema.ts`. Every user-owned table has a `user
 | `resources` | Saved resources with title, url, content, type (article/tool/book/video/other) |
 | `reviews` | Reviews (daily/weekly/monthly/quarterly) with period, content, and score |
 | `reminders` | Reminders with title, body, scheduledAt, status (pending/delivered/snoozed/done), snoozeCount |
+| `foodLog` | Food/nutrition entries with name, mealType (breakfast/lunch/dinner/snack), calories, protein, carbs, fat, quantity, entryDate |
 | `dashboardConfig` | Per-user dashboard layout: nav mode, nav order, hidden pages, page presets, custom theme |
 | `mutationLog` | Audit log of mutations for undo support (action, tableName, recordId, beforeData, afterData) |
 
@@ -442,6 +443,15 @@ PATCH  /api/v1/reminders/:id                    # Update reminder { title?, body
 DELETE /api/v1/reminders/:id                    # Delete reminder
 POST   /api/v1/reminders/:id/snooze            # Snooze { minutes }
 POST   /api/v1/reminders/:id/done              # Mark as done
+```
+
+### Food Log
+
+```
+GET    /api/v1/food-log                          # List food entries ?date=&from=&to= (YYYY-MM-DD)
+POST   /api/v1/food-log                          # Create food entry { name, entryDate?, mealType?, calories?, protein?, carbs?, fat?, quantity? }
+GET    /api/v1/food-log/totals                   # Get daily macro totals ?date= (YYYY-MM-DD, default: today)
+DELETE /api/v1/food-log/:id                      # Delete food entry
 ```
 
 ### Dashboard Config

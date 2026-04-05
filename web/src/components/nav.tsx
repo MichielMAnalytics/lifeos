@@ -220,7 +220,7 @@ export function Nav() {
               <div key={group.category ?? `g-${gi}`} className="mb-1">
                 {group.category && navExpanded && (
                   <div className="px-2 pt-3 pb-1.5 first:pt-0">
-                    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/40">
+                    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
                       {group.category}
                     </span>
                   </div>

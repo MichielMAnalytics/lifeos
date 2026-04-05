@@ -130,7 +130,7 @@ export function SettingsClient({
       <div className="flex min-h-[calc(100vh-120px)]">
         {/* Sidebar */}
         <div className="hidden md:block w-48 flex-shrink-0 border-r border-border py-6 pr-2 space-y-0.5">
-          <p className="text-[10px] uppercase tracking-widest text-text-muted/50 px-3 py-2 font-medium">
+          <p className="text-[11px] uppercase tracking-[0.08em] text-text-muted px-3 py-2 font-medium">
             Settings
           </p>
           {tabs.map((t) => {

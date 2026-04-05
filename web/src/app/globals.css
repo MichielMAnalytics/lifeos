@@ -285,8 +285,12 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(8px); }
+  from { opacity: 0; transform: translateX(40px); }
   to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-out-right {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(40px); }
 }
 
 /* Hide main scrollbar when side peek is open */
@@ -307,7 +311,10 @@ html.sidePeekOpen {
 }
 
 .animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out forwards;
+  animation: slide-in-right 0.2s ease-out forwards;
+}
+.animate-slide-out-right {
+  animation: slide-out-right 0.15s ease-in forwards;
 }
 
 /* ── Task Completion Animations ─────────────────────── */

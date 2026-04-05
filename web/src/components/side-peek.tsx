@@ -25,6 +25,7 @@ function hideSidePeek() {
 export function SidePeek({ open, onClose, onOpenFullPage, onMoveToTrash, onDelete, children, title, className }: SidePeekProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [closing, setClosing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -40,7 +41,10 @@ export function SidePeek({ open, onClose, onOpenFullPage, onMoveToTrash, onDelet
 
   const handleClose = useCallback(() => {
     setMenuOpen(false);
-    onClose();
+    setClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 150);
   }, [onClose]);
 
   // Close on Escape
@@ -100,7 +104,7 @@ export function SidePeek({ open, onClose, onOpenFullPage, onMoveToTrash, onDelet
       className={cn(
         'flex flex-col bg-bg border-l border-border',
         'shadow-[-8px_0_30px_rgba(0,0,0,0.15)]',
-        'animate-slide-in-right',
+        closing ? 'animate-slide-out-right' : 'animate-slide-in-right',
         className,
       )}
       style={{
