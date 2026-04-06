@@ -287,9 +287,11 @@ function JournalDetailModal({
 
 // ── Entry Card (new cleaner format) ─────────────────
 
-function EntryCard({ entry, onClick }: { entry: JournalEntry; onClick: () => void }) {
+function EntryCard({ entry, extraWins, onClick }: { entry: JournalEntry; extraWins?: string[]; onClick: () => void }) {
   const hasNotes = entry.notes && entry.notes.trim().length > 0;
-  const hasWins = entry.wins && entry.wins.length > 0;
+  // Merge journal wins + wins table, deduplicated
+  const allWins = [...new Set([...(entry.wins ?? []), ...(extraWins ?? [])])];
+  const hasWins = allWins.length > 0;
   const hasPriorities = entry.mit || entry.p1 || entry.p2;
   const hasContent = hasPriorities || hasNotes || hasWins;
 
@@ -318,35 +320,48 @@ function EntryCard({ entry, onClick }: { entry: JournalEntry; onClick: () => voi
         }}
         className="flex-1 border border-border rounded-xl p-6 transition-colors hover:border-text/20 cursor-pointer min-w-0"
       >
-        {/* MIT / P1 / P2 horizontal row */}
-        {hasPriorities && (
-          <div className="flex flex-wrap gap-x-8 gap-y-2 mb-5">
-            {entry.mit && (
-              <div className="min-w-0">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-0.5">MIT</p>
-                <p className="text-sm font-semibold text-text truncate">{entry.mit}</p>
-              </div>
-            )}
-            {entry.p1 && (
-              <div className="min-w-0">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-0.5">P1</p>
-                <p className="text-sm text-text truncate">{entry.p1}</p>
-              </div>
-            )}
-            {entry.p2 && (
-              <div className="min-w-0">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-0.5">P2</p>
-                <p className="text-sm text-text truncate">{entry.p2}</p>
-              </div>
-            )}
-          </div>
+        {/* Summary line */}
+        {hasContent && (
+          <p className="text-sm text-text-muted italic mb-4">
+            {entry.mit
+              ? `Focused on ${entry.mit.toLowerCase()}${entry.p1 ? ` and ${entry.p1.toLowerCase()}` : ''}${hasWins ? ` — ${allWins.length} win${allWins.length !== 1 ? 's' : ''}` : ''}.`
+              : hasNotes
+                ? (entry.notes!.split(/[.!?]/)[0].length > 80 ? entry.notes!.split(/[.!?]/)[0].slice(0, 77) + '...' : entry.notes!.split(/[.!?]/)[0] + '.')
+                : hasWins
+                  ? `${entry.wins.length} win${entry.wins.length !== 1 ? 's' : ''} logged.`
+                  : ''}
+          </p>
         )}
 
         {/* Notes as readable paragraphs */}
         {hasNotes && (
+          <NotesText text={entry.notes!} />
+        )}
+
+        {/* MIT / P1 / P2 horizontal row */}
+        {hasPriorities && (
           <>
-            {hasPriorities && <div className="border-t border-border/40 my-5" />}
-            <NotesText text={entry.notes!} />
+            {hasNotes && <div className="border-t border-border/40 my-5" />}
+            <div className="flex flex-wrap gap-x-8 gap-y-2">
+              {entry.mit && (
+                <div className="min-w-0">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-0.5">MIT</p>
+                  <p className="text-sm font-semibold text-text truncate">{entry.mit}</p>
+                </div>
+              )}
+              {entry.p1 && (
+                <div className="min-w-0">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-0.5">P1</p>
+                  <p className="text-sm text-text truncate">{entry.p1}</p>
+                </div>
+              )}
+              {entry.p2 && (
+                <div className="min-w-0">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-0.5">P2</p>
+                  <p className="text-sm text-text truncate">{entry.p2}</p>
+                </div>
+              )}
+            </div>
           </>
         )}
 
@@ -359,10 +374,10 @@ function EntryCard({ entry, onClick }: { entry: JournalEntry; onClick: () => voi
                 Wins
               </p>
               <ul className="space-y-1.5">
-                {entry.wins.map((win: string, i: number) => (
+                {allWins.map((win: string, i: number) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
-                    <span className="text-accent/60 shrink-0 mt-px">+</span>
-                    <span className="text-text-muted">{win}</span>
+                    <span className="text-success shrink-0 mt-px">&#10003;</span>
+                    <span className="text-text">{win}</span>
                   </li>
                 ))}
               </ul>
@@ -382,7 +397,18 @@ function EntryCard({ entry, onClick }: { entry: JournalEntry; onClick: () => voi
 
 export function JournalTimeline() {
   const entries = useQuery(api.journals.list, {});
+  const allWins = useQuery(api.wins.list, {});
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
+
+  // Build a map of date → wins from the wins table
+  const winsMap = new Map<string, string[]>();
+  if (allWins) {
+    for (const w of allWins) {
+      const date = w.entryDate;
+      if (!winsMap.has(date)) winsMap.set(date, []);
+      winsMap.get(date)!.push(w.content);
+    }
+  }
 
   if (!entries) return (
     <div className="space-y-3">
@@ -443,6 +469,7 @@ export function JournalTimeline() {
                   <EntryCard
                     key={entry._id}
                     entry={entry}
+                    extraWins={winsMap.get(entry.entryDate)}
                     onClick={() => setSelectedEntry(entry)}
                   />
                 ))}

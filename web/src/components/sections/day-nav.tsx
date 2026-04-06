@@ -48,7 +48,7 @@ export function DayNav() {
 
         {/* Current date */}
         <span className="text-lg font-semibold text-text">
-          {formatNavDate(date)}
+          {isToday ? 'Today' : formatNavDate(date)}
         </span>
 
         {/* Next day */}

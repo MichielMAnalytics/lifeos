@@ -324,13 +324,17 @@ function PriorityRow({
 
   const rowRef = useRef<HTMLDivElement>(null);
 
-  // Close picker when clicking outside the entire row
+  // Close picker when clicking outside the entire row and the dropdown portal
   useEffect(() => {
     if (!pickerOpen) return;
     function handleClickOutside(e: MouseEvent) {
-      if (rowRef.current && !rowRef.current.contains(e.target as Node)) {
-        setPickerOpen(false);
-      }
+      const target = e.target as Node;
+      // Don't close if clicking inside the row
+      if (rowRef.current && rowRef.current.contains(target)) return;
+      // Don't close if clicking inside the dropdown portal
+      const portal = document.querySelector('[style*="z-index: 9999"]');
+      if (portal && portal.contains(target)) return;
+      setPickerOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
