@@ -97,7 +97,7 @@ export function CustomEnvVars() {
 
   return (
     <div className="space-y-4">
-      <p className="text-[9px] text-text-muted/60 leading-relaxed">
+      <p className="text-[9px] text-text-muted leading-relaxed">
         Skills automatically pick these up as environment variables — for example, set{" "}
         <code className="text-[9px] bg-surface px-1 py-0.5 rounded">BRAVE_API_KEY</code> for
         web search or{" "}
@@ -140,7 +140,7 @@ export function CustomEnvVars() {
               className={`shrink-0 transition-colors p-1 ${
                 isDeleting
                   ? "text-text-muted hover:text-text"
-                  : "text-text-muted/40 hover:text-danger"
+                  : "text-text-muted/70 hover:text-danger"
               }`}
               title={isDeleting ? "Undo remove" : "Remove"}
             >
@@ -175,7 +175,7 @@ export function CustomEnvVars() {
           <button
             type="button"
             onClick={() => removeEntry(idx)}
-            className="shrink-0 text-text-muted/40 hover:text-danger transition-colors p-1"
+            className="shrink-0 text-text-muted/70 hover:text-danger transition-colors p-1"
             title="Remove"
           >
             <Trash2 className="size-3.5" />
@@ -196,7 +196,7 @@ export function CustomEnvVars() {
       {/* Save */}
       {hasChanges && (
         <>
-          <p className="text-[9px] text-text-muted/50 leading-relaxed">
+          <p className="text-[9px] text-text-muted/80 leading-relaxed">
             Saving will restart your instance to apply the new environment variables. This takes about 1 minute.
           </p>
           <Button

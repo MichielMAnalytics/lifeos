@@ -91,7 +91,7 @@ export function ModelSwitcher({ deploymentStatus }: { deploymentStatus: Deployme
             );
           })}
         </div>
-        <p className="text-[9px] text-text-muted/50">
+        <p className="text-[9px] text-text-muted/80">
           Model switch takes effect within seconds
         </p>
       </CardContent>

@@ -168,7 +168,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
     <div className="border border-border rounded-xl">
       {/* Header */}
       <div className="px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Quarterly Review: {quarter.label}
         </h2>
         <p className="text-xs text-text-muted mt-1">
@@ -187,7 +187,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
         <div className="p-6 space-y-8">
           {/* Quarter Summary */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
               Quarter Summary
             </label>
             <textarea
@@ -195,13 +195,13 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
               onChange={(e) => setSummary(e.target.value)}
               placeholder="How would you summarize this quarter?"
               rows={4}
-              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
           {/* Achievements (pre-filled from weekly reviews) */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
               Achievements
             </label>
             {weeklyHighlights.length > 0 && (
@@ -226,13 +226,13 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
               onChange={(e) => setAdditionalAchievements(e.target.value)}
               placeholder="Add more achievements (one per line)..."
               rows={3}
-              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
           {/* Goals Completed This Quarter */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
               Goals Completed This Quarter
             </label>
             {completedGoals.length > 0 ? (
@@ -268,7 +268,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
 
           {/* What Didn't Work */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
               What Didn&apos;t Work
             </label>
             <textarea
@@ -276,13 +276,13 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
               onChange={(e) => setWhatDidntWork(e.target.value)}
               placeholder="What would you do differently?"
               rows={3}
-              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
           {/* Next Quarter Goals */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
               Goals for Next Quarter
             </label>
             <textarea
@@ -290,13 +290,13 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
               onChange={(e) => setNextQuarterGoals(e.target.value)}
               placeholder="What do you want to achieve next quarter? (one per line)"
               rows={4}
-              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
           {/* Score */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
               Score (1-10)
             </label>
             <input
@@ -306,7 +306,7 @@ export function QuarterlyReviewForm({ onSaved }: QuarterlyReviewFormProps = {}) 
               value={score}
               onChange={(e) => setScore(e.target.value)}
               placeholder="Rate this quarter"
-              className="w-24 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
+              className="w-24 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50"
             />
           </div>
 

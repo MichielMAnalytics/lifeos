@@ -334,7 +334,7 @@ function AccountTab({ user }: { user: User | null }) {
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
             placeholder="Your name"
-            className="w-full px-3 py-2 text-sm bg-transparent border border-border text-text placeholder:text-text-muted/40 focus:border-text/30 focus:outline-none"
+            className="w-full px-3 py-2 text-sm bg-transparent border border-border text-text placeholder:text-text-muted/70 focus:border-text/30 focus:outline-none"
           />
         </div>
 
@@ -342,7 +342,7 @@ function AccountTab({ user }: { user: User | null }) {
         <div className="p-5 space-y-2">
           <label className="text-xs font-medium text-text">Email</label>
           <p className="text-sm text-text-muted">{user.email ?? 'Not set'}</p>
-          <p className="text-[10px] text-text-muted/60">Managed via your Google account</p>
+          <p className="text-[10px] text-text-muted">Managed via your Google account</p>
         </div>
 
         {/* Timezone */}
@@ -361,7 +361,7 @@ function AccountTab({ user }: { user: User | null }) {
             value={editTimezone}
             onChange={(e) => setEditTimezone(e.target.value)}
             placeholder="e.g. Europe/Amsterdam"
-            className="w-full px-3 py-2 text-sm bg-transparent border border-border text-text font-mono placeholder:text-text-muted/40 focus:border-text/30 focus:outline-none"
+            className="w-full px-3 py-2 text-sm bg-transparent border border-border text-text font-mono placeholder:text-text-muted/70 focus:border-text/30 focus:outline-none"
           />
         </div>
 
@@ -569,7 +569,7 @@ function BillingTab() {
               value={couponCode}
               onChange={(e) => { setCouponCode(e.target.value); setCouponResult(null); }}
               onKeyDown={(e) => { if (e.key === 'Enter') void handleRedeemCoupon(); }}
-              className="flex-1 text-xs px-3 py-1.5 bg-transparent border border-border text-text placeholder:text-text-muted/40 focus:border-text/30 focus:outline-none"
+              className="flex-1 text-xs px-3 py-1.5 bg-transparent border border-border text-text placeholder:text-text-muted/70 focus:border-text/30 focus:outline-none"
             />
             <button
               onClick={() => void handleRedeemCoupon()}
@@ -765,7 +765,7 @@ function ApiKeysTab({ apiKeys }: { apiKeys: ApiKeyEntry[] }) {
                       {new Date(key.lastUsedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   ) : (
-                    <span className="text-xs text-text-muted/50">never used</span>
+                    <span className="text-xs text-text-muted/80">never used</span>
                   )}
                   <div className={`h-2 w-2 rounded-full ${key.lastUsedAt ? 'bg-success' : 'bg-border'}`} />
                   <button
@@ -774,7 +774,7 @@ function ApiKeysTab({ apiKeys }: { apiKeys: ApiKeyEntry[] }) {
                       try { await deleteApiKeyMutation({ keyId: key._id }); } catch { /* silent */ } finally { setDeletingKeyId(null); }
                     }}
                     disabled={deletingKeyId === key._id}
-                    className="text-text-muted/40 hover:text-danger transition-colors disabled:opacity-30 cursor-pointer"
+                    className="text-text-muted/70 hover:text-danger transition-colors disabled:opacity-30 cursor-pointer"
                     title="Delete key"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

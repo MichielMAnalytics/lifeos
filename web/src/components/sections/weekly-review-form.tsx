@@ -161,7 +161,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
     <div className="border border-border rounded-xl">
       {/* Header */}
       <div className="px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Weekly Review: {formatDateLong(start)} &ndash; {formatDateLong(end)}
         </h2>
       </div>
@@ -177,7 +177,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
         <div className="p-6 space-y-8">
           {/* Highlights */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
               Highlights
             </label>
             {prefilledWins.length > 0 && (
@@ -200,13 +200,13 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
               onChange={(e) => setAdditionalHighlights(e.target.value)}
               placeholder="Add more highlights (one per line)..."
               rows={3}
-              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
           {/* Challenges */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
               Challenges
             </label>
             <textarea
@@ -214,14 +214,14 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
               onChange={(e) => setChallenges(e.target.value)}
               placeholder="What was difficult this week?"
               rows={3}
-              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50 resize-none"
             />
           </div>
 
           {/* Goal Updates */}
           {goals && goals.length > 0 && (
             <div>
-              <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+              <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
                 Goal Updates
               </label>
               <span className="text-xs text-text-muted block mb-3">Pre-filled from active goals:</span>
@@ -239,7 +239,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
                       }
                       placeholder="Notes on progress..."
                       rows={2}
-                      className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 resize-none"
+                      className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50 resize-none"
                     />
                   </div>
                 ))}
@@ -249,7 +249,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
 
           {/* Next Week Priorities */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
               Next Week Priorities
             </label>
             <div className="space-y-2">
@@ -260,7 +260,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
                   value={p1}
                   onChange={(e) => setP1(e.target.value)}
                   placeholder="Most important thing next week"
-                  className="flex-1 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
+                  className="flex-1 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50"
                 />
               </div>
               <div className="flex items-center gap-3">
@@ -270,7 +270,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
                   value={p2}
                   onChange={(e) => setP2(e.target.value)}
                   placeholder="Second priority"
-                  className="flex-1 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
+                  className="flex-1 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50"
                 />
               </div>
               <div className="flex items-center gap-3">
@@ -280,7 +280,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
                   value={p3}
                   onChange={(e) => setP3(e.target.value)}
                   placeholder="Third priority"
-                  className="flex-1 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
+                  className="flex-1 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50"
                 />
               </div>
             </div>
@@ -288,7 +288,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
 
           {/* Score */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block mb-3">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block mb-3">
               Score (1-10)
             </label>
             <input
@@ -298,7 +298,7 @@ export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
               value={score}
               onChange={(e) => setScore(e.target.value)}
               placeholder="How was this week?"
-              className="w-24 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50"
+              className="w-24 bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text placeholder:text-text-muted/80 focus:outline-none focus:border-accent/50"
             />
           </div>
 

@@ -23,7 +23,7 @@ export function TasksKanban() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Kanban Board
         </span>
         <span className="text-xs text-text-muted tabular-nums">{totalCount} total</span>
@@ -34,7 +34,7 @@ export function TasksKanban() {
           <div key={col.key} className="flex flex-col">
             {/* Column header */}
             <div className="px-4 py-3 border-b border-border bg-surface flex items-center justify-between">
-              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
                 {col.label}
               </span>
               <span className="text-xs text-text-muted tabular-nums">
@@ -45,7 +45,7 @@ export function TasksKanban() {
             {/* Column body */}
             {col.tasks.length === 0 ? (
               <div className="flex-1 flex items-center justify-center p-4">
-                <span className="text-xs text-text-muted/60">
+                <span className="text-xs text-text-muted">
                   Empty
                 </span>
               </div>

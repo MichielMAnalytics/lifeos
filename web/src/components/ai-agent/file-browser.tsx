@@ -148,7 +148,7 @@ export function FileBrowserContent({
           const segPath = `${BASE_DIR}/${segments.slice(0, i + 1).join("/")}`;
           return (
             <span key={segPath} className="flex items-center gap-1 shrink-0">
-              <ChevronRight className="size-3 text-text-muted/40" />
+              <ChevronRight className="size-3 text-text-muted/70" />
               <button
                 onClick={() => fetchDir(segPath)}
                 className="hover:text-text transition-colors"
@@ -182,7 +182,7 @@ export function FileBrowserContent({
               Back to listing
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-text-muted/60">
+              <span className="text-[10px] text-text-muted">
                 {formatSize(fileContent.size)}
                 {fileContent.truncated && " (truncated to 100 KB)"}
               </span>
@@ -210,7 +210,7 @@ export function FileBrowserContent({
             </button>
           )}
           {entries.length === 0 && (
-            <p className="text-xs text-text-muted/60 py-2 text-center">Empty directory</p>
+            <p className="text-xs text-text-muted py-2 text-center">Empty directory</p>
           )}
           {entries.map((entry) => (
             <button
@@ -227,12 +227,12 @@ export function FileBrowserContent({
                 {entry.name}
               </span>
               {entry.type === "file" && (
-                <span className="text-[10px] text-text-muted/50">
+                <span className="text-[10px] text-text-muted/80">
                   {formatSize(entry.size)}
                 </span>
               )}
               {entry.type === "directory" && (
-                <ChevronRight className="size-3 text-text-muted/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ChevronRight className="size-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
               )}
             </button>
           ))}

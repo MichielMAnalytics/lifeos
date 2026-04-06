@@ -127,7 +127,7 @@ function TaskQuickForm({ onDone }: { onDone: () => void }) {
         placeholder="Task title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:border-accent focus:outline-none"
+        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/80 focus:border-accent focus:outline-none"
       />
       <div className="relative">
         <button
@@ -135,7 +135,7 @@ function TaskQuickForm({ onDone }: { onDone: () => void }) {
           onClick={() => setDatePickerOpen((prev) => !prev)}
           className={cn(
             'flex items-center gap-2 w-full text-left text-sm rounded-lg border border-border bg-bg px-3 py-2 transition-colors',
-            dueDate ? 'text-text' : 'text-text-muted/50',
+            dueDate ? 'text-text' : 'text-text-muted/80',
             datePickerOpen && 'border-accent',
           )}
         >
@@ -210,7 +210,7 @@ function IdeaQuickForm({ onDone }: { onDone: () => void }) {
         value={content}
         onChange={(e) => setContent(e.target.value)}
         rows={3}
-        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:border-accent focus:outline-none resize-none"
+        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/80 focus:border-accent focus:outline-none resize-none"
       />
       <select
         value={actionability}
@@ -270,14 +270,14 @@ function ThoughtQuickForm({ onDone }: { onDone: () => void }) {
         value={content}
         onChange={(e) => setContent(e.target.value)}
         rows={3}
-        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:border-accent focus:outline-none resize-none"
+        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/80 focus:border-accent focus:outline-none resize-none"
       />
       <input
         type="text"
         placeholder="Title (optional)"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:border-accent focus:outline-none"
+        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/80 focus:border-accent focus:outline-none"
       />
       <button
         type="submit"
@@ -324,7 +324,7 @@ function WinQuickForm({ onDone }: { onDone: () => void }) {
         placeholder="What did you accomplish?"
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:border-accent focus:outline-none"
+        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/80 focus:border-accent focus:outline-none"
       />
       <button
         type="submit"
@@ -375,7 +375,7 @@ function ReminderQuickForm({ onDone }: { onDone: () => void }) {
         placeholder="Reminder title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/50 focus:border-accent focus:outline-none"
+        className="w-full border border-border bg-bg rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/80 focus:border-accent focus:outline-none"
       />
       <input
         type="datetime-local"

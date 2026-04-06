@@ -61,7 +61,7 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
       {/* Summary (quarterly) */}
       {typeof summary === 'string' && summary.length > 0 && (
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Summary
           </span>
           <p className="mt-2 text-sm text-text leading-relaxed whitespace-pre-line">{summary}</p>
@@ -71,7 +71,7 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
       {/* Highlights / Achievements */}
       {Array.isArray(highlights) && highlights.length > 0 && (
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Highlights
           </span>
           <ul className="mt-2 space-y-1.5">
@@ -89,7 +89,7 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
 
       {Array.isArray(achievements) && achievements.length > 0 && (
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Achievements
           </span>
           <ul className="mt-2 space-y-1.5">
@@ -108,7 +108,7 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
       {/* Challenges */}
       {typeof challenges === 'string' && challenges.length > 0 && (
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Challenges
           </span>
           <p className="mt-2 text-sm text-text leading-relaxed whitespace-pre-line">{challenges}</p>
@@ -118,7 +118,7 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
       {/* What Didn't Work (quarterly) */}
       {typeof whatDidntWork === 'string' && whatDidntWork.length > 0 && (
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             What Didn&apos;t Work
           </span>
           <p className="mt-2 text-sm text-text leading-relaxed whitespace-pre-line">{whatDidntWork}</p>
@@ -128,7 +128,7 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
       {/* Goal Updates (weekly) */}
       {Array.isArray(goalUpdates) && goalUpdates.length > 0 && (
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Goal Updates
           </span>
           <div className="mt-2 space-y-2">
@@ -154,7 +154,7 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
       {/* Completed Goals (quarterly) */}
       {Array.isArray(completedGoals) && completedGoals.length > 0 && (
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Goals Completed
           </span>
           <ul className="mt-2 space-y-1.5">
@@ -176,7 +176,7 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
       {/* Next Week Priorities */}
       {nextWeekPriorities && (
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Next Week Priorities
           </span>
           <div className="mt-2 space-y-1.5">
@@ -205,7 +205,7 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
       {/* Next Quarter Goals */}
       {Array.isArray(nextQuarterGoals) && nextQuarterGoals.length > 0 && (
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Next Quarter Goals
           </span>
           <ul className="mt-2 space-y-1.5">

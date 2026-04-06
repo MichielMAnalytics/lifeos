@@ -14,14 +14,14 @@ export function TasksToday() {
   return (
     <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Today&apos;s Tasks
         </h2>
       </div>
       {todayTasks.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
           <p className="text-sm text-text-muted">No tasks due today</p>
-          <p className="text-xs text-text-muted/60 mt-1">Use quick capture to add one</p>
+          <p className="text-xs text-text-muted mt-1">Use quick capture to add one</p>
         </div>
       ) : (
         <div className="divide-y divide-border">

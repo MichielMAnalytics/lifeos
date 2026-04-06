@@ -148,7 +148,7 @@ export function VisionBoard() {
     <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Vision Board
         </h2>
         <div className="flex items-center gap-3">
@@ -174,7 +174,7 @@ export function VisionBoard() {
       {images.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
           <p className="text-sm text-text-muted">No images yet</p>
-          <p className="text-xs text-text-muted/60 mt-1">
+          <p className="text-xs text-text-muted mt-1">
             Add images that represent your vision
           </p>
         </div>

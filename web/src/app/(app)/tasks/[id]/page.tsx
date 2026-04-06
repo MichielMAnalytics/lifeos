@@ -272,7 +272,7 @@ export default function TaskDetailPage() {
         onBlur={saveNotes}
         placeholder="Add a description..."
         rows={5}
-        className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none resize-none leading-relaxed"
+        className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none resize-none leading-relaxed"
       />
     </div>
   );

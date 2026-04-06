@@ -222,7 +222,7 @@ export function IdeasGrid() {
       ) : (
         <div className="border border-border rounded-xl overflow-hidden">
           {/* Table header */}
-          <div className="flex items-center gap-4 px-5 py-2.5 border-b border-border bg-surface text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <div className="flex items-center gap-4 px-5 py-2.5 border-b border-border bg-surface text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             <span className="w-8 shrink-0">#</span>
             <span className="flex-1">Content</span>
             <span className="shrink-0 w-20 text-center">Potential</span>

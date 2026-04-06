@@ -91,7 +91,7 @@ function OptionA() {
         <div className="flex min-h-[600px]">
           {/* Sidebar */}
           <div className="w-52 border-r border-border bg-bg-subtle flex-shrink-0 py-4 px-2 space-y-0.5">
-            <p className="text-[10px] uppercase tracking-widest text-text-muted/50 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-widest text-text-muted/80 px-3 py-2">
               Settings
             </p>
             {tabs.map((t) => {
@@ -380,7 +380,7 @@ function BillingMockup() {
           <input
             type="text"
             placeholder="Coupon code"
-            className="flex-1 text-xs px-3 py-1.5 bg-transparent border border-border text-text placeholder:text-text-muted/40 focus:border-text/30 focus:outline-none"
+            className="flex-1 text-xs px-3 py-1.5 bg-transparent border border-border text-text placeholder:text-text-muted/70 focus:border-text/30 focus:outline-none"
           />
           <MockButton label="Redeem" />
         </div>
@@ -476,7 +476,7 @@ function LifeCoachMockup() {
         <div className="space-y-1.5">
           <label className="text-xs text-text">OpenAI</label>
           <div className="flex items-center gap-2">
-            <div className="flex-1 px-3 py-2 border border-border border-dashed text-xs text-text-muted/40">
+            <div className="flex-1 px-3 py-2 border border-border border-dashed text-xs text-text-muted/70">
               Not configured
             </div>
             <MockButton label="Add key" subtle />
@@ -487,7 +487,7 @@ function LifeCoachMockup() {
         <div className="space-y-1.5">
           <label className="text-xs text-text">Google (Gemini)</label>
           <div className="flex items-center gap-2">
-            <div className="flex-1 px-3 py-2 border border-border border-dashed text-xs text-text-muted/40">
+            <div className="flex-1 px-3 py-2 border border-border border-dashed text-xs text-text-muted/70">
               Not configured
             </div>
             <MockButton label="Add key" subtle />
@@ -510,7 +510,7 @@ function LifeCoachMockup() {
             <div className="h-2 w-2 rounded-full bg-border" />
             <div>
               <p className="text-xs text-text-muted">Discord</p>
-              <p className="text-[10px] text-text-muted/50">Not connected</p>
+              <p className="text-[10px] text-text-muted/80">Not connected</p>
             </div>
           </div>
         </div>
@@ -545,7 +545,7 @@ function ApiKeysMockup() {
               <p className="text-[10px] text-text-muted font-mono">
                 {key.lastUsed ?? 'Never used'}
               </p>
-              <button className="text-text-muted/30 hover:text-danger transition-colors cursor-pointer">
+              <button className="text-text-muted hover:text-danger transition-colors cursor-pointer">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" />
                 </svg>
@@ -560,7 +560,7 @@ function ApiKeysMockup() {
             <input
               type="text"
               placeholder="Key name (e.g. CLI, Mobile)"
-              className="flex-1 px-3 py-2 text-xs bg-transparent border border-border text-text placeholder:text-text-muted/40 focus:border-text/30 focus:outline-none font-mono"
+              className="flex-1 px-3 py-2 text-xs bg-transparent border border-border text-text placeholder:text-text-muted/70 focus:border-text/30 focus:outline-none font-mono"
             />
             <MockButton label="Create key" primary />
           </div>
@@ -778,7 +778,7 @@ function OptionHeader({
       </div>
 
       <div>
-        <p className="text-[10px] uppercase tracking-widest text-text-muted/50 mb-1">Inspired by</p>
+        <p className="text-[10px] uppercase tracking-widest text-text-muted/80 mb-1">Inspired by</p>
         <p className="text-xs text-text-muted">{references.join(' · ')}</p>
       </div>
     </div>

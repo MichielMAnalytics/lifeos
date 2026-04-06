@@ -178,7 +178,7 @@ export function EventLog() {
                 'px-2 py-0.5 text-[10px] font-mono border transition-colors',
                 eventFilters.size === 0 || eventFilters.has(evt)
                   ? 'border-text-muted/40 text-text'
-                  : 'border-border text-text-muted/40',
+                  : 'border-border text-text-muted/70',
               )}
             >
               {evt}
@@ -219,7 +219,7 @@ export function EventLog() {
                 >
                   {entry.event}
                 </span>
-                <span className="font-mono text-text-muted/60 truncate flex-1 min-w-0">
+                <span className="font-mono text-text-muted truncate flex-1 min-w-0">
                   {truncatePayload(entry.payload)}
                 </span>
               </div>

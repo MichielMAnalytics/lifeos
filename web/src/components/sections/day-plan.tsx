@@ -57,7 +57,7 @@ export function DayPlan() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-baseline justify-between">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">Today</h2>
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">Today</h2>
         <span className="text-xs font-mono text-text-muted">{formatDate(today())}</span>
       </div>
 

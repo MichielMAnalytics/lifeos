@@ -39,7 +39,7 @@ export function GoalsOkr() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           OKR View
         </span>
       </div>
@@ -47,7 +47,7 @@ export function GoalsOkr() {
       {goals.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-sm text-text-muted">No active goals</p>
-          <p className="text-xs text-text-muted/60 mt-1">Create goals and link tasks to see OKRs</p>
+          <p className="text-xs text-text-muted mt-1">Create goals and link tasks to see OKRs</p>
         </div>
       ) : (
         <div className="divide-y divide-border">
@@ -114,7 +114,7 @@ export function GoalsOkr() {
                   </div>
                 ) : (
                   <div className="px-12 py-3">
-                    <span className="text-xs text-text-muted/60">No linked tasks</span>
+                    <span className="text-xs text-text-muted">No linked tasks</span>
                   </div>
                 )}
               </div>

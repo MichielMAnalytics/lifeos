@@ -80,7 +80,7 @@ export function GoalsTimeline() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Quarterly Timeline
         </span>
       </div>
@@ -88,7 +88,7 @@ export function GoalsTimeline() {
       {goals.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-sm text-text-muted">No active goals</p>
-          <p className="text-xs text-text-muted/60 mt-1">Set goals with a quarter to see them here</p>
+          <p className="text-xs text-text-muted mt-1">Set goals with a quarter to see them here</p>
         </div>
       ) : (
         <div className="divide-y divide-border">
@@ -100,7 +100,7 @@ export function GoalsTimeline() {
               <div key={quarter}>
                 {/* Quarter header */}
                 <div className="flex items-center gap-4 px-6 py-3 bg-surface">
-                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
                     {label}
                   </span>
                   <div className="flex-1 h-px bg-border" />

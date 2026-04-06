@@ -145,7 +145,7 @@ export function SidePeek({ open, onClose, onOpenFullPage, onMoveToTrash, onDelet
         </div>
         <div className="flex items-center gap-1">
           {title && (
-            <span className="text-xs text-text-muted/50 truncate max-w-[160px] mr-2">{title}</span>
+            <span className="text-xs text-text-muted/80 truncate max-w-[160px] mr-2">{title}</span>
           )}
           {(onMoveToTrash || onDelete) && (
             <div className="relative" ref={menuRef}>

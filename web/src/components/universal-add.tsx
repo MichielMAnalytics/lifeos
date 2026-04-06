@@ -46,7 +46,7 @@ function TaskForm({ onClose }: { onClose: () => void }) {
       <input ref={inputRef} type="text" value={title} onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
         placeholder="Task title..."
-        className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-48" />
+        className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-48" />
       <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
         className="bg-surface border border-border rounded-lg px-2 py-1.5 text-sm text-text focus:outline-none focus:border-accent/50 w-36" />
       <button type="submit" disabled={!title.trim()}
@@ -91,18 +91,18 @@ function JournalEntryForm({ onClose }: { onClose: () => void }) {
         <input ref={inputRef} type="text" value={mit} onChange={(e) => setMit(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
           placeholder="MIT..."
-          className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 flex-1" />
+          className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 flex-1" />
         <input type="text" value={p1} onChange={(e) => setP1(e.target.value)}
           placeholder="P1..."
-          className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 flex-1" />
+          className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 flex-1" />
         <input type="text" value={p2} onChange={(e) => setP2(e.target.value)}
           placeholder="P2..."
-          className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 flex-1" />
+          className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 flex-1" />
       </div>
       <div className="flex items-center gap-2">
         <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
           placeholder="Notes..."
-          className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 flex-1" />
+          className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 flex-1" />
         <button type="submit"
           className="px-3 py-1.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors">
           Save
@@ -135,7 +135,7 @@ function SimpleForm({ placeholder, onSubmit, onClose }: { placeholder: string; o
       <input ref={inputRef} type="text" value={value} onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
         placeholder={placeholder}
-        className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 flex-1" />
+        className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 flex-1" />
       <button type="submit" disabled={!value.trim()}
         className="px-3 py-1.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-40">
         Add
@@ -175,7 +175,7 @@ function WorkoutForm({ onClose }: { onClose: () => void }) {
       <input ref={inputRef} type="text" value={title} onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
         placeholder="Workout title..."
-        className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-44" />
+        className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-44" />
       <select value={type} onChange={(e) => setType(e.target.value)}
         className="bg-surface border border-border rounded-lg px-2 py-1.5 text-sm text-text focus:outline-none focus:border-accent/50">
         <option value="strength">Strength</option>
@@ -186,7 +186,7 @@ function WorkoutForm({ onClose }: { onClose: () => void }) {
       </select>
       <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)}
         placeholder="Min"
-        className="bg-surface border border-border rounded-lg px-2 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-20" />
+        className="bg-surface border border-border rounded-lg px-2 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-20" />
       <button type="submit" disabled={!title.trim()}
         className="px-3 py-1.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-40">
         Log

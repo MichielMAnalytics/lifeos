@@ -486,7 +486,7 @@ export function SearchModal() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search or type > for commands..."
-            className="flex-1 bg-transparent text-lg text-text placeholder:text-text-muted/50 focus:outline-none"
+            className="flex-1 bg-transparent text-lg text-text placeholder:text-text-muted/80 focus:outline-none"
           />
           <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-border bg-surface px-1.5 text-[10px] font-mono text-text-muted">
             ESC

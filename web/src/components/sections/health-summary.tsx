@@ -31,10 +31,10 @@ export function HealthSummary() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           This Week
         </h2>
-        <span className="text-xs text-text-muted/60">
+        <span className="text-xs text-text-muted">
           {summary.weekStart} &mdash; {summary.weekEnd}
         </span>
       </div>
@@ -42,7 +42,7 @@ export function HealthSummary() {
       <div className="px-6 py-5">
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 mb-1">
+            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted mb-1">
               Workouts
             </p>
             <p className="text-2xl font-bold text-text tabular-nums">
@@ -50,7 +50,7 @@ export function HealthSummary() {
             </p>
           </div>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 mb-1">
+            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted mb-1">
               Duration
             </p>
             <p className="text-2xl font-bold text-text tabular-nums">
@@ -74,7 +74,7 @@ export function HealthSummary() {
         )}
 
         {summary.totalWorkouts === 0 && (
-          <p className="mt-4 text-sm text-text-muted/60 text-center">
+          <p className="mt-4 text-sm text-text-muted text-center">
             No workouts this week yet
           </p>
         )}

@@ -491,7 +491,7 @@ function HeroSection() {
                 Sign in with Google to deploy
               </button>
 
-              <p className="mt-3 text-center text-[10px] text-text-muted/50 font-heading">
+              <p className="mt-3 text-center text-[10px] text-text-muted/80 font-heading">
                 7-day free trial on BYOK plan
               </p>
             </div>
@@ -594,7 +594,7 @@ function PricingSection() {
 
         {/* Monthly / Annual toggle */}
         <div className="flex items-center justify-center gap-3 mb-10">
-          <span className={`text-sm font-heading font-medium transition-colors ${!annual ? "text-text" : "text-text-muted/50"}`}>
+          <span className={`text-sm font-heading font-medium transition-colors ${!annual ? "text-text" : "text-text-muted/80"}`}>
             Monthly
           </span>
           <button
@@ -612,7 +612,7 @@ function PricingSection() {
               }`}
             />
           </button>
-          <span className={`text-sm font-heading font-medium transition-colors ${annual ? "text-text" : "text-text-muted/50"}`}>
+          <span className={`text-sm font-heading font-medium transition-colors ${annual ? "text-text" : "text-text-muted/80"}`}>
             Annual
             <span className="ml-1.5 text-[10px] text-green-500 font-medium">20% off</span>
           </span>
@@ -624,7 +624,7 @@ function PricingSection() {
           ))}
         </div>
 
-        <p className="text-center text-xs text-text-muted/50 font-heading mt-8">
+        <p className="text-center text-xs text-text-muted/80 font-heading mt-8">
           All prices in EUR. Cancel anytime. Credits roll over month-to-month.
         </p>
       </div>
@@ -664,7 +664,7 @@ function PricingCard({ tier, annual }: { tier: (typeof PRICING_TIERS)[number]; a
         <span className="text-sm text-text-muted font-heading">EUR/mo</span>
       </div>
       {annual && (
-        <p className="text-[10px] text-text-muted/50 font-heading mb-2">billed annually</p>
+        <p className="text-[10px] text-text-muted/80 font-heading mb-2">billed annually</p>
       )}
       {!annual && <div className="mb-3" />}
 
@@ -809,7 +809,7 @@ function ComparisonSection() {
                             {isOptional && (
                               <button
                                 onClick={() => removeProvider(col.id)}
-                                className="text-text-muted/40 hover:text-text transition-colors cursor-pointer"
+                                className="text-text-muted/70 hover:text-text transition-colors cursor-pointer"
                                 aria-label={`Remove ${col.name}`}
                               >
                                 <X className="w-3 h-3" />
@@ -912,7 +912,7 @@ function SecuritySection() {
             badgeColor="text-success"
             badgeIcon={EyeOff}
           />
-          <div className="hidden md:flex items-center justify-center text-text-muted/30">
+          <div className="hidden md:flex items-center justify-center text-text-muted">
             <ChevronRight className="size-6" />
           </div>
           <ArchCard
@@ -923,7 +923,7 @@ function SecuritySection() {
             badgeColor="text-accent"
             badgeIcon={Lock}
           />
-          <div className="hidden md:flex items-center justify-center text-text-muted/30">
+          <div className="hidden md:flex items-center justify-center text-text-muted">
             <ChevronRight className="size-6" />
           </div>
           <ArchCard

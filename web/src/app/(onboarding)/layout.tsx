@@ -55,7 +55,7 @@ function OnboardingShellInner({ children }: { children: React.ReactNode }) {
       <SoftGlow />
       <button
         onClick={() => void signOut()}
-        className="fixed top-6 right-6 z-50 text-[11px] text-text-muted/30 hover:text-text-muted/60 transition-colors"
+        className="fixed top-6 right-6 z-50 text-[11px] text-text-muted hover:text-text-muted transition-colors"
       >
         Sign out
       </button>

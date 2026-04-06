@@ -37,12 +37,12 @@ export function PlanCard({
         <span className="text-3xl font-semibold tracking-tight text-text">
           {'\u20AC'}0/mo
         </span>
-        <span className="text-sm text-text-muted/40 line-through">
+        <span className="text-sm text-text-muted/70 line-through">
           {price}
         </span>
       </div>
       {billedAnnually && (
-        <p className="text-[10px] text-text-muted/50 mt-0.5">billed annually</p>
+        <p className="text-[10px] text-text-muted/80 mt-0.5">billed annually</p>
       )}
       <div className="mt-4 space-y-2">
         {features.map((f, i) => (

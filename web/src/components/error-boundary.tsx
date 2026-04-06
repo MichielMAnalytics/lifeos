@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="border border-border rounded-xl p-6 text-center">
           <p className="text-sm text-text-muted">Something went wrong loading this section.</p>
-          <p className="text-xs text-text-muted/50 mt-1">{this.state.error?.message}</p>
+          <p className="text-xs text-text-muted/80 mt-1">{this.state.error?.message}</p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
             className="text-xs text-accent hover:underline mt-2"

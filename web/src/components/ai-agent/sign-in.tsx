@@ -69,7 +69,7 @@ export function SignInCard() {
 
       {/* Footer */}
       <div className="mt-6 text-center">
-        <p className="text-[10px] text-text-muted/40 tracking-wide uppercase">
+        <p className="text-[10px] text-text-muted/70 tracking-wide uppercase">
           Secured by LifeOS
         </p>
       </div>

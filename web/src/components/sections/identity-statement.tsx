@@ -40,7 +40,7 @@ export function IdentityStatement() {
     <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Identity
         </h2>
         {!editing && (
@@ -66,7 +66,7 @@ export function IdentityStatement() {
               placeholder="Define who you are and who you're becoming..."
               rows={6}
               autoFocus
-              className="w-full rounded-md border border-border bg-bg px-4 py-3 text-base text-text placeholder:text-text-muted/60 focus:border-accent focus:outline-none resize-none leading-relaxed"
+              className="w-full rounded-md border border-border bg-bg px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-accent focus:outline-none resize-none leading-relaxed"
             />
             <div className="flex gap-2">
               <Button
@@ -100,7 +100,7 @@ export function IdentityStatement() {
             <p className="text-base text-text-muted italic group-hover:text-text transition-colors">
               &ldquo;Define who you are and who you&rsquo;re becoming...&rdquo;
             </p>
-            <p className="text-xs text-text-muted/60 mt-2 group-hover:text-text-muted transition-colors">
+            <p className="text-xs text-text-muted mt-2 group-hover:text-text-muted transition-colors">
               Click to write your identity statement
             </p>
           </button>

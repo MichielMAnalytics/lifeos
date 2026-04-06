@@ -209,7 +209,7 @@ function LifeCoachStartingScreen({ status, startTime }: { status: 'provisioning'
       <div className="mt-6 w-full max-w-xs">
         {capped ? (
           <div className="space-y-2">
-            <p className="text-xs text-text-muted/40">Finalizing last details...</p>
+            <p className="text-xs text-text-muted/70">Finalizing last details...</p>
             <div className="h-1 bg-text/5 rounded-full overflow-hidden">
               <div className="h-full w-1/3 bg-accent/50 rounded-full animate-[indeterminate_1.5s_ease-in-out_infinite]" />
             </div>
@@ -217,8 +217,8 @@ function LifeCoachStartingScreen({ status, startTime }: { status: 'provisioning'
         ) : (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-text-muted/40">This usually takes about a minute</p>
-              <span className="font-mono text-xs tabular-nums text-text-muted/60">{display}</span>
+              <p className="text-xs text-text-muted/70">This usually takes about a minute</p>
+              <span className="font-mono text-xs tabular-nums text-text-muted">{display}</span>
             </div>
             <div className="h-1 bg-text/5 rounded-full overflow-hidden">
               <div
@@ -296,7 +296,7 @@ function MessageRow({ message }: { message: ChatMessage }) {
               {renderContent(message.content)}
             </div>
           </div>
-          <span className="block mt-1 text-[10px] text-text-muted/40 text-right pr-1">
+          <span className="block mt-1 text-[10px] text-text-muted/70 text-right pr-1">
             {relativeTime(message.timestamp)}
           </span>
         </div>
@@ -328,7 +328,7 @@ function MessageRow({ message }: { message: ChatMessage }) {
           </div>
         )}
 
-        <span className="block mt-1 text-[10px] text-text-muted/40">
+        <span className="block mt-1 text-[10px] text-text-muted/70">
           {relativeTime(message.timestamp)}
         </span>
       </div>
@@ -716,7 +716,7 @@ export default function LifeCoachPage() {
         </p>
         <Link
           href="/settings"
-          className="mt-3 text-xs text-text-muted/50 hover:text-text-muted transition-colors"
+          className="mt-3 text-xs text-text-muted/80 hover:text-text-muted transition-colors"
         >
           Go to Settings
         </Link>
@@ -923,7 +923,7 @@ export default function LifeCoachPage() {
                 />
               ))}
             </div>
-            <span className="text-xs font-mono tabular-nums text-text-muted/60 shrink-0">
+            <span className="text-xs font-mono tabular-nums text-text-muted shrink-0">
               {Math.floor(voiceDuration / 60)}:{String(voiceDuration % 60).padStart(2, '0')}
             </span>
           </div>
@@ -941,7 +941,7 @@ export default function LifeCoachPage() {
             disabled={(isDisconnectedOrConnecting && !isStreaming) || voiceTranscribing}
             rows={1}
             className={cn(
-              'w-full bg-transparent text-sm text-text placeholder:text-text-muted/40',
+              'w-full bg-transparent text-sm text-text placeholder:text-text-muted/70',
               'focus:outline-none resize-none leading-relaxed',
               'min-h-[24px] max-h-[160px]',
               (isDisconnectedOrConnecting && !isStreaming) && 'opacity-40',
@@ -956,7 +956,7 @@ export default function LifeCoachPage() {
               <span className="w-1 h-1 rounded-full bg-accent/60 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
               <span className="w-1 h-1 rounded-full bg-accent/60 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
             </div>
-            <p className="text-xs text-text-muted/50">Transcribing...</p>
+            <p className="text-xs text-text-muted/80">Transcribing...</p>
           </div>
         )}
         <div className="flex items-center justify-between mt-2">
@@ -965,7 +965,7 @@ export default function LifeCoachPage() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={!canSend}
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted/40 hover:text-text-muted hover:bg-text-muted/10 transition-colors disabled:opacity-30"
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted/70 hover:text-text-muted hover:bg-text-muted/10 transition-colors disabled:opacity-30"
                 title="Attach image"
               >
                 <PaperclipIcon />
@@ -979,8 +979,8 @@ export default function LifeCoachPage() {
                 voiceRecording
                   ? 'text-danger bg-danger/10 hover:bg-danger/20'
                   : voiceTranscribing
-                    ? 'text-text-muted/20 cursor-not-allowed'
-                    : 'text-text-muted/40 hover:text-text-muted hover:bg-text-muted/10',
+                    ? 'text-text-muted cursor-not-allowed'
+                    : 'text-text-muted/70 hover:text-text-muted hover:bg-text-muted/10',
               )}
               title={voiceRecording ? 'Stop recording' : voiceTranscribing ? 'Transcribing...' : 'Voice input'}
             >
@@ -991,7 +991,7 @@ export default function LifeCoachPage() {
             <button
               onClick={handleNewSession}
               disabled={!canSend}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted/40 hover:text-text-muted hover:bg-text-muted/10 transition-colors disabled:opacity-30"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted/70 hover:text-text-muted hover:bg-text-muted/10 transition-colors disabled:opacity-30"
               title="New session"
             >
               <PlusIcon />
@@ -1012,7 +1012,7 @@ export default function LifeCoachPage() {
                   'shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors',
                   input.trim() && canSend
                     ? 'bg-accent text-bg hover:bg-accent-hover'
-                    : 'bg-text-muted/10 text-text-muted/30 cursor-not-allowed',
+                    : 'bg-text-muted/10 text-text-muted cursor-not-allowed',
                 )}
                 title="Send message"
               >
@@ -1022,7 +1022,7 @@ export default function LifeCoachPage() {
           </div>
         </div>
       </div>
-      <p className="mt-2 text-center text-[10px] text-text-muted/30">
+      <p className="mt-2 text-center text-[10px] text-text-muted">
         Shift + Enter for new line
       </p>
     </div>
@@ -1050,7 +1050,7 @@ export default function LifeCoachPage() {
         <h1 className="text-2xl font-bold text-text tracking-tight mb-3">
           Ready when you are
         </h1>
-        <p className="text-xs text-text-muted/50 mb-6">
+        <p className="text-xs text-text-muted/80 mb-6">
           Powered by{' '}
           <a
             href="https://openclaw.ai"
@@ -1115,7 +1115,7 @@ export default function LifeCoachPage() {
                 try { await client.call('chat.send', { sessionKey: 'agent:main:main', message: prompt, idempotencyKey: crypto.randomUUID() }); } catch { setIsStreaming(false); }
               }}
               disabled={!canSend}
-              className="w-full text-left px-4 py-2.5 text-xs text-text-muted/60 bg-surface/50 border border-border/30 rounded-xl hover:border-border/50 hover:text-text-muted transition-colors disabled:opacity-30"
+              className="w-full text-left px-4 py-2.5 text-xs text-text-muted bg-surface/50 border border-border/30 rounded-xl hover:border-border/50 hover:text-text-muted transition-colors disabled:opacity-30"
             >
               Try <span className="font-mono text-text/70 bg-surface px-1.5 py-0.5 rounded">/lifeos-init</span> to begin your journey with your coach
             </button>

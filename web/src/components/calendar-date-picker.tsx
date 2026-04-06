@@ -188,7 +188,7 @@ export function CalendarDatePicker({ currentDate, onSelect, onClose }: CalendarD
       {/* Weekday headers */}
       <div className="grid grid-cols-7 px-3 pb-1">
         {weekDays.map((wd) => (
-          <div key={wd} className="text-center text-[10px] font-medium text-text-muted/50 py-1">
+          <div key={wd} className="text-center text-[10px] font-medium text-text-muted/80 py-1">
             {wd}
           </div>
         ))}
@@ -208,7 +208,7 @@ export function CalendarDatePicker({ currentDate, onSelect, onClose }: CalendarD
               onClick={() => onSelect(dateStr)}
               className={cn(
                 'h-8 w-full flex items-center justify-center text-[11px] rounded-lg transition-all duration-100',
-                !cd.isCurrentMonth && 'text-text-muted/25',
+                !cd.isCurrentMonth && 'text-text-muted',
                 cd.isCurrentMonth && !isToday && !isSelected && 'text-text hover:bg-surface-hover',
                 isToday && !isSelected && 'text-accent font-bold bg-accent/10',
                 isSelected && 'bg-accent text-bg font-bold',

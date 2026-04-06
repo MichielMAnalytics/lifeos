@@ -30,12 +30,12 @@ export default function TrashPage() {
         </div>
       ) : droppedTasks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted/30 mb-3">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted mb-3">
             <polyline points="3 6 5 6 21 6" />
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
           </svg>
           <p className="text-sm font-medium text-text-muted">Trash is empty</p>
-          <p className="text-xs text-text-muted/60 mt-1">Deleted items will appear here</p>
+          <p className="text-xs text-text-muted mt-1">Deleted items will appear here</p>
         </div>
       ) : (
         <div className="space-y-2">

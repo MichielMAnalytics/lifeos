@@ -83,7 +83,7 @@ export function AgentConfig() {
         <div className="flex flex-col items-center py-8 text-center">
           <span className="inline-block w-2 h-2 rounded-full bg-text-muted/40 mb-3" />
           <p className="text-sm text-text-muted">Gateway not connected</p>
-          <p className="text-xs text-text-muted/60 mt-1">
+          <p className="text-xs text-text-muted mt-1">
             Deploy your AI agent to configure it
           </p>
         </div>
@@ -141,7 +141,7 @@ export function AgentConfig() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-bg border border-border px-3 py-2 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent transition-colors"
+            className="w-full bg-bg border border-border px-3 py-2 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent transition-colors"
             placeholder="My Agent"
           />
         </div>
@@ -193,7 +193,7 @@ export function AgentConfig() {
               setSystemPrompt(e.target.value);
               autoResize();
             }}
-            className="w-full bg-bg border border-border px-3 py-2 text-sm font-mono text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent transition-colors resize-none min-h-[120px] leading-relaxed"
+            className="w-full bg-bg border border-border px-3 py-2 text-sm font-mono text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent transition-colors resize-none min-h-[120px] leading-relaxed"
             placeholder="You are a helpful assistant..."
             rows={6}
           />
@@ -208,7 +208,7 @@ export function AgentConfig() {
               'px-4 py-2 text-sm font-medium border transition-colors',
               hasChanges && !saving
                 ? 'border-text text-text hover:bg-surface-hover'
-                : 'border-border text-text-muted/40 cursor-not-allowed',
+                : 'border-border text-text-muted/70 cursor-not-allowed',
             )}
           >
             {saving ? 'Saving...' : 'Save Configuration'}

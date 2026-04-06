@@ -261,7 +261,7 @@ function TaskPickerDropdown({
             <div
               className={cn(
                 'text-[10px] font-semibold uppercase tracking-widest px-3 pt-3 pb-1',
-                group.headerClass ?? 'text-text-muted/50',
+                group.headerClass ?? 'text-text-muted/80',
               )}
             >
               {group.label}
@@ -276,7 +276,7 @@ function TaskPickerDropdown({
                 >
                   <span className="truncate">{task.title}</span>
                   {dueDateLabel && (
-                    <span className="text-[10px] text-text-muted/50 shrink-0">
+                    <span className="text-[10px] text-text-muted/80 shrink-0">
                       {dueDateLabel}
                     </span>
                   )}
@@ -423,7 +423,7 @@ function PriorityRow({
       ) : (
         <button
           onClick={() => setPickerOpen((v) => !v)}
-          className="flex-1 flex items-center gap-2 text-left text-sm text-text-muted/60 hover:text-accent border border-dashed border-border hover:border-accent/40 rounded-lg px-3 py-1.5 transition-all cursor-pointer"
+          className="flex-1 flex items-center gap-2 text-left text-sm text-text-muted hover:text-accent border border-dashed border-border hover:border-accent/40 rounded-lg px-3 py-1.5 transition-all cursor-pointer"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-50">
             <circle cx="12" cy="12" r="10" />
@@ -544,7 +544,7 @@ export function PrioritiesChecklist() {
     {showConfetti && <Confetti />}
     <div className="rounded-xl border border-border">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Priorities
         </h2>
         <span className="text-xs text-text-muted">

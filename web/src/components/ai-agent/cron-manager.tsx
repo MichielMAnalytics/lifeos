@@ -60,28 +60,28 @@ function InlineAddForm({ onSubmit, onCancel }: {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name"
-          className="bg-bg border border-border px-2.5 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent transition-colors"
+          className="bg-bg border border-border px-2.5 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent transition-colors"
         />
         <input
           type="text"
           value={schedule}
           onChange={(e) => setSchedule(e.target.value)}
           placeholder="0 9 * * *"
-          className="bg-bg border border-border px-2.5 py-1.5 text-sm font-mono text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent transition-colors"
+          className="bg-bg border border-border px-2.5 py-1.5 text-sm font-mono text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent transition-colors"
         />
         <input
           type="text"
           value={agent}
           onChange={(e) => setAgent(e.target.value)}
           placeholder="Agent name"
-          className="bg-bg border border-border px-2.5 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent transition-colors"
+          className="bg-bg border border-border px-2.5 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent transition-colors"
         />
       </div>
       <textarea
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         placeholder="Prompt (optional)"
-        className="w-full bg-bg border border-border px-2.5 py-1.5 text-sm font-mono text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent transition-colors resize-none"
+        className="w-full bg-bg border border-border px-2.5 py-1.5 text-sm font-mono text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent transition-colors resize-none"
         rows={2}
       />
       <div className="flex gap-2">
@@ -94,7 +94,7 @@ function InlineAddForm({ onSubmit, onCancel }: {
             'px-3 py-1.5 text-xs font-medium border transition-colors',
             canSubmit
               ? 'border-text text-text hover:bg-surface-hover'
-              : 'border-border text-text-muted/40 cursor-not-allowed',
+              : 'border-border text-text-muted/70 cursor-not-allowed',
           )}
         >
           Add
@@ -247,7 +247,7 @@ export function CronManager() {
       {crons.length === 0 && !showAddForm ? (
         <div className="flex flex-col items-center py-12 text-center">
           <p className="text-sm text-text-muted">No scheduled automations</p>
-          <p className="text-xs text-text-muted/60 mt-1">
+          <p className="text-xs text-text-muted mt-1">
             Add a cron job to automate recurring tasks
           </p>
         </div>

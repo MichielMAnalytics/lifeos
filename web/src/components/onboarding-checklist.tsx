@@ -76,7 +76,7 @@ function CopyableMessage({ text }: { text: string }) {
       className="mt-1.5 rounded-lg bg-surface/40 border border-border/30 px-3 py-2 cursor-pointer hover:bg-surface/60 transition-colors group flex items-center gap-3"
     >
       <p className="text-[11px] text-text/80 font-mono leading-relaxed select-all flex-1">{text}</p>
-      <span className="text-[10px] font-medium text-text-muted/50 group-hover:text-accent transition-colors shrink-0">
+      <span className="text-[10px] font-medium text-text-muted/80 group-hover:text-accent transition-colors shrink-0">
         {copied ? 'Copied!' : 'Copy'}
       </span>
     </div>
@@ -141,7 +141,7 @@ export function OnboardingChecklist() {
           </div>
           <span>Continue setup ({doneCount}/{totalCount})</span>
         </button>
-        <button onClick={handleRemove} className="text-[10px] text-text-muted/20 hover:text-text-muted/40 transition-colors">
+        <button onClick={handleRemove} className="text-[10px] text-text-muted hover:text-text-muted/70 transition-colors">
           Remove
         </button>
       </div>
@@ -158,7 +158,7 @@ export function OnboardingChecklist() {
         </div>
         <button
           onClick={handleHide}
-          className="text-[10px] text-text-muted/30 hover:text-text-muted transition-colors px-2 py-1 rounded-md hover:bg-surface/30"
+          className="text-[10px] text-text-muted hover:text-text-muted transition-colors px-2 py-1 rounded-md hover:bg-surface/30"
         >
           Hide
         </button>
@@ -206,7 +206,7 @@ export function OnboardingChecklist() {
                 {!isDone && (
                   <svg
                     width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    className={`text-text-muted/50 transition-transform duration-200 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                    className={`text-text-muted/80 transition-transform duration-200 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
                   >
                     <polyline points="6 9 12 15 18 9" />
                   </svg>

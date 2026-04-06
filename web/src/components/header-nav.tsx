@@ -166,7 +166,7 @@ export function HeaderNav() {
               >
                 {/* Drag grip (config mode only) */}
                 {isConfigMode && (
-                  <span className="cursor-grab text-text-muted/50 hover:text-text-muted mr-0.5 shrink-0">
+                  <span className="cursor-grab text-text-muted/80 hover:text-text-muted mr-0.5 shrink-0">
                     <GripIcon />
                   </span>
                 )}

@@ -213,7 +213,7 @@ export function QuickCapture() {
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder={`Quick capture ${type}... (type / for commands)`}
-          className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/50 outline-none px-4 py-3"
+          className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/80 outline-none px-4 py-3"
         />
 
         {/* Slash command menu */}

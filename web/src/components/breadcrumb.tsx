@@ -13,7 +13,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
       {items.map((item, i) => (
         <span key={i} className="flex items-center gap-1.5">
           {i > 0 && (
-            <span className="text-text-muted/30">/</span>
+            <span className="text-text-muted">/</span>
           )}
           {item.href ? (
             <Link

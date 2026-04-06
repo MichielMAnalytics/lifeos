@@ -127,7 +127,7 @@ function ResourceCard({ resource, onClick }: ResourceCardProps) {
 
       {/* Footer: date */}
       <div className="px-4 pb-3 pt-0 flex items-end justify-end gap-2 mt-auto">
-        <span className="text-[10px] text-text-muted/50 shrink-0 whitespace-nowrap">
+        <span className="text-[10px] text-text-muted/80 shrink-0 whitespace-nowrap">
           {relativeDate(resource._creationTime)}
         </span>
       </div>
@@ -153,7 +153,7 @@ function GhostCard({ ghost }: { ghost: typeof GHOST_RESOURCES[number] }) {
       </div>
 
       <div className="px-4 pb-3 pt-0 flex items-end justify-end gap-2 mt-auto">
-        <span className="text-[10px] text-text-muted/50 shrink-0">just now</span>
+        <span className="text-[10px] text-text-muted/80 shrink-0">just now</span>
       </div>
     </div>
   );
@@ -257,7 +257,7 @@ function ResourceDetailModal({ resource, onClose }: ResourceDetailModalProps) {
               (e.target as HTMLInputElement).blur();
             }
           }}
-          className="w-full bg-transparent text-2xl font-bold text-text focus:outline-none placeholder:text-text-muted/30 mb-6"
+          className="w-full bg-transparent text-2xl font-bold text-text focus:outline-none placeholder:text-text-muted mb-6"
           placeholder="Resource title"
         />
 
@@ -293,7 +293,7 @@ function ResourceDetailModal({ resource, onClose }: ResourceDetailModalProps) {
             onBlur={handleContentBlur}
             placeholder="Add a description..."
             rows={4}
-            className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/30 focus:outline-none resize-none leading-relaxed"
+            className="w-full bg-transparent text-sm text-text placeholder:text-text-muted focus:outline-none resize-none leading-relaxed"
           />
         </div>
 
@@ -423,7 +423,7 @@ function AddResourceModal({ onClose }: AddResourceModalProps) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Resource title"
-              className="w-full text-sm px-3 py-2.5 rounded-lg border border-border bg-bg text-text focus:outline-none focus:border-accent placeholder:text-text-muted/30"
+              className="w-full text-sm px-3 py-2.5 rounded-lg border border-border bg-bg text-text focus:outline-none focus:border-accent placeholder:text-text-muted"
               autoFocus
             />
           </div>
@@ -438,7 +438,7 @@ function AddResourceModal({ onClose }: AddResourceModalProps) {
               onChange={(e) => setContent(e.target.value)}
               placeholder="Add a description..."
               rows={3}
-              className="w-full text-sm px-3 py-2.5 rounded-lg border border-border bg-bg text-text focus:outline-none focus:border-accent resize-y placeholder:text-text-muted/30"
+              className="w-full text-sm px-3 py-2.5 rounded-lg border border-border bg-bg text-text focus:outline-none focus:border-accent resize-y placeholder:text-text-muted"
             />
           </div>
 
@@ -514,11 +514,11 @@ function ResourceListRow({ resource, onClick }: { resource: Resource; onClick: (
     >
       <span className="text-sm text-text flex-1 truncate">{resource.title}</span>
       {resource.type && (
-        <span className="text-[10px] font-medium uppercase tracking-wide text-text-muted/60 shrink-0">
+        <span className="text-[10px] font-medium uppercase tracking-wide text-text-muted shrink-0">
           {resource.type}
         </span>
       )}
-      <span className="text-[11px] text-text-muted/50 shrink-0">
+      <span className="text-[11px] text-text-muted/80 shrink-0">
         {relativeDate(resource._creationTime)}
       </span>
     </div>
@@ -535,7 +535,7 @@ function ResourceTableRow({ resource, onClick }: { resource: Resource; onClick: 
     >
       <td className="px-4 py-3 text-sm text-text">{resource.title}</td>
       <td className="px-4 py-3 text-xs text-text-muted">{resource.type ?? '-'}</td>
-      <td className="px-4 py-3 text-xs text-text-muted/60 whitespace-nowrap">{relativeDate(resource._creationTime)}</td>
+      <td className="px-4 py-3 text-xs text-text-muted whitespace-nowrap">{relativeDate(resource._creationTime)}</td>
       <td className="px-4 py-3 text-xs text-text-muted truncate max-w-[200px]">{resource.content ?? '-'}</td>
     </tr>
   );
@@ -633,13 +633,13 @@ export function ResourcesGrid() {
       {/* Toolbar: search + controls */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/50" />
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/80" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search resources..."
-            className="text-sm pl-9 pr-3 py-1.5 rounded-lg border border-border bg-bg text-text focus:outline-none focus:border-accent placeholder:text-text-muted/40 w-full sm:w-56"
+            className="text-sm pl-9 pr-3 py-1.5 rounded-lg border border-border bg-bg text-text focus:outline-none focus:border-accent placeholder:text-text-muted/70 w-full sm:w-56"
           />
         </div>
 
@@ -709,7 +709,7 @@ export function ResourcesGrid() {
           {groups.map(({ label, items }) => (
             <div key={label || '__all'}>
               {label && (
-                <h3 className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-muted/40 mb-3">
+                <h3 className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-muted/70 mb-3">
                   {label}
                 </h3>
               )}
@@ -743,10 +743,10 @@ export function ResourcesGrid() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border bg-surface/50">
-                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted/60">Title</th>
-                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted/60">Type</th>
-                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted/60">Date</th>
-                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted/60">Description</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted">Title</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted">Type</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted">Date</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-text-muted">Description</th>
                       </tr>
                     </thead>
                     <tbody>

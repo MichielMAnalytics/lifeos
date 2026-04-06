@@ -208,7 +208,7 @@ export function SubscriptionPicker({
         })}
       </div>
 
-      <p className="text-center text-[10px] text-text-muted/50 mt-4">
+      <p className="text-center text-[10px] text-text-muted/80 mt-4">
         All prices in EUR. Cancel anytime. Credits roll over month-to-month.
       </p>
     </div>

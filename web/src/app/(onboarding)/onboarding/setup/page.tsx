@@ -22,7 +22,7 @@ function DevSetupPage() {
           </svg>
         </div>
         <h1 className="text-2xl font-light tracking-tight text-text">
-          Setup complete <span className="text-text-muted/40">(dev preview)</span>
+          Setup complete <span className="text-text-muted/70">(dev preview)</span>
         </h1>
         <p className="mt-3 text-sm text-text-muted">
           In production, this would deploy your LifeCoach or show CLI setup.

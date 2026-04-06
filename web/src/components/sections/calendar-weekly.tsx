@@ -236,7 +236,7 @@ export function CalendarWeekly() {
         </button>
 
         <div className="flex items-center gap-3">
-          <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             {formatWeekRange(weekStart)}
           </h2>
           {!isThisWeek && (
@@ -311,7 +311,7 @@ export function CalendarWeekly() {
                     isToday && 'bg-accent/[0.04]',
                   )}
                 >
-                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 block">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted block">
                     {DAY_LABELS[i]}
                   </span>
                   <span
@@ -340,7 +340,7 @@ export function CalendarWeekly() {
                 return (
                   <div
                     key={hour}
-                    className="absolute right-2 -translate-y-1/2 text-[10px] font-mono text-text-muted/60"
+                    className="absolute right-2 -translate-y-1/2 text-[10px] font-mono text-text-muted"
                     style={{ top: i * HOUR_HEIGHT }}
                   >
                     {formatHour(hour)}
@@ -444,7 +444,7 @@ export function CalendarWeekly() {
           {/* Empty state overlay */}
           {!hasAnyItems && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ top: 120 }}>
-              <p className="text-xs text-text-muted/40 font-mono">
+              <p className="text-xs text-text-muted/70 font-mono">
                 No scheduled items this week
               </p>
             </div>

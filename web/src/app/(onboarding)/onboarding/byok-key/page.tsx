@@ -73,7 +73,7 @@ export default function ByokKeyPage() {
                 onChange={(e) => setSetupToken(e.target.value)}
                 placeholder="sk-ant-oat01-..."
                 autoComplete="off"
-                className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/30 focus:border-accent/50 focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted focus:border-accent/50 focus:outline-none transition-colors"
               />
               <div className="mt-3 rounded-xl border border-border/40 bg-surface/20 p-4 text-xs text-text-muted/80">
                 {/* Toggle: already have Claude Code? */}
@@ -82,11 +82,11 @@ export default function ByokKeyPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setHasClaudeCode(true)}
-                      className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors ${hasClaudeCode ? 'bg-accent/15 text-accent' : 'text-text-muted/50 hover:text-text-muted'}`}
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors ${hasClaudeCode ? 'bg-accent/15 text-accent' : 'text-text-muted/80 hover:text-text-muted'}`}
                     >Yes</button>
                     <button
                       onClick={() => setHasClaudeCode(false)}
-                      className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors ${!hasClaudeCode ? 'bg-accent/15 text-accent' : 'text-text-muted/50 hover:text-text-muted'}`}
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors ${!hasClaudeCode ? 'bg-accent/15 text-accent' : 'text-text-muted/80 hover:text-text-muted'}`}
                     >No</button>
                   </div>
                 </div>
@@ -133,7 +133,7 @@ export default function ByokKeyPage() {
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="sk-ant-api03-..."
                 autoComplete="off"
-                className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/30 focus:border-accent/50 focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted focus:border-accent/50 focus:outline-none transition-colors"
               />
               <div className="mt-3 rounded-xl border border-border/40 bg-surface/20 p-4 text-xs text-text-muted/80">
                 <ol className="space-y-2 text-text-muted/80">
@@ -162,7 +162,7 @@ export default function ByokKeyPage() {
           className={`mt-8 w-full rounded-lg px-8 py-3 text-sm font-medium transition-all duration-200 ${
             isValid
               ? 'bg-accent text-bg hover:opacity-90 active:scale-[0.98] shadow-sm'
-              : 'bg-text-muted/10 text-text-muted/40 cursor-not-allowed'
+              : 'bg-text-muted/10 text-text-muted/70 cursor-not-allowed'
           }`}
         >
           Continue

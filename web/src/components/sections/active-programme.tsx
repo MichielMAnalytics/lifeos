@@ -16,13 +16,13 @@ export function ActiveProgramme() {
     return (
       <div className="border border-border rounded-xl overflow-hidden">
         <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Active Programme
           </h2>
         </div>
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-sm text-text-muted">No active programme</p>
-          <p className="text-xs text-text-muted/60 mt-1">Create one via CLI or dashboard</p>
+          <p className="text-xs text-text-muted mt-1">Create one via CLI or dashboard</p>
         </div>
       </div>
     );
@@ -37,7 +37,7 @@ export function ActiveProgramme() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Active Programme
         </h2>
         <span className="text-xs text-text-muted">
@@ -53,7 +53,7 @@ export function ActiveProgramme() {
             {active.description}
           </p>
         )}
-        <div className="flex items-center gap-4 text-xs text-text-muted/60">
+        <div className="flex items-center gap-4 text-xs text-text-muted">
           <span>Started {active.startDate}</span>
           {active.endDate && <span>Ends {active.endDate}</span>}
         </div>

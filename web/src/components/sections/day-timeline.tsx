@@ -736,7 +736,7 @@ export function DayTimeline() {
     <div className="rounded-xl border border-border bg-surface overflow-hidden">
       {/* Header */}
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Day Plan
         </h2>
         {dayPlan?.wakeTime && (
@@ -857,7 +857,7 @@ export function DayTimeline() {
                   }}
                 >
                   <p className="text-sm text-text-muted">No events scheduled</p>
-                  <p className="text-xs text-text-muted/60 mt-1">
+                  <p className="text-xs text-text-muted mt-1">
                     Drag tasks from the sidebar or create a day plan
                   </p>
                 </div>

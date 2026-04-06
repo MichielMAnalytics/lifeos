@@ -28,7 +28,7 @@ export function SecretInput({
         className="flex items-center h-9 w-full border border-border bg-transparent px-3 py-1 text-sm cursor-text rounded-md"
         onClick={() => setEditing(true)}
       >
-        <span className={pendingDelete ? "text-text-muted/30 tracking-wider select-none line-through" : "text-text-muted tracking-wider select-none"}>
+        <span className={pendingDelete ? "text-text-muted tracking-wider select-none line-through" : "text-text-muted tracking-wider select-none"}>
           {"\u2022".repeat(Math.min(storedLength, 40))}
         </span>
         {onDelete && (

@@ -29,7 +29,7 @@ export function JournalEditor() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Journal -- {formatFullDate(todayStr)}
         </span>
         <span className="text-xs text-text-muted">
@@ -110,7 +110,7 @@ export function JournalEditor() {
         <div className="p-6 space-y-4">
           <div className="text-center py-6">
             <p className="text-sm text-text-muted mb-1">No entry for today yet</p>
-            <p className="text-xs text-text-muted/60">Start writing below</p>
+            <p className="text-xs text-text-muted">Start writing below</p>
           </div>
           <JournalForm />
         </div>

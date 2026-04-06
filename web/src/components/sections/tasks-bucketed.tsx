@@ -632,7 +632,7 @@ function InlineAddTask({ defaultDate, onDone }: { defaultDate?: string; onDone?:
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/50 focus:outline-none"
+        className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/80 focus:outline-none"
       />
       <div className="flex items-center justify-between mt-2.5">
         <div className="relative">
@@ -788,7 +788,7 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOve
           {bucket.sublabel && (
             <>
               <span className="text-text-muted">{bucket.label}</span>
-              <span className="mx-1.5 text-text-muted/30">&middot;</span>
+              <span className="mx-1.5 text-text-muted">&middot;</span>
             </>
           )}
           {bucket.sublabel ?? bucket.label}

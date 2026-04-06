@@ -25,7 +25,7 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-text">{title}</h1>
-          {subtitle && <p className="text-sm text-text-muted/60 mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="text-sm text-text-muted mt-0.5">{subtitle}</p>}
         </div>
         <UniversalAdd page={page} />
       </div>

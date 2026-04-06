@@ -118,12 +118,12 @@ export default function IdeaDetailPage() {
         onBlur={saveContent}
         placeholder="Describe your idea..."
         rows={5}
-        className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none resize-none leading-relaxed mb-6"
+        className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none resize-none leading-relaxed mb-6"
       />
 
       {/* Next Step */}
       <div>
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 mb-2 block">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted mb-2 block">
           Next Step
         </span>
         <input
@@ -132,7 +132,7 @@ export default function IdeaDetailPage() {
           onChange={(e) => setNextStepValue(e.target.value)}
           onBlur={saveNextStep}
           placeholder="What's the next action?"
-          className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none"
+          className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none"
         />
       </div>
     </div>

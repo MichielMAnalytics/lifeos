@@ -89,14 +89,14 @@ function PersonalizeInner() {
             className={`w-full max-w-xs rounded-lg px-8 py-3 text-sm font-medium transition-all duration-200 ${
               selected
                 ? 'bg-accent text-bg hover:opacity-90 active:scale-[0.98] shadow-sm'
-                : 'bg-text-muted/10 text-text-muted/40 cursor-not-allowed'
+                : 'bg-text-muted/10 text-text-muted/70 cursor-not-allowed'
             }`}
           >
             {saving ? 'Setting up...' : 'Continue'}
           </button>
           <button
             onClick={handleSkip}
-            className="text-xs text-text-muted/60 hover:text-text-muted transition-colors"
+            className="text-xs text-text-muted hover:text-text-muted transition-colors"
           >
             Skip — use the default layout
           </button>

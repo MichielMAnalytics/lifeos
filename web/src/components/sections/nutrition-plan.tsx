@@ -41,13 +41,13 @@ function MacroRing({
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-lg font-bold text-text tabular-nums">{Math.round(current)}</span>
-          <span className="text-[9px] text-text-muted/60">/{target}{unit}</span>
+          <span className="text-[9px] text-text-muted">/{target}{unit}</span>
         </div>
       </div>
       <span className="text-xs font-medium" style={{ color }}>
         {label}
       </span>
-      <span className="text-[10px] text-text-muted/50">
+      <span className="text-[10px] text-text-muted/80">
         {Math.round(remaining)}{unit} left
       </span>
     </div>
@@ -75,10 +75,10 @@ export function NutritionPlan() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Macros
         </h2>
-        <span className="text-xs text-text-muted/50 tabular-nums">
+        <span className="text-xs text-text-muted/80 tabular-nums">
           {Math.round(current.calories)} / {targets.calories} kcal
         </span>
       </div>

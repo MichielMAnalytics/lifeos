@@ -184,7 +184,7 @@ function HowItWorks() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-text/6">
         {steps.map((s) => (
           <div key={s.num} className="bg-surface p-6">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted/50 mb-3 block">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted/80 mb-3 block">
               Step {s.num}
             </span>
             <h3 className="text-xs font-medium text-text mb-2">{s.title}</h3>
@@ -244,7 +244,7 @@ function FAQ() {
               </h3>
               <span
                 className={cn(
-                  "text-text-muted/40 text-sm shrink-0 transition-transform duration-200",
+                  "text-text-muted/70 text-sm shrink-0 transition-transform duration-200",
                   open === i && "rotate-45",
                 )}
               >

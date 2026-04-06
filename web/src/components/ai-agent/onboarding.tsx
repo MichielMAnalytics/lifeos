@@ -228,10 +228,10 @@ export function Onboarding({ preferredPlan, preferredModel, onComplete }: { pref
 
           {/* Messaging Channels (optional) */}
           <details className="group" open>
-            <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-text-muted/60 hover:text-text-muted uppercase tracking-wider select-none list-none [&::-webkit-details-marker]:hidden transition-colors">
+            <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-text-muted hover:text-text-muted uppercase tracking-wider select-none list-none [&::-webkit-details-marker]:hidden transition-colors">
               <svg className="size-3 transition-transform group-open:rotate-90" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 2l4 4-4 4" /></svg>
               Messaging Channels
-              <span className="text-[9px] normal-case tracking-normal text-text-muted/40">— optional</span>
+              <span className="text-[9px] normal-case tracking-normal text-text-muted/70">— optional</span>
             </summary>
             <div className="mt-3 space-y-3">
               <div className="space-y-1.5">

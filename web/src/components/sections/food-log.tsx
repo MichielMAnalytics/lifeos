@@ -58,7 +58,7 @@ function AddFoodForm({ date, onClose }: { date: string; onClose: () => void }) {
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
           placeholder="Food name..."
-          className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50"
+          className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50"
         />
         <select
           value={mealType}
@@ -74,19 +74,19 @@ function AddFoodForm({ date, onClose }: { date: string; onClose: () => void }) {
       <div className="flex items-center gap-2">
         <input type="text" value={quantity} onChange={(e) => setQuantity(e.target.value)}
           placeholder="Qty (e.g. 200g)"
-          className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-24" />
+          className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-24" />
         <input type="number" value={calories} onChange={(e) => setCalories(e.target.value)}
           placeholder="kcal"
-          className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-20" />
+          className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-20" />
         <input type="number" value={protein} onChange={(e) => setProtein(e.target.value)}
           placeholder="P (g)"
-          className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-20" />
+          className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-20" />
         <input type="number" value={carbs} onChange={(e) => setCarbs(e.target.value)}
           placeholder="C (g)"
-          className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-20" />
+          className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-20" />
         <input type="number" value={fat} onChange={(e) => setFat(e.target.value)}
           placeholder="F (g)"
-          className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-20" />
+          className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-20" />
         <button type="submit" disabled={!name.trim()}
           className="px-4 py-2 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-40">
           Add
@@ -106,11 +106,11 @@ function FoodEntryRow({ entry, onDelete }: {
     <div className="flex items-center gap-3 px-5 py-3 hover:bg-surface-hover transition-colors group">
       <span className="text-sm text-text flex-1 min-w-0 truncate">{entry.name}</span>
       {entry.quantity && (
-        <span className="text-xs text-text-muted/60 shrink-0">{entry.quantity}</span>
+        <span className="text-xs text-text-muted shrink-0">{entry.quantity}</span>
       )}
       <span className="text-xs tabular-nums text-text-muted shrink-0 w-14 text-right">
         {entry.calories ? `${Math.round(entry.calories)}` : '-'}
-        <span className="text-text-muted/40 ml-0.5">kcal</span>
+        <span className="text-text-muted/70 ml-0.5">kcal</span>
       </span>
       <span className="text-xs tabular-nums text-accent shrink-0 w-10 text-right">
         {entry.protein ? `${Math.round(entry.protein)}g` : '-'}
@@ -167,7 +167,7 @@ export function FoodLog() {
   return (
     <div className="border border-border rounded-xl overflow-hidden flex flex-col">
       <div className="flex items-baseline justify-between px-5 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Food Diary
         </h2>
         <button
@@ -184,7 +184,7 @@ export function FoodLog() {
 
       {/* Column headers */}
       {entries.length > 0 && (
-        <div className="flex items-center gap-3 px-5 py-2 border-b border-border/30 text-[10px] font-medium uppercase tracking-[0.08em] text-text-muted/40">
+        <div className="flex items-center gap-3 px-5 py-2 border-b border-border/30 text-[10px] font-medium uppercase tracking-[0.08em] text-text-muted/70">
           <span className="flex-1">Food</span>
           <span className="shrink-0 w-14 text-right">Cal</span>
           <span className="shrink-0 w-10 text-right">Prot</span>
@@ -197,7 +197,7 @@ export function FoodLog() {
       {entries.length === 0 && !showForm ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <p className="text-sm text-text-muted">No food logged today</p>
-          <p className="text-xs text-text-muted/60 mt-1">Click + Add Food to start tracking</p>
+          <p className="text-xs text-text-muted mt-1">Click + Add Food to start tracking</p>
         </div>
       ) : (
         <div>
@@ -206,7 +206,7 @@ export function FoodLog() {
             if (!mealEntries || mealEntries.length === 0) return null;
             return (
               <div key={meal}>
-                <div className="px-5 py-2 text-[10px] font-medium uppercase tracking-[0.08em] text-text-muted/50 bg-surface/30">
+                <div className="px-5 py-2 text-[10px] font-medium uppercase tracking-[0.08em] text-text-muted/80 bg-surface/30">
                   {MEAL_LABELS[meal] ?? meal}
                 </div>
                 {mealEntries.map((entry) => (

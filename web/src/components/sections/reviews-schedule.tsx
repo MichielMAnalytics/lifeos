@@ -112,7 +112,7 @@ export function ReviewsSchedule() {
   if (!reviews) {
     return (
       <div className="border border-border rounded-xl p-6">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60 mb-4">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted mb-4">
           Review Schedule
         </h2>
         <div className="animate-pulse space-y-3">
@@ -199,7 +199,7 @@ export function ReviewsSchedule() {
     <div className="border border-border rounded-xl">
       {/* Header */}
       <div className="px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Review Schedule
         </h2>
       </div>
@@ -300,7 +300,7 @@ export function ReviewsSchedule() {
       {/* Upcoming section */}
       {!activeForm && (
         <div className="px-6 py-4">
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Upcoming
           </span>
           <div className="mt-3 space-y-2">
@@ -364,7 +364,7 @@ export function ReviewsSchedule() {
       {/* Completed section */}
       {completedReviews.length > 0 && !activeForm && (
         <div className="px-6 py-4 border-t border-border">
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Completed
           </span>
           <div className="mt-3 space-y-1">

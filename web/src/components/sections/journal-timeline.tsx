@@ -138,7 +138,7 @@ function WinAdder({ entryDate, existingWins }: { entryDate: string; existingWins
           onBlur={() => { if (!value.trim()) setAdding(false); }}
           onKeyDown={(e) => { if (e.key === 'Escape') setAdding(false); }}
           placeholder="What went well?"
-          className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none"
+          className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none"
         />
       </form>
     );
@@ -147,7 +147,7 @@ function WinAdder({ entryDate, existingWins }: { entryDate: string; existingWins
   return (
     <button
       onClick={() => setAdding(true)}
-      className="flex items-center gap-2 mt-2 text-sm text-text-muted/50 hover:text-accent/70 transition-colors"
+      className="flex items-center gap-2 mt-2 text-sm text-text-muted/80 hover:text-accent/70 transition-colors"
     >
       <span>+</span>
       <span>Add win</span>
@@ -241,7 +241,7 @@ function JournalDetailModal({
 
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
               Journal
             </span>
             {saving && <span className="text-[10px] text-text-muted">Saving...</span>}
@@ -253,13 +253,13 @@ function JournalDetailModal({
             onBlur={handleSaveNotes}
             placeholder="Write your thoughts for this day..."
             rows={6}
-            className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none resize-none leading-relaxed"
+            className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none resize-none leading-relaxed"
           />
         </div>
 
         {/* Wins */}
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             Wins
           </span>
           {hasWins && (
@@ -297,7 +297,7 @@ function EntryCard({ entry, onClick }: { entry: JournalEntry; onClick: () => voi
     <div className="flex gap-6 group">
       {/* Left: day + date */}
       <div className="w-12 shrink-0 pt-1 text-center">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/50">
+        <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80">
           {getWeekday(entry.entryDate)}
         </p>
         <p className="text-xl font-bold text-text leading-tight">
@@ -323,19 +323,19 @@ function EntryCard({ entry, onClick }: { entry: JournalEntry; onClick: () => voi
           <div className="flex flex-wrap gap-x-8 gap-y-2 mb-5">
             {entry.mit && (
               <div className="min-w-0">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/50 mb-0.5">MIT</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-0.5">MIT</p>
                 <p className="text-sm font-semibold text-text truncate">{entry.mit}</p>
               </div>
             )}
             {entry.p1 && (
               <div className="min-w-0">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/50 mb-0.5">P1</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-0.5">P1</p>
                 <p className="text-sm text-text truncate">{entry.p1}</p>
               </div>
             )}
             {entry.p2 && (
               <div className="min-w-0">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/50 mb-0.5">P2</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-0.5">P2</p>
                 <p className="text-sm text-text truncate">{entry.p2}</p>
               </div>
             )}
@@ -355,7 +355,7 @@ function EntryCard({ entry, onClick }: { entry: JournalEntry; onClick: () => voi
           <>
             {(hasPriorities || hasNotes) && <div className="border-t border-border/40 my-5" />}
             <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/50 mb-2">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-2">
                 Wins
               </p>
               <ul className="space-y-1.5">
@@ -371,7 +371,7 @@ function EntryCard({ entry, onClick }: { entry: JournalEntry; onClick: () => voi
         )}
 
         {!hasContent && (
-          <p className="text-sm text-text-muted/50 italic">No content for this day.</p>
+          <p className="text-sm text-text-muted/80 italic">No content for this day.</p>
         )}
       </div>
     </div>
@@ -401,7 +401,7 @@ export function JournalTimeline() {
           <div className="border border-dashed border-border/50 rounded-xl p-6 opacity-40">
             <h3 className="text-lg font-semibold text-text-muted mb-5">Today</h3>
             <div>
-              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
                 Priorities
               </span>
               <div className="mt-2.5 space-y-2">
@@ -418,7 +418,7 @@ export function JournalTimeline() {
             </div>
             <div className="border-t border-border/50 my-5" />
             <div>
-              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
                 Journal
               </span>
               <div className="mt-2.5 text-sm text-text-muted italic leading-relaxed">
@@ -435,7 +435,7 @@ export function JournalTimeline() {
           {weeks.map(({ weekLabel, entries: weekEntries }) => (
             <div key={weekLabel}>
               {/* Week header */}
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-muted/40 mb-5 ml-[72px]">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-muted/70 mb-5 ml-[72px]">
                 {weekLabel}
               </p>
               <div className="space-y-4">

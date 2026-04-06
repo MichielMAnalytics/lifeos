@@ -407,7 +407,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: Id<'tasks'>; onCl
             onBlur={handleNotesBlur}
             placeholder="Add a description..."
             rows={3}
-            className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none resize-none leading-relaxed"
+            className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none resize-none leading-relaxed"
           />
         </div>
       </div>

@@ -152,7 +152,7 @@ export function IdeaDetailModal({
           onBlur={handleContentBlur}
           placeholder="What's your idea?"
           rows={3}
-          className="w-full bg-transparent text-2xl font-bold text-text placeholder:text-text-muted/40 focus:outline-none resize-none leading-snug mb-6"
+          className="w-full bg-transparent text-2xl font-bold text-text placeholder:text-text-muted/70 focus:outline-none resize-none leading-snug mb-6"
         />
 
         {/* Properties section */}
@@ -229,7 +229,7 @@ export function IdeaDetailModal({
                   }
                 }}
                 placeholder="Define next step..."
-                className="w-full bg-transparent text-[13px] text-text placeholder:text-text-muted/40 focus:outline-none hover:bg-surface-hover focus:bg-surface-hover px-2 py-0.5 -mx-2 rounded transition-colors"
+                className="w-full bg-transparent text-[13px] text-text placeholder:text-text-muted/70 focus:outline-none hover:bg-surface-hover focus:bg-surface-hover px-2 py-0.5 -mx-2 rounded transition-colors"
               />
             </span>
           </div>
@@ -283,7 +283,7 @@ export function IdeaDetailModal({
                 }}
                 placeholder="Project title..."
                 autoFocus
-                className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none px-3 py-2 rounded-lg border border-border focus:border-accent transition-colors"
+                className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none px-3 py-2 rounded-lg border border-border focus:border-accent transition-colors"
               />
               <div className="flex gap-2">
                 <button
@@ -331,7 +331,7 @@ export function IdeaDetailModal({
                   </button>
                 ))}
                 {related.length > 5 && (
-                  <span className="text-[10px] text-text-muted/60 px-2.5">
+                  <span className="text-[10px] text-text-muted px-2.5">
                     +{related.length - 5} more
                   </span>
                 )}

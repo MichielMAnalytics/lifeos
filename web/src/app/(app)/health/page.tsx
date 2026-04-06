@@ -13,7 +13,7 @@ export default function HealthPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-text">Health</h1>
-          <p className="text-sm text-text-muted/60 mt-0.5">Nutrition, workouts, and progress</p>
+          <p className="text-sm text-text-muted mt-0.5">Nutrition, workouts, and progress</p>
         </div>
         <UniversalAdd page="health" />
       </div>

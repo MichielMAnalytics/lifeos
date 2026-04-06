@@ -113,9 +113,9 @@ function PricingCard({ title, subtitle, afterTrialPrice, annual, onToggleAnnual,
 
       {/* Annual toggle */}
       <div className="mt-4 flex items-center justify-center gap-3">
-        <span className={`text-xs ${!annual ? 'text-text font-medium' : 'text-text-muted/60'}`}>Monthly</span>
+        <span className={`text-xs ${!annual ? 'text-text font-medium' : 'text-text-muted'}`}>Monthly</span>
         <Toggle checked={annual} onChange={onToggleAnnual} />
-        <span className={`text-xs ${annual ? 'text-text font-medium' : 'text-text-muted/60'}`}>
+        <span className={`text-xs ${annual ? 'text-text font-medium' : 'text-text-muted'}`}>
           Annual <span className="text-green-500 text-[10px] font-medium">-20%</span>
         </span>
       </div>
@@ -316,9 +316,9 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
 
           {/* Annual toggle */}
           <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-center gap-3">
-            <span className={`text-xs ${!annual ? 'text-text font-medium' : 'text-text-muted/60'}`}>Monthly</span>
+            <span className={`text-xs ${!annual ? 'text-text font-medium' : 'text-text-muted'}`}>Monthly</span>
             <Toggle checked={annual} onChange={setAnnual} />
-            <span className={`text-xs ${annual ? 'text-text font-medium' : 'text-text-muted/60'}`}>
+            <span className={`text-xs ${annual ? 'text-text font-medium' : 'text-text-muted'}`}>
               Annual <span className="text-green-500 text-[10px] font-medium">-20%</span>
             </span>
           </div>

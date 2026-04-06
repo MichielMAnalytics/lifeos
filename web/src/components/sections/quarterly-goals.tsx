@@ -223,7 +223,7 @@ function QuarterSection({
         )}
       >
         <div className="flex items-center gap-3">
-          <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+          <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
             {quarter}
           </h3>
           {isCurrent && (
@@ -300,7 +300,7 @@ export function QuarterlyGoals() {
             {/* Quarter header */}
             <div className="flex items-baseline justify-between px-4 py-3 border-b border-border/30 bg-accent/5 opacity-60">
               <div className="flex items-center gap-3">
-                <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+                <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
                   {currentQuarter}
                 </h3>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-accent/60">

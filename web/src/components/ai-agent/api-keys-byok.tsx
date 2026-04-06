@@ -30,11 +30,11 @@ export function ApiKeys({ deploymentStatus }: { deploymentStatus?: DeploymentSta
 
   return (
     <details className="group" open={isByok}>
-      <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-text-muted/60 hover:text-text-muted uppercase tracking-wider select-none list-none [&::-webkit-details-marker]:hidden transition-colors">
+      <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-text-muted hover:text-text-muted uppercase tracking-wider select-none list-none [&::-webkit-details-marker]:hidden transition-colors">
         <ChevronDown className="size-3 transition-transform group-open:rotate-180" />
         API Keys
         {totalConfigured > 0 && (
-          <span className="text-[9px] normal-case tracking-normal text-text-muted/40">
+          <span className="text-[9px] normal-case tracking-normal text-text-muted/70">
             — {configuredNames.join(", ")}
           </span>
         )}

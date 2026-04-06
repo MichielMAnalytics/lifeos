@@ -26,7 +26,7 @@ export function JournalList() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Journal Entries
         </span>
       </div>
@@ -34,7 +34,7 @@ export function JournalList() {
       {entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-sm text-text-muted">No journal entries</p>
-          <p className="text-xs text-text-muted/60 mt-1">Start writing to see your entries here</p>
+          <p className="text-xs text-text-muted mt-1">Start writing to see your entries here</p>
         </div>
       ) : (
         <div className="divide-y divide-border">
@@ -48,7 +48,7 @@ export function JournalList() {
                 <span className="text-xs text-text-muted">
                   {formatShortDate(entry.entryDate)}
                 </span>
-                <span className="text-xs text-text-muted/60 ml-1">
+                <span className="text-xs text-text-muted ml-1">
                   {formatWeekday(entry.entryDate)}
                 </span>
               </div>
@@ -71,7 +71,7 @@ export function JournalList() {
                   </span>
                 )}
                 {entry.notes && (
-                  <span className="text-xs text-text-muted/60 border border-border/60 px-1.5 py-0.5 rounded">
+                  <span className="text-xs text-text-muted border border-border/60 px-1.5 py-0.5 rounded">
                     N
                   </span>
                 )}

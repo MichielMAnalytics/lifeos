@@ -91,7 +91,7 @@ function CheatsheetPopover({
       ref={ref}
       className="absolute left-full top-0 ml-2 z-[100] w-64 max-h-[17rem] overflow-auto rounded-md border border-border bg-surface p-2 shadow-lg"
     >
-      <p className="text-[10px] text-text-muted/60 px-2 pb-1.5">Click to insert into terminal</p>
+      <p className="text-[10px] text-text-muted px-2 pb-1.5">Click to insert into terminal</p>
       {CHEATSHEET.map((group) => (
         <div key={group.label} className="mb-1.5">
           <p className="text-[10px] font-medium text-text-muted px-2 py-1">{group.label}</p>
@@ -107,7 +107,7 @@ function CheatsheetPopover({
               <code className="text-[11px] font-mono text-text shrink-0 group-hover:text-accent transition-colors">
                 {item.cmd.replace("agent ", "")}
               </code>
-              <span className="text-[10px] text-text-muted/50 truncate">{item.desc}</span>
+              <span className="text-[10px] text-text-muted/80 truncate">{item.desc}</span>
             </button>
           ))}
         </div>
@@ -136,10 +136,10 @@ export function InstanceTools({
 
   return (
     <details className="group">
-      <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-text-muted/60 hover:text-text-muted uppercase tracking-wider select-none list-none [&::-webkit-details-marker]:hidden transition-colors">
+      <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-text-muted hover:text-text-muted uppercase tracking-wider select-none list-none [&::-webkit-details-marker]:hidden transition-colors">
         <ChevronDown className="size-3 transition-transform group-open:rotate-180" />
         Instance Tools
-        <span className="text-[9px] normal-case tracking-normal text-text-muted/40">
+        <span className="text-[9px] normal-case tracking-normal text-text-muted/70">
           — File Browser, Terminal
         </span>
       </summary>

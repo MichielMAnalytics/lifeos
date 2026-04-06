@@ -297,7 +297,7 @@ export function ProjectDetailModal({
             onBlur={handleDescriptionBlur}
             placeholder="Add a description..."
             rows={3}
-            className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none resize-none leading-relaxed"
+            className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none resize-none leading-relaxed"
           />
         </div>
 
@@ -335,7 +335,7 @@ export function ProjectDetailModal({
                   }
                 }}
                 placeholder="Task title..."
-                className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none border-b border-border focus:border-accent transition-colors py-1"
+                className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none border-b border-border focus:border-accent transition-colors py-1"
               />
               <button
                 type="button"
@@ -396,7 +396,7 @@ export function ProjectDetailModal({
                     {task.title}
                   </span>
                   {task.dueDate && (
-                    <span className="text-xs text-text-muted/60 ml-auto font-mono shrink-0">
+                    <span className="text-xs text-text-muted ml-auto font-mono shrink-0">
                       {task.dueDate}
                     </span>
                   )}

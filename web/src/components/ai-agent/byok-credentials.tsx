@@ -102,7 +102,7 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
             type="button"
             disabled
             title="Claude subscription is temporarily unavailable"
-            className="flex-1 py-1.5 text-[10px] uppercase tracking-wider border border-border text-text-muted/30 cursor-not-allowed"
+            className="flex-1 py-1.5 text-[10px] uppercase tracking-wider border border-border text-text-muted cursor-not-allowed"
           >
             Claude subscription
           </button>
@@ -170,7 +170,7 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
       </div>
 
       {/* Save */}
-      <p className="text-[9px] text-text-muted/50 leading-relaxed">
+      <p className="text-[9px] text-text-muted/80 leading-relaxed">
         Updating model credentials will recreate your instance. This takes about 1 minute.
       </p>
       <Button

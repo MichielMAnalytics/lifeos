@@ -33,7 +33,7 @@ export function IdeasPriority() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Ideas by Priority
         </span>
       </div>
@@ -46,7 +46,7 @@ export function IdeasPriority() {
       {sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-sm text-text-muted">No ideas captured yet</p>
-          <p className="text-xs text-text-muted/60 mt-1">Use the form above to add one</p>
+          <p className="text-xs text-text-muted mt-1">Use the form above to add one</p>
         </div>
       ) : (
         <div className="divide-y divide-border">
@@ -83,7 +83,7 @@ export function IdeasPriority() {
                       {idea.actionability}
                     </span>
                   ) : (
-                    <span className="shrink-0 text-xs font-medium uppercase tracking-wide border border-text-muted/20 text-text-muted/40 px-2 py-0.5">
+                    <span className="shrink-0 text-xs font-medium uppercase tracking-wide border border-text-muted/20 text-text-muted/70 px-2 py-0.5">
                       unset
                     </span>
                   )}

@@ -26,9 +26,46 @@ function formatDayLabel(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-// ── Macro Ring ──────────────────────────────────────
+// ── Hero Calorie Ring ───────────────────────────────
 
-function MacroRing({
+function HeroCalorieRing({ current, target }: { current: number; target: number }) {
+  const radius = 68;
+  const stroke = 8;
+  const circumference = 2 * Math.PI * radius;
+  const pct = Math.min(current / target, 1);
+  const dashOffset = circumference * (1 - pct);
+  const remaining = Math.max(0, target - current);
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-[160px] h-[160px]">
+        <svg width="160" height="160" viewBox="0 0 160 160" className="-rotate-90">
+          <circle cx="80" cy="80" r={radius} fill="none" stroke="currentColor"
+            strokeWidth={stroke} className="text-border" />
+          <circle cx="80" cy="80" r={radius} fill="none" stroke="currentColor"
+            strokeWidth={stroke} strokeLinecap="round"
+            strokeDasharray={circumference} strokeDashoffset={dashOffset}
+            className="text-text transition-all duration-700 ease-out" />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-4xl font-bold text-text tabular-nums leading-none tracking-tight">
+            {Math.round(remaining).toLocaleString()}
+          </span>
+          <span className="text-[11px] font-medium text-text-muted mt-1 uppercase tracking-wider">
+            remaining
+          </span>
+        </div>
+      </div>
+      <span className="text-xs text-text-muted mt-2 tabular-nums">
+        {Math.round(current).toLocaleString()} eaten · {target.toLocaleString()} goal
+      </span>
+    </div>
+  );
+}
+
+// ── Mini Macro Ring ─────────────────────────────────
+
+function MiniMacroRing({
   label,
   current,
   target,
@@ -41,31 +78,29 @@ function MacroRing({
   unit: string;
   color: string;
 }) {
-  const radius = 28;
-  const stroke = 4.5;
+  const radius = 21;
+  const stroke = 4;
   const circumference = 2 * Math.PI * radius;
   const pct = Math.min(current / target, 1);
   const dashOffset = circumference * (1 - pct);
-  const remaining = Math.max(0, target - current);
 
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <div className="relative w-[66px] h-[66px]">
-        <svg width="66" height="66" viewBox="0 0 66 66" className="-rotate-90">
-          <circle cx="33" cy="33" r={radius} fill="none" stroke="currentColor"
+      <div className="relative w-[52px] h-[52px]">
+        <svg width="52" height="52" viewBox="0 0 52 52" className="-rotate-90">
+          <circle cx="26" cy="26" r={radius} fill="none" stroke="currentColor"
             strokeWidth={stroke} className="text-border" />
-          <circle cx="33" cy="33" r={radius} fill="none" stroke={color}
+          <circle cx="26" cy="26" r={radius} fill="none" stroke={color}
             strokeWidth={stroke} strokeLinecap="round"
             strokeDasharray={circumference} strokeDashoffset={dashOffset}
             className="transition-all duration-700 ease-out" />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-base font-bold text-text tabular-nums leading-tight">{Math.round(current)}</span>
-          <span className="text-[8px] text-text-muted/70">/{target}{unit}</span>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xs font-bold text-text tabular-nums">{Math.round(current)}</span>
         </div>
       </div>
-      <span className="text-[10px] font-medium" style={{ color }}>{label}</span>
-      <span className="text-[9px] text-text-muted/60">{Math.round(remaining)}{unit} left</span>
+      <span className="text-[10px] font-semibold" style={{ color }}>{label}</span>
+      <span className="text-[9px] text-text-muted tabular-nums">{Math.round(current)} / {target}{unit}</span>
     </div>
   );
 }
@@ -187,7 +222,7 @@ function AddFoodForm({ date, onClose }: { date: string; onClose: () => void }) {
         <input ref={inputRef} type="text" value={name} onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
           placeholder="Food name..."
-          className="flex-1 bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50" />
+          className="flex-1 bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50" />
         <select value={mealType} onChange={(e) => setMealType(e.target.value)}
           className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text focus:outline-none focus:border-accent/50">
           <option value="breakfast">Morning</option>
@@ -199,19 +234,19 @@ function AddFoodForm({ date, onClose }: { date: string; onClose: () => void }) {
       <div className="flex items-center gap-1.5">
         <input type="text" value={quantity} onChange={(e) => setQuantity(e.target.value)}
           placeholder="Qty"
-          className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-16" />
+          className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-16" />
         <input type="number" value={calories} onChange={(e) => setCalories(e.target.value)}
           placeholder="kcal"
-          className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-16" />
+          className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-16" />
         <input type="number" value={protein} onChange={(e) => setProtein(e.target.value)}
           placeholder="P"
-          className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-14" />
+          className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-14" />
         <input type="number" value={carbs} onChange={(e) => setCarbs(e.target.value)}
           placeholder="C"
-          className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-14" />
+          className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-14" />
         <input type="number" value={fat} onChange={(e) => setFat(e.target.value)}
           placeholder="F"
-          className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50 w-14" />
+          className="bg-surface border border-border rounded-lg px-2 py-1.5 text-xs text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50 w-14" />
         <button type="submit" disabled={!name.trim()}
           className="px-3 py-1.5 bg-accent text-bg rounded-lg text-xs font-medium hover:bg-accent-hover transition-colors disabled:opacity-40">
           Add
@@ -297,25 +332,24 @@ export function HealthMacros() {
         </button>
       </div>
 
-      {/* Macro rings */}
-      <div className="px-5 py-5 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/80">Macros</span>
-          <span className="text-xs text-text-muted/70 tabular-nums">
-            {Math.round(current.calories)} / {targets.calories} kcal
-          </span>
-        </div>
+      {/* Hero calorie ring */}
+      <div className="px-5 py-6 border-b border-border">
         {loading ? (
-          <div className="animate-pulse h-24 bg-surface rounded-lg" />
+          <div className="animate-pulse h-48 bg-surface rounded-lg" />
         ) : (
-          <div className="flex justify-around">
-            <MacroRing label="Protein" current={current.protein} target={targets.protein} unit="g"
-              color="var(--color-accent, #8b5cf6)" />
-            <MacroRing label="Fat" current={current.fat} target={targets.fat} unit="g"
-              color="var(--color-warning, #f59e0b)" />
-            <MacroRing label="Carbs" current={current.carbs} target={targets.carbs} unit="g"
-              color="var(--color-success, #10b981)" />
-          </div>
+          <>
+            <HeroCalorieRing current={current.calories} target={targets.calories} />
+
+            {/* Macro row */}
+            <div className="flex justify-around mt-5 pt-5 border-t border-border">
+              <MiniMacroRing label="Protein" current={current.protein} target={targets.protein} unit="g"
+                color="var(--color-accent, #8b5cf6)" />
+              <MiniMacroRing label="Fat" current={current.fat} target={targets.fat} unit="g"
+                color="var(--color-warning, #f59e0b)" />
+              <MiniMacroRing label="Carbs" current={current.carbs} target={targets.carbs} unit="g"
+                color="var(--color-success, #10b981)" />
+            </div>
+          </>
         )}
       </div>
 
@@ -339,7 +373,7 @@ export function HealthMacros() {
 
       {/* Column headers */}
       {(entries?.length ?? 0) > 0 && (
-        <div className="flex items-center gap-2 px-4 py-1.5 text-[9px] font-medium uppercase tracking-wider text-text-muted/60 border-b border-border/30">
+        <div className="flex items-center gap-2 px-4 py-1.5 text-[9px] font-medium uppercase tracking-wider text-text-muted border-b border-border/30">
           <span className="flex-1">Item</span>
           <div className="flex items-center gap-2 shrink-0">
             <span className="w-12 text-right">kcal</span>

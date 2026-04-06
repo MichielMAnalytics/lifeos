@@ -20,7 +20,7 @@ function TelegramSetup({ token, onChange }: { token: string; onChange: (v: strin
         value={token}
         onChange={(e) => onChange(e.target.value)}
         placeholder="123456:ABC-DEF1234ghIkl..."
-        className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/30 focus:border-accent/50 focus:outline-none transition-colors"
+        className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted focus:border-accent/50 focus:outline-none transition-colors"
       />
     </div>
   );
@@ -42,7 +42,7 @@ function DiscordSetup({ token, onChange }: { token: string; onChange: (v: string
         value={token}
         onChange={(e) => onChange(e.target.value)}
         placeholder="MTIzNDU2Nzg5MDEyMzQ1..."
-        className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/30 focus:border-accent/50 focus:outline-none transition-colors"
+        className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted focus:border-accent/50 focus:outline-none transition-colors"
       />
     </div>
   );
@@ -153,7 +153,7 @@ export default function ChannelsPage() {
           <p className="mt-4 text-sm leading-relaxed text-text-muted">
             Chat with your LifeCoach on Telegram or Discord.
             <br />
-            <span className="text-text-muted/60">You can always add these later.</span>
+            <span className="text-text-muted">You can always add these later.</span>
           </p>
 
           <div className="mt-8 w-full space-y-3">
@@ -172,7 +172,7 @@ export default function ChannelsPage() {
                 </div>
                 <svg
                   width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  className={`text-text-muted/40 transition-transform duration-200 ${expanded === 'telegram' ? 'rotate-180' : ''}`}
+                  className={`text-text-muted/70 transition-transform duration-200 ${expanded === 'telegram' ? 'rotate-180' : ''}`}
                 >
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
@@ -199,7 +199,7 @@ export default function ChannelsPage() {
                 </div>
                 <svg
                   width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  className={`text-text-muted/40 transition-transform duration-200 ${expanded === 'discord' ? 'rotate-180' : ''}`}
+                  className={`text-text-muted/70 transition-transform duration-200 ${expanded === 'discord' ? 'rotate-180' : ''}`}
                 >
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
@@ -221,7 +221,7 @@ export default function ChannelsPage() {
             </button>
             <button
               onClick={handleSkip}
-              className="text-xs text-text-muted/60 hover:text-text-muted transition-colors duration-200"
+              className="text-xs text-text-muted hover:text-text-muted transition-colors duration-200"
             >
               Skip — I&apos;ll add these later
             </button>

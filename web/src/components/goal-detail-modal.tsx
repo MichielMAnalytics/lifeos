@@ -288,7 +288,7 @@ export function GoalDetailModal({
                   }
                 }}
                 placeholder="e.g. 2026-Q1"
-                className="w-full bg-transparent text-[13px] text-text placeholder:text-text-muted/40 focus:outline-none hover:bg-surface-hover focus:bg-surface-hover px-2 py-0.5 -mx-2 rounded transition-colors"
+                className="w-full bg-transparent text-[13px] text-text placeholder:text-text-muted/70 focus:outline-none hover:bg-surface-hover focus:bg-surface-hover px-2 py-0.5 -mx-2 rounded transition-colors"
               />
             </span>
           </div>
@@ -384,7 +384,7 @@ export function GoalDetailModal({
             onBlur={handleDescriptionBlur}
             placeholder="Add a description..."
             rows={3}
-            className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none resize-none leading-relaxed"
+            className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none resize-none leading-relaxed"
           />
         </div>
 
@@ -425,7 +425,7 @@ export function GoalDetailModal({
                   }
                 }}
                 placeholder="Task title..."
-                className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none border-b border-border focus:border-accent transition-colors py-1"
+                className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none border-b border-border focus:border-accent transition-colors py-1"
               />
               <button
                 type="button"
@@ -490,7 +490,7 @@ export function GoalDetailModal({
                       {task.title}
                     </span>
                     {task.dueDate && (
-                      <span className="text-xs text-text-muted/60 ml-auto font-mono shrink-0">
+                      <span className="text-xs text-text-muted ml-auto font-mono shrink-0">
                         {task.dueDate}
                       </span>
                     )}

@@ -71,7 +71,7 @@ export function HomeSetupStep() {
 
           <button
             onClick={() => { localStorage.setItem('lifeos-setup-complete', 'true'); window.location.href = '/today'; }}
-            className="mt-4 text-xs text-text-muted/40 hover:text-text-muted transition-colors duration-200"
+            className="mt-4 text-xs text-text-muted/70 hover:text-text-muted transition-colors duration-200"
           >
             Skip — I&apos;ll do this later
           </button>
@@ -85,7 +85,7 @@ export function HomeSetupStep() {
             Install the <span className="font-semibold">LifeOS CLI</span>
           </h1>
 
-          <p className="mt-3 text-sm text-text-muted/60 max-w-sm">
+          <p className="mt-3 text-sm text-text-muted max-w-sm">
             The CLI lets you capture tasks, ideas, and journal entries from your terminal
             — and connects your AI assistant to LifeOS.
           </p>
@@ -139,7 +139,7 @@ export function HomeSetupStep() {
           <div className="mt-10 flex items-center gap-6">
             <button
               onClick={() => setSetupStep(0)}
-              className="text-xs text-text-muted/40 hover:text-text-muted transition-colors"
+              className="text-xs text-text-muted/70 hover:text-text-muted transition-colors"
             >
               &larr; Back
             </button>
@@ -160,20 +160,20 @@ export function HomeSetupStep() {
             Connect your <span className="font-semibold">assistant</span>
           </h1>
 
-          <p className="mt-3 text-sm text-text-muted/60 max-w-sm">
+          <p className="mt-3 text-sm text-text-muted max-w-sm">
             The LifeOS skill was installed with the CLI. Open your coding agent and run:
           </p>
 
           <div className="mt-8 w-full max-w-md text-left space-y-6">
             <CodeBlock>/lifeos-init</CodeBlock>
 
-            <p className="text-xs text-text-muted/50 text-center">
+            <p className="text-xs text-text-muted/80 text-center">
               Your assistant will walk you through connecting to your LifeOS data,
               setting up routines, and creating your first goals.
             </p>
 
             {!apiKey && (
-              <p className="text-[11px] text-text-muted/30 text-center">
+              <p className="text-[11px] text-text-muted text-center">
                 Tip: generate your API key in the previous step — your assistant will need it.
               </p>
             )}

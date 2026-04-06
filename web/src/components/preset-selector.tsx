@@ -38,7 +38,7 @@ export function PresetSelector({ page, presets, activePreset }: PresetSelectorPr
             >
               <p className="text-sm font-medium text-text">{preset.name}</p>
               <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{preset.description}</p>
-              <p className="text-[10px] text-text-muted/50 mt-1 font-mono">
+              <p className="text-[10px] text-text-muted/80 mt-1 font-mono">
                 {preset.sections.length} sections
               </p>
             </button>

@@ -9,7 +9,7 @@
   --color-surface-hover: #2f2f2f;
   --color-border: #373737;
   --color-text: #e3e3e3;
-  --color-text-muted: #9b9a97;
+  --color-text-muted: #b0afac;
   --color-accent: #529cca;
   --color-accent-hover: #4a8db8;
   --color-accent-glow: rgba(82,156,202,0.12);
@@ -37,7 +37,7 @@
   --color-surface-hover: #f0ebe4;
   --color-border: #ddd5ca;
   --color-text: #2c2420;
-  --color-text-muted: #8a7e73;
+  --color-text-muted: #6e6259;
   --color-accent: #c45d3e;
   --color-accent-hover: #b04e32;
   --color-accent-glow: rgba(196,93,62,0.1);
@@ -60,7 +60,7 @@
   --color-surface-hover: #434c5e;
   --color-border: #4c566a;
   --color-text: #eceff4;
-  --color-text-muted: #8892a4;
+  --color-text-muted: #a8b0be;
   --color-accent: #88c0d0;
   --color-accent-hover: #7ab4c4;
   --color-accent-glow: rgba(136,192,208,0.15);
@@ -83,7 +83,7 @@
   --color-surface-hover: #362342;
   --color-border: #3d2a4a;
   --color-text: #f5e6ff;
-  --color-text-muted: #9a7fb3;
+  --color-text-muted: #c0a8d4;
   --color-accent: #f59e0b;
   --color-accent-hover: #d97706;
   --color-accent-glow: rgba(245,158,11,0.15);
@@ -106,7 +106,7 @@
   --color-surface-hover: #1e2e25;
   --color-border: #253830;
   --color-text: #dce8e0;
-  --color-text-muted: #6d8a77;
+  --color-text-muted: #98b0a0;
   --color-accent: #4ade80;
   --color-accent-hover: #22c55e;
   --color-accent-glow: rgba(74,222,128,0.15);
@@ -129,7 +129,7 @@
   --color-surface-hover: #efefed;
   --color-border: #e3e2de;
   --color-text: #37352f;
-  --color-text-muted: #9b9a97;
+  --color-text-muted: #6f6e6b;
   --color-accent: #2eaadc;
   --color-accent-hover: #2898c8;
   --color-accent-glow: rgba(46,170,220,0.08);
@@ -152,7 +152,7 @@
   --color-surface-hover: #2f2f2f;
   --color-border: #373737;
   --color-text: #e3e3e3;
-  --color-text-muted: #9b9a97;
+  --color-text-muted: #b0afac;
   --color-accent: #529cca;
   --color-accent-hover: #4a8db8;
   --color-accent-glow: rgba(82,156,202,0.12);
@@ -175,7 +175,7 @@
   --color-surface-hover: #141414;
   --color-border: #1a1a1a;
   --color-text: #ffffff;
-  --color-text-muted: #666666;
+  --color-text-muted: #a3a3a3;
   --color-accent: #ffffff;
   --color-accent-hover: #e0e0e0;
   --color-accent-glow: rgba(255,255,255,0.06);

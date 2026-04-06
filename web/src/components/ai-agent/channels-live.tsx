@@ -96,7 +96,7 @@ export function ChannelsLive() {
       {channels.length === 0 ? (
         <div className="flex flex-col items-center py-12 text-center">
           <p className="text-sm text-text-muted">No channels configured</p>
-          <p className="text-xs text-text-muted/60 mt-1">
+          <p className="text-xs text-text-muted mt-1">
             Configure channels in your agent settings
           </p>
         </div>

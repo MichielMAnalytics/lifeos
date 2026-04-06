@@ -84,7 +84,7 @@ export function RemindersUpcoming() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           Upcoming Reminders
         </h2>
         <span className="text-xs font-mono text-text-muted">
@@ -95,7 +95,7 @@ export function RemindersUpcoming() {
       {allReminders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
           <p className="text-sm text-text-muted">No upcoming reminders</p>
-          <p className="text-xs text-text-muted/60 mt-1">
+          <p className="text-xs text-text-muted mt-1">
             Create reminders from the quick capture bar
           </p>
         </div>
@@ -139,7 +139,7 @@ export function RemindersUpcoming() {
                     {reminder.title}
                   </span>
                   {reminder.body && (
-                    <span className="text-xs text-text-muted/60 block truncate mt-0.5">
+                    <span className="text-xs text-text-muted block truncate mt-0.5">
                       {reminder.body}
                     </span>
                   )}

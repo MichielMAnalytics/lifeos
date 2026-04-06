@@ -15,7 +15,7 @@ export function TasksFlat() {
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
           All Tasks
         </span>
       </div>
@@ -23,7 +23,7 @@ export function TasksFlat() {
       {tasks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-sm text-text-muted">No tasks</p>
-          <p className="text-xs text-text-muted/60 mt-1">Nothing on the list right now</p>
+          <p className="text-xs text-text-muted mt-1">Nothing on the list right now</p>
         </div>
       ) : (
         <div className="divide-y divide-border">
@@ -44,7 +44,7 @@ export function TasksFlat() {
                   {formatDate(task.dueDate)}
                 </span>
               ) : (
-                <span className="text-xs text-text-muted/40 shrink-0">no date</span>
+                <span className="text-xs text-text-muted/70 shrink-0">no date</span>
               )}
             </Link>
           ))}

@@ -108,7 +108,7 @@ export function ConfigCard({
       <ChannelConfig />
       {isByok && <ByokCredentials />}
       <p className="text-center pt-2">
-        <a href="mailto:support@lifeos.zone?subject=%5BLifeOS%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A" className="text-xs text-text-muted/50 hover:text-text-muted transition-colors">
+        <a href="mailto:support@lifeos.zone?subject=%5BLifeOS%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A" className="text-xs text-text-muted/80 hover:text-text-muted transition-colors">
           Contact Support
         </a>
       </p>

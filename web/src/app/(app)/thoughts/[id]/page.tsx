@@ -55,7 +55,7 @@ export default function ThoughtDetailPage() {
         {thought.content}
       </p>
 
-      <div className="mt-6 text-xs text-text-muted/50">
+      <div className="mt-6 text-xs text-text-muted/80">
         {new Date(thought._creationTime).toLocaleDateString('en-US', {
           day: 'numeric',
           month: 'short',

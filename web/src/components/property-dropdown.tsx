@@ -75,7 +75,7 @@ export function PropertyDropdown({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search..."
-              className="w-full bg-surface border border-border rounded-md px-3 py-1.5 text-sm text-text placeholder:text-text-muted/40 focus:outline-none focus:border-accent/50"
+              className="w-full bg-surface border border-border rounded-md px-3 py-1.5 text-sm text-text placeholder:text-text-muted/70 focus:outline-none focus:border-accent/50"
             />
           </div>
 
@@ -115,7 +115,7 @@ export function PropertyDropdown({
             ))}
 
             {filtered.length === 0 && (
-              <p className="px-4 py-3 text-sm text-text-muted/60 text-center">
+              <p className="px-4 py-3 text-sm text-text-muted text-center">
                 No results
               </p>
             )}

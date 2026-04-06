@@ -45,11 +45,11 @@ export function ChannelConfig() {
 
   return (
     <details className="group">
-      <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-text-muted/60 hover:text-text-muted uppercase tracking-wider select-none list-none [&::-webkit-details-marker]:hidden transition-colors">
+      <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-text-muted hover:text-text-muted uppercase tracking-wider select-none list-none [&::-webkit-details-marker]:hidden transition-colors">
         <ChevronDown className="size-3 transition-transform group-open:rotate-180" />
         Messaging Channels
         {(settings?.telegramBotTokenLength || settings?.discordBotTokenLength) && (
-          <span className="text-[9px] normal-case tracking-normal text-text-muted/40">
+          <span className="text-[9px] normal-case tracking-normal text-text-muted/70">
             — {[
               settings?.telegramBotTokenLength ? "Telegram" : null,
               settings?.discordBotTokenLength ? "Discord" : null,
@@ -113,7 +113,7 @@ export function ChannelConfig() {
           </div>
 
           {/* Save */}
-          <p className="text-[9px] text-text-muted/50 leading-relaxed">
+          <p className="text-[9px] text-text-muted/80 leading-relaxed">
             Updating channel tokens will recreate your instance. This takes about 1 minute.
           </p>
           <Button

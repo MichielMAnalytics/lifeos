@@ -225,7 +225,7 @@ export function ChatWidget() {
               <p className="text-sm text-text-muted">
                 Connect your AI agent to chat
               </p>
-              <p className="text-xs text-text-muted/60 mt-1">
+              <p className="text-xs text-text-muted mt-1">
                 Deploy an agent from the AI Agent page
               </p>
             </div>
@@ -234,7 +234,7 @@ export function ChatWidget() {
               {messages.length === 0 && !isStreaming && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <p className="text-sm text-text-muted">Start a conversation</p>
-                  <p className="text-xs text-text-muted/60 mt-1">
+                  <p className="text-xs text-text-muted mt-1">
                     Send a message to your AI agent
                   </p>
                 </div>
@@ -259,7 +259,7 @@ export function ChatWidget() {
                     <p className="whitespace-pre-wrap break-words leading-relaxed">
                       {msg.content}
                     </p>
-                    <span className="block mt-1 text-[10px] font-mono text-text-muted/50">
+                    <span className="block mt-1 text-[10px] font-mono text-text-muted/80">
                       {new Date(msg.timestamp).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -288,7 +288,7 @@ export function ChatWidget() {
                 placeholder="Type a message..."
                 disabled={isStreaming}
                 className={cn(
-                  'flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/40 focus:outline-none',
+                  'flex-1 bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none',
                   isStreaming && 'opacity-50',
                 )}
               />
@@ -299,7 +299,7 @@ export function ChatWidget() {
                   'p-1.5 transition-colors',
                   input.trim() && !isStreaming
                     ? 'text-text hover:text-accent'
-                    : 'text-text-muted/30 cursor-not-allowed',
+                    : 'text-text-muted cursor-not-allowed',
                 )}
                 title="Send message"
               >

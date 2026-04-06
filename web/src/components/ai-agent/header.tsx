@@ -205,7 +205,7 @@ function UserMenu() {
                     value={couponCode}
                     onChange={(e) => { setCouponCode(e.target.value); setCouponResult(null); }}
                     onKeyDown={(e) => { if (e.key === "Enter") handleRedeemCoupon(); }}
-                    className="flex-1 min-w-0 text-[10px] px-2 py-0.5 bg-transparent ring-1 ring-text/10 text-text placeholder:text-text-muted/50 focus:outline-none focus:ring-text/30 rounded"
+                    className="flex-1 min-w-0 text-[10px] px-2 py-0.5 bg-transparent ring-1 ring-text/10 text-text placeholder:text-text-muted/80 focus:outline-none focus:ring-text/30 rounded"
                   />
                   <button
                     onClick={handleRedeemCoupon}
@@ -247,8 +247,8 @@ function HintsToggle() {
       className={cn(
         "flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors cursor-pointer",
         dismissed
-          ? "text-text-muted/25 hover:text-text-muted/50"
-          : "text-text-muted/50 hover:text-text-muted",
+          ? "text-text-muted hover:text-text-muted/80"
+          : "text-text-muted/80 hover:text-text-muted",
       )}
     >
       <span className="relative flex size-[5px]">
