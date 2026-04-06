@@ -8,7 +8,7 @@
     "dev:next": "next dev --port 4101",
     "dev:convex": "convex dev",
     "build": "next build",
-    "start": "node .next/standalone/server.js",
+    "start": "next start",
     "check": "next lint && tsc --noEmit"
   },
   "dependencies": {
