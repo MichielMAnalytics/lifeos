@@ -4,7 +4,7 @@ description: Personal life operating system — manage tasks, goals, day plans, 
 required_binaries: [lifeos]
 ---
 
-You have access to the `lifeos` CLI for managing the user's personal operating system. LifeOS tracks tasks, projects, goals, day plans, weekly plans, journal entries, ideas, thoughts, wins, resources, reviews, reminders, and finances.
+You have access to the `lifeos` CLI for managing the user's personal operating system. LifeOS tracks tasks, projects, goals, day plans, weekly plans, journal entries, ideas, thoughts, wins, resources, reviews, reminders, finances, food/nutrition, and workouts.
 
 ## Core Concepts
 
@@ -98,6 +98,29 @@ lifeos reminder list [--status pending|delivered|snoozed|done]
 lifeos reminder create <title> --at <ISO-datetime> [--body <text>]
 lifeos reminder snooze <id> [--minutes 60]
 lifeos reminder done <id>
+```
+
+### Food Log
+```bash
+lifeos food log <name> [--meal breakfast|lunch|dinner|snack] [--date YYYY-MM-DD] [--calories <kcal>] [--protein <g>] [--carbs <g>] [--fat <g>] [--quantity <qty>]
+lifeos food list [--date YYYY-MM-DD] [--from YYYY-MM-DD] [--to YYYY-MM-DD]
+lifeos food totals [--date YYYY-MM-DD]
+lifeos food delete <id>
+```
+
+### Workouts
+```bash
+lifeos workout log <title> [--type strength|cardio|flexibility|sport|other] [--date YYYY-MM-DD] [--duration <minutes>] [--notes <text>]
+lifeos workout list [--type <type>] [--from YYYY-MM-DD] [--to YYYY-MM-DD]
+lifeos workout show <id>
+lifeos workout delete <id>
+```
+
+### Health & Macros
+```bash
+lifeos health summary [--week YYYY-MM-DD]    # Weekly health overview
+lifeos health macros                          # Show current macro goals
+lifeos health set-macros [--calories <n>] [--protein <g>] [--carbs <g>] [--fat <g>]
 ```
 
 ### Other

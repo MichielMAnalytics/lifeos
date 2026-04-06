@@ -86,11 +86,11 @@ export function NutritionPlan() {
       <div className="px-6 py-6">
         <div className="flex justify-around">
           <MacroRing
-            label="Carbohydrate"
-            current={current.carbs}
-            target={targets.carbs}
+            label="Protein"
+            current={current.protein}
+            target={targets.protein}
             unit="g"
-            color="var(--color-success, #10b981)"
+            color="var(--color-accent, #8b5cf6)"
           />
           <MacroRing
             label="Fat"
@@ -100,11 +100,11 @@ export function NutritionPlan() {
             color="var(--color-warning, #f59e0b)"
           />
           <MacroRing
-            label="Protein"
-            current={current.protein}
-            target={targets.protein}
+            label="Carbs"
+            current={current.carbs}
+            target={targets.carbs}
             unit="g"
-            color="var(--color-accent, #8b5cf6)"
+            color="var(--color-success, #10b981)"
           />
         </div>
       </div>

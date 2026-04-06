@@ -61,11 +61,11 @@ function MacroRing({
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-base font-bold text-text tabular-nums leading-tight">{Math.round(current)}</span>
-          <span className="text-[8px] text-text-muted/50">/{target}{unit}</span>
+          <span className="text-[8px] text-text-muted/70">/{target}{unit}</span>
         </div>
       </div>
       <span className="text-[10px] font-medium" style={{ color }}>{label}</span>
-      <span className="text-[9px] text-text-muted/40">{Math.round(remaining)}{unit} left</span>
+      <span className="text-[9px] text-text-muted/60">{Math.round(remaining)}{unit} left</span>
     </div>
   );
 }
@@ -96,13 +96,13 @@ function FoodEntry({ entry, onDelete }: {
     <div className="flex items-center gap-2 py-2 px-4 hover:bg-surface-hover/50 transition-colors group">
       <span className="text-sm text-text flex-1 min-w-0 truncate">{entry.name}</span>
       {entry.quantity && (
-        <span className="text-[10px] text-text-muted/50 shrink-0">{entry.quantity}</span>
+        <span className="text-[10px] text-text-muted/70 shrink-0">{entry.quantity}</span>
       )}
       <div className="flex items-center gap-2 shrink-0 tabular-nums text-[11px]">
         <span className="text-text-muted w-12 text-right">{entry.calories ? `${Math.round(entry.calories)}` : '-'}</span>
-        <span className="text-accent/70 w-8 text-right">{entry.protein ? `${Math.round(entry.protein)}` : '-'}</span>
-        <span className="text-success/70 w-8 text-right">{entry.carbs ? `${Math.round(entry.carbs)}` : '-'}</span>
-        <span className="text-warning/70 w-8 text-right">{entry.fat ? `${Math.round(entry.fat)}` : '-'}</span>
+        <span className="text-accent/80 w-8 text-right">{entry.protein ? `${Math.round(entry.protein)}` : '-'}</span>
+        <span className="text-success/80 w-8 text-right">{entry.carbs ? `${Math.round(entry.carbs)}` : '-'}</span>
+        <span className="text-warning/80 w-8 text-right">{entry.fat ? `${Math.round(entry.fat)}` : '-'}</span>
       </div>
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
@@ -130,10 +130,10 @@ function MealGroup({ label, entries, groupTotals, onDeleteEntry }: {
     <div className="border-b border-border/30 last:border-b-0">
       {/* Group header with totals */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-surface/30">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted/60">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted/80">
           {label}
         </span>
-        <div className="flex items-center gap-2 tabular-nums text-[10px] font-medium text-text-muted/50">
+        <div className="flex items-center gap-2 tabular-nums text-[10px] font-medium text-text-muted/70">
           <span className="w-12 text-right">{Math.round(groupTotals.calories)} kcal</span>
           <span className="w-8 text-right">{Math.round(groupTotals.protein)}p</span>
           <span className="w-8 text-right">{Math.round(groupTotals.carbs)}c</span>
@@ -300,8 +300,8 @@ export function HealthMacros() {
       {/* Macro rings */}
       <div className="px-5 py-5 border-b border-border">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">Macros</span>
-          <span className="text-xs text-text-muted/50 tabular-nums">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/80">Macros</span>
+          <span className="text-xs text-text-muted/70 tabular-nums">
             {Math.round(current.calories)} / {targets.calories} kcal
           </span>
         </div>
@@ -309,19 +309,19 @@ export function HealthMacros() {
           <div className="animate-pulse h-24 bg-surface rounded-lg" />
         ) : (
           <div className="flex justify-around">
-            <MacroRing label="Carbs" current={current.carbs} target={targets.carbs} unit="g"
-              color="var(--color-success, #10b981)" />
-            <MacroRing label="Fat" current={current.fat} target={targets.fat} unit="g"
-              color="var(--color-warning, #f59e0b)" />
             <MacroRing label="Protein" current={current.protein} target={targets.protein} unit="g"
               color="var(--color-accent, #8b5cf6)" />
+            <MacroRing label="Fat" current={current.fat} target={targets.fat} unit="g"
+              color="var(--color-warning, #f59e0b)" />
+            <MacroRing label="Carbs" current={current.carbs} target={targets.carbs} unit="g"
+              color="var(--color-success, #10b981)" />
           </div>
         )}
       </div>
 
       {/* Food diary header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-border/50">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/60">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted/80">
           Food Diary
         </span>
         <button
@@ -339,7 +339,7 @@ export function HealthMacros() {
 
       {/* Column headers */}
       {(entries?.length ?? 0) > 0 && (
-        <div className="flex items-center gap-2 px-4 py-1.5 text-[9px] font-medium uppercase tracking-wider text-text-muted/30 border-b border-border/20">
+        <div className="flex items-center gap-2 px-4 py-1.5 text-[9px] font-medium uppercase tracking-wider text-text-muted/60 border-b border-border/30">
           <span className="flex-1">Item</span>
           <div className="flex items-center gap-2 shrink-0">
             <span className="w-12 text-right">kcal</span>
@@ -357,7 +357,7 @@ export function HealthMacros() {
       ) : (entries?.length ?? 0) === 0 && !showAddForm ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <p className="text-sm text-text-muted">No food logged</p>
-          <p className="text-xs text-text-muted/50 mt-1">Click + Log Food to start tracking</p>
+          <p className="text-xs text-text-muted/70 mt-1">Click + Log Food to start tracking</p>
         </div>
       ) : (
         <div>
