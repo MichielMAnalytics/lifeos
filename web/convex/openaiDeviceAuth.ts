@@ -109,7 +109,7 @@ export const pollDeviceCode = action({
       code: data.authorization_code,
       client_id: OPENAI_CLIENT_ID,
       code_verifier: data.code_verifier,
-      redirect_uri: data.redirect_uri || "http://localhost:1455/auth/callback",
+      redirect_uri: `${OPENAI_AUTH_BASE}/api/accounts/deviceauth/callback`,
     };
     const tokenRes = await fetch(TOKEN_EXCHANGE_URL, {
       method: "POST",
