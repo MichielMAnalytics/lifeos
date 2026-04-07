@@ -348,8 +348,15 @@ proxy.all("/:provider/*", async (c) => {
     fullUpstreamUrl = `https://chatgpt.com/backend-api/codex/responses${queryString}`;
     if (requestBody) {
       requestBody.store = false;
-      // Codex requires stream=true
       requestBody.stream = true;
+      // Codex requires an instructions field
+      if (!requestBody.instructions) {
+        requestBody.instructions = "You are a helpful assistant.";
+      }
+      // Codex requires input as array
+      if (typeof requestBody.input === "string") {
+        requestBody.input = [{ role: "user", content: requestBody.input }];
+      }
       requestBodyStr = JSON.stringify(requestBody);
     }
   } else {
