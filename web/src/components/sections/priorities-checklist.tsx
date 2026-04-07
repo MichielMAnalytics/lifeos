@@ -7,7 +7,7 @@ import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
 import { useTodayDate } from '@/lib/today-date-context';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
+import { Skeleton, SkeletonCircle } from '@/components/ui/skeleton';
 
 // ── Confetti ─────────────────────────────────────────────
 
@@ -54,32 +54,38 @@ interface PriorityConfig {
   label: string;
   colorClass: string;
   checkClass: string;
+  borderClass: string;
   doneField: 'mitDone' | 'p1Done' | 'p2Done';
   taskIdField: 'mitTaskId' | 'p1TaskId' | 'p2TaskId';
 }
 
+// Sunset Gradient palette (Section 2B pick)
+// MIT #FF4D4F · P1 #FB923C · P2 #FCD34D
 const PRIORITIES: PriorityConfig[] = [
   {
     key: 'mit',
     label: 'MIT',
-    colorClass: 'text-red-500',
-    checkClass: 'border-red-500 bg-red-500',
+    colorClass: 'text-[#FF4D4F]',
+    checkClass: 'border-[#FF4D4F] bg-[#FF4D4F]',
+    borderClass: 'border-l-[#FF4D4F]',
     doneField: 'mitDone',
     taskIdField: 'mitTaskId',
   },
   {
     key: 'p1',
     label: 'P1',
-    colorClass: 'text-amber-500',
-    checkClass: 'border-amber-500 bg-amber-500',
+    colorClass: 'text-[#FB923C]',
+    checkClass: 'border-[#FB923C] bg-[#FB923C]',
+    borderClass: 'border-l-[#FB923C]',
     doneField: 'p1Done',
     taskIdField: 'p1TaskId',
   },
   {
     key: 'p2',
     label: 'P2',
-    colorClass: 'text-blue-500',
-    checkClass: 'border-blue-500 bg-blue-500',
+    colorClass: 'text-[#FCD34D]',
+    checkClass: 'border-[#FCD34D] bg-[#FCD34D]',
+    borderClass: 'border-l-[#FCD34D]',
     doneField: 'p2Done',
     taskIdField: 'p2TaskId',
   },
@@ -184,6 +190,17 @@ function formatDueDate(dueDate?: string): string | null {
 
 // ── TaskPickerDropdown ──────────────────────────────────
 
+/**
+ * Phase 2 / Section 4P-E hybrid task picker.
+ *
+ * - Search input at the top is the primary affordance.
+ * - "Today" and "Overdue" groups are expanded by default.
+ * - Other groups (This Week / Later / No date) are collapsed with a count.
+ * - Click a group header to toggle expansion.
+ * - When the user types, all groups effectively flatten into the filtered
+ *   results — we still show group separators but the typed query overrides
+ *   the collapsed/expanded state.
+ */
 function TaskPickerDropdown({
   tasks,
   onSelect,
@@ -196,7 +213,11 @@ function TaskPickerDropdown({
   anchorRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [query, setQuery] = useState('');
+  // Default expanded set: today + overdue. Everything else collapsed.
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['today', 'overdue']));
 
   // Calculate position from anchor element
   useEffect(() => {
@@ -205,16 +226,21 @@ function TaskPickerDropdown({
     setPos({
       top: rect.bottom + 4,
       left: rect.left,
-      width: rect.width,
+      width: Math.max(rect.width, 320),
     });
   }, [anchorRef]);
+
+  // Auto-focus search input
+  useEffect(() => {
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, []);
 
   // Reposition on scroll/resize
   useEffect(() => {
     if (!anchorRef.current) return;
     const update = () => {
       const rect = anchorRef.current!.getBoundingClientRect();
-      setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+      setPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 320) });
     };
     window.addEventListener('scroll', update, true);
     window.addEventListener('resize', update);
@@ -231,18 +257,43 @@ function TaskPickerDropdown({
         onClose();
       }
     }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKey);
+    };
   }, [onClose, anchorRef]);
 
-  const groups = useMemo(() => groupTasks(tasks), [tasks]);
+  // Filter tasks by query, then bucket
+  const filteredTasks = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return tasks;
+    return tasks.filter((t) => t.title.toLowerCase().includes(q));
+  }, [tasks, query]);
+
+  const groups = useMemo(() => groupTasks(filteredTasks), [filteredTasks]);
+  const isSearching = query.trim().length > 0;
+  const totalFiltered = filteredTasks.length;
+
+  function toggleGroup(key: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   if (!pos) return null;
 
   const dropdown = (
     <div
       ref={ref}
-      className="rounded-xl border border-border bg-surface shadow-lg max-h-[480px] overflow-y-auto animate-scale-in"
+      className="rounded-xl border border-border bg-surface shadow-2xl max-h-[420px] flex flex-col animate-scale-in overflow-hidden"
       style={{
         position: 'fixed',
         top: pos.top,
@@ -251,41 +302,94 @@ function TaskPickerDropdown({
         zIndex: 9999,
       }}
     >
-      {tasks.length === 0 ? (
-        <div className="p-3">
-          <p className="text-xs text-text-muted">No tasks available</p>
-        </div>
-      ) : (
-        groups.map((group) => (
-          <div key={group.key}>
-            <div
-              className={cn(
-                'text-[10px] font-semibold uppercase tracking-widest px-3 pt-3 pb-1',
-                group.headerClass ?? 'text-text-muted/80',
-              )}
-            >
-              {group.label}
-            </div>
-            {group.tasks.map((task) => {
-              const dueDateLabel = formatDueDate(task.dueDate);
-              return (
-                <button
-                  key={task._id}
-                  onClick={() => onSelect(task._id)}
-                  className="w-full text-left px-3 py-2 text-sm text-text hover:bg-surface-hover transition-colors flex items-center justify-between gap-2"
-                >
-                  <span className="truncate">{task.title}</span>
-                  {dueDateLabel && (
-                    <span className="text-[10px] text-text-muted/80 shrink-0">
-                      {dueDateLabel}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+      {/* Search input — sticky at top */}
+      <div className="border-b border-border-subtle px-3 py-2 flex items-center gap-2 shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted shrink-0">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search tasks…"
+          className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted focus:outline-none"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => { setQuery(''); inputRef.current?.focus(); }}
+            className="text-[10px] text-text-muted hover:text-text"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Groups list */}
+      <div className="flex-1 overflow-y-auto py-1">
+        {totalFiltered === 0 ? (
+          <div className="p-4 text-center">
+            <p className="text-xs text-text-muted">
+              {isSearching ? `No tasks match "${query}"` : 'No tasks available'}
+            </p>
           </div>
-        ))
-      )}
+        ) : (
+          groups.map((group) => {
+            // When searching, force-expand all groups
+            const isOpen = isSearching || expanded.has(group.key);
+            return (
+              <div key={group.key}>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.key)}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest hover:bg-surface-hover transition-colors',
+                    group.headerClass ?? 'text-text-muted/80',
+                  )}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <svg
+                      width="9"
+                      height="9"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={cn('transition-transform', isOpen ? 'rotate-90' : '')}
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                    {group.label}
+                  </span>
+                  <span className="opacity-60 tabular-nums">{group.tasks.length}</span>
+                </button>
+                {isOpen && group.tasks.map((task) => {
+                  const dueDateLabel = formatDueDate(task.dueDate);
+                  return (
+                    <button
+                      key={task._id}
+                      type="button"
+                      onClick={() => onSelect(task._id)}
+                      className="w-full text-left pl-7 pr-3 py-2 text-sm text-text hover:bg-surface-hover transition-colors flex items-center justify-between gap-2"
+                    >
+                      <span className="truncate">{task.title}</span>
+                      {dueDateLabel && (
+                        <span className="text-[10px] text-text-muted/80 shrink-0 tabular-nums">
+                          {dueDateLabel}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 
@@ -486,9 +590,6 @@ export function PrioritiesChecklist() {
   const dayPlan = useQuery(api.dayPlans.getByDate, { date });
   const upsert = useMutation(api.dayPlans.upsert);
 
-  // Fetch today's tasks for the "more tasks" count
-  const todayTasks = useQuery(api.tasks.list, { status: 'todo', due: 'today' });
-
   // Fetch ALL todo tasks for the task picker dropdown
   const allTasks = useQuery(api.tasks.list, { status: 'todo' });
 
@@ -514,12 +615,16 @@ export function PrioritiesChecklist() {
     return (
       <div className="rounded-xl border border-border">
         <div className="px-6 py-4 border-b border-border">
-          <div className="animate-pulse h-4 w-32 bg-surface rounded" />
+          <Skeleton className="h-3 w-32" />
         </div>
-        <div className="p-6 space-y-4">
-          <div className="animate-pulse h-6 bg-surface rounded" />
-          <div className="animate-pulse h-6 bg-surface rounded" />
-          <div className="animate-pulse h-6 bg-surface rounded" />
+        <div className="px-6 py-3 space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex items-center gap-4 py-2">
+              <SkeletonCircle size={24} />
+              <Skeleton className="h-3 w-8" />
+              <Skeleton className="h-3 flex-1 max-w-[24ch]" />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -538,18 +643,13 @@ export function PrioritiesChecklist() {
     [dayPlan?.mitTaskId, dayPlan?.p1TaskId, dayPlan?.p2TaskId].filter(Boolean) as string[],
   );
 
-  // Count extra tasks beyond the 3 priorities (today's tasks only)
-  const extraTaskCount = todayTasks
-    ? todayTasks.filter((t) => !assignedIds.has(t._id)).length
-    : 0;
-
   return (
     <>
     {showConfetti && <Confetti />}
     <div className="rounded-xl border border-border">
       <div className="flex items-baseline justify-between px-6 py-4 border-b border-border">
         <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
-          Priorities
+          Today&rsquo;s Top 3
         </h2>
         <span className="text-xs text-text-muted">
           {completedCount}/3 complete
@@ -572,19 +672,6 @@ export function PrioritiesChecklist() {
           />
         ))}
       </div>
-
-      {/* Extra tasks link */}
-      {extraTaskCount > 0 && (
-        <div className="px-6 py-3 border-t border-border">
-          <Link
-            href="/tasks"
-            className="text-xs text-text-muted hover:text-accent transition-colors"
-          >
-            and {extraTaskCount} more task{extraTaskCount !== 1 ? 's' : ''} due
-            today &rarr;
-          </Link>
-        </div>
-      )}
     </div>
     </>
   );

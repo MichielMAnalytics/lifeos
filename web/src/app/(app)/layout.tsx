@@ -9,6 +9,8 @@ import { MainContent } from '@/components/main-content';
 import { DashboardConfigProvider } from '@/lib/dashboard-config';
 import { GatewayProvider } from '@/lib/gateway';
 import { LoadingScreen } from '@/components/loading-screen';
+import { GlobalUndo } from '@/components/global-undo';
+import { LifeCoachOrb } from '@/components/life-coach-orb';
 
 function RedirectToLogin() {
   const router = useRouter();
@@ -69,10 +71,12 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   // Normal app
   return (
     <GatewayProvider>
+      <GlobalUndo />
       <div className="flex w-full min-h-screen">
         <Nav />
         <MainContent>{children}</MainContent>
       </div>
+      <LifeCoachOrb />
     </GatewayProvider>
   );
 }

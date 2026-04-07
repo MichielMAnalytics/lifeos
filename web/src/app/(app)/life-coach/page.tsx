@@ -351,6 +351,19 @@ export default function LifeCoachPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
 
+  // Section 17C — pick up a seeded prompt from the floating Life Coach orb
+  useEffect(() => {
+    try {
+      const seed = sessionStorage.getItem('lifeos-coach-seed-prompt');
+      if (seed) {
+        setInput(seed);
+        sessionStorage.removeItem('lifeos-coach-seed-prompt');
+      }
+    } catch {
+      // sessionStorage may be unavailable
+    }
+  }, []);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamBufferRef = useRef<string>('');

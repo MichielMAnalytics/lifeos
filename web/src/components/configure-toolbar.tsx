@@ -6,19 +6,29 @@ import { useTheme } from '@/components/theme-provider';
 import { themes, themeKeys, systemThemeEntry } from '@/lib/themes';
 import { cn } from '@/lib/utils';
 
+// Phase 2 / Section 15B — curated 7-font lineup. All 7 are loaded globally
+// in app/layout.tsx via Fontshare/Google Fonts so the picker doesn't need to
+// inject extra link tags. Default is Satoshi (current LifeOS default).
 const FONT_OPTIONS = [
-  { key: 'geist', name: 'Geist', family: '"Geist", ui-sans-serif, system-ui, sans-serif', href: 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap' },
-  { key: 'kefa', name: 'Kefa', family: '"Kefa", ui-sans-serif, system-ui, sans-serif', href: '' },
-  { key: 'satoshi', name: 'Satoshi', family: '"Satoshi", ui-sans-serif, system-ui, sans-serif', href: 'https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap' },
-  { key: 'inter', name: 'Inter', family: '"Inter", ui-sans-serif, system-ui, sans-serif', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' },
-  { key: 'jetbrains', name: 'JetBrains Mono', family: '"JetBrains Mono", ui-monospace, monospace', href: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap' },
-  { key: 'space-grotesk', name: 'Space Grotesk', family: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', href: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap' },
-  { key: 'dm-sans', name: 'DM Sans', family: '"DM Sans", ui-sans-serif, system-ui, sans-serif', href: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap' },
-  { key: 'outfit', name: 'Outfit', family: '"Outfit", ui-sans-serif, system-ui, sans-serif', href: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap' },
-  { key: 'ibm-plex', name: 'IBM Plex Sans', family: '"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif', href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap' },
-  { key: 'source-serif', name: 'Source Serif', family: '"Source Serif 4", Georgia, serif', href: 'https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500;600;700&display=swap' },
-  { key: 'system', name: 'System', family: 'ui-sans-serif, system-ui, -apple-system, sans-serif', href: '' },
+  { key: 'satoshi', name: 'Satoshi', family: '"Satoshi", ui-sans-serif, system-ui, sans-serif', href: '' },
+  { key: 'inter', name: 'Inter', family: '"Inter", ui-sans-serif, system-ui, sans-serif', href: '' },
+  { key: 'geist', name: 'Geist', family: '"Geist", ui-sans-serif, system-ui, sans-serif', href: '' },
+  { key: 'ibm-plex-serif', name: 'IBM Plex Serif', family: '"IBM Plex Serif", Georgia, serif', href: '' },
+  { key: 'jetbrains-mono', name: 'JetBrains Mono', family: '"JetBrains Mono", ui-monospace, monospace', href: '' },
+  { key: 'dm-sans', name: 'DM Sans', family: '"DM Sans", ui-sans-serif, system-ui, sans-serif', href: '' },
+  { key: 'manrope', name: 'Manrope', family: '"Manrope", ui-sans-serif, system-ui, sans-serif', href: '' },
 ] as const;
+
+// Old keys we want to migrate away from on first load
+const LEGACY_FONT_KEYS = new Set([
+  'kefa',
+  'space-grotesk',
+  'outfit',
+  'ibm-plex',
+  'source-serif',
+  'system',
+  'jetbrains',
+]);
 
 const FONT_STORAGE_KEY = 'lifeos-font';
 
@@ -39,10 +49,15 @@ function applyFont(family: string) {
 export function ConfigureToolbar() {
   const { isConfigMode, toggleConfigMode, config, setNavMode } = useDashboardConfig();
   const { theme, setTheme } = useTheme();
-  const [activeFont, setActiveFont] = useState('geist');
+  const [activeFont, setActiveFont] = useState('satoshi');
 
   useEffect(() => {
-    const stored = localStorage.getItem(FONT_STORAGE_KEY);
+    let stored = localStorage.getItem(FONT_STORAGE_KEY);
+    // Migrate legacy keys → satoshi (current default)
+    if (stored && LEGACY_FONT_KEYS.has(stored)) {
+      stored = 'satoshi';
+      localStorage.setItem(FONT_STORAGE_KEY, stored);
+    }
     if (stored) {
       setActiveFont(stored);
       const font = FONT_OPTIONS.find(f => f.key === stored);

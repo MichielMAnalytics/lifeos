@@ -81,6 +81,8 @@ export const update = mutation({
     content: v.optional(v.string()),
     actionability: v.optional(v.string()),
     nextStep: v.optional(v.string()),
+    // Phase 2 / Section 12B+ — pass null to clear the reviewed flag
+    reviewedAt: v.optional(v.union(v.float64(), v.null())),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -95,8 +97,46 @@ export const update = mutation({
     if (args.content !== undefined) updates.content = args.content;
     if (args.actionability !== undefined) updates.actionability = args.actionability;
     if (args.nextStep !== undefined) updates.nextStep = args.nextStep;
+    if (args.reviewedAt !== undefined) {
+      updates.reviewedAt = args.reviewedAt === null ? undefined : args.reviewedAt;
+    }
 
     await ctx.db.patch(args.id, updates);
+    const updated = await ctx.db.get(args.id);
+
+    await ctx.db.insert("mutationLog", {
+      userId,
+      action: "update",
+      tableName: "ideas",
+      recordId: args.id,
+      beforeData: existing,
+      afterData: updated,
+    });
+
+    return updated;
+  },
+});
+
+// ── markReviewed (toggle) ───────────────────────────────
+// Section 12B+: convenience mutation for the "✓ Reviewed" checkbox.
+
+export const markReviewed = mutation({
+  args: {
+    id: v.id("ideas"),
+    reviewed: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== userId) {
+      throw new Error("Idea not found");
+    }
+
+    await ctx.db.patch(args.id, {
+      reviewedAt: args.reviewed ? Date.now() : undefined,
+    });
     const updated = await ctx.db.get(args.id);
 
     await ctx.db.insert("mutationLog", {

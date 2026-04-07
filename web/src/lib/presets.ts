@@ -29,15 +29,19 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
 
   // ── TODAY ─────────────────────────────────────────────
   today: {
+    // Default — Section 1A Sunsama Two-Pane: day plan is the dominant element
+    // and lives at the top. Top 3 priorities sit below, then a small daily
+    // quote at the very end. Day plan already has its own task sidebar (40/60
+    // internally) so the page itself is single-column.
     default: {
       name: "Default",
-      description: "Balanced overview of your day",
+      description: "Day plan first — Sunsama-style layout (Section 1A pick)",
       sections: [
         { id: "day-nav", label: "Date Navigation", span: "full" },
         { id: "task-status-bar", label: "Task Status", span: "full" },
-        { id: "priorities-checklist", label: "Priorities", span: "half" },
-        { id: "quotes", label: "Daily Quote", span: "half" },
         { id: "day-timeline", label: "Day Plan", span: "full" },
+        { id: "priorities-checklist", label: "Today's Top 3", span: "full" },
+        { id: "quotes", label: "Daily Quote", span: "full" },
       ],
     },
     solopreneur: {
@@ -650,10 +654,11 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
   health: {
     default: {
       name: "Default",
-      description: "Workouts, programme, and nutrition",
+      description: "Workouts, programme, nutrition, and weekly macro trend",
       sections: [
         { id: "active-programme", label: "Programme", span: "half" },
         { id: "nutrition-plan", label: "Nutrition", span: "half" },
+        { id: "macros-trend", label: "Weekly Macros", span: "full" },
         { id: "food-log", label: "Food Diary", span: "full" },
         { id: "workout-log", label: "Workout Log", span: "full" },
       ],

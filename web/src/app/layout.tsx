@@ -26,15 +26,20 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+        {/* Phase 2 / Section 15 — themes (5 named + system). Section 15B — 7 fonts. */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;900&display=swap"
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Geist:wght@400;500;600;700;900&family=DM+Sans:wght@400;500;600;700;900&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Serif:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
       <body className="overflow-x-hidden">
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('lifeos-theme')||'system';if(t==='system'){t=window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t);var f=localStorage.getItem('lifeos-font');if(f){var m={kefa:'"Kefa"',satoshi:'"Satoshi"',inter:'"Inter"','jetbrains':'"JetBrains Mono", ui-monospace, monospace','space-grotesk':'"Space Grotesk"','dm-sans':'"DM Sans"',outfit:'"Outfit"',geist:'"Geist"','ibm-plex':'"IBM Plex Sans"','source-serif':'"Source Serif 4", Georgia, serif',system:'ui-sans-serif, system-ui, -apple-system, sans-serif'};if(m[f])document.documentElement.style.setProperty('--font-sans',m[f]+', ui-sans-serif, system-ui, sans-serif')}}catch(e){}`,
+            __html: `try{var t=localStorage.getItem('lifeos-theme')||'system';var legacy={midnight:1,zen:1,nord:1,sunset:1,forest:1,light:1,dark:1};if(legacy[t]){t='system';localStorage.setItem('lifeos-theme','system')}if(t==='system'){t=window.matchMedia('(prefers-color-scheme:light)').matches?'github-light':'linear-dark'}document.documentElement.setAttribute('data-theme',t);var f=localStorage.getItem('lifeos-font');var legacyF={kefa:1,'space-grotesk':1,outfit:1,'source-serif':1,system:1};if(legacyF[f]){f='satoshi';localStorage.setItem('lifeos-font','satoshi')}if(f){var m={satoshi:'"Satoshi"',inter:'"Inter"',geist:'"Geist"','ibm-plex-serif':'"IBM Plex Serif", Georgia, serif','jetbrains-mono':'"JetBrains Mono", ui-monospace, monospace','dm-sans':'"DM Sans"',manrope:'"Manrope"'};if(m[f])document.documentElement.style.setProperty('--font-sans',m[f]+', ui-sans-serif, system-ui, sans-serif')}}catch(e){}`,
           }}
         />
         <ConvexClientProvider>

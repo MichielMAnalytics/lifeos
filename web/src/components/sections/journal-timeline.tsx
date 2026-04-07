@@ -1,13 +1,48 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { JournalForm } from '@/components/journal-form';
 import { SidePeek } from '@/components/side-peek';
+import { cn } from '@/lib/utils';
 import type { Doc } from '@/lib/convex-api';
 
 type JournalEntry = Doc<'journals'>;
+
+// ── Week strip helpers (Section 7I) ─────────────────
+
+function startOfWeek(d: Date): Date {
+  // Monday-based week start
+  const result = new Date(d);
+  const day = result.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  result.setDate(result.getDate() - diff);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+function dateToISO(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function todayISO(): string {
+  return dateToISO(new Date());
+}
+
+function shiftDays(d: Date, days: number): Date {
+  const result = new Date(d);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+interface WeekDay {
+  date: string;
+  weekday: string;
+  dayNum: string;
+  isToday: boolean;
+  hasEntry: boolean;
+}
 
 function formatDateHeader(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
@@ -293,10 +328,15 @@ function EntryCard({ entry, extraWins, onClick }: { entry: JournalEntry; extraWi
   const allWins = [...new Set([...(entry.wins ?? []), ...(extraWins ?? [])])];
   const hasWins = allWins.length > 0;
   const hasPriorities = entry.mit || entry.p1 || entry.p2;
-  const hasContent = hasPriorities || hasNotes || hasWins;
+  // Section 7I — gratitudes from new schema field
+  const gratitudes = (entry as JournalEntry & { gratitudes?: string[] }).gratitudes ?? [];
+  const hasGratitudes = gratitudes.length > 0;
+  // Section 7I — explicit summary from new schema field, falls back to auto-gen
+  const explicitSummary = (entry as JournalEntry & { summary?: string }).summary;
+  const hasContent = hasPriorities || hasNotes || hasWins || hasGratitudes || !!explicitSummary;
 
   return (
-    <div className="flex gap-6 group">
+    <div id={`journal-entry-${entry.entryDate}`} className="flex gap-6 group">
       {/* Left: day + date */}
       <div className="w-12 shrink-0 pt-1 text-center">
         <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80">
@@ -320,16 +360,22 @@ function EntryCard({ entry, extraWins, onClick }: { entry: JournalEntry; extraWi
         }}
         className="flex-1 border border-border rounded-xl p-6 transition-colors hover:border-text/20 cursor-pointer min-w-0"
       >
-        {/* Summary line */}
+        {/* Section 7I — clean date — summary header */}
         {hasContent && (
-          <p className="text-sm text-text-muted italic mb-4">
-            {entry.mit
-              ? `Focused on ${entry.mit.toLowerCase()}${entry.p1 ? ` and ${entry.p1.toLowerCase()}` : ''}${hasWins ? ` — ${allWins.length} win${allWins.length !== 1 ? 's' : ''}` : ''}.`
-              : hasNotes
-                ? (entry.notes!.split(/[.!?]/)[0].length > 80 ? entry.notes!.split(/[.!?]/)[0].slice(0, 77) + '...' : entry.notes!.split(/[.!?]/)[0] + '.')
-                : hasWins
-                  ? `${entry.wins.length} win${entry.wins.length !== 1 ? 's' : ''} logged.`
-                  : ''}
+          <p className="text-sm text-text-muted mb-4">
+            <strong className="font-bold text-text">{formatDateHeader(entry.entryDate)}</strong>
+            <span className="text-text-muted/80"> — </span>
+            <span className="italic">
+              {explicitSummary
+                ? explicitSummary
+                : entry.mit
+                  ? `Focused on ${entry.mit.toLowerCase()}${entry.p1 ? ` and ${entry.p1.toLowerCase()}` : ''}${hasWins ? ` — ${allWins.length} win${allWins.length !== 1 ? 's' : ''}` : ''}.`
+                  : hasNotes
+                    ? (entry.notes!.split(/[.!?]/)[0].length > 80 ? entry.notes!.split(/[.!?]/)[0].slice(0, 77) + '...' : entry.notes!.split(/[.!?]/)[0] + '.')
+                    : hasWins
+                      ? `${entry.wins.length} win${entry.wins.length !== 1 ? 's' : ''} logged.`
+                      : ''}
+            </span>
           </p>
         )}
 
@@ -370,7 +416,7 @@ function EntryCard({ entry, extraWins, onClick }: { entry: JournalEntry; extraWi
           <>
             {(hasPriorities || hasNotes) && <div className="border-t border-border/40 my-5" />}
             <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted/80 mb-2">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-success/80 mb-2">
                 Wins
               </p>
               <ul className="space-y-1.5">
@@ -378,6 +424,26 @@ function EntryCard({ entry, extraWins, onClick }: { entry: JournalEntry; extraWi
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <span className="text-success shrink-0 mt-px">&#10003;</span>
                     <span className="text-text">{win}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
+
+        {/* Section 7I — gratitudes block */}
+        {hasGratitudes && (
+          <>
+            {(hasPriorities || hasNotes || hasWins) && <div className="border-t border-border/40 my-5" />}
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-accent/80 mb-2">
+                Gratitudes
+              </p>
+              <ul className="space-y-1.5">
+                {gratitudes.map((g: string, i: number) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <span className="text-accent shrink-0 mt-px">&#9826;</span>
+                    <span className="text-text">{g}</span>
                   </li>
                 ))}
               </ul>
@@ -393,12 +459,99 @@ function EntryCard({ entry, extraWins, onClick }: { entry: JournalEntry; extraWi
   );
 }
 
+// ── WeekStrip (Section 7I) ──────────────────────────
+
+function WeekStrip({
+  weekStart,
+  entryDates,
+  onShiftWeek,
+  onJumpToDate,
+}: {
+  weekStart: Date;
+  entryDates: Set<string>;
+  onShiftWeek: (delta: number) => void;
+  onJumpToDate: (date: string) => void;
+}) {
+  const today = todayISO();
+  const days: WeekDay[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = shiftDays(weekStart, i);
+    const date = dateToISO(d);
+    days.push({
+      date,
+      weekday: d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1),
+      dayNum: String(d.getDate()),
+      isToday: date === today,
+      hasEntry: entryDates.has(date),
+    });
+  }
+  const monthLabel = weekStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  return (
+    <div className="border border-border rounded-xl overflow-hidden bg-bg-subtle">
+      {/* Header with month + nav arrows */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+        <button
+          type="button"
+          onClick={() => onShiftWeek(-7)}
+          className="p-1 rounded text-text-muted hover:text-text hover:bg-surface transition-colors"
+          aria-label="Previous week"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <span className="text-xs font-semibold text-text uppercase tracking-wider">
+          {monthLabel}
+        </span>
+        <button
+          type="button"
+          onClick={() => onShiftWeek(7)}
+          className="p-1 rounded text-text-muted hover:text-text hover:bg-surface transition-colors"
+          aria-label="Next week"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* 7 day cells */}
+      <div className="grid grid-cols-7 gap-1 p-2">
+        {days.map((d) => (
+          <button
+            key={d.date}
+            type="button"
+            onClick={() => onJumpToDate(d.date)}
+            className={cn(
+              'flex flex-col items-center py-2 rounded-lg transition-colors',
+              d.isToday
+                ? 'bg-accent text-white'
+                : d.hasEntry
+                  ? 'bg-surface text-text hover:bg-surface-hover'
+                  : 'text-text-muted hover:bg-surface',
+            )}
+          >
+            <span className="text-[9px] uppercase tracking-wider opacity-70">{d.weekday}</span>
+            <span className="text-base font-semibold tabular-nums leading-tight">{d.dayNum}</span>
+            {d.hasEntry && !d.isToday && (
+              <span className="mt-1 inline-block h-1 w-1 rounded-full bg-success" />
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ──────────────────────────────────
 
 export function JournalTimeline() {
   const entries = useQuery(api.journals.list, {});
   const allWins = useQuery(api.wins.list, {});
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
+  // Section 7I — week strip state
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
 
   // Build a map of date → wins from the wins table
   const winsMap = new Map<string, string[]>();
@@ -409,6 +562,26 @@ export function JournalTimeline() {
       winsMap.get(date)!.push(w.content);
     }
   }
+
+  // Set of dates that have a journal entry — used by the week strip dots
+  const entryDates = useMemo(() => {
+    const set = new Set<string>();
+    if (entries) for (const e of entries) set.add(e.entryDate);
+    return set;
+  }, [entries]);
+
+  const handleJumpToDate = useCallback((date: string) => {
+    if (!entries) return;
+    const found = entries.find((e) => e.entryDate === date);
+    if (found) {
+      // Scroll to the entry's card if it's in the rendered list
+      const el = document.getElementById(`journal-entry-${date}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      setSelectedEntry(found);
+    }
+  }, [entries]);
 
   if (!entries) return (
     <div className="space-y-3">
@@ -422,6 +595,14 @@ export function JournalTimeline() {
 
   return (
     <div className="max-w-none space-y-8">
+      {/* Section 7I — calendar-led week strip at the top */}
+      <WeekStrip
+        weekStart={weekStart}
+        entryDates={entryDates}
+        onShiftWeek={(delta) => setWeekStart((prev) => shiftDays(prev, delta))}
+        onJumpToDate={handleJumpToDate}
+      />
+
       {entries.length === 0 ? (
         <div className="space-y-4">
           <div className="border border-dashed border-border/50 rounded-xl p-6 opacity-40">

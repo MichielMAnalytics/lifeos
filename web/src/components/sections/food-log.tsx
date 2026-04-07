@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -96,6 +97,108 @@ function AddFoodForm({ date, onClose }: { date: string; onClose: () => void }) {
   );
 }
 
+// ── Inline Add Row (Section 8A — Hevy-style spreadsheet) ──
+// Always-visible row at the end of each meal section. Tab-through cells.
+// Enter or Cmd+Enter saves and starts a new row in place.
+
+function InlineAddRow({ date, mealType }: { date: string; mealType: string }) {
+  const createEntry = useMutation(api.foodLog.create);
+  const [name, setName] = useState('');
+  const [qty, setQty] = useState('');
+  const [kcal, setKcal] = useState('');
+  const [p, setP] = useState('');
+  const [c, setC] = useState('');
+  const [f, setF] = useState('');
+  const [saving, setSaving] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  const handleSave = useCallback(async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      await createEntry({
+        entryDate: date,
+        name: name.trim(),
+        mealType,
+        calories: kcal ? parseFloat(kcal) : undefined,
+        protein: p ? parseFloat(p) : undefined,
+        carbs: c ? parseFloat(c) : undefined,
+        fat: f ? parseFloat(f) : undefined,
+        quantity: qty.trim() || undefined,
+      });
+      setName(''); setQty(''); setKcal(''); setP(''); setC(''); setF('');
+      // Re-focus to keep ripping through entries
+      requestAnimationFrame(() => nameRef.current?.focus());
+    } catch (err) {
+      console.error('Failed to add food:', err);
+    } finally {
+      setSaving(false);
+    }
+  }, [name, qty, kcal, p, c, f, date, mealType, createEntry]);
+
+  function handleKey(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void handleSave();
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3 px-5 py-2 group">
+      <input
+        ref={nameRef}
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder="+ Add food"
+        className="flex-1 min-w-0 bg-transparent text-sm text-text placeholder:text-text-muted/50 focus:outline-none border-b border-transparent focus:border-accent/40"
+      />
+      <input
+        type="text"
+        value={qty}
+        onChange={(e) => setQty(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder="qty"
+        className="w-12 bg-transparent text-xs text-text placeholder:text-text-muted/50 focus:outline-none text-right"
+      />
+      <input
+        type="number"
+        value={kcal}
+        onChange={(e) => setKcal(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder="kcal"
+        className="w-14 bg-transparent text-xs tabular-nums text-text placeholder:text-text-muted/50 focus:outline-none text-right"
+      />
+      <input
+        type="number"
+        value={p}
+        onChange={(e) => setP(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder="P"
+        className="w-10 bg-transparent text-xs tabular-nums text-accent placeholder:text-text-muted/50 focus:outline-none text-right"
+      />
+      <input
+        type="number"
+        value={c}
+        onChange={(e) => setC(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder="C"
+        className="w-10 bg-transparent text-xs tabular-nums text-success placeholder:text-text-muted/50 focus:outline-none text-right"
+      />
+      <input
+        type="number"
+        value={f}
+        onChange={(e) => setF(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder="F"
+        className="w-10 bg-transparent text-xs tabular-nums text-warning placeholder:text-text-muted/50 focus:outline-none text-right"
+      />
+      <span className="shrink-0 w-3 text-[10px] text-text-muted/40">{saving ? '…' : ''}</span>
+    </div>
+  );
+}
+
 // ── Food Entry Row ──────────────────────────────────
 
 function FoodEntryRow({ entry, onDelete }: {
@@ -142,7 +245,18 @@ export function FoodLog() {
   const [showForm, setShowForm] = useState(false);
 
   if (entries === undefined) {
-    return <div className="animate-pulse h-32 bg-surface rounded-lg" />;
+    return (
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-border">
+          <Skeleton className="h-3 w-24" />
+        </div>
+        <div className="p-5 space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+      </div>
+    );
   }
 
   // Group entries by meal type
@@ -202,12 +316,16 @@ export function FoodLog() {
       ) : (
         <div>
           {MEAL_ORDER.map((meal) => {
-            const mealEntries = grouped[meal];
-            if (!mealEntries || mealEntries.length === 0) return null;
+            const mealEntries = grouped[meal] ?? [];
             return (
               <div key={meal}>
-                <div className="px-5 py-2 text-[10px] font-medium uppercase tracking-[0.08em] text-text-muted/80 bg-surface/30">
-                  {MEAL_LABELS[meal] ?? meal}
+                <div className="px-5 py-2 text-[10px] font-medium uppercase tracking-[0.08em] text-text-muted/80 bg-surface/30 flex items-center justify-between">
+                  <span>{MEAL_LABELS[meal] ?? meal}</span>
+                  {mealEntries.length > 0 && (
+                    <span className="tabular-nums">
+                      {Math.round(mealEntries.reduce((s, e) => s + (e.calories ?? 0), 0))} kcal
+                    </span>
+                  )}
                 </div>
                 {mealEntries.map((entry) => (
                   <FoodEntryRow
@@ -216,6 +334,8 @@ export function FoodLog() {
                     onDelete={() => removeEntry({ id: entry._id })}
                   />
                 ))}
+                {/* Section 8A — always-visible inline add row */}
+                <InlineAddRow date={today} mealType={meal} />
               </div>
             );
           })}

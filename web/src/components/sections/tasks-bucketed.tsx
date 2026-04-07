@@ -8,7 +8,8 @@ import { TaskDetailModal } from '@/components/task-detail-modal';
 import { CalendarDatePicker } from '@/components/calendar-date-picker';
 import { HoverActionsMenu, type HoverAction } from '@/components/hover-actions-menu';
 import { ContextMenu, type ContextMenuItem } from '@/components/context-menu';
-import { formatRelativeDate } from '@/lib/utils';
+import { formatRelativeDate, cn } from '@/lib/utils';
+import { TasksToolbar, type TaskDensity, type TaskSortBy } from '@/components/tasks-toolbar';
 
 // ── Date helpers ─────────────────────────────────────
 
@@ -213,6 +214,12 @@ interface TaskCardProps {
   showDate?: boolean;
   bucketKey: string;
   isSelected?: boolean;
+  /**
+   * If the task is scheduled in today's day plan, this is its formatted start
+   * time (e.g. "9:00 AM"). When set, the date row is hidden and a small time
+   * tag is shown in the bottom-right corner instead. (FR-1)
+   */
+  scheduledTime?: string;
   onDragStart: (e: React.DragEvent, taskId: string, bucketKey: string) => void;
   onClick?: (e: React.MouseEvent) => void;
   onComplete?: () => Promise<void>;
@@ -222,7 +229,7 @@ interface TaskCardProps {
   onRemoveDate?: () => Promise<void>;
 }
 
-function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDragStart, onClick, onComplete, onDelete, onRescheduleToday, onRescheduleTomorrow, onRemoveDate }: TaskCardProps) {
+function TaskCard({ task, showDate = true, bucketKey, isSelected = false, scheduledTime, onDragStart, onClick, onComplete, onDelete, onRescheduleToday, onRescheduleTomorrow, onRemoveDate }: TaskCardProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -461,9 +468,9 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
           datePickerOpen ? 'z-20' : ''
         } ${
           isSelected
-            ? 'border-accent/40 bg-surface ring-2 ring-accent/40'
+            ? 'border-border bg-surface border-l-[2px] border-l-accent'
             : editing
-              ? 'border-accent/30 bg-surface ring-2 ring-accent/20'
+              ? 'border-border bg-surface border-l-[2px] border-l-accent/60'
               : 'border-border bg-surface hover:border-text-muted/30'
         }`}
       >
@@ -537,8 +544,8 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
               <p className="text-xs text-text-muted mt-0.5 truncate leading-snug">{task.notes}</p>
             )}
 
-            {/* Date badge - clickable */}
-            {showDate && (
+            {/* Date badge — hidden when the task is on the day plan (FR-1) */}
+            {showDate && !scheduledTime && (
               <DateBadge
                 dueDate={dueDate}
                 isOverdue={!!isOverdue}
@@ -553,6 +560,20 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, onDrag
             )}
           </div>
         </div>
+
+        {/* Day plan time tag — bottom-right corner (FR-1) */}
+        {scheduledTime && (
+          <span
+            className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent tabular-nums pointer-events-none"
+            title={`Scheduled in today's day plan at ${scheduledTime}`}
+          >
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            {scheduledTime}
+          </span>
+        )}
       </div>
     </ContextMenu>
   );
@@ -683,6 +704,8 @@ interface BucketColumnProps {
   bucket: TaskBucket;
   dragOverKey: string | null;
   selectedIds: Set<string>;
+  /** Map of taskId → formatted scheduled time for tasks on today's day plan (FR-1) */
+  scheduledTimes: Map<string, string>;
   onDragStart: (e: React.DragEvent, taskId: string, bucketKey: string) => void;
   onDragOver: (e: React.DragEvent, bucketKey: string) => void;
   onDragLeave: (e: React.DragEvent) => void;
@@ -695,7 +718,7 @@ interface BucketColumnProps {
   onTaskRemoveDate: (taskId: Id<'tasks'>) => Promise<void>;
 }
 
-function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOver, onDragLeave, onDrop, onReorder, onTaskClick, onTaskComplete, onTaskDelete, onTaskReschedule, onTaskRemoveDate }: BucketColumnProps) {
+function BucketColumn({ bucket, dragOverKey, selectedIds, scheduledTimes, onDragStart, onDragOver, onDragLeave, onDrop, onReorder, onTaskClick, onTaskComplete, onTaskDelete, onTaskReschedule, onTaskRemoveDate }: BucketColumnProps) {
   const isDragOver = dragOverKey === bucket.key;
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [rescheduling, setRescheduling] = useState(false);
@@ -827,6 +850,7 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOve
               showDate={true}
               bucketKey={bucket.key}
               isSelected={selectedIds.has(task._id)}
+              scheduledTime={scheduledTimes.get(task._id)}
               onDragStart={onDragStart}
               onClick={(e) => onTaskClick(task._id, e)}
               onComplete={() => onTaskComplete(task._id)}
@@ -868,6 +892,8 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, onDragStart, onDragOve
 
 export function TasksBucketed() {
   const tasks = useQuery(api.tasks.list, { status: 'todo' });
+  // Today's day plan — used to surface scheduled time on task cards (FR-1)
+  const todayDayPlan = useQuery(api.dayPlans.getByDate, { date: todayISO() });
   const updateTask = useMutation(api.tasks.update);
   const completeTaskMut = useMutation(api.tasks.complete);
   const removeTaskMut = useMutation(api.tasks.remove);
@@ -876,6 +902,31 @@ export function TasksBucketed() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const lastSelectedIdRef = useRef<string | null>(null);
   const dragTaskIdRef = useRef<string | null>(null);
+
+  // Section 6H-1 — compact toolbar state
+  const [hiddenBuckets, setHiddenBuckets] = useState<Set<string>>(new Set());
+  const [density, setDensity] = useState<TaskDensity>('comfortable');
+  const [sortBy, setSortBy] = useState<TaskSortBy>('manual');
+
+  // Build a map of taskId → formatted scheduled time (e.g. "9:00 AM") for any
+  // task that's part of today's day plan schedule. Hidden when no plan exists.
+  const scheduledTimes = (() => {
+    const map = new Map<string, string>();
+    const schedule = todayDayPlan?.schedule;
+    if (!schedule) return map;
+    for (const block of schedule) {
+      if (!block.taskId) continue;
+      const [hStr, mStr] = block.start.split(':');
+      const h = Number(hStr);
+      const m = Number(mStr);
+      if (!Number.isFinite(h) || !Number.isFinite(m)) continue;
+      const suffix = h >= 12 ? 'PM' : 'AM';
+      const display = h === 0 ? 12 : h > 12 ? h - 12 : h;
+      const minutes = m.toString().padStart(2, '0');
+      map.set(block.taskId, `${display}:${minutes} ${suffix}`);
+    }
+    return map;
+  })();
 
   // Build a flat ordered list of task IDs for shift-select range
   const allTaskIds = tasks ? tasks.map((t) => t._id as string) : [];
@@ -1143,10 +1194,47 @@ export function TasksBucketed() {
     );
   }
 
-  const buckets = bucketTasks(tasks);
+  const allBuckets = bucketTasks(tasks);
+
+  // Apply within-bucket sort (Section 6H-1 toolbar)
+  const sortedBuckets = sortBy === 'manual'
+    ? allBuckets
+    : allBuckets.map((b) => ({
+        ...b,
+        tasks: [...b.tasks].sort((a, c) => {
+          if (sortBy === 'date') {
+            return (a.dueDate ?? '9999').localeCompare(c.dueDate ?? '9999');
+          }
+          return a.title.localeCompare(c.title);
+        }),
+      }));
+
+  // Apply hidden-bucket filter
+  const buckets = sortedBuckets.filter((b) => !hiddenBuckets.has(b.key));
+
+  function toggleBucket(key: string) {
+    setHiddenBuckets((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   return (
-    <div className="max-w-none space-y-6">
+    <div className={cn('max-w-none space-y-6', density === 'compact' && 'tasks-density-compact')}>
+      {/* Toolbar — compact (Section 6H-1) */}
+      <div className="flex items-center justify-end -mt-1">
+        <TasksToolbar
+          hiddenBuckets={hiddenBuckets}
+          onToggleBucket={toggleBucket}
+          density={density}
+          onChangeDensity={setDensity}
+          sortBy={sortBy}
+          onChangeSort={setSortBy}
+        />
+      </div>
+
       {/* Column layout */}
       <div className="md:overflow-x-auto md:overflow-y-visible md:pb-4 md:-mx-2 md:px-2">
         <div className="flex flex-col gap-6 md:flex-row md:gap-4 md:[min-width:max-content]">
@@ -1156,6 +1244,7 @@ export function TasksBucketed() {
               bucket={bucket}
               dragOverKey={dragOverKey}
               selectedIds={selectedIds}
+              scheduledTimes={scheduledTimes}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}

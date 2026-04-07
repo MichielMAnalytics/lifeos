@@ -51,6 +51,7 @@ import { ActiveProgramme } from './sections/active-programme';
 import { HealthSummary } from './sections/health-summary';
 import { NutritionPlan } from './sections/nutrition-plan';
 import { FoodLog } from './sections/food-log';
+import { MacrosTrend } from './sections/macros-trend';
 
 const SECTION_MAP: Record<string, React.ComponentType> = {
   // Today page sections
@@ -123,6 +124,7 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'health-summary': HealthSummary,
   'nutrition-plan': NutritionPlan,
   'food-log': FoodLog,
+  'macros-trend': MacrosTrend,
 };
 
 export function SectionRenderer({ section }: { section: SectionDef }) {

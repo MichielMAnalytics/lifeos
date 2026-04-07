@@ -1,169 +1,161 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
-import type { Id } from '@/lib/convex-api';
-import { formatDate } from '@/lib/utils';
+import type { Doc } from '@/lib/convex-api';
+import { cn } from '@/lib/utils';
 import { IdeaForm } from '@/components/idea-form';
 import { IdeaDetailModal } from '@/components/idea-detail-modal';
-import type { Doc } from '@/lib/convex-api';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ── Types ────────────────────────────────────────────
 
 type Idea = Doc<'ideas'>;
 type ActionabilityLevel = 'high' | 'medium' | 'low';
 
-const ACTIONABILITY_LEVELS: ActionabilityLevel[] = ['high', 'medium', 'low'];
+const COLUMNS: {
+  key: ActionabilityLevel;
+  label: string;
+  accentClass: string;
+  borderTopClass: string;
+}[] = [
+  { key: 'high',   label: 'High',   accentClass: 'text-success',  borderTopClass: 'border-t-success' },
+  { key: 'medium', label: 'Medium', accentClass: 'text-warning',  borderTopClass: 'border-t-warning' },
+  { key: 'low',    label: 'Low',    accentClass: 'text-text-muted', borderTopClass: 'border-t-text-muted' },
+];
 
-const ACTIONABILITY_CONFIG: Record<ActionabilityLevel, { label: string; color: string }> = {
-  high: { label: 'High', color: 'text-success' },
-  medium: { label: 'Medium', color: 'text-warning' },
-  low: { label: 'Low', color: 'text-text-muted' },
-};
+// ── Helpers ──────────────────────────────────────────
 
-function getActionabilityDisplay(level: string | undefined): { label: string; color: string } {
-  if (level && level in ACTIONABILITY_CONFIG) {
-    return ACTIONABILITY_CONFIG[level as ActionabilityLevel];
-  }
-  return { label: 'Unset', color: 'text-text-muted' };
+function formatRelativeDate(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+  if (days === 0) return 'today';
+  if (days === 1) return '1d ago';
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
 }
 
-function truncate(text: string, maxLen: number): string {
-  if (text.length <= maxLen) return text;
-  return text.slice(0, maxLen).trimEnd() + '...';
+function shortDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function creationDateStr(timestamp: number): string {
-  return new Date(timestamp).toISOString().slice(0, 10);
-}
+// ── IdeaCard ─────────────────────────────────────────
 
-// ── Actionability Dropdown ───────────────────────────
+function IdeaCard({
+  idea,
+  borderTopClass,
+  onSelect,
+}: {
+  idea: Idea;
+  borderTopClass: string;
+  onSelect: (idea: Idea) => void;
+}) {
+  const markReviewed = useMutation(api.ideas.markReviewed);
+  const isReviewed = idea.reviewedAt != null;
 
-interface ActionabilityDropdownProps {
-  current: string | undefined;
-  onSelect: (level: ActionabilityLevel) => void;
-  onClose: () => void;
-}
-
-function ActionabilityDropdown({ current, onSelect, onClose }: ActionabilityDropdownProps) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
+  const toggleReviewed = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      void markReviewed({ id: idea._id, reviewed: !isReviewed }).catch((err) => {
+        console.error('Failed to toggle reviewed:', err);
+      });
+    },
+    [markReviewed, idea._id, isReviewed],
+  );
 
   return (
     <div
-      ref={ref}
-      className="absolute z-50 top-full right-0 mt-1 w-28 border border-border bg-bg shadow-lg p-1 rounded-xl"
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(idea)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect(idea);
+        }
+      }}
+      className={cn(
+        'relative bg-bg-subtle border border-border-subtle rounded-lg p-3 mb-2 cursor-pointer transition-all hover:border-border',
+        'border-t-2',
+        borderTopClass,
+        isReviewed && 'opacity-60',
+      )}
     >
-      {ACTIONABILITY_LEVELS.map((level) => {
-        const config = ACTIONABILITY_CONFIG[level];
-        const isActive = current === level;
-        return (
-          <button
-            key={level}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(level);
-            }}
-            className={`w-full text-left px-3 py-1.5 text-xs rounded transition-colors ${
-              isActive ? 'bg-accent/10 font-medium' : 'hover:bg-surface-hover'
-            } ${config.color}`}
-          >
-            {config.label}
-          </button>
-        );
-      })}
+      {/* Reviewed checkbox in top-right */}
+      <button
+        type="button"
+        onClick={toggleReviewed}
+        title={isReviewed ? `Reviewed ${shortDate(idea.reviewedAt!)}` : 'Mark as reviewed'}
+        className={cn(
+          'absolute top-2 right-2 flex h-4 w-4 shrink-0 items-center justify-center rounded border-[1.5px] transition-all',
+          isReviewed
+            ? 'border-success bg-success text-white'
+            : 'border-text-muted/40 hover:border-success',
+        )}
+      >
+        {isReviewed && (
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        )}
+      </button>
+
+      {/* Title / content */}
+      <div className="text-sm text-text font-medium leading-snug pr-6">
+        {idea.content.length > 140 ? idea.content.slice(0, 140).trimEnd() + '…' : idea.content}
+      </div>
+
+      {/* Next step */}
+      {idea.nextStep && (
+        <div className="text-xs text-text-muted mt-2 leading-snug">
+          → {idea.nextStep}
+        </div>
+      )}
+
+      {/* Footer: date + status */}
+      <div className="flex items-center justify-between mt-3 text-[10px] text-text-muted/70">
+        <span className="tabular-nums">{shortDate(idea._creationTime)} · {formatRelativeDate(idea._creationTime)}</span>
+        {isReviewed && (
+          <span className="text-success/80 font-medium">Reviewed</span>
+        )}
+      </div>
     </div>
   );
 }
 
-// ── Idea Row ─────────────────────────────────────────
+// ── Column ───────────────────────────────────────────
 
-interface IdeaRowProps {
-  idea: Idea;
-  index: number;
+function Column({
+  config,
+  ideas,
+  onSelect,
+}: {
+  config: typeof COLUMNS[number];
+  ideas: Idea[];
   onSelect: (idea: Idea) => void;
-}
-
-function IdeaRow({ idea, index, onSelect }: IdeaRowProps) {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const updateIdea = useMutation(api.ideas.update);
-
-  const handleActionabilityChange = useCallback(async (level: ActionabilityLevel) => {
-    setDropdownOpen(false);
-    try {
-      await updateIdea({ id: idea._id, actionability: level });
-    } catch (err) {
-      console.error('Failed to update idea actionability:', err);
-    }
-  }, [updateIdea, idea._id]);
-
-  const display = getActionabilityDisplay(idea.actionability);
-  const createdDate = creationDateStr(idea._creationTime);
-  const contentPreview = truncate(idea.content, 60);
-
+}) {
   return (
-    <div className="border-b border-border last:border-b-0">
-      {/* Main row */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => onSelect(idea)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onSelect(idea);
-          }
-        }}
-        className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-surface-hover cursor-pointer group"
-      >
-        {/* Index */}
-        <span className="text-xs text-text-muted w-8 shrink-0 tabular-nums">
-          {String(index).padStart(2, '0')}
-        </span>
-
-        {/* Content preview */}
-        <span className="flex-1 text-sm text-text truncate min-w-0">
-          {contentPreview}
-        </span>
-
-        {/* Actionability badge - clickable */}
-        <div className="relative shrink-0 w-20 text-center">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDropdownOpen((prev) => !prev);
-            }}
-            className={`text-xs font-medium px-2 py-0.5 rounded border border-border hover:border-text-muted/40 transition-colors ${display.color}`}
-          >
-            {display.label}
-          </button>
-          {dropdownOpen && (
-            <ActionabilityDropdown
-              current={idea.actionability}
-              onSelect={handleActionabilityChange}
-              onClose={() => setDropdownOpen(false)}
-            />
-          )}
-        </div>
-
-        {/* Date */}
-        <span className="text-xs text-text-muted shrink-0 w-16 text-right">
-          {formatDate(createdDate)}
-        </span>
+    <div className="bg-surface/50 rounded-xl p-3 border border-border-subtle min-h-[160px]">
+      <div className={cn('flex items-center justify-between mb-3 px-1', config.accentClass)}>
+        <span className="text-[10px] font-bold uppercase tracking-wider">{config.label}</span>
+        <span className="text-[10px] font-semibold tabular-nums opacity-70">{ideas.length}</span>
       </div>
+      {ideas.length === 0 ? (
+        <p className="text-[11px] text-text-muted/60 italic px-1 py-2">No ideas</p>
+      ) : (
+        ideas.map((idea) => (
+          <IdeaCard
+            key={idea._id}
+            idea={idea}
+            borderTopClass={config.borderTopClass}
+            onSelect={onSelect}
+          />
+        ))
+      )}
     </div>
   );
 }
@@ -173,69 +165,85 @@ function IdeaRow({ idea, index, onSelect }: IdeaRowProps) {
 export function IdeasGrid() {
   const ideas = useQuery(api.ideas.list, {});
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+  const [showReviewed, setShowReviewed] = useState(false);
 
-  if (!ideas) return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="h-40 rounded-xl bg-surface animate-pulse" />
-      ))}
-    </div>
-  );
+  const grouped = useMemo(() => {
+    const empty: Record<ActionabilityLevel, Idea[]> = { high: [], medium: [], low: [] };
+    if (!ideas) return empty;
+    for (const idea of ideas) {
+      if (!showReviewed && idea.reviewedAt != null) continue;
+      const level = (idea.actionability as ActionabilityLevel | undefined) ?? 'low';
+      if (level === 'high' || level === 'medium' || level === 'low') {
+        empty[level].push(idea);
+      } else {
+        empty.low.push(idea);
+      }
+    }
+    // Newest first within each column
+    for (const k of Object.keys(empty) as ActionabilityLevel[]) {
+      empty[k].sort((a, b) => b._creationTime - a._creationTime);
+    }
+    return empty;
+  }, [ideas, showReviewed]);
 
-  // Sort by creation time descending (newest first)
-  const sorted = [...ideas].sort((a, b) => b._creationTime - a._creationTime);
+  if (!ideas) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="bg-surface/50 rounded-xl p-3 border border-border-subtle">
+            <Skeleton className="h-3 w-16 mb-3" />
+            <Skeleton className="h-20 w-full mb-2 rounded-lg" />
+            <Skeleton className="h-20 w-full rounded-lg" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const totalVisible = grouped.high.length + grouped.medium.length + grouped.low.length;
+  const reviewedHidden = !showReviewed
+    ? ideas.filter((i) => i.reviewedAt != null).length
+    : 0;
 
   return (
-    <div className="max-w-none space-y-6">
-      {/* Ideas Table */}
-      {sorted.length === 0 ? (
-        <div className="space-y-4">
-          <div className="border border-dashed border-border/50 rounded-xl overflow-hidden">
-            {[
-              { content: 'What if we could automate the weekly review...', level: 'High' },
-              { content: 'A better way to track daily wins and progress', level: 'Medium' },
-              { content: 'Explore integrating with calendar for reminders', level: 'Low' },
-            ].map((ghost, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-4 px-5 py-3.5 opacity-40 border-b border-border/30 last:border-b-0"
-              >
-                <span className="text-xs font-mono text-text-muted w-8 shrink-0">
-                  [{String(idx + 1).padStart(2, '0')}]
-                </span>
-                <span className="flex-1 text-sm text-text-muted italic truncate min-w-0">
-                  {ghost.content}
-                </span>
-                <span className="text-xs font-medium px-2 py-0.5 rounded border border-border/50 text-text-muted shrink-0">
-                  {ghost.level}
-                </span>
-                <span className="text-xs text-text-muted shrink-0 w-16 text-right">
-                  Today
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-sm text-text-muted/70">
-            Capture your first idea
-          </p>
+    <div className="max-w-none space-y-4">
+      {/* Header with reviewed toggle and add button */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-xs text-text-muted">
+          {totalVisible} idea{totalVisible === 1 ? '' : 's'}
+          {reviewedHidden > 0 && ` · ${reviewedHidden} reviewed (hidden)`}
         </div>
-      ) : (
-        <div className="border border-border rounded-xl overflow-hidden">
-          {/* Table header */}
-          <div className="flex items-center gap-4 px-5 py-2.5 border-b border-border bg-surface text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
-            <span className="w-8 shrink-0">#</span>
-            <span className="flex-1">Content</span>
-            <span className="shrink-0 w-20 text-center">Potential</span>
-            <span className="shrink-0 w-16 text-right">Date</span>
-            <span className="shrink-0 w-3" />
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowReviewed((p) => !p)}
+            className={cn(
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border transition-colors',
+              showReviewed
+                ? 'bg-success/10 border-success/30 text-success'
+                : 'bg-transparent border-border text-text-muted hover:text-text hover:border-text/40',
+            )}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            {showReviewed ? 'Showing reviewed' : 'Show reviewed'}
+          </button>
+          <IdeaForm />
+        </div>
+      </div>
 
-          {/* Rows */}
-          {sorted.map((idea, idx) => (
-            <IdeaRow key={idea._id} idea={idea} index={idx + 1} onSelect={setSelectedIdea} />
-          ))}
-        </div>
-      )}
+      {/* 3-column kanban */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {COLUMNS.map((config) => (
+          <Column
+            key={config.key}
+            config={config}
+            ideas={grouped[config.key]}
+            onSelect={setSelectedIdea}
+          />
+        ))}
+      </div>
 
       {/* Detail Modal */}
       {selectedIdea && (

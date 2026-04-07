@@ -6,6 +6,7 @@ import { SectionRenderer } from './section-renderer';
 import { PresetSelector } from './preset-selector';
 import { UniversalAdd } from './universal-add';
 import { OnboardingChecklist } from './onboarding-checklist';
+import { ConfigureToggle } from './configure-toggle';
 
 interface PageShellProps {
   page: PageKey;
@@ -21,13 +22,16 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
 
   return (
     <div className="animate-fade-in">
-      {/* Page header with Add button */}
+      {/* Page header with Add button + Edit Layout pill (Section 14C) */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-text">{title}</h1>
           {subtitle && <p className="text-sm text-text-muted mt-0.5">{subtitle}</p>}
         </div>
-        <UniversalAdd page={page} />
+        <div className="flex items-center gap-2">
+          <ConfigureToggle />
+          <UniversalAdd page={page} />
+        </div>
       </div>
 
       {/* Onboarding checklist — Today page */}

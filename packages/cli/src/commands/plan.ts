@@ -205,6 +205,89 @@ planCommand
   });
 
 planCommand
+  .command('add-block <date> <block>')
+  .description('Append a single time block to a day plan. Format: "HH:MM-HH:MM Description" or "HH:MM Description".')
+  .option('-t, --type <type>', 'Block type (event/break/lunch/wake/task/other)', 'other')
+  .action(async (date: string, raw: string, opts: { type: string }) => {
+    try {
+      const rangeMatch = raw.match(/^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})\s+(.+)$/);
+      const singleMatch = raw.match(/^(\d{1,2}:\d{2})\s+(.+)$/);
+      let block: { start: string; end: string; label: string; type: string } | null = null;
+      if (rangeMatch) {
+        block = {
+          start: rangeMatch[1].padStart(5, '0'),
+          end: rangeMatch[2].padStart(5, '0'),
+          label: rangeMatch[3],
+          type: opts.type,
+        };
+      } else if (singleMatch) {
+        const startStr = singleMatch[1].padStart(5, '0');
+        const [h, m] = startStr.split(':').map(Number);
+        const endMin = h * 60 + m + 30;
+        const endH = Math.floor(endMin / 60);
+        const endM = endMin % 60;
+        const endStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+        block = {
+          start: startStr,
+          end: endStr,
+          label: singleMatch[2],
+          type: opts.type,
+        };
+      } else {
+        printError(`Invalid block format. Use "HH:MM-HH:MM Description" or "HH:MM Description"`);
+        process.exitCode = 1;
+        return;
+      }
+
+      const client = createClient();
+      // Fetch existing plan to append (don't overwrite)
+      let existingSchedule: { start: string; end: string; label: string; type: string }[] = [];
+      try {
+        const existing = await client.get<ApiResponse<DayPlan>>(`/api/v1/day-plans/${date}`);
+        if (existing.data?.schedule) {
+          existingSchedule = existing.data.schedule.map((b) => ({
+            start: b.start,
+            end: b.end,
+            label: b.label,
+            type: b.type,
+          }));
+        }
+      } catch {
+        // No existing plan; start fresh
+      }
+      const newSchedule = [...existingSchedule, block];
+      const res = await client.put<ApiResponse<DayPlan>>(`/api/v1/day-plans/${date}`, { schedule: newSchedule });
+
+      if (isJsonMode()) {
+        printJson(res);
+        return;
+      }
+      printSuccess(`Added block to ${date}: ${block.start}-${block.end} ${block.label}`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+planCommand
+  .command('clear-schedule <date>')
+  .description('Remove all schedule blocks from a day plan (keeps MIT/P1/P2)')
+  .action(async (date: string) => {
+    try {
+      const client = createClient();
+      const res = await client.put<ApiResponse<DayPlan>>(`/api/v1/day-plans/${date}`, { schedule: [] });
+      if (isJsonMode()) {
+        printJson(res);
+        return;
+      }
+      printSuccess(`Cleared schedule for ${date}.`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+planCommand
   .command('delete <date>')
   .description('Delete a day plan')
   .action(async (date: string) => {

@@ -1,7 +1,14 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { type ThemeKey, defaultTheme } from '@/lib/themes';
+import {
+  type ThemeKey,
+  themes,
+  themeKeys,
+  defaultTheme,
+  SYSTEM_DARK_THEME,
+  SYSTEM_LIGHT_THEME,
+} from '@/lib/themes';
 
 type ThemeCtx = { theme: ThemeKey; setTheme: (t: ThemeKey) => void };
 
@@ -10,44 +17,64 @@ const ThemeContext = createContext<ThemeCtx>({
   setTheme: () => {},
 });
 
-function applyTheme(t: ThemeKey) {
+const STORAGE_KEY = 'lifeos-theme';
+
+// Old theme keys (pre Phase 2). If we see one in localStorage we migrate to
+// "system" so the user gets a sensible default for their OS.
+const LEGACY_KEYS = new Set([
+  'midnight',
+  'zen',
+  'nord',
+  'sunset',
+  'forest',
+  'light',
+  'dark',
+]);
+
+function applyTheme(t: keyof typeof themes) {
   document.documentElement.setAttribute('data-theme', t);
 }
 
-function getSystemTheme(): ThemeKey {
-  if (typeof window === 'undefined') return defaultTheme;
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+function resolveSystemKey(): keyof typeof themes {
+  if (typeof window === 'undefined') return SYSTEM_DARK_THEME;
+  return window.matchMedia('(prefers-color-scheme: light)').matches
+    ? SYSTEM_LIGHT_THEME
+    : SYSTEM_DARK_THEME;
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeKey>(defaultTheme);
 
   useEffect(() => {
-    const stored = localStorage.getItem('lifeos-theme') as ThemeKey | null;
+    const stored = localStorage.getItem(STORAGE_KEY);
 
-    // If user has explicitly chosen a theme, use it.
-    // If "system", follow OS preference.
-    // If nothing stored, follow OS preference.
-    if (stored === 'system' || !stored) {
-      const systemTheme = getSystemTheme();
-      setThemeState(stored === 'system' ? ('system' as ThemeKey) : systemTheme);
-      applyTheme(systemTheme);
-
-      if (!stored) {
-        // First visit: auto-detect and save "system"
-        localStorage.setItem('lifeos-theme', 'system');
+    let active: ThemeKey = 'system';
+    if (stored) {
+      if (LEGACY_KEYS.has(stored)) {
+        // Migrate legacy keys → system
+        localStorage.setItem(STORAGE_KEY, 'system');
+        active = 'system';
+      } else if (themeKeys.includes(stored as ThemeKey)) {
+        active = stored as ThemeKey;
       }
     } else {
-      setThemeState(stored);
-      applyTheme(stored);
+      // First visit: store "system" so we remember the choice
+      localStorage.setItem(STORAGE_KEY, 'system');
     }
 
-    // Listen for OS theme changes
+    setThemeState(active);
+    if (active === 'system') {
+      applyTheme(resolveSystemKey());
+    } else {
+      applyTheme(active as keyof typeof themes);
+    }
+
+    // Keep system mode in sync with OS preference changes
     const mq = window.matchMedia('(prefers-color-scheme: light)');
     const handler = () => {
-      const current = localStorage.getItem('lifeos-theme');
-      if (current === 'system' || !current) {
-        applyTheme(mq.matches ? 'light' : 'dark');
+      const current = localStorage.getItem(STORAGE_KEY);
+      if (!current || current === 'system') {
+        applyTheme(resolveSystemKey());
       }
     };
     mq.addEventListener('change', handler);
@@ -56,11 +83,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = useCallback((t: ThemeKey) => {
     setThemeState(t);
-    localStorage.setItem('lifeos-theme', t);
+    localStorage.setItem(STORAGE_KEY, t);
     if (t === 'system') {
-      applyTheme(getSystemTheme());
+      applyTheme(resolveSystemKey());
     } else {
-      applyTheme(t);
+      applyTheme(t as keyof typeof themes);
     }
   }, []);
 

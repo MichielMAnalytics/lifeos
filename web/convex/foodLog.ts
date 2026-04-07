@@ -72,6 +72,50 @@ export const dailyTotals = query({
   },
 });
 
+// ── weeklyTotals (Section 10A) ───────────────────────
+// Returns an array of daily totals for each date in [from, to] inclusive.
+// Always returns one entry per day in the range, even days with zero entries.
+
+export const weeklyTotals = query({
+  args: {
+    from: v.string(), // "YYYY-MM-DD"
+    to: v.string(),   // "YYYY-MM-DD" inclusive
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const all = await ctx.db
+      .query("foodLog")
+      .withIndex("by_userId_entryDate", (q) => q.eq("userId", userId))
+      .collect();
+
+    const inRange = all.filter((f) => f.entryDate >= args.from && f.entryDate <= args.to);
+
+    // Build map date → totals
+    const byDate = new Map<string, { calories: number; protein: number; carbs: number; fat: number }>();
+    for (const entry of inRange) {
+      const existing = byDate.get(entry.entryDate) ?? { calories: 0, protein: 0, carbs: 0, fat: 0 };
+      existing.calories += entry.calories ?? 0;
+      existing.protein += entry.protein ?? 0;
+      existing.carbs += entry.carbs ?? 0;
+      existing.fat += entry.fat ?? 0;
+      byDate.set(entry.entryDate, existing);
+    }
+
+    // Iterate dates from → to inclusive, filling in zeros
+    const result: { date: string; calories: number; protein: number; carbs: number; fat: number }[] = [];
+    const start = new Date(args.from + 'T00:00:00');
+    const end = new Date(args.to + 'T00:00:00');
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const date = d.toISOString().slice(0, 10);
+      const totals = byDate.get(date) ?? { calories: 0, protein: 0, carbs: 0, fat: 0 };
+      result.push({ date, ...totals });
+    }
+    return result;
+  },
+});
+
 // ── create ────────────────────────────────────────────
 
 export const create = mutation({

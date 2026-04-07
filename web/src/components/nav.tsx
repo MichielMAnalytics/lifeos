@@ -38,7 +38,7 @@ export function Nav() {
   const [expanded, setExpanded] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { config, isConfigMode, toggleConfigMode, togglePageVisibility, setNavOrder } = useDashboardConfig();
+  const { config, isConfigMode, togglePageVisibility, setNavOrder } = useDashboardConfig();
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
@@ -294,7 +294,7 @@ export function Nav() {
           </Link>
 
           {/* Profile + menu */}
-          <ProfileBadge expanded={navExpanded} toggleConfigMode={toggleConfigMode} isConfigMode={isConfigMode} />
+          <ProfileBadge expanded={navExpanded} />
         </div>
       </>
     );
@@ -493,7 +493,7 @@ const PLAN_LABELS: Record<string, string> = {
   premium: 'Premium',
 };
 
-function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: boolean; toggleConfigMode: () => void; isConfigMode: boolean }) {
+function ProfileBadge({ expanded }: { expanded: boolean }) {
   const user = useQuery(api.authHelpers.getMe, {});
   const subscription = useQuery(api.stripe.getMySubscription);
   const balance = useQuery(api.stripe.getBalance);
@@ -634,17 +634,8 @@ function ProfileBadge({ expanded, toggleConfigMode, isConfigMode }: { expanded: 
             </svg>
             Settings
           </Link>
-          <button
-            onClick={() => { setMenuOpen(false); toggleConfigMode(); }}
-            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left rounded-lg mx-1"
-            style={{ width: 'calc(100% - 0.5rem)' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" />
-              <rect x="3" y="14" width="7" height="7" rx="2" /><rect x="14" y="14" width="7" height="7" rx="2" />
-            </svg>
-            {isConfigMode ? 'Done configuring' : 'Configure layout'}
-          </button>
+          {/* "Configure layout" entry removed — now lives as the Edit pill in
+              the page header (Section 14C). Esc also exits config mode. */}
           <div className="my-1 border-t border-border/40" />
           <button
             onClick={() => { setMenuOpen(false); void signOut(); }}

@@ -77,7 +77,6 @@ export function HeaderNav() {
   const {
     config,
     isConfigMode,
-    toggleConfigMode,
     setNavMode,
     setNavOrder,
     togglePageVisibility,
@@ -229,7 +228,7 @@ export function HeaderNav() {
             variant="icon"
             className="px-2 py-1.5"
           />
-          <HeaderProfileMenu toggleConfigMode={toggleConfigMode} isConfigMode={isConfigMode} />
+          <HeaderProfileMenu />
         </div>
       </div>
 
@@ -289,7 +288,7 @@ const PLAN_LABELS: Record<string, string> = {
   premium: 'Premium',
 };
 
-function HeaderProfileMenu({ toggleConfigMode, isConfigMode }: { toggleConfigMode: () => void; isConfigMode: boolean }) {
+function HeaderProfileMenu() {
   const user = useQuery(api.authHelpers.getMe, {});
   const subscription = useQuery(api.stripe.getMySubscription);
   const balance = useQuery(api.stripe.getBalance);
@@ -423,16 +422,8 @@ function HeaderProfileMenu({ toggleConfigMode, isConfigMode }: { toggleConfigMod
             </svg>
             Settings
           </Link>
-          <button
-            onClick={() => { setMenuOpen(false); toggleConfigMode(); }}
-            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors w-full text-left"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
-            </svg>
-            {isConfigMode ? 'Done configuring' : 'Configure layout'}
-          </button>
+          {/* "Configure layout" entry removed — now lives as the Edit pill in
+              the page header (Section 14C). Esc also exits config mode. */}
           <div className="my-1 border-t border-border/40" />
           <button
             onClick={() => { setMenuOpen(false); void signOut(); }}

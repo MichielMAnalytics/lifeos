@@ -88,6 +88,10 @@ export default defineSchema({
     p2: v.optional(v.string()),
     notes: v.optional(v.string()),
     wins: v.array(v.string()),
+    // Phase 2 — Section 7I additions
+    summary: v.optional(v.string()),         // one-line "headline" of the day
+    mood: v.optional(v.float64()),            // 1-5 (Daylio scale)
+    gratitudes: v.optional(v.array(v.string())),
     updatedAt: v.float64(),
   }).index("by_userId_entryDate", ["userId", "entryDate"]),
 
@@ -132,6 +136,8 @@ export default defineSchema({
     actionability: v.optional(v.string()), // "high" | "medium" | "low"
     nextStep: v.optional(v.string()),
     projectId: v.optional(v.id("projects")),
+    // Phase 2 — Section 12B+ addition: mark as reviewed
+    reviewedAt: v.optional(v.float64()),
   }).index("by_userId", ["userId"]),
 
   // ── Thoughts ───────────────────────────────────────

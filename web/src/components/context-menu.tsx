@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useId } from 'react';
 
 interface ContextMenuItem {
   label: string;
@@ -17,7 +17,14 @@ interface ContextMenuProps {
 
 export type { ContextMenuItem };
 
+// Custom event used to coordinate single-instance behavior across all
+// ContextMenu components on the page. When any menu opens, it dispatches
+// this event with its own id, and every other menu listens for it and
+// closes itself if the id doesn't match. Notion-style behavior.
+const CTX_MENU_EVENT = 'lifeos:context-menu-open';
+
 export function ContextMenu({ items, children }: ContextMenuProps) {
+  const id = useId();
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
@@ -26,37 +33,59 @@ export function ContextMenu({ items, children }: ContextMenuProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    // Calculate position, adjusting for viewport overflow
-    const menuWidth = 200;
-    const menuHeight = items.length * 36 + 8; // approximate
-    let x = e.clientX;
-    let y = e.clientY;
+    // Tell every other open ContextMenu to close itself before we open.
+    window.dispatchEvent(
+      new CustomEvent(CTX_MENU_EVENT, { detail: { id } }),
+    );
 
-    if (x + menuWidth > window.innerWidth) {
-      x = e.clientX - menuWidth;
+    // Smart positioning: anchor to the cursor with a small offset so the
+    // first item isn't directly under the pointer. Flip horizontally if it
+    // would overflow the right edge, vertically if it would overflow the
+    // bottom edge. Clamp to a small viewport gutter.
+    const GUTTER = 8;
+    const OFFSET = 4;
+    const menuWidth = 220;
+    const menuHeight = items.length * 36 + 12; // approximate
+
+    let x = e.clientX + OFFSET;
+    let y = e.clientY + OFFSET;
+
+    if (x + menuWidth > window.innerWidth - GUTTER) {
+      x = e.clientX - menuWidth - OFFSET;
     }
-    if (y + menuHeight > window.innerHeight) {
-      y = e.clientY - menuHeight;
+    if (y + menuHeight > window.innerHeight - GUTTER) {
+      y = e.clientY - menuHeight - OFFSET;
     }
+    // Final clamp so we never escape the viewport
+    x = Math.max(GUTTER, Math.min(x, window.innerWidth - menuWidth - GUTTER));
+    y = Math.max(GUTTER, Math.min(y, window.innerHeight - menuHeight - GUTTER));
 
     setPosition({ x, y });
     setOpen(true);
-  }, [items.length]);
+  }, [items.length, id]);
 
-  // Close on click outside, escape, scroll
+  // Close on click outside, escape, scroll, OR when another context menu opens.
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
     const handleEscape = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    const handleOtherMenuOpen = (e: Event) => {
+      const detail = (e as CustomEvent<{ id: string }>).detail;
+      if (detail?.id !== id) close();
+    };
     document.addEventListener('click', close);
+    document.addEventListener('contextmenu', close);
     document.addEventListener('keydown', handleEscape);
     document.addEventListener('scroll', close, true);
+    window.addEventListener(CTX_MENU_EVENT, handleOtherMenuOpen);
     return () => {
       document.removeEventListener('click', close);
+      document.removeEventListener('contextmenu', close);
       document.removeEventListener('keydown', handleEscape);
       document.removeEventListener('scroll', close, true);
+      window.removeEventListener(CTX_MENU_EVENT, handleOtherMenuOpen);
     };
-  }, [open]);
+  }, [open, id]);
 
   return (
     <>

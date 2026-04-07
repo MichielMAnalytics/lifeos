@@ -7,13 +7,15 @@ import type { Id } from '@/lib/convex-api';
 import { useTodayDate } from '@/lib/today-date-context';
 import { cn, formatRelativeDate } from '@/lib/utils';
 import { CalendarDatePicker } from '@/components/calendar-date-picker';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ── Block type colors ────────────────────────────────────
+// Sunset Gradient palette (Section 2B pick): MIT #FF4D4F · P1 #FB923C · P2 #FCD34D
 
 const blockBorder: Record<string, string> = {
-  mit: 'border-l-red-500',
-  p1: 'border-l-amber-500',
-  p2: 'border-l-blue-500',
+  mit: 'border-l-[#FF4D4F]',
+  p1: 'border-l-[#FB923C]',
+  p2: 'border-l-[#FCD34D]',
   event: 'border-l-warning',
   break: 'border-l-text-muted',
   lunch: 'border-l-text-muted',
@@ -23,9 +25,9 @@ const blockBorder: Record<string, string> = {
 };
 
 const blockBg: Record<string, string> = {
-  mit: 'bg-red-500/10',
-  p1: 'bg-amber-500/10',
-  p2: 'bg-blue-500/10',
+  mit: 'bg-[#FF4D4F]/10',
+  p1: 'bg-[#FB923C]/10',
+  p2: 'bg-[#FCD34D]/10',
   event: 'bg-warning/10',
   break: 'bg-text-muted/5',
   lunch: 'bg-text-muted/5',
@@ -116,6 +118,86 @@ interface ScheduleBlock {
   taskId?: string;
 }
 
+// ── NowCard (Section 1I) ────────────────────────────────
+// Shows the current time block plus time remaining. If no block is in
+// progress right now, shows the next upcoming block instead.
+
+function NowCard({
+  schedule,
+  nowMinutes,
+}: {
+  schedule: ScheduleBlock[];
+  nowMinutes: number;
+}) {
+  // Find the block that contains "now" (start <= now < end)
+  let current: ScheduleBlock | null = null;
+  let next: ScheduleBlock | null = null;
+  let smallestNextDelta = Infinity;
+  for (const block of schedule) {
+    const start = timeToMinutes(block.start);
+    const end = timeToMinutes(block.end);
+    if (start <= nowMinutes && nowMinutes < end) {
+      current = block;
+      break;
+    }
+    if (start > nowMinutes && start - nowMinutes < smallestNextDelta) {
+      smallestNextDelta = start - nowMinutes;
+      next = block;
+    }
+  }
+
+  if (!current && !next) return null;
+
+  const block = current ?? next!;
+  const start = timeToMinutes(block.start);
+  const end = timeToMinutes(block.end);
+  const startLabel = block.start;
+  const endLabel = block.end;
+  const total = end - start;
+  let progressPct: number | null = null;
+  let metaLabel: string;
+
+  if (current) {
+    const remaining = end - nowMinutes;
+    progressPct = Math.min(100, Math.max(0, ((nowMinutes - start) / total) * 100));
+    metaLabel = `${remaining} min left`;
+  } else {
+    const wait = start - nowMinutes;
+    if (wait < 60) metaLabel = `starts in ${wait} min`;
+    else metaLabel = `starts in ${Math.floor(wait / 60)}h ${wait % 60}m`;
+  }
+
+  return (
+    <div className="border-b border-border bg-bg-subtle px-6 py-3">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-accent shrink-0">
+          <span
+            className="inline-block h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_8px_var(--color-accent-glow)]"
+            style={{ animation: 'pulse 1.6s ease-in-out infinite' }}
+          />
+          {current ? 'Now' : 'Next'}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-text truncate">
+            {block.label}
+          </div>
+          <div className="text-[11px] text-text-muted font-mono tabular-nums">
+            {startLabel}–{endLabel} <span className="text-accent">· {metaLabel}</span>
+          </div>
+        </div>
+      </div>
+      {progressPct !== null && (
+        <div className="mt-2 h-[3px] bg-surface rounded-full overflow-hidden">
+          <div
+            className="h-full bg-accent transition-all"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Resize state type ───────────────────────────────────
 
 interface ResizeState {
@@ -179,6 +261,7 @@ function EventCard({
 
   return (
     <div
+      data-event-card
       draggable={!isResizing}
       onDragStart={handleDragStart}
       className={cn(
@@ -488,6 +571,13 @@ export function DayTimeline() {
   // Sidebar drop state
   const [isDragOverSidebar, setIsDragOverSidebar] = useState(false);
 
+  // Section 1H — click empty slot to add a custom (non-task) block
+  const [composer, setComposer] = useState<{ startMin: number; endMin: number } | null>(null);
+  const [composerLabel, setComposerLabel] = useState('');
+  const composerInputRef = useRef<HTMLInputElement>(null);
+  // When Esc closes the composer, we want the subsequent blur to NOT save.
+  const composerCancelledRef = useRef(false);
+
   const gridRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -707,16 +797,67 @@ export function DayTimeline() {
     [schedule, date, upsert],
   );
 
-  // Loading state
+  // Section 1H — click handler for adding custom non-task blocks
+  const handleGridClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (resizing || dropTargetMinutes !== null || blockDropTargetMinutes !== null) return;
+    if (!gridRef.current) return;
+    // Don't open the composer if the click came from inside an existing event
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-event-card]')) return;
+    if (target.closest('[data-composer]')) return;
+
+    const rect = gridRef.current.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const startMin = clampMinutes(snapToQuarter(positionToMinutes(y)));
+    const endMin = clampMinutes(startMin + 30); // default 30-min block
+    setComposer({ startMin, endMin });
+    setComposerLabel('');
+    requestAnimationFrame(() => composerInputRef.current?.focus());
+  }, [resizing, dropTargetMinutes, blockDropTargetMinutes]);
+
+  const closeComposer = useCallback(() => {
+    setComposer(null);
+    setComposerLabel('');
+  }, []);
+
+  const cancelComposer = useCallback(() => {
+    composerCancelledRef.current = true;
+    closeComposer();
+  }, [closeComposer]);
+
+  const saveComposer = useCallback(() => {
+    // Skip save if Esc just cancelled this composer (avoids onBlur racing)
+    if (composerCancelledRef.current) {
+      composerCancelledRef.current = false;
+      return;
+    }
+    if (!composer) return;
+    const trimmed = composerLabel.trim();
+    if (!trimmed) {
+      closeComposer();
+      return;
+    }
+    const newBlock: ScheduleBlock = {
+      start: minutesToTimeString(composer.startMin),
+      end: minutesToTimeString(composer.endMin),
+      label: trimmed,
+      type: 'other',
+    };
+    const existingSchedule: ScheduleBlock[] = dayPlan?.schedule ?? [];
+    void upsert({ date, schedule: [...existingSchedule, newBlock] });
+    closeComposer();
+  }, [composer, composerLabel, dayPlan, date, upsert, closeComposer]);
+
+  // Loading state — shape-matching skeleton (Section 18J)
   if (dayPlan === undefined) {
     return (
       <div className="rounded-xl border border-border bg-surface">
         <div className="px-6 py-4 border-b border-border">
-          <div className="animate-pulse h-4 w-28 bg-bg-subtle rounded" />
+          <Skeleton className="h-3 w-28" />
         </div>
         <div className="p-6 space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="animate-pulse h-10 bg-bg-subtle rounded" />
+            <Skeleton key={i} className="h-10 w-full rounded-lg" />
           ))}
         </div>
       </div>
@@ -745,6 +886,11 @@ export function DayTimeline() {
           </span>
         )}
       </div>
+
+      {/* Now card — Section 1I */}
+      {isToday && schedule.length > 0 && (
+        <NowCard schedule={schedule} nowMinutes={nowMinutes} />
+      )}
 
       {/* Calendar grid + task sidebar */}
       <div className="flex flex-col md:flex-row overflow-hidden">
@@ -778,6 +924,7 @@ export function DayTimeline() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
+              onClick={handleGridClick}
             >
               {/* Hour grid lines */}
               {hours.map((hour) => (
@@ -847,8 +994,44 @@ export function DayTimeline() {
               {/* Now line */}
               {isToday && <NowIndicator nowMinutes={nowMinutes} />}
 
+              {/* Inline composer for custom blocks (Section 1H) */}
+              {composer && (
+                <div
+                  data-composer
+                  className="absolute left-2 right-2 z-30 bg-surface border border-accent rounded-lg shadow-2xl px-3 py-2 flex items-center gap-2"
+                  style={{
+                    top: `${minutesToPosition(composer.startMin)}px`,
+                    height: `${Math.max(((composer.endMin - composer.startMin) / 60) * HOUR_HEIGHT, 36)}px`,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span className="text-[10px] font-mono text-text-muted shrink-0 tabular-nums">
+                    {minutesToTimeString(composer.startMin)}
+                  </span>
+                  <input
+                    ref={composerInputRef}
+                    type="text"
+                    value={composerLabel}
+                    onChange={(e) => setComposerLabel(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveComposer();
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        cancelComposer();
+                      }
+                    }}
+                    onBlur={saveComposer}
+                    placeholder="Coffee with Maya, Lunch, Workout…"
+                    className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted focus:outline-none"
+                  />
+                  <span className="text-[10px] text-text-muted shrink-0">↵ to save</span>
+                </div>
+              )}
+
               {/* Empty state message */}
-              {schedule.length === 0 && (
+              {schedule.length === 0 && !composer && (
                 <div
                   className="absolute inset-x-0 flex flex-col items-center justify-center pointer-events-none"
                   style={{
@@ -858,7 +1041,7 @@ export function DayTimeline() {
                 >
                   <p className="text-sm text-text-muted">No events scheduled</p>
                   <p className="text-xs text-text-muted mt-1">
-                    Drag tasks from the sidebar or create a day plan
+                    Click any time slot to add a block, or drag a task from the sidebar
                   </p>
                 </div>
               )}

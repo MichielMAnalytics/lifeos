@@ -1,194 +1,155 @@
 @import "tailwindcss";
 
 /* ── Tailwind Theme Tokens (static for utility generation) ── */
+/* Default = Linear Dark (the dark variant of "system"). The actual theme is applied by data-theme on <html>. */
 
 @theme {
-  --color-bg: #191919;
-  --color-bg-subtle: #1e1e1e;
-  --color-surface: #252525;
-  --color-surface-hover: #2f2f2f;
-  --color-border: #373737;
-  --color-text: #e3e3e3;
-  --color-text-muted: #b0afac;
-  --color-accent: #529cca;
-  --color-accent-hover: #4a8db8;
-  --color-accent-glow: rgba(82,156,202,0.12);
-  --color-success: #4dab9a;
-  --color-warning: #cc8833;
-  --color-danger: #e06c60;
-  --color-surface-2: #333333;
-  --color-border-subtle: #2a2a2a;
+  --color-bg: #08090a;
+  --color-bg-subtle: #0f1011;
+  --color-surface: #141517;
+  --color-surface-hover: #1c1d1f;
+  --color-border: #23252a;
+  --color-text: #f7f8f8;
+  --color-text-muted: #8a8f98;
+  --color-accent: #5e6ad2;
+  --color-accent-hover: #7170ff;
+  --color-accent-glow: rgba(94,106,210,0.15);
+  --color-success: #4cb782;
+  --color-warning: #f2c94c;
+  --color-danger: #eb5757;
+  --color-surface-2: #1c1d1f;
+  --color-border-subtle: #16171a;
   --color-overlay: rgba(0,0,0,0.6);
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.15);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.2);
   --shadow-lg: 0 8px 30px rgba(0,0,0,0.3);
-  --focus-ring: rgba(82,156,202,0.4);
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --focus-ring: rgba(94,106,210,0.4);
+  --font-sans: "Satoshi", "Geist", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ── Theme Overrides (inside @layer theme for cascade priority) ── */
+/* Phase 2 / Section 15: 5 named themes + system. System resolves at runtime. */
 
 @layer theme {
 
-[data-theme="zen"] {
-  --color-bg: #f7f3ee;
-  --color-bg-subtle: #efe9e1;
-  --color-surface: #ffffff;
-  --color-surface-hover: #f0ebe4;
-  --color-border: #ddd5ca;
-  --color-text: #2c2420;
-  --color-text-muted: #6e6259;
-  --color-accent: #c45d3e;
-  --color-accent-hover: #b04e32;
-  --color-accent-glow: rgba(196,93,62,0.1);
-  --color-success: #5a8a6a;
-  --color-warning: #c49a3e;
-  --color-danger: #c45d5d;
-  --color-surface-2: #e8e2d9;
-  --color-border-subtle: #e8e0d6;
-  --color-overlay: rgba(44,36,32,0.4);
-  --shadow-sm: 0 1px 2px rgba(44,36,32,0.06);
-  --shadow-md: 0 4px 12px rgba(44,36,32,0.08);
-  --shadow-lg: 0 8px 30px rgba(44,36,32,0.12);
-  --focus-ring: rgba(196,93,62,0.3);
+/* ── 1. Linear Default Dark — explicit selector for completeness ── */
+[data-theme="linear-dark"] {
+  --color-bg: #08090a;
+  --color-bg-subtle: #0f1011;
+  --color-surface: #141517;
+  --color-surface-hover: #1c1d1f;
+  --color-border: #23252a;
+  --color-text: #f7f8f8;
+  --color-text-muted: #8a8f98;
+  --color-accent: #5e6ad2;
+  --color-accent-hover: #7170ff;
+  --color-accent-glow: rgba(94,106,210,0.15);
+  --color-success: #4cb782;
+  --color-warning: #f2c94c;
+  --color-danger: #eb5757;
+  --color-surface-2: #1c1d1f;
+  --color-border-subtle: #16171a;
+  --color-overlay: rgba(0,0,0,0.6);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.2);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.3);
+  --focus-ring: rgba(94,106,210,0.4);
 }
 
-[data-theme="nord"] {
-  --color-bg: #242933;
-  --color-bg-subtle: #2e3440;
-  --color-surface: #3b4252;
-  --color-surface-hover: #434c5e;
-  --color-border: #4c566a;
-  --color-text: #eceff4;
-  --color-text-muted: #a8b0be;
-  --color-accent: #88c0d0;
-  --color-accent-hover: #7ab4c4;
-  --color-accent-glow: rgba(136,192,208,0.15);
-  --color-success: #a3be8c;
-  --color-warning: #ebcb8b;
-  --color-danger: #bf616a;
-  --color-surface-2: #4c566a;
-  --color-border-subtle: #3b4252;
+/* ── 2. GitHub Light ── */
+[data-theme="github-light"] {
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f6f8fa;
+  --color-surface: #f6f8fa;
+  --color-surface-hover: #eaeef2;
+  --color-border: #d0d7de;
+  --color-text: #1f2328;
+  --color-text-muted: #656d76;
+  --color-accent: #0969da;
+  --color-accent-hover: #0860c7;
+  --color-accent-glow: rgba(9,105,218,0.1);
+  --color-success: #1a7f37;
+  --color-warning: #9a6700;
+  --color-danger: #cf222e;
+  --color-surface-2: #eaeef2;
+  --color-border-subtle: #eaeef2;
+  --color-overlay: rgba(31,35,40,0.4);
+  --shadow-sm: 0 1px 2px rgba(31,35,40,0.06);
+  --shadow-md: 0 4px 12px rgba(31,35,40,0.08);
+  --shadow-lg: 0 8px 30px rgba(31,35,40,0.12);
+  --focus-ring: rgba(9,105,218,0.3);
+}
+
+/* ── 3. GitHub Dark Dimmed ── */
+[data-theme="github-dark-dimmed"] {
+  --color-bg: #22272e;
+  --color-bg-subtle: #2d333b;
+  --color-surface: #2d333b;
+  --color-surface-hover: #373e47;
+  --color-border: #444c56;
+  --color-text: #adbac7;
+  --color-text-muted: #768390;
+  --color-accent: #539bf5;
+  --color-accent-hover: #6cb6ff;
+  --color-accent-glow: rgba(83,155,245,0.15);
+  --color-success: #57ab5a;
+  --color-warning: #c69026;
+  --color-danger: #e5534b;
+  --color-surface-2: #373e47;
+  --color-border-subtle: #2d333b;
   --color-overlay: rgba(0,0,0,0.5);
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
   --shadow-lg: 0 8px 30px rgba(0,0,0,0.35);
-  --focus-ring: rgba(136,192,208,0.4);
+  --focus-ring: rgba(83,155,245,0.4);
 }
 
-[data-theme="sunset"] {
-  --color-bg: #1a0f1e;
-  --color-bg-subtle: #221528;
-  --color-surface: #2a1b33;
-  --color-surface-hover: #362342;
-  --color-border: #3d2a4a;
-  --color-text: #f5e6ff;
-  --color-text-muted: #c0a8d4;
-  --color-accent: #f59e0b;
-  --color-accent-hover: #d97706;
-  --color-accent-glow: rgba(245,158,11,0.15);
-  --color-success: #86efac;
-  --color-warning: #fcd34d;
-  --color-danger: #fb7185;
-  --color-surface-2: #422d52;
-  --color-border-subtle: #2e1d38;
-  --color-overlay: rgba(26,15,30,0.6);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.35);
-  --focus-ring: rgba(245,158,11,0.4);
-}
-
-[data-theme="forest"] {
-  --color-bg: #0c1410;
-  --color-bg-subtle: #111c16;
-  --color-surface: #16231c;
-  --color-surface-hover: #1e2e25;
-  --color-border: #253830;
-  --color-text: #dce8e0;
-  --color-text-muted: #98b0a0;
-  --color-accent: #4ade80;
-  --color-accent-hover: #22c55e;
-  --color-accent-glow: rgba(74,222,128,0.15);
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
-  --color-danger: #f87171;
-  --color-surface-2: #273d2f;
-  --color-border-subtle: #1a2b22;
-  --color-overlay: rgba(12,20,16,0.6);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.35);
-  --focus-ring: rgba(74,222,128,0.4);
-}
-
-[data-theme="light"] {
+/* ── 4. Notion Light ── */
+[data-theme="notion-light"] {
   --color-bg: #ffffff;
   --color-bg-subtle: #fbfbfa;
   --color-surface: #f7f6f3;
   --color-surface-hover: #efefed;
   --color-border: #e3e2de;
   --color-text: #37352f;
-  --color-text-muted: #6f6e6b;
-  --color-accent: #2eaadc;
-  --color-accent-hover: #2898c8;
-  --color-accent-glow: rgba(46,170,220,0.08);
+  --color-text-muted: #787774;
+  --color-accent: #2383e2;
+  --color-accent-hover: #1a73d1;
+  --color-accent-glow: rgba(35,131,226,0.08);
   --color-success: #4dab9a;
-  --color-warning: #cc8833;
-  --color-danger: #e06c60;
+  --color-warning: #cb912f;
+  --color-danger: #e03e3e;
   --color-surface-2: #eae9e6;
   --color-border-subtle: #eeede9;
   --color-overlay: rgba(55,53,47,0.4);
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
   --shadow-lg: 0 8px 30px rgba(0,0,0,0.1);
-  --focus-ring: rgba(46,170,220,0.35);
+  --focus-ring: rgba(35,131,226,0.3);
 }
 
-[data-theme="dark"] {
-  --color-bg: #191919;
-  --color-bg-subtle: #1e1e1e;
-  --color-surface: #252525;
-  --color-surface-hover: #2f2f2f;
-  --color-border: #373737;
-  --color-text: #e3e3e3;
-  --color-text-muted: #b0afac;
-  --color-accent: #529cca;
-  --color-accent-hover: #4a8db8;
-  --color-accent-glow: rgba(82,156,202,0.12);
-  --color-success: #4dab9a;
-  --color-warning: #cc8833;
-  --color-danger: #e06c60;
-  --color-surface-2: #333333;
-  --color-border-subtle: #2a2a2a;
-  --color-overlay: rgba(0,0,0,0.6);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.15);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.2);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.3);
-  --focus-ring: rgba(82,156,202,0.4);
-}
-
-[data-theme="midnight"] {
-  --color-bg: #000000;
-  --color-bg-subtle: #080808;
-  --color-surface: #0a0a0a;
-  --color-surface-hover: #141414;
-  --color-border: #1a1a1a;
-  --color-text: #ffffff;
-  --color-text-muted: #a3a3a3;
-  --color-accent: #ffffff;
-  --color-accent-hover: #e0e0e0;
-  --color-accent-glow: rgba(255,255,255,0.06);
-  --color-success: #00dc82;
-  --color-warning: #f5a623;
-  --color-danger: #ff4444;
-  --color-surface-2: #1e1e1e;
-  --color-border-subtle: #111111;
-  --color-overlay: rgba(0,0,0,0.7);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.5);
-  --focus-ring: rgba(255,255,255,0.2);
+/* ── 5. iA Writer / Solarized Light ── */
+[data-theme="ia-writer"] {
+  --color-bg: #fdf6e3;
+  --color-bg-subtle: #f5eedb;
+  --color-surface: #ffffff;
+  --color-surface-hover: #eee8d5;
+  --color-border: #e4dcc1;
+  --color-text: #373129;
+  --color-text-muted: #93a1a1;
+  --color-accent: #b58900;
+  --color-accent-hover: #9c7500;
+  --color-accent-glow: rgba(181,137,0,0.12);
+  --color-success: #859900;
+  --color-warning: #cb4b16;
+  --color-danger: #dc322f;
+  --color-surface-2: #eee8d5;
+  --color-border-subtle: #ede5c4;
+  --color-overlay: rgba(55,49,41,0.4);
+  --shadow-sm: 0 1px 2px rgba(55,49,41,0.06);
+  --shadow-md: 0 4px 12px rgba(55,49,41,0.08);
+  --shadow-lg: 0 8px 30px rgba(55,49,41,0.12);
+  --focus-ring: rgba(181,137,0,0.3);
 }
 
 } /* end @layer theme */

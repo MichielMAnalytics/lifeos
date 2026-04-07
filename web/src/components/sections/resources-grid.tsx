@@ -501,6 +501,49 @@ function TableIcon({ active }: { active: boolean }) {
   );
 }
 
+function HeadlinesIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? 'text-accent' : 'text-text-muted'}>
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+      <line x1="3" y1="14" x2="21" y2="14" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+// ── Headlines view row (super dense) ────────────────
+
+function ResourceHeadlineRow({ resource, onClick }: { resource: Resource; onClick: () => void }) {
+  let domain = '';
+  if (resource.url) {
+    try {
+      domain = new URL(resource.url).hostname.replace(/^www\./, '');
+    } catch {
+      // ignore
+    }
+  }
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      className="flex items-center gap-3 px-4 py-1.5 hover:bg-surface-hover transition-colors cursor-pointer border-b border-border/30 last:border-b-0 text-xs"
+    >
+      <span className="text-text flex-1 truncate">{resource.title}</span>
+      {domain && (
+        <span className="text-text-muted shrink-0 tabular-nums">{domain}</span>
+      )}
+      {resource.type && (
+        <span className="text-[9px] uppercase tracking-wide text-text-muted/70 shrink-0 w-12 text-right">
+          {resource.type}
+        </span>
+      )}
+    </div>
+  );
+}
+
 // ── Resource List Row ────────────────────────────────
 
 function ResourceListRow({ resource, onClick }: { resource: Resource; onClick: () => void }) {
@@ -544,8 +587,18 @@ function ResourceTableRow({ resource, onClick }: { resource: Resource; onClick: 
 // ── Sort/Group helpers ──────────────────────────────
 
 type SortBy = 'date' | 'title';
-type GroupBy = 'none' | 'date' | 'title';
-type ViewMode = 'grid' | 'list' | 'table';
+type GroupBy = 'none' | 'date' | 'title' | 'type';
+type ViewMode = 'grid' | 'list' | 'table' | 'headlines';
+type TypeFilter = 'all' | 'article' | 'tool' | 'book' | 'video' | 'other';
+
+const TYPE_FILTERS: { key: TypeFilter; label: string }[] = [
+  { key: 'all',     label: 'All'      },
+  { key: 'article', label: 'Articles' },
+  { key: 'tool',    label: 'Tools'    },
+  { key: 'book',    label: 'Books'    },
+  { key: 'video',   label: 'Videos'   },
+  { key: 'other',   label: 'Other'    },
+];
 
 function groupResources(resources: Resource[], groupBy: GroupBy): { label: string; items: Resource[] }[] {
   if (groupBy === 'none') return [{ label: '', items: resources }];
@@ -556,6 +609,8 @@ function groupResources(resources: Resource[], groupBy: GroupBy): { label: strin
     if (groupBy === 'date') {
       const d = new Date(r._creationTime);
       key = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    } else if (groupBy === 'type') {
+      key = r.type ? r.type.charAt(0).toUpperCase() + r.type.slice(1) : 'No type';
     } else {
       key = r.title.charAt(0).toUpperCase();
     }
@@ -577,11 +632,16 @@ export function ResourcesGrid() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortBy>('date');
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
 
   // Filter + sort
   const filtered = useMemo(() => {
     if (!resources) return [];
     let list = [...resources];
+
+    if (typeFilter !== 'all') {
+      list = list.filter((r) => (r.type ?? 'other') === typeFilter);
+    }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -599,7 +659,20 @@ export function ResourcesGrid() {
     }
 
     return list;
-  }, [resources, searchQuery, sortBy]);
+  }, [resources, searchQuery, sortBy, typeFilter]);
+
+  // Counts per type for the filter chips
+  const typeCounts = useMemo(() => {
+    const counts: Record<TypeFilter, number> = { all: 0, article: 0, tool: 0, book: 0, video: 0, other: 0 };
+    if (!resources) return counts;
+    for (const r of resources) {
+      counts.all += 1;
+      const t = (r.type ?? 'other') as TypeFilter;
+      if (t in counts) counts[t] += 1;
+      else counts.other += 1;
+    }
+    return counts;
+  }, [resources]);
 
   const groups = useMemo(() => groupResources(filtered, groupBy), [filtered, groupBy]);
 
@@ -662,12 +735,13 @@ export function ResourcesGrid() {
           >
             <option value="none">Group: None</option>
             <option value="date">Group: Date</option>
+            <option value="type">Group: Type</option>
             <option value="title">Group: Title</option>
           </select>
 
-          {/* View mode */}
+          {/* View mode — Section 13A Raindrop Quad */}
           <div className="flex items-center border border-border rounded-md overflow-hidden ml-1">
-            <button onClick={() => setViewMode('grid')} className={cn('p-1.5 transition-colors', viewMode === 'grid' ? 'bg-surface' : 'hover:bg-surface-hover')} title="Gallery">
+            <button onClick={() => setViewMode('grid')} className={cn('p-1.5 transition-colors', viewMode === 'grid' ? 'bg-surface' : 'hover:bg-surface-hover')} title="Grid">
               <GridIcon active={viewMode === 'grid'} />
             </button>
             <button onClick={() => setViewMode('list')} className={cn('p-1.5 transition-colors', viewMode === 'list' ? 'bg-surface' : 'hover:bg-surface-hover')} title="List">
@@ -676,8 +750,35 @@ export function ResourcesGrid() {
             <button onClick={() => setViewMode('table')} className={cn('p-1.5 transition-colors', viewMode === 'table' ? 'bg-surface' : 'hover:bg-surface-hover')} title="Table">
               <TableIcon active={viewMode === 'table'} />
             </button>
+            <button onClick={() => setViewMode('headlines')} className={cn('p-1.5 transition-colors', viewMode === 'headlines' ? 'bg-surface' : 'hover:bg-surface-hover')} title="Headlines">
+              <HeadlinesIcon active={viewMode === 'headlines'} />
+            </button>
           </div>
         </div>
+      </div>
+
+      {/* Type filter chips — Section 13A */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {TYPE_FILTERS.map((tf) => {
+          const isActive = typeFilter === tf.key;
+          const count = typeCounts[tf.key];
+          return (
+            <button
+              key={tf.key}
+              type="button"
+              onClick={() => setTypeFilter(tf.key)}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border transition-colors',
+                isActive
+                  ? 'bg-accent/15 border-accent/40 text-accent'
+                  : 'bg-transparent border-border text-text-muted hover:text-text hover:border-text/40',
+              )}
+            >
+              {tf.label}
+              <span className="opacity-60 tabular-nums">{count}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Content */}
@@ -759,6 +860,18 @@ export function ResourcesGrid() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {viewMode === 'headlines' && (
+                <div className="border border-border rounded-xl overflow-hidden divide-y divide-border/30">
+                  {items.map((resource) => (
+                    <ResourceHeadlineRow
+                      key={resource._id}
+                      resource={resource}
+                      onClick={() => setSelectedId(resource._id)}
+                    />
+                  ))}
                 </div>
               )}
             </div>

@@ -1,15 +1,15 @@
 'use client';
 
 import { useTheme } from '@/components/theme-provider';
-
-const LIGHT_THEMES = new Set(['zen', 'light']);
+import { themes } from '@/lib/themes';
 
 function isLightTheme(theme: string): boolean {
-  if (LIGHT_THEMES.has(theme)) return true;
   if (theme === 'system' && typeof window !== 'undefined') {
     return window.matchMedia('(prefers-color-scheme: light)').matches;
   }
-  return false;
+  // Look up the theme entry; default to "dark" (false) if unknown
+  const entry = (themes as Record<string, { isDark: boolean } | undefined>)[theme];
+  return entry ? !entry.isDark : false;
 }
 
 export function LogoMark({ size = 28, className }: { size?: number; className?: string }) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from 'convex/react';
+import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
@@ -210,6 +210,7 @@ export function SearchModal() {
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { toggleConfigMode } = useDashboardConfig();
+  const undoLastMutation = useMutation(api.mutationLog.undo);
 
   // ── Build commands list ─────────────────────────────
   const commands: Command[] = useMemo(() => {
@@ -257,8 +258,21 @@ export function SearchModal() {
         },
         keywords: ['configure', 'layout', 'customize', 'theme', 'design'],
       },
+      {
+        id: 'undo-last',
+        label: 'Undo Last Action',
+        category: 'action' as const,
+        icon: <ArrowRightIcon />,
+        action: () => {
+          close();
+          void undoLastMutation().catch(() => {
+            // Silent — "no mutations to undo" is normal
+          });
+        },
+        keywords: ['undo', 'revert', 'cmd+z', 'control+z', 'rollback'],
+      },
     ];
-  }, [router, toggleConfigMode]);
+  }, [router, toggleConfigMode, undoLastMutation]);
 
   // ── Filter commands by query ────────────────────────
   const filteredCommands = useMemo(() => {
