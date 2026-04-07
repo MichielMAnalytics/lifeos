@@ -13,6 +13,9 @@ export interface OnboardingState {
   anthropicAuthMethod: 'api_key' | 'setup_token';
   anthropicApiKey: string;
   anthropicSetupToken: string;
+  openaiAuthMethod: 'api_key' | 'chatgpt_oauth';
+  openaiApiKey: string;
+  openaiOAuthTokens: string;
   telegramToken: string;
   discordToken: string;
   /** Post-paywall personalization */
@@ -26,6 +29,9 @@ const DEFAULT_STATE: OnboardingState = {
   anthropicAuthMethod: 'setup_token',
   anthropicApiKey: '',
   anthropicSetupToken: '',
+  openaiAuthMethod: 'api_key',
+  openaiApiKey: '',
+  openaiOAuthTokens: '',
   telegramToken: '',
   discordToken: '',
   persona: null,
