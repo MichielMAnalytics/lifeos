@@ -98,18 +98,21 @@ export const pollDeviceCode = action({
     const data = (await res.json()) as {
       authorization_code: string;
       code_verifier: string;
+      redirect_uri?: string;
     };
 
     // Exchange authorization code for access + refresh tokens
+    const params: Record<string, string> = {
+      grant_type: "authorization_code",
+      code: data.authorization_code,
+      client_id: OPENAI_CLIENT_ID,
+      code_verifier: data.code_verifier,
+      redirect_uri: data.redirect_uri || "https://auth.openai.com/authorize/callback",
+    };
     const tokenRes = await fetch(TOKEN_EXCHANGE_URL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code: data.authorization_code,
-        client_id: OPENAI_CLIENT_ID,
-        code_verifier: data.code_verifier,
-      }),
+      body: new URLSearchParams(params),
     });
 
     if (!tokenRes.ok) {
