@@ -7,6 +7,7 @@ import type { Id } from '@/lib/convex-api';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { DeploymentDashboard } from '@/components/ai-agent/deployment-dashboard';
+import { ModelSwitcher } from '@/components/ai-agent/model-switcher';
 import { ChannelConfig } from '@/components/ai-agent/channel-config';
 import { ApiKeys as ByokApiKeys } from '@/components/ai-agent/api-keys-byok';
 import { InstanceTools } from '@/components/ai-agent/instance-tools';
@@ -689,6 +690,9 @@ function LifeCoachTab() {
               <DeploymentDashboard deployment={deployment} />
             </div>
           </div>
+
+          {/* Model switcher */}
+          <ModelSwitcher deploymentStatus={deployment.status} />
 
           {/* Channels */}
           <div className="border border-border">
