@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { redis, userKey, rateLimitKey, RATE_LIMIT_SCRIPT } from "../services/redis.js";
 import { checkBalance, deductBalance, markDirty, InsufficientBalanceError } from "../services/balance.js";
 import { resolveKey, getAccessToken } from "../services/keys.js";
+import { getValidAccessToken, parseCodexTokens } from "../services/openai-codex-refresh.js";
 import { calculateCostCents, MINIMUM_RESERVE_CENTS } from "../services/pricing.js";
 import { parseUsage } from "../services/usage.js";
 import { gatewayEnv } from "../env.js";
@@ -113,6 +114,7 @@ proxy.all("/:provider/*", async (c) => {
   // Resolve API key
   let apiKey: string;
   let isBYOK: boolean;
+  let resolvedUserId: string | undefined;
   try {
     if (provider === "kimi" || provider === "gemini" || provider === "minimax" || provider === "qwen") {
       // Vertex AI providers: BYOK uses direct API key, platform uses GCP SA token.
@@ -132,6 +134,7 @@ proxy.all("/:provider/*", async (c) => {
       const resolved = await resolveKey(podSecret, provider);
       apiKey = resolved.key;
       isBYOK = resolved.isBYOK;
+      resolvedUserId = resolved.userId;
     }
   } catch (err) {
     console.error(`[proxy] Key resolution error for ${provider}:`, err);
@@ -147,6 +150,22 @@ proxy.all("/:provider/*", async (c) => {
         return c.json({ error: "Credit balance exhausted. Your deployment remains active. Please top up credits.", code: "CREDITS_EXHAUSTED" }, 402);
       }
       throw err;
+    }
+  }
+
+  // Detect OpenAI Codex OAuth (stored as JSON with access_token + refresh_token)
+  let isOpenAICodexOAuth = false;
+  let codexAccessToken: string | undefined;
+  if (provider === "openai" && isBYOK && apiKey.startsWith("{")) {
+    const parsed = parseCodexTokens(apiKey);
+    if (parsed) {
+      isOpenAICodexOAuth = true;
+      try {
+        codexAccessToken = await getValidAccessToken(resolvedUserId ?? "unknown", apiKey);
+      } catch (err) {
+        console.error(`[proxy] Codex OAuth token refresh failed:`, err);
+        return c.json({ error: "ChatGPT OAuth token expired. Please re-authenticate in LifeOS settings." }, 401);
+      }
     }
   }
 
@@ -323,6 +342,12 @@ proxy.all("/:provider/*", async (c) => {
       }
       requestBodyStr = JSON.stringify(requestBody);
     }
+  } else if (isOpenAICodexOAuth) {
+    fullUpstreamUrl = "https://chatgpt.com/backend-api/codex/responses";
+    if (requestBody) {
+      delete requestBody.store;
+      requestBodyStr = JSON.stringify(requestBody);
+    }
   } else {
     const upstreamBase = UPSTREAM_URLS[provider];
     fullUpstreamUrl = `${upstreamBase}${subPath}${queryString}`;
@@ -351,6 +376,9 @@ proxy.all("/:provider/*", async (c) => {
       upstreamHeaders.set("x-api-key", apiKey);
     }
     upstreamHeaders.set("anthropic-version", c.req.header("anthropic-version") ?? "2023-06-01");
+  } else if (isOpenAICodexOAuth && codexAccessToken) {
+    upstreamHeaders.set("Authorization", `Bearer ${codexAccessToken}`);
+    console.log(`[proxy] Codex OAuth path for openai, userId: ${resolvedUserId?.slice(0, 8)}...`);
   } else {
     upstreamHeaders.set("Authorization", `Bearer ${apiKey}`);
   }

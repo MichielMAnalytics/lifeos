@@ -92,7 +92,7 @@ async function getBYOKey(userId: string, provider: string): Promise<string | nul
   }
 }
 
-export async function resolveKey(podSecret: string, provider: string): Promise<{ key: string; isBYOK: boolean }> {
+export async function resolveKey(podSecret: string, provider: string): Promise<{ key: string; isBYOK: boolean; userId?: string }> {
   const userInfo = await redis.hgetall(userKey(podSecret));
   const apiKeySource = userInfo?.apiKeySource ?? "platform";
 
@@ -101,7 +101,7 @@ export async function resolveKey(podSecret: string, provider: string): Promise<{
     if (!userId) throw new Error("userId not found in Redis for BYOK lookup");
     const key = await getBYOKey(userId, provider);
     if (key) {
-      return { key, isBYOK: true };
+      return { key, isBYOK: true, userId };
     }
     throw new Error(`No ${provider} API key configured. Please add your ${provider} API key in the ClawNow dashboard.`);
   }
