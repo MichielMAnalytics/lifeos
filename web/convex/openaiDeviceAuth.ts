@@ -51,7 +51,7 @@ export const initiateDeviceCode = action({
     return {
       deviceAuthId: data.device_auth_id,
       userCode: data.user_code,
-      interval: data.interval ?? 5,
+      interval: Number(data.interval) || 5,
       verificationUrl: VERIFICATION_URL,
     };
   },
