@@ -375,6 +375,13 @@ function LiveConfirmPage() {
           ...(isByok && state.anthropicAuthMethod === 'setup_token' && state.anthropicSetupToken.trim()
             ? { anthropicSetupToken: state.anthropicSetupToken.trim() }
             : {}),
+          openaiAuthMethod: isByok ? state.openaiAuthMethod : undefined,
+          ...(isByok && state.openaiAuthMethod === 'api_key' && state.openaiApiKey.trim()
+            ? { openaiKey: state.openaiApiKey.trim() }
+            : {}),
+          ...(isByok && state.openaiAuthMethod === 'chatgpt_oauth' && state.openaiOAuthTokens.trim()
+            ? { openaiOAuthTokens: state.openaiOAuthTokens.trim() }
+            : {}),
           telegramBotToken: state.telegramToken.trim() || undefined,
           discordBotToken: state.discordToken.trim() || undefined,
         });
