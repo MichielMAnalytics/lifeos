@@ -223,7 +223,7 @@ function buildOpenClawConfig(
         openai: {
           baseUrl: `${gatewayUrl}/v1/openai`,
           apiKey: "gateway-managed",
-          api: "openai-completions",
+          api: "openai-responses",
           headers: { "X-Pod-Secret": podSecretEnvRef },
           models: [
             { id: "gpt-5.4-2026-03-05", name: "GPT 5.4", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
