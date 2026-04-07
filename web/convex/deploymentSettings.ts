@@ -39,6 +39,10 @@ export const saveSettings = mutation({
       v.union(v.literal("api_key"), v.literal("setup_token")),
     ),
     anthropicSetupToken: v.optional(v.string()),
+    openaiAuthMethod: v.optional(
+      v.union(v.literal("api_key"), v.literal("chatgpt_oauth")),
+    ),
+    openaiOAuthTokens: v.optional(v.string()),
     googleKey: v.optional(v.string()),
     moonshotKey: v.optional(v.string()),
     minimaxKey: v.optional(v.string()),
@@ -58,6 +62,9 @@ export const saveSettings = mutation({
       anthropicAuthMethod: args.anthropicAuthMethod,
       selectedModel: args.selectedModel,
     };
+    if (args.openaiAuthMethod) {
+      dbFields.openaiAuthMethod = args.openaiAuthMethod;
+    }
     if (args.anthropicKey) {
       dbFields.anthropicKeyLength = args.anthropicKey.length;
     } else if (args.anthropicSetupToken) {
@@ -65,6 +72,8 @@ export const saveSettings = mutation({
     }
     if (args.openaiKey) {
       dbFields.openaiKeyLength = args.openaiKey.length;
+    } else if (args.openaiOAuthTokens) {
+      dbFields.openaiKeyLength = args.openaiOAuthTokens.length;
     }
     if (args.googleKey) {
       dbFields.googleKeyLength = args.googleKey.length;
@@ -99,6 +108,9 @@ export const saveSettings = mutation({
         if (provider === "anthropic") {
           dbFields.anthropicAuthMethod = undefined;
         }
+        if (provider === "openai") {
+          dbFields.openaiAuthMethod = undefined;
+        }
       }
     }
 
@@ -131,7 +143,7 @@ export const saveSettings = mutation({
     // Write BYOK keys directly to GCP Secret Manager
     if (
       args.apiKeySource === "byok" &&
-      (args.openaiKey || args.anthropicKey || args.anthropicSetupToken || args.googleKey || args.moonshotKey || args.minimaxKey)
+      (args.openaiKey || args.openaiOAuthTokens || args.anthropicKey || args.anthropicSetupToken || args.googleKey || args.moonshotKey || args.minimaxKey)
     ) {
       await ctx.scheduler.runAfter(
         0,
@@ -139,6 +151,8 @@ export const saveSettings = mutation({
         {
           userId,
           openaiKey: args.openaiKey,
+          openaiOAuthTokens: args.openaiOAuthTokens,
+          openaiAuthMethod: args.openaiAuthMethod,
           anthropicKey: args.anthropicKey,
           anthropicAuthMethod: args.anthropicAuthMethod,
           anthropicSetupToken: args.anthropicSetupToken,

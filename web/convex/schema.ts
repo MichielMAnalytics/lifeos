@@ -309,6 +309,9 @@ export default defineSchema({
       v.union(v.literal("api_key"), v.literal("setup_token")),
     ),
     anthropicKeyLength: v.optional(v.number()),
+    openaiAuthMethod: v.optional(
+      v.union(v.literal("api_key"), v.literal("chatgpt_oauth")),
+    ),
     openaiKeyLength: v.optional(v.number()),
     googleKeyLength: v.optional(v.number()),
     moonshotKeyLength: v.optional(v.number()),
