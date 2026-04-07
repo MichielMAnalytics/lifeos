@@ -899,6 +899,10 @@ export const writeByokKeysToSecretManager = internalAction({
   args: {
     userId: v.id("users"),
     openaiKey: v.optional(v.string()),
+    openaiAuthMethod: v.optional(
+      v.union(v.literal("api_key"), v.literal("chatgpt_oauth")),
+    ),
+    openaiOAuthTokens: v.optional(v.string()),
     anthropicKey: v.optional(v.string()),
     anthropicAuthMethod: v.optional(
       v.union(v.literal("api_key"), v.literal("setup_token")),
@@ -910,7 +914,12 @@ export const writeByokKeysToSecretManager = internalAction({
   },
   returns: v.null(),
   handler: async (_ctx, args): Promise<null> => {
-    const { userId, openaiKey, anthropicKey, anthropicAuthMethod, anthropicSetupToken, googleKey, moonshotKey, minimaxKey } = args;
+    const { userId, openaiKey, openaiAuthMethod, openaiOAuthTokens, anthropicKey, anthropicAuthMethod, anthropicSetupToken, googleKey, moonshotKey, minimaxKey } = args;
+
+    const openaiCredential =
+      openaiAuthMethod === "chatgpt_oauth"
+        ? openaiOAuthTokens
+        : openaiKey;
 
     const anthropicCredential =
       anthropicAuthMethod === "setup_token"
@@ -918,7 +927,7 @@ export const writeByokKeysToSecretManager = internalAction({
         : anthropicKey;
 
     const keys: Record<string, string | undefined> = {
-      openai: openaiKey,
+      openai: openaiCredential,
       anthropic: anthropicCredential,
       google: googleKey,
       moonshot: moonshotKey,
