@@ -357,6 +357,12 @@ proxy.all("/:provider/*", async (c) => {
       if (typeof requestBody.input === "string") {
         requestBody.input = [{ role: "user", content: requestBody.input }];
       }
+      // Strip fields unsupported by Codex endpoint
+      delete requestBody.max_output_tokens;
+      delete requestBody.max_tokens;
+      delete requestBody.service_tier;
+      delete requestBody.prompt_cache_key;
+      delete requestBody.prompt_cache_retention;
       requestBodyStr = JSON.stringify(requestBody);
     }
   } else {
