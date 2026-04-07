@@ -343,9 +343,13 @@ proxy.all("/:provider/*", async (c) => {
       requestBodyStr = JSON.stringify(requestBody);
     }
   } else if (isOpenAICodexOAuth) {
-    fullUpstreamUrl = "https://chatgpt.com/backend-api/codex/responses";
+    // Codex OAuth: route to chatgpt.com/backend-api/codex (Responses API)
+    // subPath is e.g. "/v1/responses" or "/v1/chat/completions"
+    const codexBase = "https://chatgpt.com/backend-api/codex";
+    fullUpstreamUrl = `${codexBase}${subPath}${queryString}`;
     if (requestBody) {
-      delete requestBody.store;
+      // Codex requires store=false
+      requestBody.store = false;
       requestBodyStr = JSON.stringify(requestBody);
     }
   } else {
