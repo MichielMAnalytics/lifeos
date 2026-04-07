@@ -14,7 +14,6 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
   const settings = useQuery(api.deploymentSettings.getMySettings);
   const saveSettings = useMutation(api.deploymentSettings.saveSettings);
 
-  // Default to api_key — setup_token (Claude subscription) is temporarily unavailable
   const [anthropicAuthMethod, setAnthropicAuthMethod] = useState<"api_key" | "setup_token">("api_key");
   const [anthropicKey, setAnthropicKey] = useState("");
   const [anthropicSetupToken, setAnthropicSetupToken] = useState("");
@@ -27,8 +26,7 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    // Keep api_key as default — setup_token is temporarily unavailable
-    if (settings?.anthropicAuthMethod && settings.anthropicAuthMethod !== "setup_token") {
+    if (settings?.anthropicAuthMethod) {
       setAnthropicAuthMethod(settings.anthropicAuthMethod);
     }
   }, [settings?.anthropicAuthMethod]);
@@ -113,9 +111,13 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
           </button>
           <button
             type="button"
-            disabled
-            title="Claude subscription is temporarily unavailable"
-            className="flex-1 py-1.5 text-[10px] uppercase tracking-wider border border-border text-text-muted cursor-not-allowed"
+            onClick={() => setAnthropicAuthMethod("setup_token")}
+            className={cn(
+              "flex-1 py-1.5 text-[10px] uppercase tracking-wider border transition-colors cursor-pointer",
+              anthropicAuthMethod === "setup_token"
+                ? "bg-text text-bg border-text"
+                : "bg-transparent text-text-muted border-border hover:border-text/30",
+            )}
           >
             Claude subscription
           </button>

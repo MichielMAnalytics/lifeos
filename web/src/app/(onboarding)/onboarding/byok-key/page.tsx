@@ -18,8 +18,7 @@ export default function ByokKeyPage() {
 
   useEffect(() => {
     const state = getOnboardingState();
-    // Default to api_key since setup_token (Claude subscription) is temporarily unavailable
-    setMethod(state.anthropicAuthMethod === 'setup_token' ? 'api_key' : state.anthropicAuthMethod);
+    setMethod(state.anthropicAuthMethod);
     setApiKey(state.anthropicApiKey);
     setSetupToken(state.anthropicSetupToken);
     setOpenaiMethod(state.openaiAuthMethod);
@@ -61,14 +60,17 @@ export default function ByokKeyPage() {
 
         {/* Method cards */}
         <div className="mt-8 grid grid-cols-2 gap-3 w-full">
-          <div
-            className="relative rounded-2xl border-2 p-4 text-center border-border/20 bg-surface/5 opacity-40 cursor-not-allowed select-none"
-            title="Claude subscription is temporarily unavailable"
+          <button
+            onClick={() => setMethod('setup_token')}
+            className={`rounded-2xl border-2 p-4 text-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+              method === 'setup_token'
+                ? 'border-accent bg-accent/[0.05]'
+                : 'border-border/40 bg-surface/10 hover:border-border/60'
+            }`}
           >
-            <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-text-muted/30 px-2 py-0.5 text-[9px] font-medium text-bg tracking-wide whitespace-nowrap">Temporarily unavailable</span>
             <span className="text-sm font-semibold text-text block">Claude Subscription</span>
             <span className="text-[11px] text-text-muted/70 block mt-1">Pro or Max plan</span>
-          </div>
+          </button>
           <button
             onClick={() => setMethod('api_key')}
             className={`rounded-2xl border-2 p-4 text-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
