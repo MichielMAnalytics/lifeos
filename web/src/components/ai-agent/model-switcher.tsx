@@ -49,7 +49,7 @@ export function ModelSwitcher({ deploymentStatus }: { deploymentStatus: Deployme
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-2">
-          {MODELS.filter((m) => m.id.startsWith("claude")).map((model) => {
+          {MODELS.map((model) => {
             const isClaude = model.id.startsWith("claude");
             const isGpt = model.id.startsWith("gpt");
             const isGemini = model.id.startsWith("gemini");
@@ -131,7 +131,7 @@ export function PreDeployModelPicker() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-2">
-          {MODELS.filter((m) => m.id.startsWith("claude")).map((model) => {
+          {MODELS.map((model) => {
             const isClaude = model.id.startsWith("claude");
             const isGpt = model.id.startsWith("gpt");
             const isGemini = model.id.startsWith("gemini");
