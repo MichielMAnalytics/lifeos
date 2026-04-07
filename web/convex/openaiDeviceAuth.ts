@@ -95,7 +95,9 @@ export const pollDeviceCode = action({
     }
 
     // User completed auth -- we get an authorization code + PKCE params
-    const data = (await res.json()) as {
+    const rawData = await res.json();
+    console.log("[openaiDeviceAuth] Poll success response keys:", Object.keys(rawData as object));
+    const data = rawData as {
       authorization_code: string;
       code_verifier: string;
       redirect_uri?: string;
@@ -107,7 +109,7 @@ export const pollDeviceCode = action({
       code: data.authorization_code,
       client_id: OPENAI_CLIENT_ID,
       code_verifier: data.code_verifier,
-      redirect_uri: data.redirect_uri || "https://auth.openai.com/authorize/callback",
+      redirect_uri: data.redirect_uri || "http://localhost:1455/auth/callback",
     };
     const tokenRes = await fetch(TOKEN_EXCHANGE_URL, {
       method: "POST",
