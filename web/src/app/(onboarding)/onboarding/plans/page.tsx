@@ -17,8 +17,8 @@ const PATHS: {
   },
   {
     key: 'byok',
-    title: 'Use my Claude subscription',
-    subtitle: 'Bring your own Anthropic account.',
+    title: 'Use my AI subscription',
+    subtitle: 'Bring your own Claude or ChatGPT account.',
   },
   {
     key: 'managed',
