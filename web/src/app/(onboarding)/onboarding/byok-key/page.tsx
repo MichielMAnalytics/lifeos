@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAction } from 'convex/react';
+import { api } from '@/lib/convex-api';
 import { StepContainer } from '@/components/onboarding/step-container';
 import { getOnboardingState, setOnboardingState, onboardingPath } from '@/lib/onboarding-store';
 
@@ -15,6 +17,51 @@ export default function ByokKeyPage() {
   const [openaiMethod, setOpenaiMethod] = useState<OpenaiAuthOption>('api_key');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [openaiOAuthTokens, setOpenaiOAuthTokens] = useState('');
+
+  // Device code flow
+  const initiateDeviceCode = useAction(api.openaiDeviceAuth.initiateDeviceCode);
+  const pollDeviceCodeAction = useAction(api.openaiDeviceAuth.pollDeviceCode);
+  const [deviceFlow, setDeviceFlow] = useState<{ deviceAuthId: string; userCode: string; interval: number; verificationUrl: string } | null>(null);
+  const [deviceStatus, setDeviceStatus] = useState<'idle' | 'initiating' | 'waiting' | 'complete' | 'error'>('idle');
+  const [deviceError, setDeviceError] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopPolling = useCallback(() => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } }, []);
+  useEffect(() => stopPolling, [stopPolling]);
+
+  const startDeviceCodeFlow = async () => {
+    setDeviceStatus('initiating');
+    setDeviceError(null);
+    stopPolling();
+    try {
+      const result = await initiateDeviceCode({});
+      setDeviceFlow(result);
+      setDeviceStatus('waiting');
+      pollRef.current = setInterval(async () => {
+        try {
+          const poll = await pollDeviceCodeAction({ deviceAuthId: result.deviceAuthId, userCode: result.userCode });
+          if (poll.status === 'complete') {
+            stopPolling();
+            setDeviceStatus('complete');
+            setOpenaiOAuthTokens(poll.tokens);
+          }
+        } catch (err) {
+          stopPolling();
+          setDeviceStatus('error');
+          setDeviceError(err instanceof Error ? err.message : 'Polling failed');
+        }
+      }, (result.interval || 5) * 1000);
+    } catch (err) {
+      setDeviceStatus('error');
+      setDeviceError(err instanceof Error ? err.message : 'Failed to start');
+    }
+  };
+
+  const cancelDeviceCodeFlow = () => {
+    stopPolling();
+    setDeviceFlow(null);
+    setDeviceStatus('idle');
+    setDeviceError(null);
+  };
 
   useEffect(() => {
     const state = getOnboardingState();
@@ -251,52 +298,63 @@ export default function ByokKeyPage() {
               </div>
             </>
           ) : (
-            <>
-              <label className="text-xs font-medium text-text mb-2 block">OAuth Tokens (JSON)</label>
-              <input
-                type="password"
-                value={openaiOAuthTokens}
-                onChange={(e) => setOpenaiOAuthTokens(e.target.value)}
-                placeholder='{"accessToken":"...","refreshToken":"..."}'
-                autoComplete="off"
-                className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted/30 focus:border-accent/50 focus:outline-none transition-colors"
-              />
-              <div className="mt-3 rounded-xl border border-border/40 bg-surface/20 p-4 text-xs text-text-muted/80">
-                <ol className="space-y-2 text-text-muted/80">
-                  <li className="flex items-start gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-accent/15 text-accent text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-                    <div>
-                      <span>Run in your terminal:</span>
-                      <code
-                        onClick={() => navigator.clipboard.writeText('codex login')}
-                        className="mt-1 block w-full px-3 py-2 rounded-lg bg-bg border border-border/30 text-text text-[11px] font-mono cursor-pointer hover:bg-surface-hover transition-colors"
-                        title="Click to copy"
-                      >codex login</code>
+            <div className="space-y-3">
+              {deviceStatus === 'idle' || deviceStatus === 'error' ? (
+                <>
+                  {openaiOAuthTokens ? (
+                    <div className="rounded-xl border border-green-500/30 bg-green-500/5 px-4 py-3 text-center">
+                      <p className="text-sm font-medium text-green-600">ChatGPT connected</p>
                     </div>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-accent/15 text-accent text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-                    <span>Sign in when your browser opens</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-accent/15 text-accent text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-                    <div>
-                      <span>Copy the contents of:</span>
-                      <code
-                        onClick={() => navigator.clipboard.writeText('cat ~/.codex/auth.json')}
-                        className="mt-1 block w-full px-3 py-2 rounded-lg bg-bg border border-border/30 text-text text-[11px] font-mono cursor-pointer hover:bg-surface-hover transition-colors"
-                        title="Click to copy"
-                      >cat ~/.codex/auth.json</code>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-accent/15 text-accent text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
-                    <span>Paste the JSON above</span>
-                  </li>
-                </ol>
-                <p className="mt-3 text-[10px] text-text-muted/70">Uses your existing ChatGPT subscription — no extra costs.</p>
-              </div>
-            </>
+                  ) : (
+                    <button
+                      onClick={() => void startDeviceCodeFlow()}
+                      className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm font-medium text-text hover:bg-surface/50 transition-colors cursor-pointer"
+                    >
+                      Connect ChatGPT account
+                    </button>
+                  )}
+                  {deviceError && (
+                    <p className="text-[11px] text-red-500 leading-relaxed">{deviceError}</p>
+                  )}
+                  <p className="text-[10px] text-text-muted/70">Uses your ChatGPT Plus, Pro, or Team subscription. No API costs.</p>
+                </>
+              ) : deviceStatus === 'initiating' ? (
+                <div className="rounded-xl border border-border/40 bg-surface/20 px-4 py-4 text-center">
+                  <p className="text-sm text-text-muted">Starting authentication...</p>
+                </div>
+              ) : deviceStatus === 'waiting' && deviceFlow ? (
+                <div className="rounded-xl border-2 border-accent/30 bg-accent/5 px-4 py-4 space-y-3 text-center">
+                  <p className="text-sm text-text">Enter this code at OpenAI:</p>
+                  <code
+                    onClick={() => navigator.clipboard.writeText(deviceFlow.userCode)}
+                    className="inline-block px-5 py-2.5 rounded-lg bg-bg border border-border text-xl font-mono font-bold text-text tracking-widest cursor-pointer hover:bg-surface-hover transition-colors"
+                    title="Click to copy"
+                  >
+                    {deviceFlow.userCode}
+                  </code>
+                  <div>
+                    <a
+                      href={deviceFlow.verificationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-text text-bg px-4 py-2 text-xs font-medium hover:opacity-90 transition-opacity"
+                    >
+                      Open OpenAI
+                      <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 fill-current"><path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" /></svg>
+                    </a>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                    <p className="text-[11px] text-text-muted">Waiting for sign-in...</p>
+                  </div>
+                  <button onClick={cancelDeviceCodeFlow} className="text-[11px] text-text-muted hover:text-text transition-colors cursor-pointer">Cancel</button>
+                </div>
+              ) : deviceStatus === 'complete' ? (
+                <div className="rounded-xl border border-green-500/30 bg-green-500/5 px-4 py-3 text-center">
+                  <p className="text-sm font-medium text-green-600">ChatGPT connected</p>
+                </div>
+              ) : null}
+            </div>
           )}
         </div>
 
