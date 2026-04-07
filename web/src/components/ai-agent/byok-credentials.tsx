@@ -19,6 +19,8 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
   const [anthropicKey, setAnthropicKey] = useState("");
   const [anthropicSetupToken, setAnthropicSetupToken] = useState("");
   const [openaiKey, setOpenaiKey] = useState("");
+  const [openaiAuthMethod, setOpenaiAuthMethod] = useState<"api_key" | "chatgpt_oauth">("api_key");
+  const [openaiOAuthTokens, setOpenaiOAuthTokens] = useState("");
   const [googleKey, setGoogleKey] = useState("");
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
@@ -31,6 +33,12 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
     }
   }, [settings?.anthropicAuthMethod]);
 
+  useEffect(() => {
+    if (settings?.openaiAuthMethod) {
+      setOpenaiAuthMethod(settings.openaiAuthMethod);
+    }
+  }, [settings?.openaiAuthMethod]);
+
   const togglePendingDelete = (provider: string) => {
     setPendingDeletes((prev) => {
       const next = new Set(prev);
@@ -40,8 +48,9 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
     });
   };
 
-  const hasChanges = !!(anthropicKey || anthropicSetupToken || openaiKey || googleKey
+  const hasChanges = !!(anthropicKey || anthropicSetupToken || openaiKey || openaiOAuthTokens || googleKey
     || anthropicAuthMethod !== (settings?.anthropicAuthMethod ?? "api_key")
+    || openaiAuthMethod !== (settings?.openaiAuthMethod ?? "api_key")
     || pendingDeletes.size > 0);
 
   const handleSave = async () => {
@@ -56,13 +65,17 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
         ...(anthropicAuthMethod === "api_key"
           ? { anthropicKey: anthropicKey || undefined }
           : { anthropicSetupToken: anthropicSetupToken || undefined }),
-        openaiKey: openaiKey || undefined,
+        openaiAuthMethod,
+        ...(openaiAuthMethod === "api_key"
+          ? { openaiKey: openaiKey || undefined }
+          : { openaiOAuthTokens: openaiOAuthTokens || undefined }),
         googleKey: googleKey || undefined,
         keysToDelete: pendingDeletes.size > 0 ? Array.from(pendingDeletes) : undefined,
       });
       setAnthropicKey("");
       setAnthropicSetupToken("");
       setOpenaiKey("");
+      setOpenaiOAuthTokens("");
       setGoogleKey("");
       setPendingDeletes(new Set());
       setSaved(true);
@@ -136,21 +149,67 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
       </div>
 
       {/* OpenAI */}
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-text-muted">
           <svg viewBox="0 0 24 24" className="h-3.5 w-auto fill-current opacity-70" aria-hidden="true">
             <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855l-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z" />
           </svg>
-          OpenAI API Key
+          OpenAI
         </label>
-        <SecretInput
-          storedLength={settings?.openaiKeyLength}
-          placeholder="sk-..."
-          value={openaiKey}
-          onChange={setOpenaiKey}
-          onDelete={settings?.openaiKeyLength ? () => togglePendingDelete("openai") : undefined}
-          pendingDelete={pendingDeletes.has("openai")}
-        />
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => setOpenaiAuthMethod("api_key")}
+            className={cn(
+              "flex-1 py-1.5 text-[10px] uppercase tracking-wider border transition-colors cursor-pointer",
+              openaiAuthMethod === "api_key"
+                ? "bg-text text-bg border-text"
+                : "bg-transparent text-text-muted border-border hover:border-text/30",
+            )}
+          >
+            API Key
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpenaiAuthMethod("chatgpt_oauth")}
+            className={cn(
+              "flex-1 py-1.5 text-[10px] uppercase tracking-wider border transition-colors cursor-pointer",
+              openaiAuthMethod === "chatgpt_oauth"
+                ? "bg-text text-bg border-text"
+                : "bg-transparent text-text-muted border-border hover:border-text/30",
+            )}
+          >
+            ChatGPT subscription
+          </button>
+        </div>
+        {openaiAuthMethod === "api_key" ? (
+          <SecretInput
+            storedLength={settings?.openaiAuthMethod !== "chatgpt_oauth" ? settings?.openaiKeyLength : undefined}
+            placeholder="sk-..."
+            value={openaiKey}
+            onChange={setOpenaiKey}
+            onDelete={settings?.openaiAuthMethod !== "chatgpt_oauth" && settings?.openaiKeyLength ? () => togglePendingDelete("openai") : undefined}
+            pendingDelete={pendingDeletes.has("openai")}
+          />
+        ) : (
+          <div className="space-y-1.5">
+            <SecretInput
+              storedLength={settings?.openaiAuthMethod === "chatgpt_oauth" ? settings?.openaiKeyLength : undefined}
+              placeholder="Paste auth.json contents..."
+              value={openaiOAuthTokens}
+              onChange={setOpenaiOAuthTokens}
+              onDelete={settings?.openaiAuthMethod === "chatgpt_oauth" && settings?.openaiKeyLength ? () => togglePendingDelete("openai") : undefined}
+              pendingDelete={pendingDeletes.has("openai")}
+            />
+            <p className="text-[9px] text-text-muted leading-relaxed">
+              Run{" "}
+              <CopyCode text="codex login" />{" "}
+              in your terminal, then paste the contents of{" "}
+              <CopyCode text="cat ~/.codex/auth.json" />{" "}
+              above. Uses your existing ChatGPT subscription.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Google */}
