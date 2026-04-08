@@ -164,6 +164,8 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
         deploymentStatus={deploymentStatus}
         onSaveTokens={async (tokens: string) => {
           if (!settings) return;
+          // Clear any pending openai delete to prevent race condition
+          setPendingDeletes((prev) => { const next = new Set(prev); next.delete("openai"); return next; });
           setSaving(true);
           try {
             await saveSettings({
