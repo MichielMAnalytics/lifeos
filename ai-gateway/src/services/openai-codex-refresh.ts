@@ -1,3 +1,6 @@
+import { getAccessToken } from "./keys.js";
+import { gatewayEnv } from "../env.js";
+
 const OPENAI_TOKEN_ENDPOINT = "https://auth.openai.com/oauth/token";
 const OPENAI_CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann";
 
@@ -90,7 +93,38 @@ export async function getValidAccessToken(userId: string, storedTokenJson: strin
   console.log(`[codex-refresh] Refreshing OpenAI Codex token for user ${userId.slice(0, 8)}...`);
   const refreshed = await refreshCodexToken(tokens.refresh_token);
   tokenCache.set(userId, refreshed);
+  // Persist to GCP SM so tokens survive gateway restarts
+  persistRefreshedTokens(userId, refreshed).catch(() => {});
   return refreshed.access_token;
+}
+
+async function persistRefreshedTokens(userId: string, tokens: CodexOAuthTokens): Promise<void> {
+  try {
+    const gcpToken = await getAccessToken();
+    const secretName = `projects/${gatewayEnv.GCP_PROJECT_ID}/secrets/byok-${userId}-openai`;
+    const payload = Buffer.from(JSON.stringify({
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+    })).toString("base64");
+
+    // Add a new version with the refreshed tokens
+    const res = await fetch(`https://secretmanager.googleapis.com/v1/${secretName}:addVersion`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${gcpToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ payload: { data: payload } }),
+    });
+
+    if (!res.ok) {
+      console.error(`[codex-refresh] Failed to persist refreshed tokens for ${userId.slice(0, 8)}...: ${res.status}`);
+    } else {
+      console.log(`[codex-refresh] Persisted refreshed tokens for ${userId.slice(0, 8)}...`);
+    }
+  } catch (err) {
+    console.error(`[codex-refresh] Error persisting tokens for ${userId.slice(0, 8)}...:`, err);
+  }
 }
 
 export function clearTokenCache(userId: string): void {
