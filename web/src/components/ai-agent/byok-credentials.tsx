@@ -170,7 +170,7 @@ export function ByokCredentials({ deploymentStatus }: { deploymentStatus?: Deplo
           try {
             await saveSettings({
               apiKeySource: settings.apiKeySource,
-              selectedModel: settings.selectedModel,
+              selectedModel: "gpt",
               openaiAuthMethod: "chatgpt_oauth",
               openaiOAuthTokens: tokens,
             });
