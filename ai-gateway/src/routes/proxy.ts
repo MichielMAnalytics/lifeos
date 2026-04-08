@@ -357,6 +357,15 @@ proxy.all("/:provider/*", async (c) => {
       if (typeof requestBody.input === "string") {
         requestBody.input = [{ role: "user", content: requestBody.input }];
       }
+      // Codex only accepts base model IDs (no date suffixes)
+      if (typeof requestBody.model === "string") {
+        const CODEX_MODEL_MAP: Record<string, string> = {
+          "gpt-5.4-2026-03-05": "gpt-5.4",
+          "gpt-5-mini-2025-08-07": "gpt-5-mini",
+          "gpt-5-nano-2025-08-07": "gpt-5-nano",
+        };
+        requestBody.model = CODEX_MODEL_MAP[requestBody.model] ?? requestBody.model;
+      }
       // Strip fields unsupported by Codex endpoint
       delete requestBody.max_output_tokens;
       delete requestBody.max_tokens;
