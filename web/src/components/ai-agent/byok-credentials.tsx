@@ -367,18 +367,29 @@ function OpenAICredentialSection({
       ) : (
         <div className="space-y-2">
           {isConnected && deviceFlowStatus === "idle" ? (
-            <div className="flex items-center justify-between rounded border border-success/30 bg-success/5 px-3 py-2">
-              <span className="text-[11px] text-success font-medium">ChatGPT connected</span>
-              <button
-                type="button"
-                onClick={() => togglePendingDelete("openai")}
-                className={cn(
-                  "text-[10px] transition-colors",
-                  pendingDeletes.has("openai") ? "text-danger" : "text-text-muted hover:text-danger",
-                )}
-              >
-                {pendingDeletes.has("openai") ? "Undo disconnect" : "Disconnect"}
-              </button>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between rounded border border-success/30 bg-success/5 px-3 py-2">
+                <span className="text-[11px] text-success font-medium">ChatGPT connected</span>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void startDeviceCodeFlow()}
+                    className="text-[10px] text-text-muted hover:text-text transition-colors cursor-pointer"
+                  >
+                    Reconnect
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => togglePendingDelete("openai")}
+                    className={cn(
+                      "text-[10px] transition-colors",
+                      pendingDeletes.has("openai") ? "text-danger" : "text-text-muted hover:text-danger",
+                    )}
+                  >
+                    {pendingDeletes.has("openai") ? "Undo disconnect" : "Disconnect"}
+                  </button>
+                </div>
+              </div>
             </div>
           ) : deviceFlowStatus === "idle" || deviceFlowStatus === "error" ? (
             <div className="space-y-2">
