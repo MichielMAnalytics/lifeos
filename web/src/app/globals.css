@@ -154,11 +154,91 @@
 
 } /* end @layer theme */
 
+/* ── Density tokens — Section 16 D2 Editorial default ───── */
+/* Row heights, paddings, border radius, and body font size derive from
+   these tokens. To switch density presets globally, override these on
+   <html data-density="compact"> etc. */
+
+:root {
+  /* D2 Editorial (default pick) — Notion / Claude.ai-style reading density */
+  --density-row-height: 40px;
+  --density-row-padding-x: 12px;
+  --density-page-padding-x: 32px;
+  --density-page-padding-y: 40px;
+  --density-card-padding: 20px;
+  --density-section-gap: 24px;
+  --density-body-font-size: 15px;
+  --density-body-line-height: 1.6;
+  --density-radius: 8px;
+}
+
+[data-density="editorial"] {
+  --density-row-height: 40px;
+  --density-row-padding-x: 12px;
+  --density-page-padding-x: 32px;
+  --density-page-padding-y: 40px;
+  --density-card-padding: 20px;
+  --density-section-gap: 24px;
+  --density-body-font-size: 15px;
+  --density-body-line-height: 1.6;
+  --density-radius: 8px;
+}
+
+[data-density="spacious"] {
+  --density-row-height: 44px;
+  --density-row-padding-x: 16px;
+  --density-page-padding-x: 40px;
+  --density-page-padding-y: 48px;
+  --density-card-padding: 24px;
+  --density-section-gap: 32px;
+  --density-body-font-size: 15px;
+  --density-body-line-height: 1.55;
+  --density-radius: 12px;
+}
+
+[data-density="standard"] {
+  --density-row-height: 36px;
+  --density-row-padding-x: 12px;
+  --density-page-padding-x: 24px;
+  --density-page-padding-y: 32px;
+  --density-card-padding: 16px;
+  --density-section-gap: 20px;
+  --density-body-font-size: 14px;
+  --density-body-line-height: 1.5;
+  --density-radius: 8px;
+}
+
+[data-density="compact"] {
+  --density-row-height: 32px;
+  --density-row-padding-x: 10px;
+  --density-page-padding-x: 20px;
+  --density-page-padding-y: 24px;
+  --density-card-padding: 12px;
+  --density-section-gap: 16px;
+  --density-body-font-size: 13px;
+  --density-body-line-height: 1.45;
+  --density-radius: 6px;
+}
+
+[data-density="dense"] {
+  --density-row-height: 28px;
+  --density-row-padding-x: 8px;
+  --density-page-padding-x: 16px;
+  --density-page-padding-y: 16px;
+  --density-card-padding: 8px;
+  --density-section-gap: 12px;
+  --density-body-font-size: 12px;
+  --density-body-line-height: 1.4;
+  --density-radius: 4px;
+}
+
 /* ── Base Styles ─────────────────────────────────── */
 
 body {
   background: var(--color-bg);
   color: var(--color-text);
+  font-size: var(--density-body-font-size);
+  line-height: var(--density-body-line-height);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-weight: 500;

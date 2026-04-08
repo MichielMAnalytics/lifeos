@@ -4,13 +4,28 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
+import { Skeleton, SkeletonRow } from '@/components/ui/skeleton';
 
 export function TasksByGoal() {
   const tasks = useQuery(api.tasks.list, { status: 'todo' });
   const goals = useQuery(api.goals.list, { status: 'active' });
 
   if (tasks === undefined || goals === undefined) {
-    return <div className="animate-pulse h-48 bg-surface rounded-lg" />;
+    return (
+      <div className="space-y-4">
+        {[0, 1].map((i) => (
+          <div key={i} className="border border-border rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-border">
+              <Skeleton className="h-3 w-32" />
+            </div>
+            <div className="px-2 py-2 space-y-1">
+              <SkeletonRow />
+              <SkeletonRow />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   // Build a map of goalId -> goal title

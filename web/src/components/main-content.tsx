@@ -51,7 +51,18 @@ export function MainContent({ children }: { children: React.ReactNode }) {
       {isFullHeight ? (
         <div className="h-full">{children}</div>
       ) : (
-        <div className="px-4 py-4 md:px-8 md:py-8 lg:px-12 lg:py-10">{children}</div>
+        <div
+          className="px-4 py-4 md:px-8 md:py-8"
+          style={{
+            // Section 16 D2 — density tokens scale page padding at lg+
+            paddingLeft: 'var(--density-page-padding-x, 48px)',
+            paddingRight: 'var(--density-page-padding-x, 48px)',
+            paddingTop: 'var(--density-page-padding-y, 40px)',
+            paddingBottom: 'var(--density-page-padding-y, 40px)',
+          }}
+        >
+          {children}
+        </div>
       )}
     </main>
   );

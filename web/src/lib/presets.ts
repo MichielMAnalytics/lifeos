@@ -29,18 +29,18 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
 
   // ── TODAY ─────────────────────────────────────────────
   today: {
-    // Default — Section 1A Sunsama Two-Pane: day plan is the dominant element
-    // and lives at the top. Top 3 priorities sit below, then a small daily
-    // quote at the very end. Day plan already has its own task sidebar (40/60
-    // internally) so the page itself is single-column.
+    // Section 1A — Sunsama Two-Pane. The TodayShell component renders a real
+    // page-level two-column layout: priorities + today's tasks + done today on
+    // the LEFT (40%), and the day plan timeline (with its internal sidebar
+    // hidden) on the RIGHT (60%). Everything else — date nav, status bar,
+    // quote — stays as full-width sections above/below the shell.
     default: {
       name: "Default",
-      description: "Day plan first — Sunsama-style layout (Section 1A pick)",
+      description: "Sunsama-style two-pane (Section 1A pick)",
       sections: [
         { id: "day-nav", label: "Date Navigation", span: "full" },
         { id: "task-status-bar", label: "Task Status", span: "full" },
-        { id: "day-timeline", label: "Day Plan", span: "full" },
-        { id: "priorities-checklist", label: "Today's Top 3", span: "full" },
+        { id: "today-shell", label: "Today Two-Pane", span: "full" },
         { id: "quotes", label: "Daily Quote", span: "full" },
       ],
     },

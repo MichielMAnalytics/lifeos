@@ -10,6 +10,7 @@ import { HoverActionsMenu, type HoverAction } from '@/components/hover-actions-m
 import { ContextMenu, type ContextMenuItem } from '@/components/context-menu';
 import { formatRelativeDate, cn } from '@/lib/utils';
 import { TasksToolbar, type TaskDensity, type TaskSortBy } from '@/components/tasks-toolbar';
+import { Skeleton, SkeletonRow } from '@/components/ui/skeleton';
 
 // ── Date helpers ─────────────────────────────────────
 
@@ -1185,11 +1186,26 @@ export function TasksBucketed() {
   }, [updateTask]);
 
   if (!tasks) {
+    // Section 18J — shape-matching skeleton: header bar + 4 columns of rows
     return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 rounded-xl bg-surface animate-pulse" />
-        ))}
+      <div className="space-y-6">
+        <div className="flex items-center justify-end">
+          <Skeleton className="h-7 w-48 rounded-md" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[0, 1, 2].map((col) => (
+            <div key={col} className="rounded-xl border border-border bg-surface overflow-hidden">
+              <div className="px-4 py-3 border-b border-border">
+                <Skeleton className="h-3 w-20" />
+              </div>
+              <div className="px-2 py-2 space-y-1">
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

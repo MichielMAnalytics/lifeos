@@ -3,6 +3,7 @@
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -24,7 +25,18 @@ export function JournalToday() {
   const journal = useQuery(api.journals.getByDate, { date: todayStr });
 
   if (journal === undefined) {
-    return <div className="animate-pulse h-48 bg-surface rounded-lg" />;
+    return (
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <Skeleton className="h-3 w-20" />
+        </div>
+        <div className="p-6 space-y-3">
+          <Skeleton className="h-3 w-3/4" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-2/3" />
+        </div>
+      </div>
+    );
   }
 
   return (

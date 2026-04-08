@@ -8,6 +8,7 @@ import type { Doc } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { GoalForm } from '@/components/goal-form';
 import { GoalDetailModal } from '@/components/goal-detail-modal';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ── Helpers ────────────────────────────────────────────
 
@@ -125,7 +126,7 @@ function GoalRow({ goal, onSelect }: { goal: Doc<'goals'>; onSelect: (goalId: Id
       {expanded && (
         <div className="px-4 pb-4 pl-14">
           {goalDetail === undefined ? (
-            <div className="animate-pulse h-8 bg-surface rounded" />
+            <Skeleton className="h-8 w-full" />
           ) : goalDetail === null || goalDetail.tasks.length === 0 ? (
             <p className="text-xs text-text-muted italic">No linked tasks</p>
           ) : (
@@ -321,7 +322,29 @@ export function QuarterlyGoals() {
   }, [allGoals, currentQuarter]);
 
   if (allGoals === undefined) {
-    return <div className="animate-pulse h-48 bg-surface rounded-lg" />;
+    // Section 18J — shape-matching skeleton for the Compass page
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+        <div className="border border-border rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-border">
+            <Skeleton className="h-3 w-32" />
+          </div>
+          <div className="p-3 space-y-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+        </div>
+      </div>
+    );
   }
 
   return (

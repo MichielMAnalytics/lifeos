@@ -3,6 +3,7 @@
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { IdeaForm } from '../idea-form';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const actionabilityOrder: Record<string, number> = {
   high: 0,
@@ -20,7 +21,18 @@ export function IdeasPriority() {
   const ideas = useQuery(api.ideas.list, {});
 
   if (ideas === undefined) {
-    return <div className="animate-pulse h-48 bg-surface rounded-lg" />;
+    return (
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <Skeleton className="h-3 w-24" />
+        </div>
+        <div className="p-3 space-y-2">
+          <Skeleton className="h-12 w-full rounded-lg" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+        </div>
+      </div>
+    );
   }
 
   // Sort by actionability: high -> medium -> low -> unset

@@ -38,10 +38,26 @@ function todayISO(): string {
 }
 
 // ── Exercise editor (Hevy-style table — Section 9A) ─────
+// Includes a "Previous" column that shows the most-recent session's
+// weight×reps for the same exercise name (matched case-insensitively).
 
-function ExerciseTable({ workout }: { workout: Workout }) {
+function ExerciseTable({
+  workout,
+  previousByName,
+}: {
+  workout: Workout;
+  previousByName: Map<string, { weight?: number; reps?: number; unit?: string }>;
+}) {
   const updateWorkout = useMutation(api.workouts.update);
   const exercises: ExerciseRow[] = (workout.exercises ?? []) as ExerciseRow[];
+
+  function formatPrev(name: string): string {
+    const prev = previousByName.get(name.toLowerCase().trim());
+    if (!prev) return '—';
+    const w = prev.weight != null ? `${prev.weight}${prev.unit ?? 'kg'}` : '';
+    const r = prev.reps != null ? `×${prev.reps}` : '';
+    return [w, r].filter(Boolean).join(' ') || '—';
+  }
 
   // Local draft for the new-row inputs
   const [draftName, setDraftName] = useState('');
@@ -88,8 +104,9 @@ function ExerciseTable({ workout }: { workout: Workout }) {
   return (
     <div className="px-6 py-3 border-t border-border-subtle bg-surface/30">
       {/* Column headers */}
-      <div className="grid grid-cols-[2fr_0.6fr_0.6fr_0.8fr_auto] gap-2 text-[10px] font-medium uppercase tracking-wider text-text-muted/80 pb-2 border-b border-border-subtle">
+      <div className="grid grid-cols-[1.6fr_0.9fr_0.5fr_0.5fr_0.7fr_auto] gap-2 text-[10px] font-medium uppercase tracking-wider text-text-muted/80 pb-2 border-b border-border-subtle">
         <span>Exercise</span>
+        <span className="text-right">Previous</span>
         <span className="text-right">Sets</span>
         <span className="text-right">Reps</span>
         <span className="text-right">Weight</span>
@@ -100,9 +117,12 @@ function ExerciseTable({ workout }: { workout: Workout }) {
       {exercises.map((ex, idx) => (
         <div
           key={idx}
-          className="grid grid-cols-[2fr_0.6fr_0.6fr_0.8fr_auto] gap-2 py-1.5 text-sm group items-center"
+          className="grid grid-cols-[1.6fr_0.9fr_0.5fr_0.5fr_0.7fr_auto] gap-2 py-1.5 text-sm group items-center"
         >
           <span className="text-text truncate">{ex.name}</span>
+          <span className="text-right text-text-muted/60 tabular-nums text-xs italic">
+            {formatPrev(ex.name)}
+          </span>
           <span className="text-right text-text-muted tabular-nums">{ex.sets ?? '—'}</span>
           <span className="text-right text-text-muted tabular-nums">{ex.reps ?? '—'}</span>
           <span className="text-right text-text-muted tabular-nums">
@@ -122,7 +142,7 @@ function ExerciseTable({ workout }: { workout: Workout }) {
       ))}
 
       {/* Inline add row */}
-      <div className="grid grid-cols-[2fr_0.6fr_0.6fr_0.8fr_auto] gap-2 py-2 text-sm border-t border-dashed border-border-subtle mt-1">
+      <div className="grid grid-cols-[1.6fr_0.9fr_0.5fr_0.5fr_0.7fr_auto] gap-2 py-2 text-sm border-t border-dashed border-border-subtle mt-1">
         <input
           type="text"
           value={draftName}
@@ -131,6 +151,9 @@ function ExerciseTable({ workout }: { workout: Workout }) {
           placeholder="+ Add exercise"
           className="bg-transparent text-text placeholder:text-text-muted/50 focus:outline-none border-b border-transparent focus:border-accent/40 min-w-0"
         />
+        <span className="text-right text-text-muted/40 tabular-nums text-xs italic">
+          {draftName ? formatPrev(draftName) : ''}
+        </span>
         <input
           type="number"
           value={draftSets}
@@ -171,6 +194,37 @@ export function WorkoutLog() {
   const [type, setType] = useState('strength');
   const [duration, setDuration] = useState('');
   const [expandedId, setExpandedId] = useState<Id<'workouts'> | null>(null);
+
+  // Section 9A — "Previous" column helper.
+  // Given the workout currently being displayed, return a map of
+  // lowercased exercise name → most recent same-named exercise from any
+  // workout STRICTLY BEFORE this one (by date, then creation time).
+  // Used by ExerciseTable to show "80kg ×8" ghost text next to each row.
+  function buildPrevForWorkout(
+    currentWorkout: Workout,
+  ): Map<string, { weight?: number; reps?: number; unit?: string }> {
+    const result = new Map<string, { weight?: number; reps?: number; unit?: string }>();
+    if (!workouts) return result;
+    // Walk newest → oldest so the FIRST hit per key is the most recent prior
+    const ordered = [...workouts].sort((a, b) => {
+      if (a.workoutDate !== b.workoutDate) return b.workoutDate.localeCompare(a.workoutDate);
+      return b._creationTime - a._creationTime;
+    });
+    for (const w of ordered) {
+      if (w._id === currentWorkout._id) continue;
+      if (w.workoutDate > currentWorkout.workoutDate) continue;
+      if (
+        w.workoutDate === currentWorkout.workoutDate &&
+        w._creationTime >= currentWorkout._creationTime
+      ) continue;
+      for (const ex of w.exercises ?? []) {
+        const key = (ex.name ?? '').toLowerCase().trim();
+        if (!key || result.has(key)) continue;
+        result.set(key, { weight: ex.weight, reps: ex.reps, unit: ex.unit });
+      }
+    }
+    return result;
+  }
 
   if (workouts === undefined) {
     return (
@@ -310,7 +364,9 @@ export function WorkoutLog() {
                     </svg>
                   </div>
                 </button>
-                {isExpanded && <ExerciseTable workout={w} />}
+                {isExpanded && (
+                  <ExerciseTable workout={w} previousByName={buildPrevForWorkout(w)} />
+                )}
               </div>
             );
           })}

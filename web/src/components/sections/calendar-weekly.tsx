@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ── Constants ───────────────────────────────────────────
 
@@ -287,8 +288,8 @@ export function CalendarWeekly() {
             <div className="w-10 md:w-14 shrink-0" />
             {Array.from({ length: 7 }).map((_, i) => (
               <div key={i} className="flex-1 space-y-2">
-                <div className="animate-pulse h-10 bg-surface-hover rounded" />
-                <div className="animate-pulse h-40 bg-surface-hover rounded" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-40 w-full" />
               </div>
             ))}
           </div>

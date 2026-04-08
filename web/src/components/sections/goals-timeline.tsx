@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import Link from 'next/link';
 import type { Id } from '@/lib/convex-api';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function GoalBar({ goalId, title, targetDate }: { goalId: Id<"goals">; title: string; targetDate?: string }) {
   const health = useQuery(api.goals.health, { id: goalId });
@@ -54,7 +55,14 @@ export function GoalsTimeline() {
   const goals = useQuery(api.goals.list, { status: 'active' });
 
   if (goals === undefined) {
-    return <div className="animate-pulse h-48 bg-surface rounded-lg" />;
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-3 w-32" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+      </div>
+    );
   }
 
   // Group by quarter

@@ -6,6 +6,7 @@ import { api } from '@/lib/convex-api';
 import { JournalForm } from '@/components/journal-form';
 import { SidePeek } from '@/components/side-peek';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Doc } from '@/lib/convex-api';
 
 type JournalEntry = Doc<'journals'>;
@@ -459,87 +460,192 @@ function EntryCard({ entry, extraWins, onClick }: { entry: JournalEntry; extraWi
   );
 }
 
-// ── WeekStrip (Section 7I) ──────────────────────────
+// ── WeekStrip / MonthGrid (Section 7I) ──────────────
+// Section 7I asked for a week strip plus a monthly view toggle. Both render
+// from the same set of entryDates, with click-to-jump.
 
-function WeekStrip({
+type CalendarMode = 'week' | 'month';
+
+function CalendarStrip({
+  mode,
+  setMode,
   weekStart,
+  monthDate,
   entryDates,
   onShiftWeek,
+  onShiftMonth,
   onJumpToDate,
 }: {
+  mode: CalendarMode;
+  setMode: (m: CalendarMode) => void;
   weekStart: Date;
+  monthDate: Date;
   entryDates: Set<string>;
   onShiftWeek: (delta: number) => void;
+  onShiftMonth: (delta: number) => void;
   onJumpToDate: (date: string) => void;
 }) {
   const today = todayISO();
-  const days: WeekDay[] = [];
-  for (let i = 0; i < 7; i++) {
-    const d = shiftDays(weekStart, i);
-    const date = dateToISO(d);
-    days.push({
-      date,
-      weekday: d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1),
-      dayNum: String(d.getDate()),
-      isToday: date === today,
-      hasEntry: entryDates.has(date),
-    });
+
+  // Build the cells for the current mode
+  const headerLabel =
+    mode === 'week'
+      ? weekStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Week-mode: 7 day cells
+  const weekDays: WeekDay[] = [];
+  if (mode === 'week') {
+    for (let i = 0; i < 7; i++) {
+      const d = shiftDays(weekStart, i);
+      const date = dateToISO(d);
+      weekDays.push({
+        date,
+        weekday: d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1),
+        dayNum: String(d.getDate()),
+        isToday: date === today,
+        hasEntry: entryDates.has(date),
+      });
+    }
   }
-  const monthLabel = weekStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Month-mode: build a 6×7 grid starting from the Monday of the week
+  // containing the 1st of the month, padding with previous/next month days.
+  interface MonthCell {
+    date: string;
+    dayNum: string;
+    isToday: boolean;
+    hasEntry: boolean;
+    inMonth: boolean;
+  }
+  const monthCells: MonthCell[] = [];
+  if (mode === 'month') {
+    const firstOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+    const gridStart = startOfWeek(firstOfMonth);
+    for (let i = 0; i < 42; i++) {
+      const d = shiftDays(gridStart, i);
+      const date = dateToISO(d);
+      monthCells.push({
+        date,
+        dayNum: String(d.getDate()),
+        isToday: date === today,
+        hasEntry: entryDates.has(date),
+        inMonth: d.getMonth() === monthDate.getMonth(),
+      });
+    }
+  }
+
+  const handlePrev = () => (mode === 'week' ? onShiftWeek(-7) : onShiftMonth(-1));
+  const handleNext = () => (mode === 'week' ? onShiftWeek(7) : onShiftMonth(1));
 
   return (
     <div className="border border-border rounded-xl overflow-hidden bg-bg-subtle">
-      {/* Header with month + nav arrows */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+      {/* Header — month label, nav arrows, mode toggle */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border gap-3">
         <button
           type="button"
-          onClick={() => onShiftWeek(-7)}
+          onClick={handlePrev}
           className="p-1 rounded text-text-muted hover:text-text hover:bg-surface transition-colors"
-          aria-label="Previous week"
+          aria-label={mode === 'week' ? 'Previous week' : 'Previous month'}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <span className="text-xs font-semibold text-text uppercase tracking-wider">
-          {monthLabel}
+        <span className="text-xs font-semibold text-text uppercase tracking-wider flex-1 text-center">
+          {headerLabel}
         </span>
         <button
           type="button"
-          onClick={() => onShiftWeek(7)}
+          onClick={handleNext}
           className="p-1 rounded text-text-muted hover:text-text hover:bg-surface transition-colors"
-          aria-label="Next week"
+          aria-label={mode === 'week' ? 'Next week' : 'Next month'}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </button>
-      </div>
-
-      {/* 7 day cells */}
-      <div className="grid grid-cols-7 gap-1 p-2">
-        {days.map((d) => (
+        {/* Mode toggle pill */}
+        <div className="inline-flex items-center bg-bg border border-border rounded-full p-0.5 text-[10px] font-medium ml-1">
           <button
-            key={d.date}
             type="button"
-            onClick={() => onJumpToDate(d.date)}
+            onClick={() => setMode('week')}
             className={cn(
-              'flex flex-col items-center py-2 rounded-lg transition-colors',
-              d.isToday
-                ? 'bg-accent text-white'
-                : d.hasEntry
-                  ? 'bg-surface text-text hover:bg-surface-hover'
-                  : 'text-text-muted hover:bg-surface',
+              'px-2.5 py-0.5 rounded-full transition-colors',
+              mode === 'week' ? 'bg-surface text-text' : 'text-text-muted hover:text-text',
             )}
           >
-            <span className="text-[9px] uppercase tracking-wider opacity-70">{d.weekday}</span>
-            <span className="text-base font-semibold tabular-nums leading-tight">{d.dayNum}</span>
-            {d.hasEntry && !d.isToday && (
-              <span className="mt-1 inline-block h-1 w-1 rounded-full bg-success" />
-            )}
+            Week
           </button>
-        ))}
+          <button
+            type="button"
+            onClick={() => setMode('month')}
+            className={cn(
+              'px-2.5 py-0.5 rounded-full transition-colors',
+              mode === 'month' ? 'bg-surface text-text' : 'text-text-muted hover:text-text',
+            )}
+          >
+            Month
+          </button>
+        </div>
       </div>
+
+      {mode === 'week' ? (
+        <div className="grid grid-cols-7 gap-1 p-2">
+          {weekDays.map((d) => (
+            <button
+              key={d.date}
+              type="button"
+              onClick={() => onJumpToDate(d.date)}
+              className={cn(
+                'flex flex-col items-center py-2 rounded-lg transition-colors',
+                d.isToday
+                  ? 'bg-accent text-white'
+                  : d.hasEntry
+                    ? 'bg-surface text-text hover:bg-surface-hover'
+                    : 'text-text-muted hover:bg-surface',
+              )}
+            >
+              <span className="text-[9px] uppercase tracking-wider opacity-70">{d.weekday}</span>
+              <span className="text-base font-semibold tabular-nums leading-tight">{d.dayNum}</span>
+              {d.hasEntry && !d.isToday && (
+                <span className="mt-1 inline-block h-1 w-1 rounded-full bg-success" />
+              )}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="p-2">
+          {/* Weekday header row */}
+          <div className="grid grid-cols-7 gap-1 mb-1 px-1 text-[9px] uppercase tracking-wider text-text-muted/60 text-center">
+            <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+          </div>
+          {/* 6×7 day grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {monthCells.map((c) => (
+              <button
+                key={c.date}
+                type="button"
+                onClick={() => onJumpToDate(c.date)}
+                className={cn(
+                  'aspect-square flex flex-col items-center justify-center rounded-md transition-colors text-xs',
+                  !c.inMonth && 'opacity-30',
+                  c.isToday
+                    ? 'bg-accent text-white'
+                    : c.hasEntry
+                      ? 'bg-surface text-text hover:bg-surface-hover'
+                      : 'text-text-muted hover:bg-surface',
+                )}
+              >
+                <span className="font-semibold tabular-nums leading-none">{c.dayNum}</span>
+                {c.hasEntry && !c.isToday && (
+                  <span className="mt-0.5 inline-block h-1 w-1 rounded-full bg-success" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -550,8 +656,15 @@ export function JournalTimeline() {
   const entries = useQuery(api.journals.list, {});
   const allWins = useQuery(api.wins.list, {});
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
-  // Section 7I — week strip state
+  // Section 7I — calendar strip state
+  const [calendarMode, setCalendarMode] = useState<CalendarMode>('week');
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
+  const [monthDate, setMonthDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
 
   // Build a map of date → wins from the wins table
   const winsMap = new Map<string, string[]>();
@@ -584,9 +697,21 @@ export function JournalTimeline() {
   }, [entries]);
 
   if (!entries) return (
-    <div className="space-y-3">
+    // Section 18J — week strip + 3 entry-card placeholders
+    <div className="space-y-6">
+      <Skeleton className="h-20 w-full rounded-xl" />
       {[1, 2, 3].map((i) => (
-        <div key={i} className="h-16 rounded-xl bg-surface animate-pulse" />
+        <div key={i} className="flex gap-6">
+          <div className="w-12 shrink-0 space-y-1 text-center">
+            <Skeleton className="h-2 w-8 mx-auto" />
+            <Skeleton className="h-5 w-6 mx-auto" />
+          </div>
+          <div className="flex-1 border border-border rounded-xl p-6 space-y-3">
+            <Skeleton className="h-3 w-3/4" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-2/3" />
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -595,11 +720,21 @@ export function JournalTimeline() {
 
   return (
     <div className="max-w-none space-y-8">
-      {/* Section 7I — calendar-led week strip at the top */}
-      <WeekStrip
+      {/* Section 7I — calendar strip with week ↔ month toggle */}
+      <CalendarStrip
+        mode={calendarMode}
+        setMode={setCalendarMode}
         weekStart={weekStart}
+        monthDate={monthDate}
         entryDates={entryDates}
         onShiftWeek={(delta) => setWeekStart((prev) => shiftDays(prev, delta))}
+        onShiftMonth={(delta) => {
+          setMonthDate((prev) => {
+            const next = new Date(prev);
+            next.setMonth(next.getMonth() + delta);
+            return next;
+          });
+        }}
         onJumpToDate={handleJumpToDate}
       />
 

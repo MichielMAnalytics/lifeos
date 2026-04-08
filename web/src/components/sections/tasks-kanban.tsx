@@ -4,13 +4,28 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function TasksKanban() {
   const todoTasks = useQuery(api.tasks.list, { status: 'todo' });
   const doneTasks = useQuery(api.tasks.list, { status: 'done' });
 
   if (todoTasks === undefined || doneTasks === undefined) {
-    return <div className="animate-pulse h-48 bg-surface rounded-lg" />;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[0, 1].map((col) => (
+          <div key={col} className="rounded-xl border border-border bg-surface overflow-hidden">
+            <div className="px-4 py-3 border-b border-border">
+              <Skeleton className="h-3 w-20" />
+            </div>
+            <div className="px-3 py-3 space-y-2">
+              <Skeleton className="h-12 w-full rounded-lg" />
+              <Skeleton className="h-12 w-full rounded-lg" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   const columns = [

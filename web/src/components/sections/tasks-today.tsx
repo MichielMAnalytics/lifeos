@@ -3,12 +3,24 @@
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import Link from 'next/link';
+import { Skeleton, SkeletonRow } from '@/components/ui/skeleton';
 
 export function TasksToday() {
   const todayTasks = useQuery(api.tasks.list, { status: 'todo', due: 'today' });
 
   if (todayTasks === undefined) {
-    return <div className="animate-pulse h-48 bg-surface rounded-lg" />;
+    return (
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <Skeleton className="h-3 w-28" />
+        </div>
+        <div className="px-2 py-2 space-y-1">
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
+        </div>
+      </div>
+    );
   }
 
   return (

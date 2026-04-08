@@ -4,12 +4,22 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
+import { Skeleton, SkeletonRow } from '@/components/ui/skeleton';
 
 export function TasksFlat() {
   const tasks = useQuery(api.tasks.list, { status: 'todo' });
 
   if (tasks === undefined) {
-    return <div className="animate-pulse h-48 bg-surface rounded-lg" />;
+    return (
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <Skeleton className="h-3 w-24" />
+        </div>
+        <div className="px-2 py-2 space-y-1">
+          {[0, 1, 2, 3, 4].map((i) => <SkeletonRow key={i} />)}
+        </div>
+      </div>
+    );
   }
 
   return (

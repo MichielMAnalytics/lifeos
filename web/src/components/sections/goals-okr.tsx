@@ -3,6 +3,7 @@
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function GoalsOkr() {
   const goals = useQuery(api.goals.list, { status: 'active' });
@@ -10,7 +11,13 @@ export function GoalsOkr() {
   const doneTasks = useQuery(api.tasks.list, { status: 'done' });
 
   if (goals === undefined || todoTasks === undefined || doneTasks === undefined) {
-    return <div className="animate-pulse h-48 bg-surface rounded-lg" />;
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+      </div>
+    );
   }
 
   // Combine all tasks for counting

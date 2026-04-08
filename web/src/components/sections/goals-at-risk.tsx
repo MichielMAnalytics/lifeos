@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import Link from 'next/link';
 import type { Id } from '@/lib/convex-api';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const statusColors: Record<string, string> = {
   at_risk: 'text-warning',
@@ -19,7 +20,7 @@ function GoalHealthRow({ goalId, title }: { goalId: Id<"goals">; title: string }
   const health = useQuery(api.goals.health, { id: goalId });
 
   if (health === undefined) {
-    return <div className="animate-pulse h-10 bg-surface rounded" />;
+    return <Skeleton className="h-10 w-full" />;
   }
 
   // Only render if at_risk or off_track
@@ -57,7 +58,17 @@ export function GoalsAtRisk() {
   const goals = useQuery(api.goals.list, { status: 'active' });
 
   if (goals === undefined) {
-    return <div className="animate-pulse h-32 bg-surface rounded-lg" />;
+    return (
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <Skeleton className="h-3 w-28" />
+        </div>
+        <div className="p-3 space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    );
   }
 
   if (goals.length === 0) {

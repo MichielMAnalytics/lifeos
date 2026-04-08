@@ -550,7 +550,15 @@ function TaskSidebar({
 
 // ── Main component ───────────────────────────────────────
 
-export function DayTimeline() {
+/**
+ * DayTimeline — the day plan grid + its internal task sidebar.
+ *
+ * @param hideSidebar  When true the internal task sidebar is not rendered.
+ *   Used by the TodayShell two-pane layout so the page-level left pane
+ *   handles priorities + unscheduled tasks instead of having them
+ *   duplicated inside this component.
+ */
+export function DayTimeline({ hideSidebar = false }: { hideSidebar?: boolean } = {}) {
   const { date, isToday } = useTodayDate();
   const dayPlan = useQuery(api.dayPlans.getByDate, { date });
   const upsert = useMutation(api.dayPlans.upsert);
@@ -1049,15 +1057,18 @@ export function DayTimeline() {
           </div>
         </div>
 
-        {/* Task sidebar */}
-        <TaskSidebar
-          todayTasks={filteredTodayTasks}
-          overdueTasks={filteredOverdueTasks}
-          isDragOverSidebar={isDragOverSidebar}
-          onSidebarDragOver={handleSidebarDragOver}
-          onSidebarDragLeave={handleSidebarDragLeave}
-          onSidebarDrop={handleSidebarDrop}
-        />
+        {/* Task sidebar — hidden when rendered inside the TodayShell two-pane
+            layout (the page-level left pane handles tasks instead) */}
+        {!hideSidebar && (
+          <TaskSidebar
+            todayTasks={filteredTodayTasks}
+            overdueTasks={filteredOverdueTasks}
+            isDragOverSidebar={isDragOverSidebar}
+            onSidebarDragOver={handleSidebarDragOver}
+            onSidebarDragLeave={handleSidebarDragLeave}
+            onSidebarDrop={handleSidebarDrop}
+          />
+        )}
       </div>
 
       {/* Overflow warning */}

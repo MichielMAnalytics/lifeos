@@ -18,6 +18,7 @@ import { PrioritiesChecklist } from './sections/priorities-checklist';
 import { DayTimeline } from './sections/day-timeline';
 import { Quotes } from './sections/quotes';
 import { TaskStatusBar } from './sections/task-status-bar';
+import { TodayShell } from './sections/today-shell';
 
 // Page-level section components
 import { TasksBucketed } from './sections/tasks-bucketed';
@@ -70,6 +71,7 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'day-timeline': DayTimeline,
   'quotes': Quotes,
   'task-status-bar': TaskStatusBar,
+  'today-shell': TodayShell,
 
   // Tasks page sections
   'tasks-bucketed': TasksBucketed,
