@@ -366,9 +366,16 @@ function LiveConfirmPage() {
       const isManaged = state.path === 'managed';
 
       if (isManaged || isByok) {
+        // Default to GPT if user only connected ChatGPT, otherwise Claude
+        const hasAnthropic = (state.anthropicAuthMethod === 'api_key' && state.anthropicApiKey.trim()) ||
+          (state.anthropicAuthMethod === 'setup_token' && state.anthropicSetupToken.trim());
+        const hasOpenai = (state.openaiAuthMethod === 'chatgpt_oauth' && state.openaiOAuthTokens.trim()) ||
+          (state.openaiAuthMethod === 'api_key' && state.openaiApiKey.trim());
+        const defaultModel = hasAnthropic ? 'claude-sonnet' : hasOpenai ? 'gpt' : 'claude-sonnet';
+
         await saveSettings({
           apiKeySource: isByok ? 'byok' : 'ours',
-          selectedModel: 'claude-sonnet',
+          selectedModel: defaultModel,
           anthropicAuthMethod: isByok ? state.anthropicAuthMethod : undefined,
           ...(isByok && state.anthropicAuthMethod === 'api_key' && state.anthropicApiKey.trim()
             ? { anthropicKey: state.anthropicApiKey.trim() }
