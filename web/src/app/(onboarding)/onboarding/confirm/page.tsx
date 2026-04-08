@@ -24,8 +24,9 @@ const isDev = process.env.NODE_ENV === 'development';
 const MOCK_PLANS: Plan[] = [
   { priceId: 'mock_basic', annualPriceId: 'mock_basic_yr', planType: 'basic', priceEuroCents: 3000, annualPriceEuroCents: 28800, includedCreditsCents: 1000, label: 'Managed (€10)', includesDeployment: true },
   { priceId: 'mock_standard', annualPriceId: 'mock_standard_yr', planType: 'standard', priceEuroCents: 4500, annualPriceEuroCents: 43200, includedCreditsCents: 2500, label: 'Managed (€25)', includesDeployment: true },
+  { priceId: 'mock_pro', annualPriceId: 'mock_pro_yr', planType: 'pro', priceEuroCents: 7000, annualPriceEuroCents: 67200, includedCreditsCents: 5000, label: 'Managed (€50)', includesDeployment: true },
   { priceId: 'mock_premium', annualPriceId: 'mock_premium_yr', planType: 'premium', priceEuroCents: 12000, annualPriceEuroCents: 115200, includedCreditsCents: 10000, label: 'Managed (€100)', includesDeployment: true },
-  { priceId: 'mock_byok', annualPriceId: 'mock_byok_yr', planType: 'byok', priceEuroCents: 3000, annualPriceEuroCents: 28800, includedCreditsCents: 0, label: 'BYOK', includesDeployment: true },
+  { priceId: 'mock_byok', annualPriceId: 'mock_byok_yr', planType: 'byok', priceEuroCents: 2000, annualPriceEuroCents: 19200, includedCreditsCents: 0, label: 'BYOK', includesDeployment: true },
   { priceId: 'mock_dashboard', annualPriceId: 'mock_dashboard_yr', planType: 'dashboard', priceEuroCents: 1000, annualPriceEuroCents: 9600, includedCreditsCents: 0, label: 'Home', includesDeployment: false },
 ];
 

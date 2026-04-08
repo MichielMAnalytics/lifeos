@@ -198,7 +198,7 @@ export function SubscriptionPicker({
                 loading={loading === activePriceId}
               >
                 {loading === activePriceId
-                  ? { byok: "Smart move!", basic: "Great choice!", standard: "Let's go!", premium: "Excellent taste!" }[plan.planType]
+                  ? { byok: "Smart move!", basic: "Great choice!", standard: "Let's go!", pro: "Great pick!", premium: "Excellent taste!" }[plan.planType]
                   : grayed
                     ? plan.planType === "byok" ? "Switch to BYOK" : "Use Our Keys"
                     : plan.planType === "byok" ? "Start 7-Day Trial" : "Subscribe"}

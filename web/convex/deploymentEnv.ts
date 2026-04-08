@@ -9,11 +9,13 @@ const serverEnvSchema = z.object({
   STRIPE_SUB_BYOK: z.string().optional(),
   STRIPE_SUB_BASIC: z.string().optional(),
   STRIPE_SUB_STANDARD: z.string().optional(),
+  STRIPE_SUB_PRO: z.string().optional(),
   STRIPE_SUB_PREMIUM: z.string().optional(),
   STRIPE_SUB_DASHBOARD_ANNUAL: z.string().optional(),
   STRIPE_SUB_BYOK_ANNUAL: z.string().optional(),
   STRIPE_SUB_BASIC_ANNUAL: z.string().optional(),
   STRIPE_SUB_STANDARD_ANNUAL: z.string().optional(),
+  STRIPE_SUB_PRO_ANNUAL: z.string().optional(),
   STRIPE_SUB_PREMIUM_ANNUAL: z.string().optional(),
   SITE_URL: z.url().default("http://localhost:5173"),
   K8S_API_URL: z.string().optional(),
@@ -110,6 +112,17 @@ const PLAN_DEFS = [
     includesDeployment: true,
   },
   {
+    key: "STRIPE_SUB_PRO" as const,
+    annualKey: "STRIPE_SUB_PRO_ANNUAL" as const,
+    planType: "pro" as const,
+    priceEuroCents: 7000,
+    annualPriceEuroCents: 67200 as number | null,
+    includedCreditsCents: 5000,
+    apiKeyMode: "ours" as const,
+    label: "Managed (€50 credits)",
+    includesDeployment: true,
+  },
+  {
     key: "STRIPE_SUB_PREMIUM" as const,
     annualKey: "STRIPE_SUB_PREMIUM_ANNUAL" as const,
     planType: "premium" as const,
@@ -142,7 +155,7 @@ export function getSubscriptionPlans(): Record<
 export function getSubscriptionPlansList(): Array<{
   priceId: string;
   annualPriceId: string | null;
-  planType: "dashboard" | "byok" | "basic" | "standard" | "premium";
+  planType: "dashboard" | "byok" | "basic" | "standard" | "pro" | "premium";
   priceEuroCents: number;
   annualPriceEuroCents: number | null;
   includedCreditsCents: number;
