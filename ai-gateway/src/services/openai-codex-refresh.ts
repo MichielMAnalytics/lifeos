@@ -23,9 +23,13 @@ export function parseCodexTokens(stored: string): CodexOAuthTokens | null {
         refresh_token: parsed.tokens.refresh_token,
       };
     }
-    // Handle tokens-only format
+    // Handle tokens-only format (with optional expires_at)
     if (typeof parsed.access_token === "string" && typeof parsed.refresh_token === "string") {
-      return parsed as CodexOAuthTokens;
+      return {
+        access_token: parsed.access_token,
+        refresh_token: parsed.refresh_token,
+        expires_at: typeof parsed.expires_at === "number" ? parsed.expires_at : undefined,
+      };
     }
     return null;
   } catch {
@@ -33,10 +37,30 @@ export function parseCodexTokens(stored: string): CodexOAuthTokens | null {
   }
 }
 
+function extractJwtExpiry(accessToken: string): number | undefined {
+  try {
+    const parts = accessToken.split(".");
+    if (parts.length !== 3) return undefined;
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+    if (typeof payload.exp === "number") return payload.exp * 1000; // epoch ms
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function isTokenExpired(tokens: CodexOAuthTokens): boolean {
-  if (!tokens.expires_at) return true;
-  // Refresh 60s before expiry
-  return Date.now() > tokens.expires_at - 60_000;
+  // Use explicit expires_at if available
+  if (tokens.expires_at) {
+    return Date.now() > tokens.expires_at - 60_000;
+  }
+  // Fall back to JWT exp claim
+  const jwtExpiry = extractJwtExpiry(tokens.access_token);
+  if (jwtExpiry) {
+    return Date.now() > jwtExpiry - 60_000;
+  }
+  // Unknown expiry — assume expired to trigger refresh
+  return true;
 }
 
 export async function refreshCodexToken(refreshToken: string): Promise<CodexOAuthTokens> {
@@ -105,6 +129,7 @@ async function persistRefreshedTokens(userId: string, tokens: CodexOAuthTokens):
     const payload = Buffer.from(JSON.stringify({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
+      expires_at: tokens.expires_at,
     })).toString("base64");
 
     // Add a new version with the refreshed tokens
