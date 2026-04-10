@@ -632,8 +632,8 @@ export async function patchStatefulSet(
         'done',
       ].join('\n')],
       env: [
-        { name: "LIFEOS_API_URL", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_URL" } } },
-        { name: "LIFEOS_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_KEY" } } },
+        { name: "LIFEOS_API_URL", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_URL", optional: true } } },
+        { name: "LIFEOS_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_KEY", optional: true } } },
       ],
       volumeMounts: [{ name: "data", mountPath: "/mnt/data" }],
       securityContext: { runAsUser: 1000, runAsGroup: 1000 },
