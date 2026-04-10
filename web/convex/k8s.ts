@@ -213,7 +213,7 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/anthropic`,
           apiKey: "gateway-managed",
           api: "anthropic-messages",
-          allowPrivateNetwork: true,
+
           headers: { "X-Pod-Secret": podSecretEnvRef },
           models: [
             { id: "claude-opus-4-6", name: "Claude Opus 4.6", contextWindow: 1000000, maxTokens: 32000, input: ["text", "image"] },
@@ -225,7 +225,7 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/openai`,
           apiKey: "gateway-managed",
           api: "openai-responses",
-          allowPrivateNetwork: true,
+
           headers: { "X-Pod-Secret": podSecretEnvRef },
           models: [
             { id: "gpt-5.4-2026-03-05", name: "GPT 5.4", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
@@ -238,7 +238,7 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/kimi`,
           apiKey: "gateway-managed",
           api: "openai-completions",
-          allowPrivateNetwork: true,
+
           headers: { "X-Pod-Secret": podSecretEnvRef },
           models: [
             { id: "moonshotai/kimi-k2-thinking-maas", name: "Kimi K2 Thinking", reasoning: true, contextWindow: 262144, maxTokens: 65536, compat: { supportsDeveloperRole: false } },
@@ -251,7 +251,7 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/gemini`,
           apiKey: "gateway-managed",
           api: "openai-completions",
-          allowPrivateNetwork: true,
+
           headers: { "X-Pod-Secret": podSecretEnvRef },
           models: [
             { id: "google/gemini-3.1-pro-preview", name: "Gemini 3.1 Pro", reasoning: false, contextWindow: 1000000, maxTokens: 65536, input: ["text", "image"] },
@@ -262,7 +262,7 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/minimax`,
           apiKey: "gateway-managed",
           api: "openai-completions",
-          allowPrivateNetwork: true,
+
           headers: { "X-Pod-Secret": podSecretEnvRef },
           models: [
             { id: "MiniMax-M2.1", name: "MiniMax M2.1", contextWindow: 200000, maxTokens: 8192, input: ["text"] },
@@ -273,7 +273,7 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/qwen`,
           apiKey: "gateway-managed",
           api: "openai-completions",
-          allowPrivateNetwork: true,
+
           headers: { "X-Pod-Secret": podSecretEnvRef },
           models: [
             { id: "qwen/qwen3-coder-480b-a35b-instruct-maas", name: "Qwen3 Coder 480B", contextWindow: 262144, maxTokens: 65536, input: ["text"] },

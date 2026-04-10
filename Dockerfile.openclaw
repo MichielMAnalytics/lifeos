@@ -26,6 +26,13 @@ RUN OPENCLAW_A2UI_SKIP_MISSING=1 pnpm build
 ENV OPENCLAW_PREFER_PNPM=1
 # Skip UI build — LifeOS serves its own dashboard, OpenClaw runs headless
 
+# Patch: default allowPrivateNetwork to true for provider requests.
+# OpenClaw v2026.4.9 added SSRF guards that block cluster-internal gateway URLs.
+# We run providers through an internal gateway, so we need private network access.
+RUN find dist/ -name '*.js' -exec sed -i \
+  's/allowPrivateNetwork:.\{0,5\}\.allowPrivateNetwork??!1/allowPrivateNetwork:true/g; s/allowPrivateNetwork:.\{0,5\}\.allowPrivateNetwork??false/allowPrivateNetwork:true/g' \
+  {} +
+
 # Clean up build-only artifacts. We intentionally skip `pnpm prune --prod`
 # because extensions (e.g. googlechat) are loaded dynamically at runtime and
 # their production deps (e.g. google-auth-library) would be dropped since no
