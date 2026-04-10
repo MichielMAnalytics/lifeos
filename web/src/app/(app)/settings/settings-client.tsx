@@ -195,6 +195,7 @@ export function SettingsClient({
 /* ================================================================== */
 
 function AccountTab({ user }: { user: User | null }) {
+  const deployment = useQuery(api.deploymentQueries.getMyDeployment);
   const [avatar, setAvatar] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [editName, setEditName] = useState('');
@@ -371,6 +372,14 @@ function AccountTab({ user }: { user: User | null }) {
           <label className="text-xs font-medium text-text">Joined</label>
           <p className="text-sm text-text-muted">{formatJoinDate(user._creationTime)}</p>
         </div>
+
+        {/* Pod ID (debug) */}
+        {deployment && (
+          <div className="p-5 space-y-2">
+            <label className="text-xs font-medium text-text">Pod ID</label>
+            <p className="text-sm text-text-muted font-mono">{deployment.subdomain}</p>
+          </div>
+        )}
       </div>
 
       {/* Save */}
