@@ -19,19 +19,23 @@ export function getConfigDir(): string {
 }
 
 export function getConfig(): CliConfig {
+  // Env vars take precedence (set by K8s pod containers)
+  const envUrl = process.env.LIFEOS_API_URL ?? '';
+  const envKey = process.env.LIFEOS_API_KEY ?? '';
+
   const configPath = join(getConfigDir(), CONFIG_FILE_NAME);
   if (!existsSync(configPath)) {
-    return { api_url: '', api_key: '' };
+    return { api_url: envUrl, api_key: envKey };
   }
   try {
     const raw = readFileSync(configPath, 'utf-8');
     const parsed = JSON.parse(raw) as Partial<CliConfig>;
     return {
-      api_url: parsed.api_url ?? '',
-      api_key: parsed.api_key ?? '',
+      api_url: envUrl || parsed.api_url || '',
+      api_key: envKey || parsed.api_key || '',
     };
   } catch {
-    return { api_url: '', api_key: '' };
+    return { api_url: envUrl, api_key: envKey };
   }
 }
 

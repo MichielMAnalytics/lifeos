@@ -493,6 +493,8 @@ fs.writeFileSync(cf, JSON.stringify(c));
                 { name: "OPENCLAW_GATEWAY_TOKEN", valueFrom: { secretKeyRef: { name: secretName, key: "GATEWAY_TOKEN" } } },
                 { name: "NPM_CONFIG_PREFIX", value: "/home/node/.npm-global" },
                 { name: "PIP_USER", value: "1" },
+                { name: "LIFEOS_API_URL", valueFrom: { secretKeyRef: { name: `${name}-init`, key: "LIFEOS_API_URL", optional: true } } },
+                { name: "LIFEOS_API_KEY", valueFrom: { secretKeyRef: { name: `${name}-init`, key: "LIFEOS_API_KEY", optional: true } } },
               ],
               volumeMounts: [
                 { name: "data", mountPath: "/home/node" },
@@ -651,6 +653,10 @@ export async function patchStatefulSet(
     env: [
       { name: "NPM_CONFIG_PREFIX", value: "/home/node/.npm-global" },
       { name: "PIP_USER", value: "1" },
+      ...(initSecretName ? [
+        { name: "LIFEOS_API_URL", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_URL", optional: true } } },
+        { name: "LIFEOS_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_KEY", optional: true } } },
+      ] : []),
     ],
     startupProbe: {
       httpGet: { path: "/", port: 18789 },
