@@ -754,7 +754,18 @@ export const rolloutPatch = internalAction({
           ...customEnvVars,
           });
 
-        // Create the split init secret (idempotent — createSecret handles 409)
+        // Regenerate Life Coach API key so the CLI works inside the pod
+        const existingKeys = await ctx.runQuery(internal.authHelpers._listApiKeys, { userId: depRecord.userId });
+        const existingLifeCoachKey = existingKeys?.find((k: { name?: string }) => k.name === "Life Coach");
+        if (existingLifeCoachKey) {
+          await ctx.runMutation(internal.authHelpers._deleteApiKey, { userId: depRecord.userId, keyId: existingLifeCoachKey._id });
+        }
+        const apiKeyResult = await ctx.runAction(internal.apiKeyAuth._createApiKey, {
+          userId: depRecord.userId,
+          name: "Life Coach",
+        });
+
+        // Create the split init secret with LIFEOS CLI credentials
         await createSecret(initSecretName, {
           POD_SECRET: dep.podSecret,
           CALLBACK_JWT: depRecord.callbackJwt,
@@ -762,6 +773,8 @@ export const rolloutPatch = internalAction({
           API_KEY_SOURCE: settings?.apiKeySource ?? "ours",
           OWNER_EMAIL: ownerEmail ?? "",
           GATEWAY_TOKEN: depRecord.gatewayToken,
+          LIFEOS_API_KEY: apiKeyResult.key,
+          LIFEOS_API_URL: serverEnv.CONVEX_SITE_URL ?? "",
         });
 
         // Patch StatefulSet template with latest config + init container migration
