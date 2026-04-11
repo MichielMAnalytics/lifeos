@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { redis, userKey, rateLimitKey, RATE_LIMIT_SCRIPT } from "../services/redis.js";
 import { checkBalance, deductBalance, markDirty, InsufficientBalanceError } from "../services/balance.js";
-import { resolveKey, getAccessToken } from "../services/keys.js";
+import { resolveKey, getAccessToken, getPlatformKey } from "../services/keys.js";
 import { getValidAccessToken, parseCodexTokens } from "../services/openai-codex-refresh.js";
 import { calculateCostCents, MINIMUM_RESERVE_CENTS } from "../services/pricing.js";
 import { parseUsage } from "../services/usage.js";
@@ -154,9 +154,12 @@ proxy.all("/:provider/*", async (c) => {
   }
 
   // Detect OpenAI Codex OAuth (stored as JSON with access_token + refresh_token)
+  // Audio/multipart requests can't go through Codex — fall back to platform key
+  const earlyContentType = c.req.header("Content-Type") ?? "";
+  const isEarlyMultipart = earlyContentType.includes("multipart/");
   let isOpenAICodexOAuth = false;
   let codexAccessToken: string | undefined;
-  if (provider === "openai" && isBYOK && apiKey.startsWith("{")) {
+  if (provider === "openai" && isBYOK && apiKey.startsWith("{") && !isEarlyMultipart) {
     const parsed = parseCodexTokens(apiKey);
     if (parsed) {
       isOpenAICodexOAuth = true;
@@ -167,6 +170,12 @@ proxy.all("/:provider/*", async (c) => {
         return c.json({ error: "ChatGPT OAuth token expired. Please re-authenticate in LifeOS settings." }, 401);
       }
     }
+  }
+  // For multipart OpenAI BYOK requests (audio), use platform key instead of Codex
+  if (provider === "openai" && isBYOK && isEarlyMultipart && apiKey.startsWith("{")) {
+    apiKey = getPlatformKey("openai");
+    isBYOK = false;
+    console.log(`[proxy] Multipart request (audio) — falling back to platform OpenAI key`);
   }
 
   // Parse request body (need it to extract model and potentially modify for OpenAI streaming)
