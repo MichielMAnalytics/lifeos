@@ -299,8 +299,9 @@ function buildOpenClawConfig(
           enabled: true,
           echoTranscript: true,
           echoFormat: "🎤 \"{transcript}\"",
+          request: { allowPrivateNetwork: true },
           models: [
-            { provider: "openai", model: "gpt-4o-mini-transcribe", baseUrl: `${gatewayUrl}/v1/openai`, request: { allowPrivateNetwork: true } },
+            { provider: "openai", model: "gpt-4o-mini-transcribe", baseUrl: `${gatewayUrl}/v1/openai` },
           ],
         },
       },
