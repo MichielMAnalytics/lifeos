@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LifeOS — Text Contrast Fix Inspiration</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Satoshi', -apple-system, sans-serif;
+    background: #0a0a0b;
+    color: #f4f4f5;
+    -webkit-font-smoothing: antialiased;
+    padding: 48px 32px 120px;
+    line-height: 1.5;
+  }
+
+  .page-header { max-width: 960px; margin: 0 auto 48px; }
+  .page-header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
+  .page-header p { color: #a1a1aa; font-size: 14px; max-width: 640px; }
+
+  .section { max-width: 960px; margin: 0 auto 56px; }
+  .section h2 {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #71717a; margin-bottom: 20px;
+    padding-bottom: 12px; border-bottom: 1px solid #1e1e21;
+  }
+
+  /* ─── Problem Diagnosis ─── */
+  .diagnosis {
+    background: #111113;
+    border: 1px solid #1e1e21;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .diagnosis h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+  .diagnosis p { font-size: 13px; color: #a1a1aa; margin-bottom: 8px; }
+  .diagnosis code {
+    background: #1e1e21; padding: 2px 6px; border-radius: 4px;
+    font-size: 12px; color: #e4e4e7;
+  }
+  .stat-row {
+    display: flex; gap: 16px; margin-top: 16px;
+  }
+  .stat {
+    background: #18181b; border: 1px solid #27272a; border-radius: 8px;
+    padding: 12px 16px; flex: 1; text-align: center;
+  }
+  .stat .num { font-size: 28px; font-weight: 700; color: #ef4444; }
+  .stat .label { font-size: 11px; color: #71717a; margin-top: 4px; }
+
+  /* ─── Comparison Cards ─── */
+  .compare-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  }
+  .compare-card {
+    background: #111113; border: 1px solid #1e1e21;
+    border-radius: 12px; overflow: hidden;
+  }
+  .compare-label {
+    padding: 12px 16px; border-bottom: 1px solid #1e1e21;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .compare-label h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tag { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 100px; }
+  .tag-bad { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .tag-good { background: rgba(16,185,129,0.15); color: #10b981; }
+  .tag-ref { background: rgba(59,130,246,0.15); color: #3b82f6; }
+
+  .compare-body { padding: 20px; }
+
+  /* ─── Text Samples ─── */
+  .text-sample { margin-bottom: 16px; }
+  .text-sample .context {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #52525b; margin-bottom: 6px;
+  }
+
+  /* Current broken styles (simulating the globals.css values) */
+  .current-theme { --muted: #666666; --text: #ffffff; --bg: #000000; --surface: #0a0a0a; --border: #1a1a1a; }
+  .current-dark { --muted: #9b9a97; --text: #e3e3e3; --bg: #191919; --surface: #252525; --border: #373737; }
+
+  /* ─── Option A: Brighter muted base ─── */
+  .option-a { --muted: #a0a0a0; }
+  /* ─── Option B: Notion-style ─── */
+  .option-b { --muted: #9a9a97; }
+
+  /* Simulated UI elements */
+  .sim-nav {
+    display: flex; flex-direction: column; gap: 2px; padding: 8px;
+    background: var(--surface, #0a0a0a); border-radius: 8px;
+    border: 1px solid var(--border, #1a1a1a);
+  }
+  .sim-nav-group {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 8px 10px 4px; line-height: 1;
+  }
+  .sim-nav-item {
+    font-size: 13px; padding: 6px 10px; border-radius: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sim-nav-item .icon { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+  .sim-section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border, #1a1a1a);
+    margin-bottom: 8px;
+  }
+  .sim-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .sim-meta { font-size: 12px; font-variant-numeric: tabular-nums; }
+
+  .sim-entry {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0; font-size: 13px;
+  }
+  .sim-entry-meta { font-size: 11px; font-variant-numeric: tabular-nums; }
+
+  .sim-empty { padding: 20px; text-align: center; }
+  .sim-empty .primary { font-size: 13px; margin-bottom: 4px; }
+  .sim-empty .secondary { font-size: 12px; }
+
+  .sim-input {
+    width: 100%; padding: 6px 10px; border-radius: 6px; font-size: 13px;
+    font-family: inherit; margin-top: 8px;
+    background: var(--surface, #0a0a0a); border: 1px solid var(--border, #1a1a1a);
+    color: var(--text, #fff);
+  }
+
+  .sim-col-headers {
+    display: flex; justify-content: space-between; padding: 4px 0;
+    font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border, #1a1a1a);
+    margin-bottom: 4px;
+  }
+
+  /* ─── Proposed Rules ─── */
+  .rules-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .rules-table th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    color: #71717a; padding: 8px 12px; border-bottom: 1px solid #27272a;
+  }
+  .rules-table td {
+    padding: 10px 12px; border-bottom: 1px solid #1e1e21;
+    color: #d4d4d8;
+  }
+  .rules-table .swatch {
+    display: inline-block; width: 14px; height: 14px; border-radius: 3px;
+    vertical-align: middle; margin-right: 6px;
+  }
+
+  /* ─── Color Fix Table ─── */
+  .color-fix-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  .color-fix-card {
+    background: #111113; border: 1px solid #1e1e21; border-radius: 10px;
+    padding: 16px; text-align: center;
+  }
+  .color-fix-card h4 { font-size: 12px; font-weight: 600; margin-bottom: 12px; }
+  .color-swatches { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; }
+  .color-swatch {
+    width: 40px; height: 40px; border-radius: 8px; border: 1px solid #27272a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 600; color: #fff;
+  }
+  .arrow { color: #52525b; font-size: 18px; align-self: center; }
+  .color-fix-card .label { font-size: 10px; color: #71717a; }
+
+  /* ─── Animations ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .section { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .section:nth-child(2) { animation-delay: 0.05s; }
+  .section:nth-child(3) { animation-delay: 0.1s; }
+  .section:nth-child(4) { animation-delay: 0.15s; }
+  .section:nth-child(5) { animation-delay: 0.2s; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Text Contrast — Problem & Fix</h1>
+  <p>The dashboard text is hard to read due to overly dark muted colors and excessive opacity reductions stacked on top. Here are the options to fix it.</p>
+</div>
+
+<!-- ═══ PROBLEM ═══ -->
+<div class="section">
+  <h2>1. The Problem</h2>
+  <div class="diagnosis">
+    <h3>Double opacity hit</h3>
+    <p>The CSS variable <code>--color-text-muted</code> is already set to a dark color (e.g. <code>#666666</code> on Midnight theme).</p>
+    <p>Then Tailwind classes like <code>text-text-muted/40</code> apply <strong>40% opacity on top</strong> — making the text nearly invisible.</p>
+    <p>Result: effective color on Midnight = <code>#666666</code> at 40% opacity on <code>#000000</code> bg = <strong>#292929</strong> — a 1.4:1 contrast ratio (WCAG requires 4.5:1).</p>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><div class="num">351</div><div class="label">Low-opacity text instances</div></div>
+    <div class="stat"><div class="num">93</div><div class="label">At /40 opacity (worst common)</div></div>
+    <div class="stat"><div class="num">24</div><div class="label">At /30 opacity (near invisible)</div></div>
+    <div class="stat"><div class="num">7</div><div class="label">Theme color mismatches</div></div>
+  </div>
+</div>
+
+<!-- ═══ BEFORE / AFTER ═══ -->
+<div class="section">
+  <h2>2. Before vs After — Midnight Theme</h2>
+  <div class="compare-grid">
+    <!-- BEFORE -->
+    <div class="compare-card current-theme">
+      <div class="compare-label">
+        <h3>Current (Broken)</h3>
+        <span class="tag tag-bad">Hard to read</span>
+      </div>
+      <div class="compare-body">
+        <div class="sim-nav">
+          <div class="sim-nav-group" style="color: rgba(102,102,102,0.6)">DAILY</div>
+          <div class="sim-nav-item" style="color: rgba(102,102,102,0.6)"><span class="icon" style="background:#1a1a1a"></span>Today</div>
+          <div class="sim-nav-item" style="color: rgba(102,102,102,0.6)"><span class="icon" style="background:#1a1a1a"></span>Tasks</div>
+          <div class="sim-nav-item" style="color: #fff; background: #141414"><span class="icon" style="background:#1a1a1a"></span>Health</div>
+          <div class="sim-nav-group" style="color: rgba(102,102,102,0.6); margin-top:4px">CAPTURE</div>
+          <div class="sim-nav-item" style="color: rgba(102,102,102,0.6)"><span class="icon" style="background:#1a1a1a"></span>Ideas</div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="sim-section-header" style="border-color:#1a1a1a">
+            <span class="sim-section-title" style="color: rgba(102,102,102,0.6)">Macros</span>
+            <span class="sim-meta" style="color: rgba(102,102,102,0.5)">750 / 2,200 kcal</span>
+          </div>
+          <div class="sim-col-headers" style="color: rgba(102,102,102,0.3); border-color:#1a1a1a">
+            <span>Item</span><span>kcal · P · C · F</span>
+          </div>
+          <div class="sim-entry">
+            <span style="color:#fff">Greek Yogurt</span>
+            <span class="sim-entry-meta" style="color: rgba(102,102,102,0.5)">180 · 20 · 12 · 6</span>
+          </div>
+          <div class="sim-empty">
+            <div class="primary" style="color: rgba(102,102,102,0.6)">No more entries</div>
+            <div class="secondary" style="color: rgba(102,102,102,0.4)">Click + Log Food to track</div>
+          </div>
+          <input class="sim-input" style="border-color:#1a1a1a; color: rgba(102,102,102,0.4)" value="Search tasks..." readonly>
+        </div>
+      </div>
+    </div>
+
+    <!-- AFTER: Option A -->
+    <div class="compare-card" style="--muted:#a0a0a0; --text:#fff; --surface:#0a0a0a; --border:#1a1a1a">
+      <div class="compare-label">
+        <h3>Option A — Bright Muted + No Low Opacity</h3>
+        <span class="tag tag-good">Recommended</span>
+      </div>
+      <div class="compare-body">
+        <div class="sim-nav">
+          <div class="sim-nav-group" style="color: #a0a0a0">DAILY</div>
+          <div class="sim-nav-item" style="color: #a0a0a0"><span class="icon" style="background:#1a1a1a"></span>Today</div>
+          <div class="sim-nav-item" style="color: #a0a0a0"><span class="icon" style="background:#1a1a1a"></span>Tasks</div>
+          <div class="sim-nav-item" style="color: #fff; background: #141414"><span class="icon" style="background:#1a1a1a"></span>Health</div>
+          <div class="sim-nav-group" style="color: #a0a0a0; margin-top:4px">CAPTURE</div>
+          <div class="sim-nav-item" style="color: #a0a0a0"><span class="icon" style="background:#1a1a1a"></span>Ideas</div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="sim-section-header" style="border-color:#1a1a1a">
+            <span class="sim-section-title" style="color: #a0a0a0">Macros</span>
+            <span class="sim-meta" style="color: #808080">750 / 2,200 kcal</span>
+          </div>
+          <div class="sim-col-headers" style="color: #707070; border-color:#1a1a1a">
+            <span>Item</span><span>kcal · P · C · F</span>
+          </div>
+          <div class="sim-entry">
+            <span style="color:#fff">Greek Yogurt</span>
+            <span class="sim-entry-meta" style="color: #909090">180 · 20 · 12 · 6</span>
+          </div>
+          <div class="sim-empty">
+            <div class="primary" style="color: #a0a0a0">No more entries</div>
+            <div class="secondary" style="color: #707070">Click + Log Food to track</div>
+          </div>
+          <input class="sim-input" style="border-color:#1a1a1a; color: #707070" value="Search tasks..." readonly>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DARK THEME COMPARISON ═══ -->
+<div class="section">
+  <h2>3. Before vs After — Dark (Default) Theme</h2>
+  <div class="compare-grid">
+    <!-- BEFORE -->
+    <div class="compare-card" style="background:#191919">
+      <div class="compare-label" style="border-color:#373737; background:#1e1e1e">
+        <h3>Current</h3>
+        <span class="tag tag-bad">Faded</span>
+      </div>
+      <div class="compare-body">
+        <div class="sim-section-header" style="border-color:#373737">
+          <span class="sim-section-title" style="color: rgba(155,154,151,0.6)">Tasks Due Today</span>
+          <span class="sim-meta" style="color: rgba(155,154,151,0.5)">3 remaining</span>
+        </div>
+        <div class="sim-entry">
+          <span style="color:#e3e3e3">Review PR for auth module</span>
+          <span class="sim-entry-meta" style="color: rgba(155,154,151,0.5)">Due today</span>
+        </div>
+        <div class="sim-entry">
+          <span style="color:#e3e3e3">Fix dashboard layout bug</span>
+          <span class="sim-entry-meta" style="color: rgba(155,154,151,0.4)">Project: LifeOS</span>
+        </div>
+        <div class="sim-col-headers" style="color: rgba(155,154,151,0.3); border-color:#373737; margin-top:12px">
+          <span>Column headers at /30 — can you read this?</span>
+        </div>
+        <div style="margin-top:12px; font-size:12px; color: rgba(155,154,151,0.4)">
+          Helper text at /40 opacity — barely visible
+        </div>
+        <div style="margin-top:8px; font-size:11px; color: rgba(155,154,151,0.3)">
+          Hint text at /30 — nearly invisible
+        </div>
+      </div>
+    </div>
+
+    <!-- AFTER -->
+    <div class="compare-card" style="background:#191919">
+      <div class="compare-label" style="border-color:#373737; background:#1e1e1e">
+        <h3>Option A — Fixed</h3>
+        <span class="tag tag-good">Clear</span>
+      </div>
+      <div class="compare-body">
+        <div class="sim-section-header" style="border-color:#373737">
+          <span class="sim-section-title" style="color: #b0afac">Tasks Due Today</span>
+          <span class="sim-meta" style="color: #8a8985">3 remaining</span>
+        </div>
+        <div class="sim-entry">
+          <span style="color:#e3e3e3">Review PR for auth module</span>
+          <span class="sim-entry-meta" style="color: #8a8985">Due today</span>
+        </div>
+        <div class="sim-entry">
+          <span style="color:#e3e3e3">Fix dashboard layout bug</span>
+          <span class="sim-entry-meta" style="color: #78777a">Project: LifeOS</span>
+        </div>
+        <div class="sim-col-headers" style="color: #6a696c; border-color:#373737; margin-top:12px">
+          <span>Column headers — clearly readable now</span>
+        </div>
+        <div style="margin-top:12px; font-size:12px; color: #78777a">
+          Helper text — visible and helpful
+        </div>
+        <div style="margin-top:8px; font-size:11px; color: #6a696c">
+          Hint text — subtle but legible
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FIX STRATEGY ═══ -->
+<div class="section">
+  <h2>4. Fix Strategy — Two Options</h2>
+
+  <div class="compare-grid" style="margin-bottom: 24px">
+    <div class="compare-card">
+      <div class="compare-label">
+        <h3>Option A — Sync Colors + Cap Opacity</h3>
+        <span class="tag tag-good">Recommended</span>
+      </div>
+      <div class="compare-body" style="font-size:13px; color:#a1a1aa">
+        <p style="margin-bottom:12px"><strong style="color:#f4f4f5">1. Fix globals.css</strong> — sync <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">--color-text-muted</code> values to match <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">themes.ts</code> (brighter values)</p>
+        <p style="margin-bottom:12px"><strong style="color:#f4f4f5">2. Bulk replace low opacity</strong> — find-replace all <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">/30</code> → <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">/60</code>, <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">/40</code> → <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">/70</code>, <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">/50</code> → <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">/80</code></p>
+        <p style="margin-bottom:12px"><strong style="color:#f4f4f5">3. New minimum rule</strong> — no text below <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">/60</code> opacity on <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">text-muted</code></p>
+        <p><strong style="color:#10b981">Pro:</strong> Quick, systematic fix. Touches many files but each change is mechanical.</p>
+      </div>
+    </div>
+
+    <div class="compare-card">
+      <div class="compare-label">
+        <h3>Option B — Three-Tier Text System</h3>
+        <span class="tag tag-ref">Alternative</span>
+      </div>
+      <div class="compare-body" style="font-size:13px; color:#a1a1aa">
+        <p style="margin-bottom:12px"><strong style="color:#f4f4f5">1. Define 3 text tiers in CSS</strong></p>
+        <p style="margin-bottom:4px; padding-left:12px">• <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">text-primary</code> — main content (current <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">text</code>)</p>
+        <p style="margin-bottom:4px; padding-left:12px">• <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">text-secondary</code> — labels, metadata, hints</p>
+        <p style="margin-bottom:12px; padding-left:12px">• <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">text-tertiary</code> — placeholders, disabled, decorative</p>
+        <p style="margin-bottom:12px"><strong style="color:#f4f4f5">2. Replace all <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">text-muted/XX</code></strong> with the appropriate tier class</p>
+        <p><strong style="color:#3b82f6">Pro:</strong> Cleaner architecture. No opacity hacks. Easier to maintain.<br><strong style="color:#ef4444">Con:</strong> Larger refactor — 351 instances to classify manually.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COLOR FIXES ═══ -->
+<div class="section">
+  <h2>5. Proposed globals.css Color Fixes (Option A)</h2>
+  <p style="font-size:13px; color:#a1a1aa; margin-bottom:16px">Sync <code style="background:#1e1e21;padding:2px 5px;border-radius:3px;font-size:11px;color:#e4e4e7">--color-text-muted</code> in globals.css to match the brighter values from themes.ts:</p>
+
+  <table class="rules-table">
+    <thead>
+      <tr><th>Theme</th><th>Current (globals.css)</th><th>→ Proposed (from themes.ts)</th><th>Change</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Midnight</td>
+        <td><span class="swatch" style="background:#666666"></span><code>#666666</code></td>
+        <td><span class="swatch" style="background:#a3a3a3"></span><code>#a3a3a3</code></td>
+        <td style="color:#10b981">+57% brighter</td>
+      </tr>
+      <tr>
+        <td>Dark (default)</td>
+        <td><span class="swatch" style="background:#9b9a97"></span><code>#9b9a97</code></td>
+        <td><span class="swatch" style="background:#b0afac"></span><code>#b0afac</code></td>
+        <td style="color:#10b981">+15% brighter</td>
+      </tr>
+      <tr>
+        <td>Nord</td>
+        <td><span class="swatch" style="background:#8892a4"></span><code>#8892a4</code></td>
+        <td><span class="swatch" style="background:#a8b0be"></span><code>#a8b0be</code></td>
+        <td style="color:#10b981">+24% brighter</td>
+      </tr>
+      <tr>
+        <td>Sunset</td>
+        <td><span class="swatch" style="background:#9a7fb3"></span><code>#9a7fb3</code></td>
+        <td><span class="swatch" style="background:#c0a8d4"></span><code>#c0a8d4</code></td>
+        <td style="color:#10b981">+26% brighter</td>
+      </tr>
+      <tr>
+        <td>Forest</td>
+        <td><span class="swatch" style="background:#6d8a77"></span><code>#6d8a77</code></td>
+        <td><span class="swatch" style="background:#98b0a0"></span><code>#98b0a0</code></td>
+        <td style="color:#10b981">+40% brighter</td>
+      </tr>
+      <tr>
+        <td>Zen</td>
+        <td><span class="swatch" style="background:#8a7e73"></span><code>#8a7e73</code></td>
+        <td><span class="swatch" style="background:#6e6259"></span><code>#6e6259</code></td>
+        <td style="color:#f59e0b">Keep CSS (darker is correct for light bg)</td>
+      </tr>
+      <tr>
+        <td>Light</td>
+        <td><span class="swatch" style="background:#9b9a97"></span><code>#9b9a97</code></td>
+        <td><span class="swatch" style="background:#6f6e6b"></span><code>#6f6e6b</code></td>
+        <td style="color:#f59e0b">Keep CSS (darker is correct for light bg)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══ OPACITY RULES ═══ -->
+<div class="section">
+  <h2>6. Proposed Opacity Rules (Option A)</h2>
+  <table class="rules-table">
+    <thead>
+      <tr><th>Current</th><th>→ Replace With</th><th>Use For</th><th>Count</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>text-text-muted/20</code></td>
+        <td><code style="color:#10b981">text-text-muted/60</code></td>
+        <td>Disabled states</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td><code>text-text-muted/25</code></td>
+        <td><code style="color:#10b981">text-text-muted/60</code></td>
+        <td>Disabled states</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td><code>text-text-muted/30</code></td>
+        <td><code style="color:#10b981">text-text-muted/60</code></td>
+        <td>Placeholders, hints, decorative</td>
+        <td>24</td>
+      </tr>
+      <tr>
+        <td><code>text-text-muted/40</code></td>
+        <td><code style="color:#10b981">text-text-muted/70</code></td>
+        <td>Placeholders, helper text</td>
+        <td>93</td>
+      </tr>
+      <tr>
+        <td><code>text-text-muted/50</code></td>
+        <td><code style="color:#10b981">text-text-muted/80</code></td>
+        <td>Secondary metadata</td>
+        <td>82</td>
+      </tr>
+      <tr>
+        <td><code>text-text-muted/60</code></td>
+        <td><code style="color:#10b981">text-text-muted</code> (no opacity)</td>
+        <td>Labels, section headers</td>
+        <td>148</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:12px; color:#71717a; margin-top:12px">
+    <strong>New rule:</strong> No text below /60 opacity. Use the muted color directly for most secondary text — the color itself provides enough contrast hierarchy when properly set.
+  </p>
+</div>
+
+</body>
+</html>

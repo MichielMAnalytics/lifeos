@@ -45,6 +45,9 @@ export function saveConfig(config: CliConfig): void {
 }
 
 export function getApiUrl(): string {
+  const envUrl = process.env.LIFEOS_API_URL;
+  if (envUrl) return envUrl;
+
   const { api_url } = getConfig();
   if (!api_url) {
     throw new Error("API URL not configured. Run 'lifeos config set-url <url>' first.");
@@ -53,6 +56,9 @@ export function getApiUrl(): string {
 }
 
 export function getApiKey(): string {
+  const envKey = process.env.LIFEOS_API_KEY;
+  if (envKey) return envKey;
+
   const { api_key } = getConfig();
   if (!api_key) {
     throw new Error("API key not configured. Run 'lifeos config set-key <key>' first.");

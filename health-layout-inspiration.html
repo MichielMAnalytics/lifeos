@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LifeOS Health — Layout Inspiration</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-subtle: #111113;
+    --surface: #18181b;
+    --surface-hover: #1f1f23;
+    --border: #27272a;
+    --border-dim: #1e1e21;
+    --text: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #71717a;
+    --accent: #8b5cf6;
+    --accent-glow: rgba(139, 92, 246, 0.15);
+    --success: #10b981;
+    --success-glow: rgba(16, 185, 129, 0.15);
+    --warning: #f59e0b;
+    --warning-glow: rgba(245, 158, 11, 0.15);
+    --calories: #e4e4e7;
+    --ring-track: #1e1e21;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Satoshi', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    padding: 48px 24px 120px;
+  }
+
+  .page-header {
+    max-width: 1440px;
+    margin: 0 auto 56px;
+    text-align: center;
+  }
+  .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+  }
+  .page-header p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .variations {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 1200px) {
+    .variations { grid-template-columns: 1fr; max-width: 480px; }
+  }
+
+  .variation {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-dim);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .variation-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-dim);
+    background: var(--bg);
+  }
+  .variation-label h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+  .variation-label .tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tag-current { background: var(--accent-glow); color: var(--accent); }
+  .tag-recommended { background: var(--success-glow); color: var(--success); }
+  .tag-alt { background: var(--warning-glow); color: var(--warning); }
+
+  .variation-body {
+    padding: 24px 20px;
+  }
+
+  /* ─── Shared Ring Styles ─── */
+  .ring-svg { transform: rotate(-90deg); }
+  .ring-track { fill: none; stroke: var(--ring-track); }
+  .ring-fill { fill: none; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); }
+
+  /* ─── VARIATION A: Current LifeOS (rings only) ─── */
+  .v-a .day-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 20px;
+  }
+  .v-a .day-nav button {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+  }
+  .v-a .day-nav span {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .v-a .macro-rings {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 24px;
+  }
+  .v-a .macro-ring-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .v-a .ring-container { position: relative; width: 72px; height: 72px; }
+  .v-a .ring-value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .v-a .ring-value .num { font-size: 16px; font-weight: 700; color: var(--text); }
+  .v-a .ring-value .denom { font-size: 8px; color: var(--text-tertiary); }
+  .v-a .ring-label { font-size: 11px; font-weight: 600; }
+  .v-a .ring-remaining { font-size: 9px; color: var(--text-tertiary); }
+
+  .v-a .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 12px;
+    border-top: 1px solid var(--border-dim);
+  }
+  .v-a .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+  }
+  .v-a .section-meta {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ─── VARIATION B: Hero Calorie + Macro Row (MacroFactor) ─── */
+  .v-b .hero-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 24px;
+  }
+  .v-b .hero-ring {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin-bottom: 4px;
+  }
+  .v-b .hero-value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .v-b .hero-remaining {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    line-height: 1;
+  }
+  .v-b .hero-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .v-b .hero-eaten {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .v-b .macro-row {
+    display: flex;
+    justify-content: space-around;
+    padding: 20px 0;
+    border-top: 1px solid var(--border-dim);
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .v-b .macro-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .v-b .mini-ring { position: relative; width: 52px; height: 52px; }
+  .v-b .mini-value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .v-b .macro-label { font-size: 10px; font-weight: 600; }
+  .v-b .macro-detail { font-size: 9px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+  /* ─── VARIATION C: Bar-based (MyFitnessPal) ─── */
+  .v-c .cal-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .v-c .cal-number {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .v-c .cal-unit {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+  }
+  .v-c .cal-meta {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+  }
+  .v-c .cal-bar-track {
+    height: 8px;
+    background: var(--ring-track);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .v-c .cal-bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--accent), #a78bfa);
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .v-c .macro-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .v-c .macro-bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .v-c .macro-bar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .v-c .macro-bar-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .v-c .macro-bar-values {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .v-c .bar-track {
+    height: 6px;
+    background: var(--ring-track);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .v-c .bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ─── Food Diary (shared across variations) ─── */
+  .diary {
+    padding-top: 16px;
+  }
+  .diary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 12px;
+  }
+  .diary-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+  }
+  .diary-add {
+    font-size: 12px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    font-family: inherit;
+  }
+
+  .meal-group { border-bottom: 1px solid var(--border-dim); }
+  .meal-group:last-child { border-bottom: none; }
+  .meal-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+  }
+  .meal-name {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+  .meal-cals {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .food-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+  }
+  .food-name {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .food-macros {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .food-kcal { color: var(--text-secondary); width: 44px; text-align: right; }
+  .food-p { color: var(--accent); width: 32px; text-align: right; opacity: 0.85; }
+  .food-c { color: var(--success); width: 32px; text-align: right; opacity: 0.85; }
+  .food-f { color: var(--warning); width: 32px; text-align: right; opacity: 0.85; }
+
+  .col-headers {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0 2px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .col-headers .food-name { color: var(--text-tertiary); }
+
+  .daily-total {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0 4px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .daily-total .food-name {
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .daily-total .food-macros { font-weight: 600; }
+
+  /* ─── Annotations ─── */
+  .annotation {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border-radius: 10px;
+    border: 1px solid var(--border-dim);
+  }
+  .annotation h3 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .annotation ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .annotation li {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+    padding-left: 12px;
+    position: relative;
+  }
+  .annotation li::before {
+    content: '·';
+    position: absolute;
+    left: 0;
+    color: var(--text-tertiary);
+    font-weight: 700;
+  }
+
+  /* ─── Animations ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .variation {
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .variation:nth-child(1) { animation-delay: 0.05s; }
+  .variation:nth-child(2) { animation-delay: 0.15s; }
+  .variation:nth-child(3) { animation-delay: 0.25s; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Health Page — Layout Exploration</h1>
+  <p>Three layout directions for the LifeOS nutrition tracker. Same data, different hierarchy and density. Each optimized for clarity and readability.</p>
+</div>
+
+<div class="variations">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VARIATION A: Current LifeOS (improved)     -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="variation">
+    <div class="variation-label">
+      <h2>A — Current (Refined)</h2>
+      <span class="tag tag-current">Current Style</span>
+    </div>
+    <div class="variation-body v-a">
+      <div class="day-nav">
+        <button>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span>Today</span>
+        <button>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+
+      <div class="section-header" style="border-top:none; padding-top:0;">
+        <span class="section-title">Macros</span>
+        <span class="section-meta">750 / 2,200 kcal</span>
+      </div>
+
+      <div class="macro-rings">
+        <div class="macro-ring-item">
+          <div class="ring-container">
+            <svg width="72" height="72" viewBox="0 0 72 72" class="ring-svg">
+              <circle cx="36" cy="36" r="30" class="ring-track" stroke-width="5"/>
+              <circle cx="36" cy="36" r="30" class="ring-fill" stroke="var(--accent)" stroke-width="5"
+                stroke-dasharray="188.5" stroke-dashoffset="94.2"/>
+            </svg>
+            <div class="ring-value">
+              <span class="num">75</span>
+              <span class="denom">/150g</span>
+            </div>
+          </div>
+          <span class="ring-label" style="color:var(--accent)">Protein</span>
+          <span class="ring-remaining">75g left</span>
+        </div>
+        <div class="macro-ring-item">
+          <div class="ring-container">
+            <svg width="72" height="72" viewBox="0 0 72 72" class="ring-svg">
+              <circle cx="36" cy="36" r="30" class="ring-track" stroke-width="5"/>
+              <circle cx="36" cy="36" r="30" class="ring-fill" stroke="var(--warning)" stroke-width="5"
+                stroke-dasharray="188.5" stroke-dashoffset="131.9"/>
+            </svg>
+            <div class="ring-value">
+              <span class="num">20</span>
+              <span class="denom">/65g</span>
+            </div>
+          </div>
+          <span class="ring-label" style="color:var(--warning)">Fat</span>
+          <span class="ring-remaining">45g left</span>
+        </div>
+        <div class="macro-ring-item">
+          <div class="ring-container">
+            <svg width="72" height="72" viewBox="0 0 72 72" class="ring-svg">
+              <circle cx="36" cy="36" r="30" class="ring-track" stroke-width="5"/>
+              <circle cx="36" cy="36" r="30" class="ring-fill" stroke="var(--success)" stroke-width="5"
+                stroke-dasharray="188.5" stroke-dashoffset="113.1"/>
+            </svg>
+            <div class="ring-value">
+              <span class="num">80</span>
+              <span class="denom">/200g</span>
+            </div>
+          </div>
+          <span class="ring-label" style="color:var(--success)">Carbs</span>
+          <span class="ring-remaining">120g left</span>
+        </div>
+      </div>
+
+      <!-- Food diary -->
+      <div class="diary">
+        <div class="diary-header">
+          <span class="diary-title">Food Diary</span>
+          <button class="diary-add">+ Log Food</button>
+        </div>
+        <div class="col-headers">
+          <span class="food-name">Item</span>
+          <div class="food-macros">
+            <span class="food-kcal">kcal</span>
+            <span class="food-p">P</span>
+            <span class="food-c">C</span>
+            <span class="food-f">F</span>
+          </div>
+        </div>
+        <div class="meal-group">
+          <div class="meal-label">
+            <span class="meal-name">Morning</span>
+            <span class="meal-cals">380 kcal</span>
+          </div>
+          <div class="food-entry"><span class="food-name">Greek Yogurt</span><div class="food-macros"><span class="food-kcal">180</span><span class="food-p">20</span><span class="food-c">12</span><span class="food-f">6</span></div></div>
+          <div class="food-entry"><span class="food-name">Granola with berries</span><div class="food-macros"><span class="food-kcal">200</span><span class="food-p">5</span><span class="food-c">32</span><span class="food-f">6</span></div></div>
+        </div>
+        <div class="meal-group">
+          <div class="meal-label">
+            <span class="meal-name">Day</span>
+            <span class="meal-cals">370 kcal</span>
+          </div>
+          <div class="food-entry"><span class="food-name">Chicken breast salad</span><div class="food-macros"><span class="food-kcal">370</span><span class="food-p">42</span><span class="food-c">18</span><span class="food-f">8</span></div></div>
+        </div>
+        <div class="daily-total">
+          <span class="food-name">Daily Total</span>
+          <div class="food-macros">
+            <span class="food-kcal">750</span>
+            <span class="food-p">67</span>
+            <span class="food-c">62</span>
+            <span class="food-f">20</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="annotation">
+        <h3>Design Notes</h3>
+        <ul>
+          <li>Three equal rings — simple, balanced</li>
+          <li>Calorie summary in header, not a ring</li>
+          <li>Closest to current LifeOS with better contrast</li>
+          <li>Risk: no clear focal point; all rings compete</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VARIATION B: Hero Calorie Ring (MacroFactor) -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="variation">
+    <div class="variation-label">
+      <h2>B — Hero Ring</h2>
+      <span class="tag tag-recommended">Recommended</span>
+    </div>
+    <div class="variation-body v-b">
+      <div class="hero-section">
+        <div class="hero-ring">
+          <svg width="160" height="160" viewBox="0 0 160 160" class="ring-svg">
+            <circle cx="80" cy="80" r="68" class="ring-track" stroke-width="8"/>
+            <circle cx="80" cy="80" r="68" class="ring-fill" stroke="var(--text)" stroke-width="8"
+              stroke-dasharray="427.3" stroke-dashoffset="281.9"/>
+          </svg>
+          <div class="hero-value">
+            <span class="hero-remaining">1,450</span>
+            <span class="hero-label">remaining</span>
+          </div>
+        </div>
+        <span class="hero-eaten">750 eaten · 2,200 goal</span>
+      </div>
+
+      <div class="macro-row">
+        <div class="macro-item">
+          <div class="mini-ring">
+            <svg width="52" height="52" viewBox="0 0 52 52" class="ring-svg">
+              <circle cx="26" cy="26" r="21" class="ring-track" stroke-width="4"/>
+              <circle cx="26" cy="26" r="21" class="ring-fill" stroke="var(--accent)" stroke-width="4"
+                stroke-dasharray="132" stroke-dashoffset="66"/>
+            </svg>
+            <div class="mini-value">75</div>
+          </div>
+          <span class="macro-label" style="color:var(--accent)">Protein</span>
+          <span class="macro-detail">75 / 150g</span>
+        </div>
+        <div class="macro-item">
+          <div class="mini-ring">
+            <svg width="52" height="52" viewBox="0 0 52 52" class="ring-svg">
+              <circle cx="26" cy="26" r="21" class="ring-track" stroke-width="4"/>
+              <circle cx="26" cy="26" r="21" class="ring-fill" stroke="var(--warning)" stroke-width="4"
+                stroke-dasharray="132" stroke-dashoffset="91.5"/>
+            </svg>
+            <div class="mini-value">20</div>
+          </div>
+          <span class="macro-label" style="color:var(--warning)">Fat</span>
+          <span class="macro-detail">20 / 65g</span>
+        </div>
+        <div class="macro-item">
+          <div class="mini-ring">
+            <svg width="52" height="52" viewBox="0 0 52 52" class="ring-svg">
+              <circle cx="26" cy="26" r="21" class="ring-track" stroke-width="4"/>
+              <circle cx="26" cy="26" r="21" class="ring-fill" stroke="var(--success)" stroke-width="4"
+                stroke-dasharray="132" stroke-dashoffset="79.2"/>
+            </svg>
+            <div class="mini-value">80</div>
+          </div>
+          <span class="macro-label" style="color:var(--success)">Carbs</span>
+          <span class="macro-detail">80 / 200g</span>
+        </div>
+      </div>
+
+      <!-- Food diary -->
+      <div class="diary">
+        <div class="diary-header">
+          <span class="diary-title">Food Diary</span>
+          <button class="diary-add">+ Log Food</button>
+        </div>
+        <div class="col-headers">
+          <span class="food-name">Item</span>
+          <div class="food-macros">
+            <span class="food-kcal">kcal</span>
+            <span class="food-p">P</span>
+            <span class="food-c">C</span>
+            <span class="food-f">F</span>
+          </div>
+        </div>
+        <div class="meal-group">
+          <div class="meal-label">
+            <span class="meal-name">Morning</span>
+            <span class="meal-cals">380 kcal</span>
+          </div>
+          <div class="food-entry"><span class="food-name">Greek Yogurt</span><div class="food-macros"><span class="food-kcal">180</span><span class="food-p">20</span><span class="food-c">12</span><span class="food-f">6</span></div></div>
+          <div class="food-entry"><span class="food-name">Granola with berries</span><div class="food-macros"><span class="food-kcal">200</span><span class="food-p">5</span><span class="food-c">32</span><span class="food-f">6</span></div></div>
+        </div>
+        <div class="meal-group">
+          <div class="meal-label">
+            <span class="meal-name">Day</span>
+            <span class="meal-cals">370 kcal</span>
+          </div>
+          <div class="food-entry"><span class="food-name">Chicken breast salad</span><div class="food-macros"><span class="food-kcal">370</span><span class="food-p">42</span><span class="food-c">18</span><span class="food-f">8</span></div></div>
+        </div>
+        <div class="daily-total">
+          <span class="food-name">Daily Total</span>
+          <div class="food-macros">
+            <span class="food-kcal">750</span>
+            <span class="food-p">67</span>
+            <span class="food-c">62</span>
+            <span class="food-f">20</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="annotation">
+        <h3>Design Notes</h3>
+        <ul>
+          <li>Clear hierarchy: calories dominate, macros support</li>
+          <li>"Remaining" framing is motivating (MacroFactor pattern)</li>
+          <li>Large ring is an instant glanceable status</li>
+          <li>Smaller macro rings don't compete for attention</li>
+          <li>Best balance of information density and clarity</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VARIATION C: Bars + Numbers (MyFitnessPal)  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="variation">
+    <div class="variation-label">
+      <h2>C — Progress Bars</h2>
+      <span class="tag tag-alt">Alternative</span>
+    </div>
+    <div class="variation-body v-c">
+      <div class="cal-header">
+        <span class="cal-number">1,450</span>
+        <span class="cal-unit">kcal remaining</span>
+      </div>
+      <div class="cal-meta">750 eaten of 2,200 goal</div>
+      <div class="cal-bar-track">
+        <div class="cal-bar-fill" style="width: 34%"></div>
+      </div>
+
+      <div class="macro-bars">
+        <div class="macro-bar-item">
+          <div class="macro-bar-header">
+            <span class="macro-bar-label" style="color:var(--accent)">Protein</span>
+            <span class="macro-bar-values">75 / 150g</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 50%; background: var(--accent)"></div>
+          </div>
+        </div>
+        <div class="macro-bar-item">
+          <div class="macro-bar-header">
+            <span class="macro-bar-label" style="color:var(--warning)">Fat</span>
+            <span class="macro-bar-values">20 / 65g</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 31%; background: var(--warning)"></div>
+          </div>
+        </div>
+        <div class="macro-bar-item">
+          <div class="macro-bar-header">
+            <span class="macro-bar-label" style="color:var(--success)">Carbs</span>
+            <span class="macro-bar-values">80 / 200g</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 40%; background: var(--success)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Food diary -->
+      <div class="diary">
+        <div class="diary-header">
+          <span class="diary-title">Food Diary</span>
+          <button class="diary-add">+ Log Food</button>
+        </div>
+        <div class="col-headers">
+          <span class="food-name">Item</span>
+          <div class="food-macros">
+            <span class="food-kcal">kcal</span>
+            <span class="food-p">P</span>
+            <span class="food-c">C</span>
+            <span class="food-f">F</span>
+          </div>
+        </div>
+        <div class="meal-group">
+          <div class="meal-label">
+            <span class="meal-name">Morning</span>
+            <span class="meal-cals">380 kcal</span>
+          </div>
+          <div class="food-entry"><span class="food-name">Greek Yogurt</span><div class="food-macros"><span class="food-kcal">180</span><span class="food-p">20</span><span class="food-c">12</span><span class="food-f">6</span></div></div>
+          <div class="food-entry"><span class="food-name">Granola with berries</span><div class="food-macros"><span class="food-kcal">200</span><span class="food-p">5</span><span class="food-c">32</span><span class="food-f">6</span></div></div>
+        </div>
+        <div class="meal-group">
+          <div class="meal-label">
+            <span class="meal-name">Day</span>
+            <span class="meal-cals">370 kcal</span>
+          </div>
+          <div class="food-entry"><span class="food-name">Chicken breast salad</span><div class="food-macros"><span class="food-kcal">370</span><span class="food-p">42</span><span class="food-c">18</span><span class="food-f">8</span></div></div>
+        </div>
+        <div class="daily-total">
+          <span class="food-name">Daily Total</span>
+          <div class="food-macros">
+            <span class="food-kcal">750</span>
+            <span class="food-p">67</span>
+            <span class="food-c">62</span>
+            <span class="food-f">20</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="annotation">
+        <h3>Design Notes</h3>
+        <ul>
+          <li>Large number is the hero, no ring needed</li>
+          <li>Horizontal bars are compact and scannable</li>
+          <li>Most space-efficient — leaves room for more diary entries</li>
+          <li>MyFitnessPal-inspired: familiar to most users</li>
+          <li>Trade-off: less visually interesting than rings</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

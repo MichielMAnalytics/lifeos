@@ -50,6 +50,7 @@ import type * as tasks from "../tasks.js";
 import type * as thoughts from "../thoughts.js";
 import type * as transcribe from "../transcribe.js";
 import type * as triggers from "../triggers.js";
+import type * as userProfile from "../userProfile.js";
 import type * as visionBoard from "../visionBoard.js";
 import type * as weeklyPlans from "../weeklyPlans.js";
 import type * as wins from "../wins.js";
@@ -104,6 +105,7 @@ declare const fullApi: ApiFromModules<{
   thoughts: typeof thoughts;
   transcribe: typeof transcribe;
   triggers: typeof triggers;
+  userProfile: typeof userProfile;
   visionBoard: typeof visionBoard;
   weeklyPlans: typeof weeklyPlans;
   wins: typeof wins;

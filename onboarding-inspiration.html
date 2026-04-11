@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LifeOS — Onboarding Inspiration</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-subtle: #111113;
+    --surface: #18181b;
+    --surface-2: #1f1f23;
+    --surface-hover: #27272a;
+    --border: #27272a;
+    --border-dim: #1e1e21;
+    --text: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #71717a;
+    --text-quiet: #52525b;
+    --accent: #8b5cf6;
+    --accent-hover: #a78bfa;
+    --accent-glow: rgba(139, 92, 246, 0.15);
+    --success: #10b981;
+    --success-glow: rgba(16, 185, 129, 0.15);
+    --warning: #f59e0b;
+    --warning-glow: rgba(245, 158, 11, 0.15);
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --info-glow: rgba(59, 130, 246, 0.15);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 32px; }
+  body {
+    font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    max-width: 1680px;
+    margin: 0 auto;
+    min-height: 100vh;
+  }
+  .toc {
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    border-right: 1px solid var(--border-dim);
+    padding: 32px 24px; background: var(--bg);
+  }
+  .toc h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .toc .subtitle { font-size: 11px; color: var(--text-tertiary); margin-bottom: 24px; line-height: 1.5; }
+  .toc ol { list-style: none; counter-reset: section; }
+  .toc ol li { counter-increment: section; margin-bottom: 2px; }
+  .toc ol li a {
+    display: block; color: var(--text-secondary); text-decoration: none;
+    font-size: 13px; padding: 6px 8px; border-radius: 6px; transition: all 0.15s;
+  }
+  .toc ol li a::before { content: counter(section) ". "; color: var(--text-quiet); }
+  .toc ol li a:hover { color: var(--text); background: var(--surface); }
+  .main { padding: 48px 56px; max-width: 1200px; }
+  .section { margin-bottom: 80px; }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .section h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
+  .section .desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 32px; max-width: 700px; }
+  .complaint {
+    background: var(--danger);
+    background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.06));
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 32px;
+    font-size: 13px; color: var(--text-secondary);
+  }
+  .complaint strong { color: var(--danger); }
+  .insight {
+    background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06));
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 32px;
+    font-size: 13px; color: var(--text-secondary);
+  }
+  .insight strong { color: var(--info); }
+  .options-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 24px; margin-bottom: 24px;
+  }
+  .option {
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px;
+    background: var(--surface);
+    transition: border-color 0.2s;
+  }
+  .option:hover { border-color: var(--text-quiet); }
+  .option-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .option-id { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+  .option-ref { font-size: 10px; color: var(--text-quiet); text-transform: uppercase; letter-spacing: 0.05em; }
+  .option h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .option p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  .option .pros { margin-top: 12px; font-size: 12px; }
+  .option .pros strong { color: var(--success); }
+  .option .pros .cons { color: var(--warning); }
+  .full-width { grid-column: 1 / -1; }
+  .source-list { margin-top: 8px; font-size: 11px; color: var(--text-quiet); }
+  .source-list a { color: var(--text-tertiary); text-decoration: underline; text-underline-offset: 2px; }
+  .divider { height: 1px; background: var(--border-dim); margin: 48px 0; }
+  .footer { font-size: 11px; color: var(--text-quiet); margin-top: 64px; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .toc { display: none; }
+    .main { padding: 24px; }
+    .options-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ─── TOC ─── -->
+<nav class="toc">
+  <h1>Onboarding Inspiration</h1>
+  <p class="subtitle">Pick & choose. Each option has a unique ID<br>(e.g., 1A, 2C) you can reference back.</p>
+  <ol>
+    <li><a href="#struggle-framing">Struggle / Use Case Framing</a></li>
+    <li><a href="#pre-payment-credibility">Pre-Payment Credibility</a></li>
+    <li><a href="#personalization-quiz">Personalization Questions</a></li>
+    <li><a href="#pricing-paywall">Pricing & Paywall</a></li>
+    <li><a href="#post-payment-setup">Post-Payment Setup</a></li>
+    <li><a href="#demo-previews">Demo & Preview Patterns</a></li>
+    <li><a href="#onboarding-chat">Chat-Based Onboarding</a></li>
+    <li><a href="#hints-nudges">Hints & Progressive Nudges</a></li>
+    <li><a href="#social-proof">Social Proof Patterns</a></li>
+    <li><a href="#commitment-devices">Commitment Devices</a></li>
+  </ol>
+</nav>
+
+<!-- ─── MAIN ─── -->
+<main class="main">
+
+<!-- ═══ SECTION 1: Struggle Framing ═══ -->
+<div class="section" id="struggle-framing">
+  <div class="section-label">Section 01</div>
+  <h2>Struggle / Use Case Framing</h2>
+  <p class="desc">How to frame the "What do you struggle with?" page. Current: 5 cards with struggle-based titles. Research shows this is the strongest pattern for coaching products.</p>
+
+  <div class="insight">
+    <strong>Key insight:</strong> Calm, Noom, and Fabulous all lead with "What brings you here?" or "What are you struggling with?" rather than listing features. Coaching products convert 2-3x better when they mirror the user's pain, not the product's capabilities.
+  </div>
+
+  <div class="options-grid">
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 1A</span>
+        <span class="option-ref">Calm + Headspace</span>
+      </div>
+      <h3>Emotional Struggle Cards</h3>
+      <p>Large cards with illustrations. Each card is a feeling: "My days feel chaotic," "I keep losing focus," "I never finish what I start." Tap to select multiple. No descriptions needed &mdash; the title IS the description.</p>
+      <div class="pros"><strong>Pros:</strong> Maximum emotional resonance. Fast to scan.<br><span class="cons"><strong>Cons:</strong> Fewer cards means some struggles aren't represented.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 1B</span>
+        <span class="option-ref">Noom + Fabulous</span>
+      </div>
+      <h3>Progressive Struggle Quiz</h3>
+      <p>Instead of one page with 5 cards, ask 3 quick questions one at a time (Typeform-style): (1) "What's your #1 challenge?" (2) "When does it affect you most?" (3) "What have you tried before?" Each answer refines the experience.</p>
+      <div class="pros"><strong>Pros:</strong> Feels more personal. Creates investment (sunk cost).<br><span class="cons"><strong>Cons:</strong> More steps before payment. Some users may drop off.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 1C</span>
+        <span class="option-ref">Notion + Monday.com</span>
+      </div>
+      <h3>Outcome-First Cards</h3>
+      <p>Flip the framing from struggle to desired outcome: "I want to plan better days," "I want to hit my goals," "I want to reflect more." Each card shows a mini preview of what that looks like in LifeOS (screenshot or animation).</p>
+      <div class="pros"><strong>Pros:</strong> Aspirational, forward-looking. Shows the product early.<br><span class="cons"><strong>Cons:</strong> Less emotional hook than struggle-based. Requires demo assets.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 1D</span>
+        <span class="option-ref">Current LifeOS</span>
+      </div>
+      <h3>Struggle Cards + Demo Preview</h3>
+      <p>Keep the current 5 struggle cards but add a preview panel on the right (like the connect page chat mockup). When a user selects "My days feel chaotic," the right panel shows a day plan demo. Selecting "I need accountability" shows the Life Coach chat.</p>
+      <div class="pros"><strong>Pros:</strong> Best of both worlds: emotional hook + product preview.<br><span class="cons"><strong>Cons:</strong> Requires 5 demo assets (screenshots or short videos). More complex to build.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 2: Pre-Payment Credibility ═══ -->
+<div class="section" id="pre-payment-credibility">
+  <div class="section-label">Section 02</div>
+  <h2>Pre-Payment Credibility</h2>
+  <p class="desc">Building enough trust and desire before the paywall. The goal: users should want the product before they see the price.</p>
+
+  <div class="insight">
+    <strong>Key insight:</strong> Noom inserts stats and testimonials <em>between</em> quiz questions, not just on the paywall. Fabulous leads with "Born at Duke University" for academic credibility. The most effective pattern: show value, then ask for payment.
+  </div>
+
+  <div class="options-grid">
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 2A</span>
+        <span class="option-ref">Noom</span>
+      </div>
+      <h3>Interstitial Stats</h3>
+      <p>Between onboarding steps, insert brief stat screens: "87% of LifeOS users complete their MIT every day" or "Users report 3x more weekly wins after 30 days." 2-3 seconds each, auto-advance with a skip option.</p>
+      <div class="pros"><strong>Pros:</strong> Builds trust without feeling like a sales pitch.<br><span class="cons"><strong>Cons:</strong> Need real data (or at least plausible data for beta).</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 2B</span>
+        <span class="option-ref">Headspace</span>
+      </div>
+      <h3>Experience Before Payment</h3>
+      <p>Let users experience one core feature before the paywall. For LifeOS: let them create their first day plan or have a quick exchange with the Life Coach. The paywall appears after they've felt the value, not before.</p>
+      <div class="pros"><strong>Pros:</strong> Highest-quality leads (they've already used it).<br><span class="cons"><strong>Cons:</strong> Requires the product to work pre-payment. Infrastructure complexity.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 2C</span>
+        <span class="option-ref">Blinkist + Calm</span>
+      </div>
+      <h3>Outcome Projection</h3>
+      <p>After the struggle quiz, show a personalized "results" page: "Based on what you told us, here's your plan." Show a mock day plan or goal timeline with the user's selected focus areas filled in. "Your Life Coach is ready to help you with [X, Y, Z]."</p>
+      <div class="pros"><strong>Pros:</strong> Creates strong desire ("I want to see more of this").<br><span class="cons"><strong>Cons:</strong> Must feel genuine, not manipulative.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 3: Personalization Questions ═══ -->
+<div class="section" id="personalization-quiz">
+  <div class="section-label">Section 03</div>
+  <h2>Personalization Questions</h2>
+  <p class="desc">What to ask during the post-payment personalization flow. Current: 6 questions in a chat-bubble UI. Research says 3-5 is the sweet spot for productivity apps; coaching apps can go longer.</p>
+
+  <div class="insight">
+    <strong>Key insight from Sunsama:</strong> Every question should have immediate functional impact. If a question doesn't change the experience, remove it. Notion asks only 3 questions. Headspace asks 3. Noom asks 77 &mdash; but the quiz IS the product.
+  </div>
+
+  <div class="options-grid">
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 3A</span>
+        <span class="option-ref">Notion + Headspace</span>
+      </div>
+      <h3>Minimal: 3 Questions</h3>
+      <p>(1) "What should I call you?" (2) "What are your top goals?" (3) "How should I talk to you?" (tone). Each answer directly shapes the Life Coach's behavior. Done in under 60 seconds.</p>
+      <div class="pros"><strong>Pros:</strong> Zero friction. Respects user's time. Each question matters.<br><span class="cons"><strong>Cons:</strong> Less data for personalization. May feel too quick.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 3B</span>
+        <span class="option-ref">Current LifeOS</span>
+      </div>
+      <h3>Balanced: 6 Questions</h3>
+      <p>Name, goals, focus areas, communication tone, biggest challenge, accountability style. Chat-bubble UI with progress bar. Each answer saves to the profile and shapes the Life Coach. About 2-3 minutes.</p>
+      <div class="pros"><strong>Pros:</strong> Good balance of data and speed. Feels thorough but not heavy.<br><span class="cons"><strong>Cons:</strong> Some questions may feel redundant (goals vs focus areas).</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 3C</span>
+        <span class="option-ref">Noom + Fabulous</span>
+      </div>
+      <h3>Deep: Quiz as Product</h3>
+      <p>10-15 questions that teach the user about themselves while collecting data. Include micro-insights between questions: "Interesting &mdash; people who struggle with finishing things often benefit from smaller daily goals." The quiz itself feels valuable.</p>
+      <div class="pros"><strong>Pros:</strong> Creates investment. Users feel understood. More data.<br><span class="cons"><strong>Cons:</strong> Risk of drop-off. Must be genuinely insightful, not filler.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 3D</span>
+        <span class="option-ref">Linear</span>
+      </div>
+      <h3>Skip to Action</h3>
+      <p>No quiz at all. After payment, drop users directly into the Life Coach with a greeting: "Hey [name]! Tell me about your week &mdash; what's on your mind?" Let the AI learn naturally through conversation rather than a structured quiz.</p>
+      <div class="pros"><strong>Pros:</strong> Most natural for a chat product. Zero friction.<br><span class="cons"><strong>Cons:</strong> First interactions may feel generic until the AI learns enough.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 4: Pricing & Paywall ═══ -->
+<div class="section" id="pricing-paywall">
+  <div class="section-label">Section 04</div>
+  <h2>Pricing & Paywall</h2>
+  <p class="desc">How to present the pricing page. Current: "You're one step away" with pricing card + founders note.</p>
+
+  <div class="options-grid">
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 4A</span>
+        <span class="option-ref">Blinkist</span>
+      </div>
+      <h3>The Honest Paywall</h3>
+      <p>Radically transparent: clear trial timeline, explicit "we'll remind you before charging" promise, no hidden terms. Blinkist reported 23% conversion increase and 55% fewer complaints after adopting this pattern.</p>
+      <div class="pros"><strong>Pros:</strong> Builds massive trust. Reduces churn and support tickets.<br><span class="cons"><strong>Cons:</strong> Requires confidence in the product (no fear of trial cancellations).</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 4B</span>
+        <span class="option-ref">Headspace</span>
+      </div>
+      <h3>Minimal Paywall</h3>
+      <p>Just the price and a CTA. No feature lists, no comparisons, no long copy. The assumption: if the onboarding did its job, the user already wants it. Headspace shows one meditation BEFORE the paywall, then just "Continue for $12.99/mo."</p>
+      <div class="pros"><strong>Pros:</strong> Clean, confident, premium feel.<br><span class="cons"><strong>Cons:</strong> Only works if pre-paywall experience is strong enough.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 4C</span>
+        <span class="option-ref">Noom</span>
+      </div>
+      <h3>Personalized Plan Summary</h3>
+      <p>Before showing the price, display a "Your personalized plan" summary based on quiz answers. "Based on your goals, we recommend [X]. Your Life Coach will focus on [Y, Z]." Then show the price as an afterthought. The price feels justified because the plan feels custom.</p>
+      <div class="pros"><strong>Pros:</strong> Price feels earned and personalized. High conversion.<br><span class="cons"><strong>Cons:</strong> Can feel manipulative if the "personalization" is fake.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 5: Post-Payment Setup ═══ -->
+<div class="section" id="post-payment-setup">
+  <div class="section-label">Section 05</div>
+  <h2>Post-Payment Setup</h2>
+  <p class="desc">The setup flow after payment: Skip / Quick Connect / Full Setup. Research shows setup should produce real output, not just configure settings.</p>
+
+  <div class="options-grid">
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 5A</span>
+        <span class="option-ref">Motion + Linear</span>
+      </div>
+      <h3>Setup Produces Real Output</h3>
+      <p>Instead of configuring settings, the setup creates something real: your first day plan, your first goal, or your first journal entry. Linear teaches features through a checklist of real tasks. Motion builds a real project template during setup.</p>
+      <div class="pros"><strong>Pros:</strong> User has something valuable immediately. Setup = first use.<br><span class="cons"><strong>Cons:</strong> More complex to build. Harder to skip.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 5B</span>
+        <span class="option-ref">Sunsama</span>
+      </div>
+      <h3>Drip Onboarding (1 feature/day)</h3>
+      <p>Don't reveal everything at once. Day 1: set up your day plan. Day 2: the Life Coach introduces goal tracking. Day 3: learn about journaling. Each day, the Life Coach sends a message introducing one new capability. By day 10, users have organically adopted the full product.</p>
+      <div class="pros"><strong>Pros:</strong> No overwhelm. Each feature feels like a personal recommendation.<br><span class="cons"><strong>Cons:</strong> Slower time-to-value for power users who want everything now.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 5C</span>
+        <span class="option-ref">Monday.com</span>
+      </div>
+      <h3>Pre-Populated Dashboard</h3>
+      <p>Show the dashboard pre-filled with example data based on the user's struggle selections. "My days feel chaotic" &rarr; show a beautiful day plan with sample tasks. User sees their future self in the product, then clears the sample data and starts fresh.</p>
+      <div class="pros"><strong>Pros:</strong> Instant "aha moment." User sees the product's potential immediately.<br><span class="cons"><strong>Cons:</strong> Sample data can feel fake. Need good placeholder content.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 6: Demo & Preview ═══ -->
+<div class="section" id="demo-previews">
+  <div class="section-label">Section 06</div>
+  <h2>Demo & Preview Patterns</h2>
+  <p class="desc">How to show demos during the use case / struggle selection page. These assets need to be recorded by Kemp.</p>
+
+  <div class="insight">
+    <strong>What to record:</strong> 5 short demos (10-15 seconds each), one per struggle card. Can be screen recordings, GIFs, or short Loom-style videos. Show the actual LifeOS experience for each use case.
+  </div>
+
+  <div class="options-grid">
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 6A</span>
+        <span class="option-ref">Monday.com</span>
+      </div>
+      <h3>Hover Preview</h3>
+      <p>When user hovers over a struggle card, a looping GIF or video plays inside the card showing that feature in action. No click needed. Fast, engaging, zero-friction.</p>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 6B</span>
+        <span class="option-ref">Notion</span>
+      </div>
+      <h3>Side Panel Preview</h3>
+      <p>Struggle cards on the left, live preview panel on the right (like current connect page). Selecting a card swaps the preview. Desktop only &mdash; on mobile, show preview below the cards.</p>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 6C</span>
+        <span class="option-ref">Linear</span>
+      </div>
+      <h3>Background Video</h3>
+      <p>A single looping video of the LifeOS dashboard plays behind the struggle cards (slightly blurred/dimmed). Gives an impression of the product without needing per-card demos. Simple to produce, high impact.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 7: Chat-Based Onboarding ═══ -->
+<div class="section" id="onboarding-chat">
+  <div class="section-label">Section 07</div>
+  <h2>Chat-Based Onboarding</h2>
+  <p class="desc">Making the personalization feel like a conversation with the Life Coach (current approach). How to make it feel more alive.</p>
+
+  <div class="options-grid">
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 7A</span>
+        <span class="option-ref">Current LifeOS</span>
+      </div>
+      <h3>Static Chat Bubbles</h3>
+      <p>Pre-scripted questions in chat-bubble UI. Structured inputs (chips, cards) for answers. Fast, predictable, clean. Current implementation with progress bar.</p>
+      <div class="pros"><strong>Pros:</strong> Fast, no API calls, works offline. Consistent experience.<br><span class="cons"><strong>Cons:</strong> Feels scripted. Not truly conversational.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 7B</span>
+        <span class="option-ref">Future LifeOS</span>
+      </div>
+      <h3>Hybrid: Static Start, Live Finish</h3>
+      <p>Start with 3-4 structured questions (static). After the last answer, hand off to the real Life Coach with all context: "Great, I've got everything I need. Is there anything else you'd like me to know?" The transition from scripted to live feels magical.</p>
+      <div class="pros"><strong>Pros:</strong> Best of both worlds. Users experience the real product at the end.<br><span class="cons"><strong>Cons:</strong> Requires deployment to be ready. Timing dependency.</span></div>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 7C</span>
+        <span class="option-ref">Noom</span>
+      </div>
+      <h3>Quiz with Micro-Insights</h3>
+      <p>Between questions, the "coach" shares a relevant insight: "Fun fact: people who set their MIT the night before are 2x more likely to complete it." Makes the quiz educational, not just data collection.</p>
+      <div class="pros"><strong>Pros:</strong> Quiz feels valuable in itself. Users learn while answering.<br><span class="cons"><strong>Cons:</strong> Longer flow. Insights must be genuinely useful.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 8: Hints & Nudges ═══ -->
+<div class="section" id="hints-nudges">
+  <div class="section-label">Section 08</div>
+  <h2>Hints & Progressive Nudges</h2>
+  <p class="desc">Post-onboarding hints in the bottom-right of the app. Current: 5 condition-based hints with 7-day cooldown and 1-hour gap.</p>
+
+  <div class="options-grid">
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 8A</span>
+        <span class="option-ref">Monday.com</span>
+      </div>
+      <h3>Action-Card Checklist</h3>
+      <p>Instead of individual hints, show a persistent checklist card: "Get started: [ ] Set your first goal [ ] Create a day plan [ ] Connect Telegram." Progress bar fills as items are completed. Dismissable.</p>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 8B</span>
+        <span class="option-ref">Sunsama</span>
+      </div>
+      <h3>Life Coach Drip Messages</h3>
+      <p>No separate hint UI. Instead, the Life Coach sends proactive messages: "Hey! I noticed you haven't set up Telegram yet. Want me to walk you through it?" More natural, uses existing UI (chat), and feels personal.</p>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 8C</span>
+        <span class="option-ref">Current LifeOS</span>
+      </div>
+      <h3>Subtle Bottom-Right Cards</h3>
+      <p>Current implementation: small cards with dismiss, 7-day cooldown, 1-hour gap. Non-intrusive, condition-based. Simple and clean.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 9: Social Proof ═══ -->
+<div class="section" id="social-proof">
+  <div class="section-label">Section 09</div>
+  <h2>Social Proof Patterns</h2>
+  <p class="desc">When and how to show social proof. Research: show it AFTER the user forms their own opinion, not during initial exploration.</p>
+
+  <div class="options-grid">
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 9A</span>
+        <span class="option-ref">Noom</span>
+      </div>
+      <h3>Precise Numbers + Testimonials</h3>
+      <p>"47,392 people started their free trial this week." Precise numbers feel more authentic than rounded ones. Pair with 1-2 short testimonials about outcomes, not features.</p>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 9B</span>
+        <span class="option-ref">Fabulous</span>
+      </div>
+      <h3>Authority / Academic Credibility</h3>
+      <p>"Built with behavioral science from [university/research]." For LifeOS: "Designed around the RPM method and MIT framework." Position the methodology, not the user count.</p>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 9C</span>
+        <span class="option-ref">Current LifeOS</span>
+      </div>
+      <h3>Founders Note</h3>
+      <p>Personal message from Kemp & Michiel with photos. "We built this for ourselves first." Authenticity over scale. Works especially well for early-stage products where user counts are small.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 10: Commitment Devices ═══ -->
+<div class="section" id="commitment-devices">
+  <div class="section-label">Section 10</div>
+  <h2>Commitment Devices</h2>
+  <p class="desc">Behavioral science techniques to increase follow-through after onboarding.</p>
+
+  <div class="insight">
+    <strong>Research from Fabulous:</strong> Users who sign a "commitment contract" during onboarding are 20% more likely to follow through on their plan. Implementation intentions ("I will [behavior] at [time] in [location]") are the most effective format.
+  </div>
+
+  <div class="options-grid">
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 10A</span>
+        <span class="option-ref">Fabulous</span>
+      </div>
+      <h3>Commitment Contract</h3>
+      <p>After personalization, ask: "I commit to checking in with my Life Coach every [morning/evening] for the next 7 days." User taps to "sign." Creates psychological ownership and follow-through.</p>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 10B</span>
+        <span class="option-ref">Noom</span>
+      </div>
+      <h3>Outcome Timeline</h3>
+      <p>Show a projected timeline: "If you follow your plan, here's where you could be in 30 days." For LifeOS: "30 days of daily planning = [X] tasks completed, [Y] journal entries, [Z] goals tracked." Makes the future tangible.</p>
+    </div>
+    <div class="option">
+      <div class="option-header">
+        <span class="option-id">Option 10C</span>
+        <span class="option-ref">Rise</span>
+      </div>
+      <h3>First Action Now</h3>
+      <p>End onboarding with one immediate action: "Let's set your MIT for tomorrow. What's the one thing you need to do?" User types it. Done &mdash; they've already used the product. First action = first habit loop.</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="footer">
+  <p>Sources: Noom (Paddle, Justinmind, Behavioral Scientist), Notion (Candu, GoodUX), Sunsama (Dhruvirzala, Help Docs), Headspace (GoodUX, Medium), Calm (GoodUX, AppFuel), Fabulous (Behavioral Scientist, ScreensDesign), Monday.com (Candu, Medium), Linear (Candu, Supademo), Motion (usemotion.com), Rise (AppFuel), Blinkist (Superwall), ClickUp, Todoist (PageFlows), Structured (ScreensDesign), Reclaim.ai, 200+ Onboarding Flows Study (DesignerUp).</p>
+  <br>
+  <p>Made for Kemp &mdash; Apr 2026</p>
+</div>
+
+</main>
+</div>
+</body>
+</html>

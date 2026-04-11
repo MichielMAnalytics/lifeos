@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Compass Tab — Inspiration (Tony Robbins frameworks)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&f[]=jetbrains-mono@400,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-subtle: #111113;
+    --surface: #17171a;
+    --surface-hover: #1d1d21;
+    --border: #27272b;
+    --border-subtle: #1c1c20;
+    --text: #f5f5f5;
+    --text-muted: #888892;
+    --accent: #8b7fff;
+    --accent-2: #ffb86b;
+    --accent-glow: rgba(139, 127, 255, 0.15);
+    --success: #5ee6a1;
+    --warning: #ffb86b;
+    --danger: #ff6b8a;
+    --gold: #e0c28c;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv11';
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; }
+  .tx-muted { color: var(--text-muted); }
+  .tx-accent { color: var(--accent); }
+  .tx-gold { color: var(--gold); }
+  .bd { border-color: var(--border); }
+  .bd-sub { border-color: var(--border-subtle); }
+  .label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+  }
+  .chip.gold { border-color: rgba(224,194,140,0.35); color: var(--gold); background: rgba(224,194,140,0.05); }
+  .chip.accent { border-color: rgba(139,127,255,0.35); color: var(--accent); background: var(--accent-glow); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+
+  .variant {
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    background: linear-gradient(180deg, #0e0e11 0%, #0a0a0b 100%);
+    overflow: hidden;
+    margin-bottom: 56px;
+  }
+  .variant-head {
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .variant-head-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .variant-body {
+    padding: 32px 40px 44px 40px;
+  }
+  .source-tag {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--surface);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .variant-meta {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 780px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .card-sub {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  /* ============== V1 — RPM Method ============== */
+  .rpm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.4fr;
+    gap: 16px;
+  }
+  .rpm-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    min-height: 320px;
+  }
+  .rpm-col .tag {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 10px;
+    display: inline-block;
+    padding: 3px 8px;
+    background: var(--accent-glow);
+    border-radius: 6px;
+  }
+  .rpm-col h4 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin-bottom: 16px;
+  }
+  .rpm-action {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 13px;
+  }
+  .rpm-action:first-of-type { border-top: none; }
+  .rpm-action .num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-glow);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ============== V2 — Wheel of Life ============== */
+  .wheel-wrap { display: grid; grid-template-columns: 420px 1fr; gap: 32px; align-items: start; }
+  .wheel {
+    width: 400px; height: 400px;
+    position: relative;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      rgba(139,127,255,0.12) 0deg 45deg,
+      rgba(255,184,107,0.12) 45deg 90deg,
+      rgba(94,230,161,0.12) 90deg 135deg,
+      rgba(255,107,138,0.12) 135deg 180deg,
+      rgba(139,127,255,0.12) 180deg 225deg,
+      rgba(255,184,107,0.12) 225deg 270deg,
+      rgba(94,230,161,0.12) 270deg 315deg,
+      rgba(255,107,138,0.12) 315deg 360deg
+    );
+    border: 1px solid var(--border);
+  }
+  .wheel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      repeating-conic-gradient(from 0deg, transparent 0deg 44.9deg, var(--border) 44.9deg 45deg),
+      radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.2) 100%);
+  }
+  .wheel::after {
+    content: '';
+    position: absolute;
+    inset: 20%;
+    border-radius: 50%;
+    border: 1px dashed var(--border);
+  }
+  .wheel-center {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    pointer-events: none;
+  }
+  .wheel-center .score { font-size: 42px; font-weight: 900; letter-spacing: -0.02em; }
+  .wheel-center .of { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em; }
+  .wheel-label {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--bg);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  /* Area list */
+  .area-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 32px;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 13px;
+  }
+  .area-row:first-of-type { border-top: none; }
+  .area-bar {
+    height: 6px; background: var(--border-subtle); border-radius: 999px; overflow: hidden; position: relative;
+  }
+  .area-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%); border-radius: 999px; }
+  .area-score { text-align: right; font-weight: 700; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  /* ============== V3 — Identity Ladder ============== */
+  .ladder {
+    display: grid; gap: 12px;
+  }
+  .rung {
+    padding: 18px 22px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 14px;
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 20px;
+    align-items: center;
+  }
+  .rung .k { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); }
+  .rung .k-2 { color: var(--accent-2); }
+  .rung .k-3 { color: var(--success); }
+  .rung .v { font-size: 15px; line-height: 1.5; }
+  .rung-divider { text-align: center; color: var(--text-muted); font-size: 11px; padding: 4px 0; letter-spacing: 0.1em; }
+
+  /* ============== V4 — 6 Human Needs ============== */
+  .need-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .need-row {
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .need-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .need-head .name { font-size: 13px; font-weight: 600; }
+  .need-head .score { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted); }
+  .need-bar { height: 8px; background: var(--border-subtle); border-radius: 999px; overflow: hidden; }
+  .need-bar > div { height: 100%; border-radius: 999px; }
+  .need-desc { font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+
+  /* ============== V5 — North Star + Roles ============== */
+  .north-wrap {
+    background: radial-gradient(ellipse at top, rgba(139,127,255,0.12) 0%, transparent 60%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 40px;
+    text-align: center;
+    position: relative;
+  }
+  .north-star { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3; max-width: 680px; margin: 0 auto; }
+  .north-horizon { display: inline-flex; gap: 6px; align-items: center; margin-top: 14px; color: var(--text-muted); font-size: 12px; }
+  .roles {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 32px;
+  }
+  .role {
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    min-height: 180px;
+  }
+  .role .name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-2); margin-bottom: 4px; }
+  .role .vision { font-size: 13px; line-height: 1.5; margin-bottom: 12px; }
+  .role .goal { font-size: 12px; color: var(--text-muted); padding: 6px 0; border-top: 1px solid var(--border-subtle); }
+
+  /* ============== V6 — Year Compass ============== */
+  .year-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .quarter {
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    min-height: 240px;
+  }
+  .quarter.current { border-color: var(--accent); background: linear-gradient(180deg, rgba(139,127,255,0.08) 0%, var(--surface) 100%); }
+  .quarter-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .quarter-name { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+  .quarter-theme { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+  .quarter-goal { font-size: 12px; padding: 6px 0; border-top: 1px solid var(--border-subtle); line-height: 1.4; }
+  .quarter-goal:first-of-type { border-top: none; padding-top: 0; }
+  .quarter-meta { font-size: 10px; color: var(--text-muted); margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-subtle); }
+
+  /* ============== V7 — Primary Question ============== */
+  .pq-wrap {
+    padding: 60px 48px;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(255,184,107,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(139,127,255,0.08) 0%, transparent 50%),
+      var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    text-align: center;
+  }
+  .pq-label { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
+  .pq {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    max-width: 820px;
+    margin: 0 auto;
+    font-style: italic;
+  }
+  .pq em { color: var(--gold); font-style: italic; }
+
+</style>
+</head>
+<body class="min-h-screen">
+
+<div class="max-w-[1240px] mx-auto px-8 py-16">
+
+  <!-- Header -->
+  <header class="mb-16">
+    <div class="flex items-baseline gap-3 mb-4">
+      <h1 class="text-[44px] font-bold tracking-tight leading-none">Compass — inspiration</h1>
+      <span class="source-tag">LifeOS · /goals</span>
+    </div>
+    <p class="tx-muted text-[15px] max-w-[760px] leading-relaxed">
+      The current Compass tab renders Identity Statement, Vision Board, and Quarterly Goals stacked vertically.
+      It&rsquo;s fine but feels generic. This file pulls layout ideas from Tony Robbins&rsquo; core coaching frameworks —
+      RPM, Wheel of Life, 6 Human Needs, the Primary Question, the North Star vision, and the Year Compass.
+    </p>
+    <div class="mt-6 flex flex-wrap gap-2">
+      <span class="chip gold">Tony Robbins frameworks</span>
+      <span class="chip">RPM Method</span>
+      <span class="chip">Wheel of Life</span>
+      <span class="chip">6 Human Needs</span>
+      <span class="chip">Identity Ladder</span>
+      <span class="chip">North Star / Roles</span>
+      <span class="chip">Primary Question</span>
+      <span class="chip">Year Compass</span>
+    </div>
+  </header>
+
+  <!-- Mini glossary -->
+  <section class="mb-20 card">
+    <h2 class="text-[16px] font-semibold mb-4">Quick glossary of the frameworks</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-[13px] leading-relaxed tx-muted">
+      <div>
+        <div class="text-white font-semibold mb-1">RPM (Rapid Planning Method)</div>
+        <p>Robbins&rsquo; flagship planning system. Every goal starts with a <em class="text-white not-italic">Result</em> (what you want),
+        a <em class="text-white not-italic">Purpose</em> (why it matters), and a <em class="text-white not-italic">Massive Action Plan</em>
+        (the concrete steps). &ldquo;No purpose, no power.&rdquo;</p>
+      </div>
+      <div>
+        <div class="text-white font-semibold mb-1">Wheel of Life</div>
+        <p>Rate 8 life areas 1–10 to see which are thriving and which are starving. The shape of the wheel tells you where your
+        energy is imbalanced. Classic self-assessment tool.</p>
+      </div>
+      <div>
+        <div class="text-white font-semibold mb-1">6 Human Needs</div>
+        <p>Certainty, Variety, Significance, Love / Connection, Growth, Contribution. Robbins argues every goal you set is
+        unconsciously trying to meet one of these six. Knowing your top 2 reveals why some goals stall.</p>
+      </div>
+      <div>
+        <div class="text-white font-semibold mb-1">Primary Question</div>
+        <p>The question you unconsciously ask yourself most often shapes your life. &ldquo;How can I make this fun?&rdquo; lives a different life than
+        &ldquo;Why does this always happen to me?&rdquo; Setting it explicitly is a power move.</p>
+      </div>
+      <div>
+        <div class="text-white font-semibold mb-1">Identity Ladder</div>
+        <p>&ldquo;Who I am&rdquo; → &ldquo;What I do&rdquo; → &ldquo;What I have.&rdquo; Robbins teaches you lead with identity — change the first, the rest follow.
+        The compass should make this explicit.</p>
+      </div>
+      <div>
+        <div class="text-white font-semibold mb-1">North Star + Roles</div>
+        <p>One 10-year vision, then your 4–6 life roles (Founder, Partner, Friend, Athlete…), each with its own mini-vision and
+        current quarter goal. Treats life like a portfolio.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- V1 — RPM Grid -->
+  <section class="variant">
+    <div class="variant-head">
+      <div class="variant-head-row">
+        <div>
+          <div class="label mb-1">Variant 1 — RPM Grid</div>
+          <h3 class="text-[22px] font-semibold tracking-tight">Result · Purpose · Massive Action Plan</h3>
+        </div>
+        <span class="source-tag">framework · RPM Method</span>
+      </div>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-8">
+        The most on-brand Robbins layout. Every goal lives as a trio: the outcome, the reason, and the specific action plan.
+        Shown here for the current quarter. Each goal is one row expanded; secondary goals collapse. Forces you to write the
+        &ldquo;why&rdquo; column — most planning tools skip it.
+      </p>
+
+      <div class="mb-5 flex items-center justify-between">
+        <div class="flex items-baseline gap-3">
+          <span class="label">Current RPM · Q2 2026</span>
+          <span class="mono tx-muted text-xs">3 active</span>
+        </div>
+        <div class="flex gap-2">
+          <span class="chip">+ New RPM</span>
+          <span class="chip">History</span>
+        </div>
+      </div>
+
+      <div class="rpm-grid">
+        <div class="rpm-col">
+          <div class="tag">Result</div>
+          <h4>Ship LifeOS Phase 2 to 100 users</h4>
+          <p class="variant-meta text-[12px] mt-2">Specific, measurable, by June 30.</p>
+        </div>
+        <div class="rpm-col">
+          <div class="tag">Purpose</div>
+          <h4>So I know if this product deserves my next 3 years.</h4>
+          <p class="variant-meta text-[12px] mt-2">If 100 users don&rsquo;t care, I don&rsquo;t owe it more runway.</p>
+        </div>
+        <div class="rpm-col">
+          <div class="tag">Massive Action Plan</div>
+          <div class="rpm-action"><span class="num">1</span><span>Finish compass + journal redesigns this week</span></div>
+          <div class="rpm-action"><span class="num">2</span><span>Record 3 demo loom videos for alpha list</span></div>
+          <div class="rpm-action"><span class="num">3</span><span>Open waitlist form, publish landing page</span></div>
+          <div class="rpm-action"><span class="num">4</span><span>Reach out to 20 beta users personally</span></div>
+          <div class="rpm-action"><span class="num">5</span><span>Ship to production with Michiel, Apr 25</span></div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-between text-xs tx-muted">
+        <span>Second active RPM: &ldquo;Hit 10 workouts/week consistency&rdquo; · Third: &ldquo;Finish book chapter 4&rdquo;</span>
+        <span>Expand →</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- V2 — Wheel of Life -->
+  <section class="variant">
+    <div class="variant-head">
+      <div class="variant-head-row">
+        <div>
+          <div class="label mb-1">Variant 2 — Wheel of Life</div>
+          <h3 class="text-[22px] font-semibold tracking-tight">Rate 8 life areas. See your balance at a glance.</h3>
+        </div>
+        <span class="source-tag">framework · Wheel of Life</span>
+      </div>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-8">
+        A monthly or quarterly self-rating. Each slice 1–10. The center of the wheel shows your average score. Click an area to
+        see the goals attached to it and the history of its score. When an area dips, LifeOS surfaces it at the top of the home tab.
+      </p>
+
+      <div class="wheel-wrap">
+        <div>
+          <div class="wheel"></div>
+          <!-- the labels wouldn't position cleanly on top of an SVG-less wheel, so keep them below -->
+          <div class="text-[11px] tx-muted mt-3 text-center italic">Decorative wheel. Real version would be an SVG radar chart.</div>
+        </div>
+
+        <div>
+          <div class="flex items-baseline justify-between mb-4">
+            <div>
+              <div class="label mb-1">Your wheel · April</div>
+              <div class="text-[24px] font-bold">6.4 <span class="tx-muted text-[14px] font-medium">/ 10 avg</span></div>
+            </div>
+            <span class="chip accent">↑ 0.6 vs March</span>
+          </div>
+          <div class="area-row"><span>Career · Business</span><div class="area-bar"><div style="width: 82%;"></div></div><span class="area-score">8.2</span></div>
+          <div class="area-row"><span>Health · Body</span><div class="area-bar"><div style="width: 70%;"></div></div><span class="area-score">7.0</span></div>
+          <div class="area-row"><span>Finance</span><div class="area-bar"><div style="width: 65%;"></div></div><span class="area-score">6.5</span></div>
+          <div class="area-row"><span>Relationships</span><div class="area-bar"><div style="width: 75%;"></div></div><span class="area-score">7.5</span></div>
+          <div class="area-row"><span>Family</span><div class="area-bar"><div style="width: 60%;"></div></div><span class="area-score">6.0</span></div>
+          <div class="area-row"><span>Personal growth</span><div class="area-bar"><div style="width: 78%;"></div></div><span class="area-score">7.8</span></div>
+          <div class="area-row"><span>Fun · Recreation</span><div class="area-bar"><div style="width: 42%;"></div></div><span class="area-score" style="color: var(--warning);">4.2</span></div>
+          <div class="area-row"><span>Environment · Home</span><div class="area-bar"><div style="width: 55%;"></div></div><span class="area-score">5.5</span></div>
+
+          <div class="mt-6 p-3 rounded-lg" style="background: rgba(255,184,107,0.06); border: 1px solid rgba(255,184,107,0.2);">
+            <div class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--warning);">Needs attention</div>
+            <div class="text-[13px] mt-1">Fun / Recreation has been under 5 for two months. Schedule something non-productive this week.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- V3 — Identity Ladder -->
+  <section class="variant">
+    <div class="variant-head">
+      <div class="variant-head-row">
+        <div>
+          <div class="label mb-1">Variant 3 — Identity Ladder</div>
+          <h3 class="text-[22px] font-semibold tracking-tight">&ldquo;Change the identity and the rest follows.&rdquo;</h3>
+        </div>
+        <span class="source-tag">framework · Identity Ladder</span>
+      </div>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-8">
+        Explicitly stack the three layers: who you are, what you do, what you want. Robbins teaches you lead with identity.
+        The top row is the most important one — your goals should be derived from it, not the other way around. Converts the current
+        &ldquo;identity statement&rdquo; section from a passive card into a structural backbone.
+      </p>
+
+      <div class="ladder">
+        <div class="rung">
+          <div class="k">I am</div>
+          <div class="v">Someone who builds tools I wish existed — patient, disciplined, deliberate. I don&rsquo;t ship hacks.</div>
+        </div>
+        <div class="rung-divider">↓ therefore</div>
+        <div class="rung">
+          <div class="k k-2">I do</div>
+          <div class="v">Ship one focused dashboard feature per week. Train 5 days. Write one reflection per evening.</div>
+        </div>
+        <div class="rung-divider">↓ therefore</div>
+        <div class="rung">
+          <div class="k k-3">I have</div>
+          <div class="v">LifeOS at 100 alpha users · 10 consistent weeks of training · a chapter-a-week book habit</div>
+        </div>
+      </div>
+
+      <div class="mt-8 grid grid-cols-2 gap-4">
+        <div class="card-sub">
+          <div class="label mb-2">Tiny today</div>
+          <div class="text-[13px]">Ask: &ldquo;What would the person I&rsquo;m becoming do right now?&rdquo; — a question reminder pinned to the top of home.</div>
+        </div>
+        <div class="card-sub">
+          <div class="label mb-2">Quarterly review prompt</div>
+          <div class="text-[13px]">Rate each rung 1–10. If any rung feels <em>false</em>, the compass surfaces it before goals.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- V4 — 6 Human Needs -->
+  <section class="variant">
+    <div class="variant-head">
+      <div class="variant-head-row">
+        <div>
+          <div class="label mb-1">Variant 4 — 6 Human Needs Assessment</div>
+          <h3 class="text-[22px] font-semibold tracking-tight">Every goal meets a need. Know which.</h3>
+        </div>
+        <span class="source-tag">framework · 6 Human Needs</span>
+      </div>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-8">
+        Six sliders. Rate how fulfilled each need is right now. Goals can be tagged against needs — so a goal that&rsquo;s tagged
+        &ldquo;Growth&rdquo; but you&rsquo;re already at 9/10 for Growth is probably the wrong goal. Robbins&rsquo; core
+        teaching: your top 2 needs drive 90% of your behaviour.
+      </p>
+
+      <div class="need-grid">
+        <div class="need-row">
+          <div class="need-head"><span class="name">Certainty</span><span class="score">6 / 10</span></div>
+          <div class="need-bar"><div style="width: 60%; background: linear-gradient(90deg, var(--accent), #a599ff);"></div></div>
+          <div class="need-desc">Safety, comfort, predictability. Too high = boredom. Too low = anxiety.</div>
+        </div>
+        <div class="need-row">
+          <div class="need-head"><span class="name">Variety / Uncertainty</span><span class="score">8 / 10</span></div>
+          <div class="need-bar"><div style="width: 80%; background: linear-gradient(90deg, var(--accent-2), #ffd29a);"></div></div>
+          <div class="need-desc">Surprise, novelty, change. Your highest need right now — shows in the multi-project sprawl.</div>
+        </div>
+        <div class="need-row">
+          <div class="need-head"><span class="name">Significance</span><span class="score">7 / 10</span></div>
+          <div class="need-bar"><div style="width: 70%; background: linear-gradient(90deg, var(--accent), #a599ff);"></div></div>
+          <div class="need-desc">Feeling important, unique, needed. Watch for ego traps.</div>
+        </div>
+        <div class="need-row">
+          <div class="need-head"><span class="name">Love / Connection</span><span class="score">5 / 10</span></div>
+          <div class="need-bar"><div style="width: 50%; background: linear-gradient(90deg, var(--danger), #ff9ab1);"></div></div>
+          <div class="need-desc">Currently low — flagged last review. Scheduled dinners with old friends.</div>
+        </div>
+        <div class="need-row">
+          <div class="need-head"><span class="name">Growth</span><span class="score">9 / 10</span></div>
+          <div class="need-bar"><div style="width: 90%; background: linear-gradient(90deg, var(--success), #a6f0c8);"></div></div>
+          <div class="need-desc">Learning, expanding, developing. Consistently your top score for 6 months.</div>
+        </div>
+        <div class="need-row">
+          <div class="need-head"><span class="name">Contribution</span><span class="score">4 / 10</span></div>
+          <div class="need-bar"><div style="width: 40%; background: linear-gradient(90deg, var(--danger), #ff9ab1);"></div></div>
+          <div class="need-desc">Giving beyond yourself. Lowest right now — consider a goal that serves others.</div>
+        </div>
+      </div>
+
+      <div class="mt-8 p-4 rounded-lg border bd" style="background: rgba(139,127,255,0.04);">
+        <div class="label mb-2" style="color: var(--accent);">Compass insight</div>
+        <div class="text-[13px] leading-relaxed">Your top 2 needs are <strong>Growth</strong> and <strong>Variety</strong>.
+          That explains why you start new projects easily but struggle to finish — finishing satisfies Certainty, not Growth.
+          Consider framing Phase 2 polish as a <em>new</em> problem (&ldquo;how do I design the best compass tab&rdquo;) instead of a
+          &ldquo;finish&rdquo; task.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- V5 — North Star + Roles -->
+  <section class="variant">
+    <div class="variant-head">
+      <div class="variant-head-row">
+        <div>
+          <div class="label mb-1">Variant 5 — North Star + Roles</div>
+          <h3 class="text-[22px] font-semibold tracking-tight">One 10-year vision. Four roles. Each with a mini-compass.</h3>
+        </div>
+        <span class="source-tag">framework · North Star · Life Roles</span>
+      </div>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-8">
+        Treat life like a portfolio. One vision statement up top. Below it, four or five roles you hold (Founder, Partner, Athlete,
+        Friend, Learner). Each role has its own mini-vision and its current quarter goal. Pulls in the current Identity and
+        Vision Board sections as sub-elements.
+      </p>
+
+      <div class="north-wrap">
+        <div class="label mb-3">North Star · 10-year vision</div>
+        <div class="north-star">
+          To run a small, beloved product studio that pays the rent on freedom and produces tools I&rsquo;d use every day — while being an athlete, a present partner, and still genuinely curious at 40.
+        </div>
+        <div class="north-horizon">
+          <span>Set Jan 2026</span> · <span>Reviewed quarterly</span> · <span>Revised once since</span>
+        </div>
+      </div>
+
+      <div class="roles">
+        <div class="role">
+          <div class="name">Founder</div>
+          <div class="vision">Build one profitable niche tool per year. Stay solo + one collaborator.</div>
+          <div class="goal">Q2 goal · Ship LifeOS Phase 2 to 100 alpha users</div>
+          <div class="goal">Q2 goal · Open OpenClaw pricing page</div>
+        </div>
+        <div class="role">
+          <div class="name">Partner</div>
+          <div class="vision">Present, playful, not half-distracted by the laptop at dinner.</div>
+          <div class="goal">Q2 goal · Weekly planned dates</div>
+          <div class="goal">Q2 goal · One trip together</div>
+        </div>
+        <div class="role">
+          <div class="name">Athlete</div>
+          <div class="vision">Strong, lean, flexible. Age gracefully by outworking gravity.</div>
+          <div class="goal">Q2 goal · 5 workouts/week avg</div>
+          <div class="goal">Q2 goal · Sub-10min 2k row</div>
+        </div>
+        <div class="role">
+          <div class="name">Learner</div>
+          <div class="vision">Consume less, produce more. Write what I&rsquo;m learning.</div>
+          <div class="goal">Q2 goal · Finish book chapter 4</div>
+          <div class="goal">Q2 goal · Weekly reflection journal</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- V6 — Year Compass -->
+  <section class="variant">
+    <div class="variant-head">
+      <div class="variant-head-row">
+        <div>
+          <div class="label mb-1">Variant 6 — Year Compass (Q1–Q4)</div>
+          <h3 class="text-[22px] font-semibold tracking-tight">One year, four quadrants. Each quarter has a theme.</h3>
+        </div>
+        <span class="source-tag">framework · Year Compass / Annual Review</span>
+      </div>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-8">
+        Zoom out. Plan in seasons. Each quarter gets a theme (a 1-word mood), a single must-achieve, and a few supporting goals.
+        Current quarter expands in place. Past quarters show their score. Closest to how the current Quarterly Goals section
+        works — but with temporal context.
+      </p>
+
+      <div class="year-grid">
+        <div class="quarter">
+          <div class="quarter-head"><span class="quarter-name">Q1</span><span class="chip">Reviewed · 7/10</span></div>
+          <div class="quarter-theme">Theme · Foundations</div>
+          <div class="quarter-goal">✓ Monorepo + CI shipped</div>
+          <div class="quarter-goal">✓ Convex migrated to teams</div>
+          <div class="quarter-goal">— Missed: weekly newsletter</div>
+          <div class="quarter-meta">Jan – Mar 2026</div>
+        </div>
+        <div class="quarter current">
+          <div class="quarter-head"><span class="quarter-name">Q2</span><span class="chip accent">Active</span></div>
+          <div class="quarter-theme">Theme · Ship &amp; Sharpen</div>
+          <div class="quarter-goal">Ship LifeOS Phase 2 to 100 users</div>
+          <div class="quarter-goal">Open OpenClaw pricing page</div>
+          <div class="quarter-goal">Hit 5 workouts/week avg</div>
+          <div class="quarter-goal">Write book chapter 4</div>
+          <div class="quarter-meta">Apr – Jun 2026 · Week 2 of 13</div>
+        </div>
+        <div class="quarter">
+          <div class="quarter-head"><span class="quarter-name">Q3</span><span class="chip">Draft</span></div>
+          <div class="quarter-theme">Theme · Harvest</div>
+          <div class="quarter-goal">Convert alpha → paid</div>
+          <div class="quarter-goal">Hire one contractor</div>
+          <div class="quarter-goal">Long trip (3 weeks)</div>
+          <div class="quarter-meta">Jul – Sep 2026</div>
+        </div>
+        <div class="quarter">
+          <div class="quarter-head"><span class="quarter-name">Q4</span><span class="chip">Draft</span></div>
+          <div class="quarter-theme">Theme · Expand</div>
+          <div class="quarter-goal">Product #2 scoping</div>
+          <div class="quarter-goal">2026 annual review</div>
+          <div class="quarter-goal">Plan 2027 north star</div>
+          <div class="quarter-meta">Oct – Dec 2026</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- V7 — Primary Question -->
+  <section class="variant">
+    <div class="variant-head">
+      <div class="variant-head-row">
+        <div>
+          <div class="label mb-1">Variant 7 — Primary Question</div>
+          <h3 class="text-[22px] font-semibold tracking-tight">The question you ask yourself the most becomes your life.</h3>
+        </div>
+        <span class="source-tag">framework · Primary Question</span>
+      </div>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-8">
+        A decorative section at the top of compass (or a small ribbon on home). Forces you to articulate the question you want
+        to live inside of. Robbins tells a story of switching his own from &ldquo;how do I get more love?&rdquo; to &ldquo;how do I give more?&rdquo;
+        — said it changed his life. Not a functional data surface; a ritual one.
+      </p>
+
+      <div class="pq-wrap">
+        <div class="pq-label">Primary Question</div>
+        <div class="pq">&ldquo;How can I ship one thing today that <em>I</em> would actually want to use?&rdquo;</div>
+        <div class="mt-8 text-[12px] tx-muted">Set Jan 2026 · Edit · History (2 previous)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <section class="mt-10 pt-10 border-t bd">
+    <h2 class="text-[20px] font-semibold mb-4">My recommendation</h2>
+    <p class="tx-muted text-[14px] max-w-[760px] leading-relaxed">
+      The compass tab works best as a <strong class="text-white">layered page</strong>, not a single framework. My strongest
+      combination: <strong class="text-white">V5 (North Star + Roles)</strong> at the top of the page as the anchor, then
+      <strong class="text-white">V6 (Year Compass)</strong> in the middle to show quarterly execution, and
+      <strong class="text-white">V2 (Wheel of Life)</strong> at the bottom as a self-assessment ribbon. V1 (RPM) becomes the
+      &ldquo;detail view&rdquo; when you click into a goal. V7 (Primary Question) could be a thin strip at the very top instead
+      of the journal bar on home.
+    </p>
+    <p class="tx-muted text-[13px] mt-4 max-w-[760px] leading-relaxed">
+      V3 (Identity Ladder) and V4 (Human Needs) are powerful but don&rsquo;t belong on the main compass tab — they fit better as
+      <em>sub-pages</em> or as a quarterly review flow. They&rsquo;d overwhelm daily use.
+    </p>
+    <p class="tx-muted text-xs mt-6">Standalone HTML. Open in any browser. No build required.</p>
+  </section>
+
+</div>
+</body>
+</html>

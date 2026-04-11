@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Journal Bar — Inspiration</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&f[]=jetbrains-mono@400,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-subtle: #111113;
+    --surface: #17171a;
+    --surface-hover: #1d1d21;
+    --border: #27272b;
+    --border-subtle: #1c1c20;
+    --text: #f5f5f5;
+    --text-muted: #888892;
+    --accent: #8b7fff;
+    --accent-glow: rgba(139, 127, 255, 0.15);
+    --success: #5ee6a1;
+    --warning: #ffb86b;
+    --danger: #ff6b8a;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv11';
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; }
+  .surface { background: var(--surface); }
+  .surface-sub { background: var(--bg-subtle); }
+  .bd { border-color: var(--border); }
+  .bd-sub { border-color: var(--border-subtle); }
+  .tx-muted { color: var(--text-muted); }
+  .tx-accent { color: var(--accent); }
+  .bg-accent-glow { background: var(--accent-glow); }
+  .grain {
+    background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+  .divide-bd > * + * { border-color: var(--border); }
+  /* scroll shadows */
+  .scrollx { scrollbar-width: none; }
+  .scrollx::-webkit-scrollbar { display: none; }
+  .label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+  .dot.g { background: var(--success); }
+  .dot.y { background: var(--warning); }
+  .dot.r { background: var(--danger); }
+  .ring {
+    background: conic-gradient(var(--accent) 0% 62%, var(--border) 62% 100%);
+    border-radius: 50%;
+  }
+  .variant {
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    background: linear-gradient(180deg, #0e0e11 0%, #0a0a0b 100%);
+    overflow: hidden;
+  }
+  .variant-head {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .variant-body { padding: 28px 32px 36px 32px; }
+  .variant-meta { color: var(--text-muted); font-size: 12.5px; line-height: 1.55; max-width: 720px; }
+  .source-tag {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--surface);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  /* === Variants === */
+
+  /* V1: Sunsama-style intention strip */
+  .v1-wrap {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .v1-intention {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .v1-intention::before {
+    content: '›';
+    color: var(--accent);
+    margin-right: 8px;
+    font-weight: 700;
+  }
+
+  /* V2: Linear minimal */
+  .v2-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 12.5px;
+  }
+
+  /* V3: Notion weekly-strip with hover reveal */
+  .v3-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+  .v3-day {
+    padding: 10px 12px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    min-height: 64px;
+    cursor: pointer;
+    transition: all 150ms;
+  }
+  .v3-day:hover { background: var(--surface); border-color: var(--border); }
+  .v3-day.today { border-color: var(--accent); background: linear-gradient(180deg, rgba(139,127,255,0.08) 0%, transparent 100%); }
+
+  /* V4: Things-style giant date */
+  .v4-wrap {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: center;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .v4-date {
+    font-size: 44px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .v4-weekday {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* V5: Amie / Akiflow time-of-day gradient strip */
+  .v5-wrap {
+    padding: 14px 20px;
+    border-radius: 14px;
+    background: linear-gradient(90deg, rgba(139,127,255,0.14) 0%, rgba(139,127,255,0.04) 40%, transparent 80%);
+    border: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 18px;
+    align-items: center;
+  }
+  .v5-greeting {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* V6: Motion / Reclaim metric-bar */
+  .v6-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border-subtle);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .v6-cell {
+    background: var(--surface);
+    padding: 12px 16px;
+  }
+  .v6-cell .k { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+  .v6-cell .v { font-size: 18px; font-weight: 700; margin-top: 2px; }
+
+  /* V7: Reflect / Daylio mood first */
+  .v7-wrap {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 12px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+  .v7-mood {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffcf6b, #ff9e6b);
+    box-shadow: 0 0 0 3px rgba(255, 184, 107, 0.12);
+  }
+
+  /* V8: Three-priority ticker */
+  .v8-wrap {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border-subtle);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .v8-cell { background: var(--surface); padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+  .v8-badge { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 4px; }
+  .v8-mit { color: var(--accent); background: var(--accent-glow); }
+  .v8-p1  { color: var(--warning); background: rgba(255,184,107,0.12); }
+  .v8-p2  { color: var(--text-muted); background: var(--bg-subtle); }
+
+  /* V9: Superhuman / focus-timer combined */
+  .v9-wrap {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+    padding: 12px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .v9-timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  /* V10: Current — for reference */
+  .current-wrap {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .current-head {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .current-body { padding: 24px; font-size: 14px; }
+  .current-entry { display: flex; gap: 12px; align-items: flex-start; padding-top: 6px; padding-bottom: 6px; }
+  .current-entry .label-tag {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--text-muted); width: 32px; flex-shrink: 0; padding-top: 2px;
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div class="max-w-[1120px] mx-auto px-8 py-16">
+
+  <!-- Header -->
+  <header class="mb-16">
+    <div class="flex items-baseline gap-3 mb-4">
+      <h1 class="text-[44px] font-bold tracking-tight leading-none">Journal bar — inspiration</h1>
+      <span class="source-tag">LifeOS · home</span>
+    </div>
+    <p class="tx-muted text-[15px] max-w-[680px] leading-relaxed">
+      The current journal block is too tall and carries visual weight of a full card. We want something smaller,
+      that still surfaces today&rsquo;s priorities and wins, but compresses like a strip — something you glance at,
+      not sit in. Below: nine variants pulled from productivity apps I liked the density of.
+    </p>
+    <div class="mt-6 flex flex-wrap gap-2">
+      <span class="chip"><span class="dot g"></span> Goal: smaller</span>
+      <span class="chip"><span class="dot y"></span> Goal: still shows MIT / P1 / P2</span>
+      <span class="chip"><span class="dot"></span> Goal: not a card, a strip</span>
+    </div>
+  </header>
+
+  <!-- Current (for contrast) -->
+  <section class="mb-16">
+    <div class="flex items-baseline justify-between mb-4">
+      <h2 class="text-[18px] font-semibold">Current (for reference)</h2>
+      <span class="source-tag">sections/journal-today.tsx</span>
+    </div>
+    <p class="variant-meta mb-5">Full card with label &ldquo;JOURNAL&rdquo;, sectioned body, generous padding, separated Wins list. Works, but takes a lot of vertical space at the top of the home page.</p>
+    <div class="current-wrap">
+      <div class="current-head">
+        <span class="label">Journal</span>
+        <span class="text-xs tx-muted">Open</span>
+      </div>
+      <div class="current-body">
+        <div class="current-entry"><span class="label-tag">MIT</span><span>Finish Phase 2 tasks-bucketed cleanup</span></div>
+        <div class="current-entry"><span class="label-tag">P1</span><span>Pull prod data into local dev</span></div>
+        <div class="current-entry"><span class="label-tag">P2</span><span>Sketch compass tab rework</span></div>
+        <div class="mt-5 pt-5 border-t bd">
+          <span class="label block mb-2">Notes</span>
+          <p class="tx-muted leading-relaxed">Shifted the tasks bucket logic so day-after is always visible. Still need to test with empty overdue state.</p>
+        </div>
+        <div class="mt-5 pt-5 border-t bd">
+          <span class="label block mb-2">Wins</span>
+          <ul class="space-y-2 mt-1">
+            <li class="flex gap-3 items-start" style="color: var(--success);"><span class="mono text-xs tx-muted">01</span> Shipped task scheduler tag</li>
+            <li class="flex gap-3 items-start" style="color: var(--success);"><span class="mono text-xs tx-muted">02</span> Removed noisy per-card colors in Ideas</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Variants intro -->
+  <section class="mb-16">
+    <h2 class="text-[20px] font-semibold mb-2">Candidates</h2>
+    <p class="tx-muted text-sm">Each variant below is rendered with the same mock data so you can compare directly. All use dark-theme LifeOS tokens.</p>
+  </section>
+
+  <!-- V1 — Sunsama -->
+  <section class="variant mb-10">
+    <div class="variant-head">
+      <div>
+        <div class="label mb-1">Variant 1 — Daily intention strip</div>
+        <h3 class="text-[18px] font-semibold">One line. One intention. Nothing else.</h3>
+      </div>
+      <span class="source-tag">inspired by · Sunsama</span>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-5">Sunsama&rsquo;s daily planning ritual puts a single sentence at the top of the day. Everything else is below the fold. If MIT / P1 / P2 are already in the priorities checklist section, the journal strip could just carry the narrative intention and nothing more.</p>
+      <div class="v1-wrap">
+        <div class="v1-intention">Finish Phase 2 polish so we can demo to Michiel by Friday — this unlocks the compass rework.</div>
+        <div class="flex items-center gap-2 tx-muted text-xs">
+          <span class="mono">Sat · Apr 11</span>
+          <span>·</span>
+          <span>Edit</span>
+        </div>
+      </div>
+      <div class="mt-3 text-xs tx-muted">Height: ~48px. Single row. Scales across themes.</div>
+    </div>
+  </section>
+
+  <!-- V2 — Linear minimal -->
+  <section class="variant mb-10">
+    <div class="variant-head">
+      <div>
+        <div class="label mb-1">Variant 2 — Inline pills</div>
+        <h3 class="text-[18px] font-semibold">Date, intention, three priorities, all in one row.</h3>
+      </div>
+      <span class="source-tag">inspired by · Linear / Raycast</span>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-5">Linear compresses everything into a single horizontal bar. Labels become tags, the text becomes a pill. Trades readability for density.</p>
+      <div class="v2-bar">
+        <span class="mono tx-muted text-xs">Sat · 11 Apr</span>
+        <span class="chip"><span class="dot" style="background: var(--accent);"></span> MIT · Phase 2 polish</span>
+        <span class="chip"><span class="dot y"></span> P1 · Prod data sync</span>
+        <span class="chip"><span class="dot"></span> P2 · Compass sketch</span>
+        <span class="ml-auto tx-muted text-xs">2 wins</span>
+      </div>
+      <div class="mt-3 text-xs tx-muted">Height: ~40px. Ideal when the home page is already dense.</div>
+    </div>
+  </section>
+
+  <!-- V3 — Notion 7-day -->
+  <section class="variant mb-10">
+    <div class="variant-head">
+      <div>
+        <div class="label mb-1">Variant 3 — Weekly glance</div>
+        <h3 class="text-[18px] font-semibold">A seven-day strip; today is highlighted, others are historical.</h3>
+      </div>
+      <span class="source-tag">inspired by · Notion Weekly · Oura</span>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-5">Instead of one day, show the last seven. Click any day to expand. Today is the only one with real content — the others preview. Good for people who think in week cycles.</p>
+      <div class="v3-grid">
+        <div class="v3-day"><div class="text-[10px] tx-muted uppercase tracking-wider">Mon</div><div class="text-sm mt-1">✓ 3 wins</div></div>
+        <div class="v3-day"><div class="text-[10px] tx-muted uppercase tracking-wider">Tue</div><div class="text-sm mt-1">—</div></div>
+        <div class="v3-day"><div class="text-[10px] tx-muted uppercase tracking-wider">Wed</div><div class="text-sm mt-1">✓ 1 win</div></div>
+        <div class="v3-day"><div class="text-[10px] tx-muted uppercase tracking-wider">Thu</div><div class="text-sm mt-1">✓ 2 wins</div></div>
+        <div class="v3-day"><div class="text-[10px] tx-muted uppercase tracking-wider">Fri</div><div class="text-sm mt-1">—</div></div>
+        <div class="v3-day today">
+          <div class="text-[10px] tx-accent uppercase tracking-wider font-bold">Sat · Today</div>
+          <div class="text-[12px] mt-1 truncate">Phase 2 polish</div>
+          <div class="text-[10px] tx-muted mt-1">MIT set</div>
+        </div>
+        <div class="v3-day"><div class="text-[10px] tx-muted uppercase tracking-wider">Sun</div><div class="text-sm mt-1">Planned</div></div>
+      </div>
+      <div class="mt-3 text-xs tx-muted">Height: ~80px. Trades density for temporal awareness.</div>
+    </div>
+  </section>
+
+  <!-- V4 — Things -->
+  <section class="variant mb-10">
+    <div class="variant-head">
+      <div>
+        <div class="label mb-1">Variant 4 — Big date + sidebar quote</div>
+        <h3 class="text-[18px] font-semibold">Calendar-feel; the date is the hero, intention is a whisper next to it.</h3>
+      </div>
+      <span class="source-tag">inspired by · Things 3 · Apple Calendar</span>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-5">Things makes the day feel like a destination by putting the number big. Puts you in a &ldquo;which day is this&rdquo; frame of mind. Lower information density, higher emotional weight.</p>
+      <div class="v4-wrap">
+        <div>
+          <div class="v4-date">11</div>
+          <div class="v4-weekday">Sat · Apr</div>
+        </div>
+        <div>
+          <div class="text-[14px] tx-muted italic leading-relaxed">&ldquo;Finish Phase 2 polish so we can demo to Michiel by Friday.&rdquo;</div>
+          <div class="text-xs tx-muted mt-2">3 priorities · 2 wins logged</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="chip"><span class="dot" style="background: var(--accent);"></span> Open journal</span>
+        </div>
+      </div>
+      <div class="mt-3 text-xs tx-muted">Height: ~88px. Best when this is the first thing you see each morning.</div>
+    </div>
+  </section>
+
+  <!-- V5 — Amie -->
+  <section class="variant mb-10">
+    <div class="variant-head">
+      <div>
+        <div class="label mb-1">Variant 5 — Time-of-day greeting</div>
+        <h3 class="text-[18px] font-semibold">Personal. Warm. The bar changes copy through the day.</h3>
+      </div>
+      <span class="source-tag">inspired by · Amie · Cron (Notion Calendar)</span>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-5">Amie leads with &ldquo;Good morning, Kemp&rdquo; and a soft gradient. Later in the day it shifts to &ldquo;Afternoon check-in&rdquo;. Less about tasks, more about tone — leaves the priority data to the checklist below.</p>
+      <div class="v5-wrap">
+        <div>
+          <div class="v5-greeting">Good morning, Kemp</div>
+          <div class="text-xs tx-muted mt-1">You have 3 priorities set · 2 wins so far</div>
+        </div>
+        <div></div>
+        <div class="flex items-center gap-2">
+          <span class="chip">Reflect</span>
+          <span class="chip">Open</span>
+        </div>
+      </div>
+      <div class="mt-3 text-xs tx-muted">Height: ~72px. Pairs well with a simplified priorities section.</div>
+    </div>
+  </section>
+
+  <!-- V6 — Motion metric -->
+  <section class="variant mb-10">
+    <div class="variant-head">
+      <div>
+        <div class="label mb-1">Variant 6 — Metric row</div>
+        <h3 class="text-[18px] font-semibold">Treats the day like a dashboard. Numbers first.</h3>
+      </div>
+      <span class="source-tag">inspired by · Motion · Reclaim</span>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-5">No prose. Four counters. Useful if you want feedback on whether you&rsquo;re on pace. Feels productive; feels cold.</p>
+      <div class="v6-grid">
+        <div class="v6-cell"><div class="k">Priorities</div><div class="v">3 / 3</div></div>
+        <div class="v6-cell"><div class="k">Wins</div><div class="v">2</div></div>
+        <div class="v6-cell"><div class="k">Focus</div><div class="v">2h 40m</div></div>
+        <div class="v6-cell"><div class="k">Streak</div><div class="v">12 days</div></div>
+      </div>
+      <div class="mt-3 text-xs tx-muted">Height: ~72px. Good for developer / executive presets; wrong for journaler.</div>
+    </div>
+  </section>
+
+  <!-- V7 — Reflect mood -->
+  <section class="variant mb-10">
+    <div class="variant-head">
+      <div>
+        <div class="label mb-1">Variant 7 — Mood orb</div>
+        <h3 class="text-[18px] font-semibold">One tap to capture how the day feels.</h3>
+      </div>
+      <span class="source-tag">inspired by · Reflect · Daylio</span>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-5">Reflect puts a mood picker in the daily note. Not a priority surface — an emotional one. Could live next to a shortened journal strip and make the journal tab feel less transactional.</p>
+      <div class="v7-wrap">
+        <div class="v7-mood"></div>
+        <div class="flex-1">
+          <div class="text-sm">Feeling <strong>focused</strong> today</div>
+          <div class="text-xs tx-muted">Tap to change mood · 3 priorities · 2 wins</div>
+        </div>
+        <span class="chip">Journal</span>
+      </div>
+      <div class="mt-3 text-xs tx-muted">Height: ~64px. Non-functional without a mood field in the schema.</div>
+    </div>
+  </section>
+
+  <!-- V8 — Three-priority ticker -->
+  <section class="variant mb-10">
+    <div class="variant-head">
+      <div>
+        <div class="label mb-1">Variant 8 — MIT / P1 / P2 ticker</div>
+        <h3 class="text-[18px] font-semibold">Three columns. Three priorities. Nothing else.</h3>
+      </div>
+      <span class="source-tag">inspired by · Todoist · Superlist</span>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-5">The existing journal block already has MIT/P1/P2 labels — this just flips the orientation from stacked rows to inline columns. Cuts height in half while keeping the same information. Probably the safest change.</p>
+      <div class="v8-wrap">
+        <div class="v8-cell"><span class="v8-badge v8-mit">MIT</span><span class="text-sm truncate">Finish Phase 2 polish</span></div>
+        <div class="v8-cell"><span class="v8-badge v8-p1">P1</span><span class="text-sm truncate">Pull prod data into dev</span></div>
+        <div class="v8-cell"><span class="v8-badge v8-p2">P2</span><span class="text-sm truncate">Sketch compass rework</span></div>
+      </div>
+      <div class="mt-3 text-xs tx-muted">Height: ~56px. Closest to today&rsquo;s behavior — minimal rewrite.</div>
+    </div>
+  </section>
+
+  <!-- V9 — Focus timer combined -->
+  <section class="variant mb-10">
+    <div class="variant-head">
+      <div>
+        <div class="label mb-1">Variant 9 — Timer + current task</div>
+        <h3 class="text-[18px] font-semibold">What are you doing right now? When does this block end?</h3>
+      </div>
+      <span class="source-tag">inspired by · Superhuman · Session</span>
+    </div>
+    <div class="variant-body">
+      <p class="variant-meta mb-5">Shows the active time block from today&rsquo;s plan, counting down. Less about what&rsquo;s tomorrow, more about what&rsquo;s the next 90 minutes. Requires the day plan to be populated to feel useful.</p>
+      <div class="v9-wrap">
+        <div class="ring" style="width:42px;height:42px;"></div>
+        <div>
+          <div class="text-sm font-medium">Phase 2 polish block</div>
+          <div class="text-xs tx-muted mt-0.5">Ends at 14:30 · MIT</div>
+        </div>
+        <div class="v9-timer">01:24:06</div>
+      </div>
+      <div class="mt-3 text-xs tx-muted">Height: ~72px. Depends on day plan integration; wrong if no plan exists.</div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <section class="mt-16 pt-10 border-t bd">
+    <h2 class="text-[18px] font-semibold mb-4">Which one?</h2>
+    <p class="tx-muted text-sm max-w-[680px] leading-relaxed">
+      My picks, ranked: <strong class="text-white">V8 (ticker)</strong> if you just want to shrink, <strong class="text-white">V1 (intention)</strong>
+      if you&rsquo;re willing to move MIT/P1/P2 down into the priorities checklist section (they&rsquo;re already there),
+      <strong class="text-white">V4 (big date)</strong> if you want the home page to feel more emotional in the morning.
+      V3 (weekly) is the most ambitious — not a &ldquo;smaller&rdquo; change but a different mental model.
+    </p>
+    <p class="tx-muted text-xs mt-4">This file is standalone. Open locally in a browser. No build step.</p>
+  </section>
+
+</div>
+</body>
+</html>
