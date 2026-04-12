@@ -240,6 +240,7 @@ export const deploy = action({
         GATEWAY_TOKEN: gatewayToken,
         LIFEOS_API_KEY: apiKeyResult.key,
         LIFEOS_API_URL: serverEnv.CONVEX_SITE_URL ?? "",
+        OPENAI_API_KEY: serverEnv.OPENAI_API_KEY ?? "",
       });
 
       await createStatefulSet({
@@ -775,6 +776,7 @@ export const rolloutPatch = internalAction({
           GATEWAY_TOKEN: depRecord.gatewayToken,
           LIFEOS_API_KEY: apiKeyResult.key,
           LIFEOS_API_URL: serverEnv.CONVEX_SITE_URL ?? "",
+          OPENAI_API_KEY: serverEnv.OPENAI_API_KEY ?? "",
         });
 
         // Patch StatefulSet template with latest config + init container migration
