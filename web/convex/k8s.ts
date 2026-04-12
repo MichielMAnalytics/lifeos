@@ -300,7 +300,7 @@ function buildOpenClawConfig(
           echoTranscript: true,
           echoFormat: "🎤 \"{transcript}\"",
           models: [
-            { provider: "openai", model: "gpt-4o-mini-transcribe", baseUrl: `${gatewayUrl}/v1/openai` },
+            { provider: "openai", model: "gpt-4o-mini-transcribe", baseUrl: "https://api.openai.com/v1", apiKey: serverEnv.OPENAI_API_KEY ?? "" },
           ],
         },
       },

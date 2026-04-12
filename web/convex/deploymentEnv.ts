@@ -26,6 +26,7 @@ const serverEnvSchema = z.object({
   AI_GATEWAY_INTERNAL_URL: z.string().optional(),
   AI_GATEWAY_K8S_SERVICE: z.string().default("ai-gateway"),
   OPENCLAW_IMAGE_TAG: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
   GCP_PROJECT_ID: z.string().optional(),
   LIFEOS_DOMAIN: z.string().default("lifeos.zone"),
   GITHUB_FEEDBACK_TOKEN: z.string().optional(),
