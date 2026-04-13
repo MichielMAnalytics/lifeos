@@ -305,6 +305,7 @@ function OpenAICredentialSection({
             setDeviceFlowStatus("complete");
             await onSaveTokens(poll.tokens);
             setDeviceFlow(null);
+            setDeviceFlowStatus("idle");
           }
         } catch (err) {
           stopPolling();
