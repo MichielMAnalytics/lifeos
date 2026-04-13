@@ -1143,6 +1143,7 @@ function FAQSection() {
 // ---------------------------------------------------------------------------
 
 function CTASection() {
+  const { signIn } = useAuthActions();
   return (
     <section className="py-24 lg:py-28 px-6 lg:px-12">
       <div className="max-w-7xl mx-auto">
@@ -1168,17 +1169,17 @@ function CTASection() {
 
           {/* Right side */}
           <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
+            <button
+              type="button"
+              onClick={() => {
+                capture(EVENTS.SIGNED_IN, { method: "google", source: "bottom-cta" });
+                void signIn("google");
               }}
-              className="inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-bg text-sm font-medium px-8 py-4 rounded-md transition-all duration-150 active:scale-[0.99]"
+              className="inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-bg text-sm font-medium px-8 py-4 rounded-md transition-all duration-150 active:scale-[0.99] cursor-pointer"
             >
               Get Started with LifeOS
               <ChevronRight className="w-4 h-4" />
-            </a>
+            </button>
             <a
               href="mailto:support@lifeos.zone?subject=LifeOS"
               className="inline-flex items-center justify-center ring-1 ring-text/10 text-sm px-8 py-4 rounded-md text-text hover:ring-text/20 transition-all duration-150 active:scale-[0.99]"
