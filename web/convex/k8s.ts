@@ -163,7 +163,7 @@ export const MODEL_REF_MAP: Record<string, string> = {
   claude: "anthropic/claude-opus-4-6",
   "claude-sonnet": "anthropic/claude-sonnet-4-6",
   "claude-haiku": "anthropic/claude-haiku-4-5-20251001",
-  gpt: "openai/gpt-5.4-2026-03-05",
+  gpt: "openai/gpt-5.4",
   "gpt-5.2": "openai/gpt-5.2",
   "gpt-mini": "openai/gpt-5-mini-2025-08-07",
   "gpt-nano": "openai/gpt-5-nano-2025-08-07",
@@ -221,10 +221,6 @@ function buildOpenClawConfig(
             { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", contextWindow: 200000, maxTokens: 16000, input: ["text", "image"] },
             { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", contextWindow: 200000, maxTokens: 8192, input: ["text", "image"] },
           ],
-        },
-        openai: {
-          headers: { "X-Pod-Secret": podSecretEnvRef },
-          request: { allowPrivateNetwork: true },
         },
         kimi: {
           baseUrl: `${gatewayUrl}/v1/kimi`,
