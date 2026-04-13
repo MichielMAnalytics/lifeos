@@ -267,6 +267,7 @@ function OpenAICredentialSection({
     verificationUrl: string;
   } | null>(null);
   const [deviceFlowStatus, setDeviceFlowStatus] = useState<"idle" | "initiating" | "waiting" | "complete" | "error">("idle");
+  const [copiedCode, setCopiedCode] = useState(false);
   const [deviceFlowError, setDeviceFlowError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -421,11 +422,11 @@ function OpenAICredentialSection({
               </p>
               <div className="flex justify-center">
                 <code
-                  onClick={() => navigator.clipboard.writeText(deviceFlow.userCode)}
+                  onClick={() => { navigator.clipboard.writeText(deviceFlow.userCode); setCopiedCode(true); setTimeout(() => setCopiedCode(false), 2000); }}
                   className="px-4 py-2 rounded-lg bg-bg border border-border text-lg font-mono font-bold text-text tracking-widest cursor-pointer hover:bg-surface-hover transition-colors"
                   title="Click to copy"
                 >
-                  {deviceFlow.userCode}
+                  {copiedCode ? "Copied!" : deviceFlow.userCode}
                 </code>
               </div>
               <div className="flex justify-center">
@@ -433,6 +434,7 @@ function OpenAICredentialSection({
                   href={deviceFlow.verificationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => { navigator.clipboard.writeText(deviceFlow.userCode); }}
                   className="inline-flex items-center gap-1.5 rounded bg-text text-bg px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider hover:opacity-90 transition-opacity"
                 >
                   Open OpenAI

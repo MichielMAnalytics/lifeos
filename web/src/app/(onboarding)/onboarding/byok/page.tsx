@@ -20,6 +20,7 @@ export default function ByokPage() {
   const pollDeviceCodeAction = useAction(api.openaiDeviceAuth.pollDeviceCode);
   const [deviceFlow, setDeviceFlow] = useState<{ deviceAuthId: string; userCode: string; interval: number; verificationUrl: string } | null>(null);
   const [deviceStatus, setDeviceStatus] = useState<'idle' | 'initiating' | 'waiting' | 'complete' | 'error'>('idle');
+  const [copiedCode, setCopiedCode] = useState(false);
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stopPolling = useCallback(() => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } }, []);
@@ -179,14 +180,15 @@ export default function ByokPage() {
                       <div className="rounded-xl border-2 border-accent/30 bg-accent/5 px-4 py-4 space-y-3 text-center">
                         <p className="text-sm text-text">Enter this code at OpenAI:</p>
                         <code
-                          onClick={() => navigator.clipboard.writeText(deviceFlow.userCode)}
+                          onClick={() => { navigator.clipboard.writeText(deviceFlow.userCode); setCopiedCode(true); setTimeout(() => setCopiedCode(false), 2000); }}
                           className="inline-block px-5 py-2.5 rounded-lg bg-bg border border-border text-xl font-mono font-bold text-text tracking-widest cursor-pointer hover:bg-surface-hover transition-colors"
                           title="Click to copy"
                         >
-                          {deviceFlow.userCode}
+                          {copiedCode ? "Copied!" : deviceFlow.userCode}
                         </code>
                         <div>
                           <a href={deviceFlow.verificationUrl} target="_blank" rel="noopener noreferrer"
+                            onClick={() => { navigator.clipboard.writeText(deviceFlow.userCode); }}
                             className="inline-flex items-center gap-1.5 rounded-lg bg-text text-bg px-4 py-2 text-xs font-medium hover:opacity-90 transition-opacity"
                           >
                             Open OpenAI
