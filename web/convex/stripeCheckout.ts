@@ -41,8 +41,8 @@ export const createSubscriptionCheckout = action({
       customer: customer.customerId,
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${serverEnv.SITE_URL}/life-coach?subscription=success`,
-      cancel_url: `${serverEnv.SITE_URL}/life-coach?subscription=cancelled`,
+      success_url: `${serverEnv.SITE_URL}/setup?subscription=success`,
+      cancel_url: `${serverEnv.SITE_URL}/onboarding/confirm?subscription=cancelled`,
       subscription_data: {
         metadata: {
           userId,

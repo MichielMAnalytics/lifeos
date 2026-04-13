@@ -17,8 +17,8 @@ const PATHS: {
   },
   {
     key: 'byok',
-    title: 'Use my AI subscription',
-    subtitle: 'Bring your own Claude or ChatGPT account.',
+    title: 'Bring your own ChatGPT or Claude account',
+    subtitle: 'Use your existing AI subscription.',
   },
   {
     key: 'managed',
@@ -28,9 +28,8 @@ const PATHS: {
 ];
 
 function getNextPath(path: OnboardingPath): string {
-  if (path === 'managed') return '/onboarding/channels';
-  if (path === 'byok') return '/onboarding/byok-key';
-  return '/onboarding/confirm';
+  if (path === 'byok') return '/onboarding/byok';
+  return '/onboarding/use-cases';
 }
 
 /* Friendly, thick-stroke pictograms */
@@ -79,7 +78,7 @@ const ICONS: Record<OnboardingPath, React.FC<{ className?: string }>> = {
 };
 
 export default function PlansPage() {
-  const [selected, setSelected] = useState<OnboardingPath | null>(null);
+  const [selected, setSelected] = useState<OnboardingPath | null>('byok');
 
   const handleContinue = useCallback(() => {
     if (!selected) return;
@@ -101,17 +100,23 @@ export default function PlansPage() {
         <div className="mt-10 grid grid-cols-3 gap-4 w-full">
           {PATHS.map((p) => {
             const isSelected = selected === p.key;
+            const isRecommended = p.key === 'byok';
             const Icon = ICONS[p.key];
             return (
               <div key={p.key} className="flex flex-col items-center gap-3">
                 <button
                   onClick={() => setSelected(p.key)}
-                  className={`relative w-full flex flex-col items-center text-center rounded-2xl border-2 p-5 pt-6 pb-5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+                  className={`relative w-full flex flex-col items-center justify-center text-center rounded-2xl border-2 p-5 pt-7 pb-5 min-h-[160px] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
                     isSelected
                       ? 'border-accent bg-accent/[0.05] shadow-lg shadow-accent/10'
                       : 'border-border/40 bg-surface/10 hover:border-border/70 hover:bg-surface/30'
                   }`}
                 >
+                  {isRecommended && (
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-semibold bg-accent text-white px-2.5 py-0.5 rounded-full">
+                      Recommended
+                    </span>
+                  )}
                   <Icon className={`w-12 h-12 mb-3 transition-colors ${isSelected ? 'text-text' : 'text-text/70'}`} />
                   <span className={`text-[13px] font-semibold leading-tight transition-colors ${isSelected ? 'text-text' : 'text-text/70'}`}>
                     {p.title}

@@ -139,7 +139,7 @@ export default function ChannelsPage() {
     window.location.href = onboardingPath('/onboarding/confirm');
   }
 
-  const backPath = path === 'byok' ? '/onboarding/byok-key' : '/onboarding/plans';
+  const backPath = path === 'byok' ? '/onboarding/byok' : '/onboarding/plans';
 
   return (
     <StepContainer backHref={backPath}>

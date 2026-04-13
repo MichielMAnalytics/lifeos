@@ -6,7 +6,6 @@ import { SectionRenderer } from './section-renderer';
 import { PresetSelector } from './preset-selector';
 import { UniversalAdd } from './universal-add';
 import { OnboardingChecklist } from './onboarding-checklist';
-import { ConfigureToggle } from './configure-toggle';
 
 interface PageShellProps {
   page: PageKey;
@@ -29,7 +28,6 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
           {subtitle && <p className="text-sm text-text-muted mt-0.5">{subtitle}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <ConfigureToggle />
           <UniversalAdd page={page} />
         </div>
       </div>

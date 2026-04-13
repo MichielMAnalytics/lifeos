@@ -18,6 +18,10 @@ export interface OnboardingState {
   openaiOAuthTokens: string;
   telegramToken: string;
   discordToken: string;
+  /** Pre-paywall: selected use cases */
+  selectedUseCases: string[];
+  /** Post-paywall: setup path */
+  setupPath: 'skip' | 'quick-connect' | 'full-setup' | null;
   /** Post-paywall personalization */
   persona: string | null;
   mainFocus: string | null;
@@ -29,11 +33,13 @@ const DEFAULT_STATE: OnboardingState = {
   anthropicAuthMethod: 'setup_token',
   anthropicApiKey: '',
   anthropicSetupToken: '',
-  openaiAuthMethod: 'api_key',
+  openaiAuthMethod: 'chatgpt_oauth',
   openaiApiKey: '',
   openaiOAuthTokens: '',
   telegramToken: '',
   discordToken: '',
+  selectedUseCases: [],
+  setupPath: null,
   persona: null,
   mainFocus: null,
 };

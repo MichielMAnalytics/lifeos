@@ -57,6 +57,7 @@ export default defineSchema({
     userId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
+    purpose: v.optional(v.string()), // RPM "why" — the deeper reason this goal matters
     status: v.string(), // "active" | "completed" | "dropped"
     targetDate: v.optional(v.string()),
     quarter: v.optional(v.string()), // "2026-Q1"
@@ -241,6 +242,23 @@ export default defineSchema({
     protein: v.float64(), // grams
     carbs: v.float64(), // grams
     fat: v.float64(), // grams
+    updatedAt: v.float64(),
+  }).index("by_userId", ["userId"]),
+
+  // ── User Profile (onboarding personalization) ──────
+  userProfile: defineTable({
+    userId: v.id("users"),
+    displayName: v.optional(v.string()),
+    role: v.optional(v.string()),
+    topGoals: v.optional(v.array(v.string())),
+    focusAreas: v.optional(v.array(v.string())),
+    communicationTone: v.optional(v.string()),
+    workSchedule: v.optional(v.string()),
+    biggestChallenge: v.optional(v.string()),
+    accountabilityStyle: v.optional(v.string()),
+    selectedUseCases: v.optional(v.array(v.string())),
+    setupPath: v.optional(v.string()),
+    setupCompleted: v.optional(v.boolean()),
     updatedAt: v.float64(),
   }).index("by_userId", ["userId"]),
 
