@@ -207,7 +207,7 @@ function buildOpenClawConfig(
       defaultProfile: "openclaw",
     },
     models: {
-      mode: "replace",
+      mode: "merge",
       providers: {
         anthropic: {
           baseUrl: `${gatewayUrl}/v1/anthropic`,
