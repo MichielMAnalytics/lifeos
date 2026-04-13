@@ -224,7 +224,6 @@ function buildOpenClawConfig(
         },
         openai: {
           baseUrl: `${gatewayUrl}/v1/openai`,
-          apiKey: "gateway-managed",
           api: "openai-responses",
 
           headers: { "X-Pod-Secret": podSecretEnvRef },
@@ -286,14 +285,6 @@ function buildOpenClawConfig(
             { id: "qwen/qwen3-235b-a22b-instruct-2507-maas", name: "Qwen3 235B", contextWindow: 262144, maxTokens: 8192, input: ["text"] },
           ],
         },
-        "openai-audio": {
-          baseUrl: "https://api.openai.com/v1",
-          apiKey: serverEnv.OPENAI_API_KEY ?? "not-configured",
-          api: "openai-completions",
-          models: [
-            { id: "gpt-4o-mini-transcribe", name: "GPT-4o Mini Transcribe", contextWindow: 16000, maxTokens: 16000, input: ["text"] },
-          ],
-        },
       },
     },
     agents: {
@@ -308,7 +299,7 @@ function buildOpenClawConfig(
           echoTranscript: true,
           echoFormat: "🎤 \"{transcript}\"",
           models: [
-            { provider: "openai-audio", model: "gpt-4o-mini-transcribe" },
+            { provider: "openai", model: "gpt-4o-mini-transcribe", baseUrl: "https://api.openai.com/v1" },
           ],
         },
       },
