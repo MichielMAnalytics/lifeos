@@ -104,7 +104,11 @@ function canShowHint(): boolean {
 
 function useActiveHint(): Hint | null {
   const profile = useQuery(api.userProfile.get);
-  const reviews = useQuery(api.reviews.list, {});
+  // Skip reviews query if profile isn't loaded yet to avoid auth race
+  const reviews = useQuery(
+    api.reviews.list,
+    profile !== undefined ? {} : "skip",
+  );
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
