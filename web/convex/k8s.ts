@@ -223,17 +223,8 @@ function buildOpenClawConfig(
           ],
         },
         openai: {
-          baseUrl: `${gatewayUrl}/v1/openai`,
-          api: "openai-responses",
-
           headers: { "X-Pod-Secret": podSecretEnvRef },
           request: { allowPrivateNetwork: true },
-          models: [
-            { id: "gpt-5.4-2026-03-05", name: "GPT 5.4", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
-            { id: "gpt-5.2", name: "GPT 5.2", contextWindow: 1000000, maxTokens: 32000, input: ["text", "image"] },
-            { id: "gpt-5-mini-2025-08-07", name: "GPT-5 Mini", contextWindow: 400000, maxTokens: 16384, input: ["text", "image"] },
-            { id: "gpt-5-nano-2025-08-07", name: "GPT-5 Nano", contextWindow: 128000, maxTokens: 16384, input: ["text", "image"] },
-          ],
         },
         kimi: {
           baseUrl: `${gatewayUrl}/v1/kimi`,
@@ -647,6 +638,7 @@ export async function patchStatefulSet(
         { name: "LIFEOS_API_URL", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_URL", optional: true } } },
         { name: "LIFEOS_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_KEY", optional: true } } },
         { name: "OPENAI_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "OPENAI_API_KEY", optional: true } } },
+        { name: "OPENAI_BASE_URL", value: `http://${serverEnv.AI_GATEWAY_K8S_SERVICE}.lifeos-system.svc.cluster.local/v1/openai` },
       ],
       volumeMounts: [{ name: "data", mountPath: "/mnt/data" }],
       securityContext: { runAsUser: 1000, runAsGroup: 1000 },
@@ -668,6 +660,7 @@ export async function patchStatefulSet(
         { name: "LIFEOS_API_URL", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_URL" } } },
         { name: "LIFEOS_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_KEY" } } },
         { name: "OPENAI_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "OPENAI_API_KEY", optional: true } } },
+        { name: "OPENAI_BASE_URL", value: `http://${serverEnv.AI_GATEWAY_K8S_SERVICE}.lifeos-system.svc.cluster.local/v1/openai` },
       ] : []),
     ],
     startupProbe: {
