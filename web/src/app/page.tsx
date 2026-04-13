@@ -18,7 +18,7 @@ function StoreUrlPrefs() {
 
 function GoToApp() {
   const router = useRouter();
-  useEffect(() => { router.replace('/life-coach'); }, [router]);
+  useEffect(() => { router.replace('/today'); }, [router]);
   return null;
 }
 

@@ -403,7 +403,7 @@ function HeroSection() {
                   <span className="text-[10px] text-text-muted font-heading">Dashboard + optional AI agent</span>
                 </div>
                 <a
-                  href="https://lifeos.zone"
+                  href="/login"
                   className="text-xs text-text-muted hover:text-text transition-colors font-heading"
                 >
                   or log in &rarr;
