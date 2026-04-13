@@ -298,6 +298,7 @@ function buildOpenClawConfig(
           enabled: true,
           echoTranscript: true,
           echoFormat: "🎤 \"{transcript}\"",
+          scope: { default: "allow" },
           models: [
             { provider: "openai", model: "gpt-4o-mini-transcribe", baseUrl: "https://api.openai.com/v1" },
           ],
