@@ -634,7 +634,6 @@ export async function patchStatefulSet(
         { name: "LIFEOS_API_URL", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_URL", optional: true } } },
         { name: "LIFEOS_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_KEY", optional: true } } },
         { name: "OPENAI_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "OPENAI_API_KEY", optional: true } } },
-        { name: "OPENAI_BASE_URL", value: `http://${serverEnv.AI_GATEWAY_K8S_SERVICE}.lifeos-system.svc.cluster.local/v1/openai` },
       ],
       volumeMounts: [{ name: "data", mountPath: "/mnt/data" }],
       securityContext: { runAsUser: 1000, runAsGroup: 1000 },
@@ -656,7 +655,6 @@ export async function patchStatefulSet(
         { name: "LIFEOS_API_URL", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_URL" } } },
         { name: "LIFEOS_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "LIFEOS_API_KEY" } } },
         { name: "OPENAI_API_KEY", valueFrom: { secretKeyRef: { name: initSecretName, key: "OPENAI_API_KEY", optional: true } } },
-        { name: "OPENAI_BASE_URL", value: `http://${serverEnv.AI_GATEWAY_K8S_SERVICE}.lifeos-system.svc.cluster.local/v1/openai` },
       ] : []),
     ],
     startupProbe: {
