@@ -17,12 +17,12 @@ WORKDIR /app
 # including extensions/*/package.json — are present before pnpm install,
 # so pnpm properly resolves and links extension dependencies
 # (e.g. google-auth-library for googlechat).
-ARG OPENCLAW_VERSION=v2026.4.8
+ARG OPENCLAW_VERSION=v2026.4.7
 RUN git clone --depth 1 --branch ${OPENCLAW_VERSION} https://github.com/openclaw/openclaw.git .
 
 RUN pnpm install --frozen-lockfile
 
-RUN OPENCLAW_A2UI_SKIP_MISSING=1 pnpm build
+RUN NODE_OPTIONS="--max-old-space-size=6144" OPENCLAW_A2UI_SKIP_MISSING=1 pnpm build
 ENV OPENCLAW_PREFER_PNPM=1
 # Skip UI build — LifeOS serves its own dashboard, OpenClaw runs headless
 
