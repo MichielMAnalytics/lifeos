@@ -319,6 +319,7 @@ function buildOpenClawConfig(
         googlechat: { enabled: true },
         openai: { enabled: true },
       },
+      allow: ["openai"],
     },
   };
 }
