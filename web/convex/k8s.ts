@@ -321,6 +321,7 @@ function buildOpenClawConfig(
         ...(hasTelegram ? { telegram: { enabled: true } } : {}),
         ...(hasDiscord ? { discord: { enabled: true } } : {}),
         googlechat: { enabled: true },
+        openai: { enabled: true },
       },
     },
   };
