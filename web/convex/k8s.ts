@@ -517,7 +517,8 @@ fs.writeFileSync(cf, JSON.stringify(c));
                 httpGet: { path: "/", port: 18789 },
                 initialDelaySeconds: 10,
                 periodSeconds: 10,
-                failureThreshold: 60, // 10 + 60×10 = 610s max startup
+                timeoutSeconds: 5,
+                failureThreshold: 60,
               },
               readinessProbe: {
                 httpGet: { path: "/", port: 18789 },
