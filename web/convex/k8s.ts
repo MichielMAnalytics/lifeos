@@ -163,10 +163,10 @@ export const MODEL_REF_MAP: Record<string, string> = {
   claude: "anthropic/claude-opus-4-6",
   "claude-sonnet": "anthropic/claude-sonnet-4-6",
   "claude-haiku": "anthropic/claude-haiku-4-5-20251001",
-  gpt: "openai-gw/gpt-5.4",
-  "gpt-5.2": "openai-gw/gpt-5.2",
-  "gpt-mini": "openai-gw/gpt-5-mini-2025-08-07",
-  "gpt-nano": "openai-gw/gpt-5-nano-2025-08-07",
+  gpt: "openai/gpt-5.4-2026-03-05",
+  "gpt-5.2": "openai/gpt-5.2",
+  "gpt-mini": "openai/gpt-5-mini-2025-08-07",
+  "gpt-nano": "openai/gpt-5-nano-2025-08-07",
   "kimi-k2": "kimi/moonshotai/kimi-k2-thinking-maas",
   "kimi-k2.5": "kimi/moonshotai/kimi-k2.5",
   "kimi-k2-thinking-turbo": "kimi/moonshotai/kimi-k2-thinking-turbo",
@@ -213,23 +213,20 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/anthropic`,
           apiKey: "gateway-managed",
           api: "anthropic-messages",
-
           headers: { "X-Pod-Secret": podSecretEnvRef },
-          request: { allowPrivateNetwork: true },
           models: [
             { id: "claude-opus-4-6", name: "Claude Opus 4.6", contextWindow: 1000000, maxTokens: 32000, input: ["text", "image"] },
             { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", contextWindow: 200000, maxTokens: 16000, input: ["text", "image"] },
             { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", contextWindow: 200000, maxTokens: 8192, input: ["text", "image"] },
           ],
         },
-        "openai-gw": {
+        openai: {
           baseUrl: `${gatewayUrl}/v1/openai`,
           apiKey: "gateway-managed",
           api: "openai-responses",
           headers: { "X-Pod-Secret": podSecretEnvRef },
-          request: { allowPrivateNetwork: true },
           models: [
-            { id: "gpt-5.4", name: "GPT 5.4", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
+            { id: "gpt-5.4-2026-03-05", name: "GPT 5.4", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
             { id: "gpt-5.2", name: "GPT 5.2", contextWindow: 1000000, maxTokens: 32000, input: ["text", "image"] },
             { id: "gpt-5-mini-2025-08-07", name: "GPT-5 Mini", contextWindow: 400000, maxTokens: 16384, input: ["text", "image"] },
             { id: "gpt-5-nano-2025-08-07", name: "GPT-5 Nano", contextWindow: 128000, maxTokens: 16384, input: ["text", "image"] },
@@ -241,7 +238,7 @@ function buildOpenClawConfig(
           api: "openai-completions",
 
           headers: { "X-Pod-Secret": podSecretEnvRef },
-          request: { allowPrivateNetwork: true },
+
           models: [
             { id: "moonshotai/kimi-k2-thinking-maas", name: "Kimi K2 Thinking", reasoning: true, contextWindow: 262144, maxTokens: 65536, compat: { supportsDeveloperRole: false } },
             { id: "moonshotai/kimi-k2.5", name: "Kimi K2.5", reasoning: false, contextWindow: 262144, maxTokens: 8192, input: ["text", "image"], compat: { supportsDeveloperRole: false } },
@@ -255,7 +252,7 @@ function buildOpenClawConfig(
           api: "openai-completions",
 
           headers: { "X-Pod-Secret": podSecretEnvRef },
-          request: { allowPrivateNetwork: true },
+
           models: [
             { id: "google/gemini-3.1-pro-preview", name: "Gemini 3.1 Pro", reasoning: false, contextWindow: 1000000, maxTokens: 65536, input: ["text", "image"] },
             { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash", reasoning: false, contextWindow: 1000000, maxTokens: 65536, input: ["text", "image"] },
@@ -267,7 +264,7 @@ function buildOpenClawConfig(
           api: "openai-completions",
 
           headers: { "X-Pod-Secret": podSecretEnvRef },
-          request: { allowPrivateNetwork: true },
+
           models: [
             { id: "MiniMax-M2.1", name: "MiniMax M2.1", contextWindow: 200000, maxTokens: 8192, input: ["text"] },
             { id: "MiniMax-M2.5", name: "MiniMax M2.5", reasoning: true, contextWindow: 200000, maxTokens: 8192, input: ["text"] },
@@ -279,7 +276,7 @@ function buildOpenClawConfig(
           api: "openai-completions",
 
           headers: { "X-Pod-Secret": podSecretEnvRef },
-          request: { allowPrivateNetwork: true },
+
           models: [
             { id: "qwen/qwen3-coder-480b-a35b-instruct-maas", name: "Qwen3 Coder 480B", contextWindow: 262144, maxTokens: 65536, input: ["text"] },
             { id: "qwen/qwen3-235b-a22b-instruct-2507-maas", name: "Qwen3 235B", contextWindow: 262144, maxTokens: 8192, input: ["text"] },
@@ -298,7 +295,6 @@ function buildOpenClawConfig(
           enabled: true,
           echoTranscript: true,
           echoFormat: "🎤 \"{transcript}\"",
-          scope: { default: "allow" },
           models: [
             { provider: "openai", model: "gpt-4o-mini-transcribe" },
           ],
@@ -321,7 +317,6 @@ function buildOpenClawConfig(
         ...(hasTelegram ? { telegram: { enabled: true } } : {}),
         ...(hasDiscord ? { discord: { enabled: true } } : {}),
         googlechat: { enabled: true },
-        openai: { enabled: true },
       },
     },
   };
@@ -517,8 +512,7 @@ fs.writeFileSync(cf, JSON.stringify(c));
                 httpGet: { path: "/", port: 18789 },
                 initialDelaySeconds: 10,
                 periodSeconds: 10,
-                timeoutSeconds: 5,
-                failureThreshold: 60,
+                failureThreshold: 60, // 10 + 60×10 = 610s max startup
               },
               readinessProbe: {
                 httpGet: { path: "/", port: 18789 },
