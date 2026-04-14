@@ -17,7 +17,7 @@ WORKDIR /app
 # including extensions/*/package.json — are present before pnpm install,
 # so pnpm properly resolves and links extension dependencies
 # (e.g. google-auth-library for googlechat).
-ARG OPENCLAW_VERSION=v2026.4.5
+ARG OPENCLAW_VERSION=v2026.4.8
 RUN git clone --depth 1 --branch ${OPENCLAW_VERSION} https://github.com/openclaw/openclaw.git .
 
 RUN pnpm install --frozen-lockfile
