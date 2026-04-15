@@ -430,7 +430,7 @@ export async function createStatefulSet(opts: {
                 "sh", "-c",
                 (() => {
                   // Use __POD_SECRET__ placeholder, replaced at runtime via sed
-                  // Use the in-cluster gateway URL (not the external gatewayUrl which is for Convex→gateway calls)
+                  // Use in-cluster gateway URL for speed/stability; SSRF bypass via gateway.security config
                   const inClusterGatewayUrl = `http://${serverEnv.AI_GATEWAY_K8S_SERVICE}.lifeos-system.svc.cluster.local`;
                   const configTemplate = JSON.stringify(buildOpenClawConfig(inClusterGatewayUrl, "__POD_SECRET__", selectedModel, enabledChannels));
                   // Merge platform config into existing openclaw.json to preserve user channel settings.
@@ -455,6 +455,8 @@ Object.keys(pgw).forEach(k => {
   }
 });
 c.gateway = gw;
+// Clean up stale keys that OpenClaw rejects
+delete c.gateway.security; delete c.security;
 // Always force allowedOrigins (critical for dashboard access)
 if (!c.gateway.controlUi) c.gateway.controlUi = {};
 c.gateway.controlUi.allowedOrigins = (p.gateway && p.gateway.controlUi && p.gateway.controlUi.allowedOrigins) || ['http://localhost:4101','https://lifeos.zone','https://www.lifeos.zone','https://app.lifeos.zone'];
@@ -473,7 +475,7 @@ fs.writeFileSync(cf, JSON.stringify(c));
                     `find ~/.openclaw -name '*.lock' -delete 2>/dev/null || true`,
                     `mkdir -p ~/.openclaw/devices`,
                     `rm -f ~/.openclaw/identity/device-auth.json`,
-                    `echo '${configTemplate}' | sed "s/__POD_SECRET__/$POD_SECRET/g; s/__GATEWAY_TOKEN__/$OPENCLAW_GATEWAY_TOKEN/g" > ~/.openclaw/lifeos-platform.json`,
+                    `echo '${configTemplate}' | sed "s/__POD_SECRET__/$POD_SECRET/g; s/__GATEWAY_TOKEN__/$OPENCLAW_GATEWAY_TOKEN/g; s/__OPENAI_API_KEY__/$OPENAI_API_KEY/g" > ~/.openclaw/lifeos-platform.json`,
                     mergeScript,
                     `test -f ~/.openclaw/devices/pending.json || echo '${JSON.stringify({ silent: true })}' > ~/.openclaw/devices/pending.json`,
                   ].join(" && ")
@@ -512,15 +514,18 @@ fs.writeFileSync(cf, JSON.stringify(c));
                 httpGet: { path: "/", port: 18789 },
                 initialDelaySeconds: 10,
                 periodSeconds: 10,
+                timeoutSeconds: 5,
                 failureThreshold: 60, // 10 + 60×10 = 610s max startup
               },
               readinessProbe: {
                 httpGet: { path: "/", port: 18789 },
                 periodSeconds: 5,
+                timeoutSeconds: 3,
               },
               livenessProbe: {
                 httpGet: { path: "/", port: 18789 },
                 periodSeconds: 20,
+                timeoutSeconds: 5,
                 failureThreshold: 3,
               },
             },
@@ -670,21 +675,25 @@ export async function patchStatefulSet(
       httpGet: { path: "/", port: 18789 },
       initialDelaySeconds: 10,
       periodSeconds: 10,
+      timeoutSeconds: 5,
       failureThreshold: 60,
     },
     readinessProbe: {
       httpGet: { path: "/", port: 18789 },
       periodSeconds: 5,
+      timeoutSeconds: 3,
     },
     livenessProbe: {
       httpGet: { path: "/", port: 18789 },
       periodSeconds: 20,
+      timeoutSeconds: 5,
       failureThreshold: 3,
     },
   };
 
   // If model provided, update the container command with new OpenClaw config + PATH export
   if (selectedModel) {
+    // Use in-cluster gateway URL for speed/stability; SSRF bypass via gateway.security config
     const inClusterGatewayUrl = `http://${serverEnv.AI_GATEWAY_K8S_SERVICE}.lifeos-system.svc.cluster.local`;
     const configTemplate = JSON.stringify(buildOpenClawConfig(inClusterGatewayUrl, "__POD_SECRET__", selectedModel, enabledChannels));
     const mergeScript = `node -e "
@@ -722,7 +731,7 @@ fs.writeFileSync(cf, JSON.stringify(c));
       `find ~/.openclaw -name '*.lock' -delete 2>/dev/null || true`,
       `mkdir -p ~/.openclaw/devices`,
       `rm -f ~/.openclaw/identity/device-auth.json`,
-      `echo '${configTemplate}' | sed "s/__POD_SECRET__/$POD_SECRET/g; s/__GATEWAY_TOKEN__/$OPENCLAW_GATEWAY_TOKEN/g" > ~/.openclaw/lifeos-platform.json`,
+      `echo '${configTemplate}' | sed "s/__POD_SECRET__/$POD_SECRET/g; s/__GATEWAY_TOKEN__/$OPENCLAW_GATEWAY_TOKEN/g; s/__OPENAI_API_KEY__/$OPENAI_API_KEY/g" > ~/.openclaw/lifeos-platform.json`,
       mergeScript,
       `test -f ~/.openclaw/devices/pending.json || echo '${JSON.stringify({ silent: true })}' > ~/.openclaw/devices/pending.json`,
     ].join(" && ")

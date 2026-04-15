@@ -5,7 +5,7 @@
 <h3 align="center">Personal Life Operating System</h3>
 
 <p align="center">
-  Manage tasks, goals, journals, day plans, weekly plans, ideas, thoughts, wins, resources, reminders, and reviews — all from your terminal.
+  Manage tasks, goals, journals, day plans, weekly plans, ideas, thoughts, wins, resources, reminders, reviews, and health — all from your terminal.
 </p>
 
 <p align="center">
@@ -200,6 +200,20 @@ lifeos reminder snooze <id> [options]      Snooze a reminder
   -m, --minutes <min>                        Duration in minutes (default: 60)
 
 lifeos reminder done <id>                  Mark reminder as done
+```
+
+### Health
+
+```
+lifeos health summary [options]            Show weekly health summary
+  -w, --week <date>                          Week start (YYYY-MM-DD Monday, default: this week)
+
+lifeos health macros                       Show current macro goals
+lifeos health set-macros [options]         Set macro goals
+  --calories <kcal>                          Daily calorie target
+  --protein <grams>                          Daily protein target
+  --carbs <grams>                            Daily carbs target
+  --fat <grams>                              Daily fat target
 ```
 
 ### Search

@@ -5,7 +5,7 @@ import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { serverEnv } from "./deploymentEnv";
 
-const MAX_ATTEMPTS = 60; // 60 * 5s = 5 minutes
+const MAX_ATTEMPTS = 120; // 120 * 5s = 10 minutes (matches K8s startup probe)
 const RETRY_DELAY_MS = 5000;
 
 export const checkDeploymentHealth = internalAction({
@@ -59,7 +59,7 @@ export const checkDeploymentHealth = internalAction({
         deploymentId,
         status: "error",
         errorMessage:
-          "Instance failed to become healthy within 5 minutes. Please try restarting.",
+          "Instance failed to become healthy within 10 minutes. Please try restarting.",
       });
       return null;
     }

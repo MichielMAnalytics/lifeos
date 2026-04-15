@@ -158,7 +158,7 @@ export class GatewayClient {
           this.pending.delete(id);
           reject(new Error(`Request ${method} timed out`));
         }
-      }, 30000);
+      }, 90000);
     });
   }
 

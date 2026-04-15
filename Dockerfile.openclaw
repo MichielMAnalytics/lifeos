@@ -17,7 +17,7 @@ WORKDIR /app
 # including extensions/*/package.json — are present before pnpm install,
 # so pnpm properly resolves and links extension dependencies
 # (e.g. google-auth-library for googlechat).
-ARG OPENCLAW_VERSION=v2026.4.7
+ARG OPENCLAW_VERSION=v2026.4.5
 RUN git clone --depth 1 --branch ${OPENCLAW_VERSION} https://github.com/openclaw/openclaw.git .
 
 RUN pnpm install --frozen-lockfile
@@ -107,7 +107,7 @@ RUN printf '%s\n' '#!/usr/bin/env bash' 'exec /app/node_modules/.bin/pi "$@"' > 
 # only caches core gateway code (~12MB) and misses plugin modules (~7MB) that
 # then need JIT compilation at runtime, adding 2+ minutes to startup.
 RUN mkdir -p /tmp/warmup-home/.openclaw \
-    && echo '{"gateway":{"auth":{"mode":"token","token":"warmup-token"},"controlUi":{"dangerouslyDisableDeviceAuth":true,"dangerouslyAllowHostHeaderOriginFallback":true}},"browser":{"enabled":true,"headless":true,"noSandbox":true},"channels":{"telegram":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]},"discord":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]},"whatsapp":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]}},"plugins":{"entries":{"whatsapp":{"enabled":true},"telegram":{"enabled":true},"discord":{"enabled":true},"googlechat":{"enabled":true}}}}' \
+    && echo '{"gateway":{"auth":{"mode":"token","token":"warmup-token"},"controlUi":{"dangerouslyDisableDeviceAuth":true}},"browser":{"enabled":true,"headless":true,"noSandbox":true},"channels":{"telegram":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]},"whatsapp":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]}},"plugins":{"entries":{"whatsapp":{"enabled":true},"telegram":{"enabled":true}}}}' \
        > /tmp/warmup-home/.openclaw/openclaw.json
 RUN HOME=/tmp/warmup-home node --disable-warning=ExperimentalWarning openclaw.mjs gateway --allow-unconfigured &\
     pid=$!; \
