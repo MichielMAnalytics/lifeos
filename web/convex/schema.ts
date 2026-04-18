@@ -49,6 +49,20 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     status: v.string(), // "active" | "completed" | "archived"
+    // Dan Sullivan's Impact Filter — optional one-pager that forces clarity
+    // before delegation. successCriteria intentionally has no length cap in
+    // the validator; the wizard enforces "exactly 8" at the UI layer.
+    impactFilter: v.optional(v.object({
+      purpose: v.string(),
+      importance: v.string(),
+      idealOutcome: v.string(),
+      worstResult: v.string(),
+      bestResult: v.string(),
+      successCriteria: v.array(v.string()),
+      who: v.optional(v.string()),
+      completedAt: v.float64(),
+      updatedAt: v.float64(),
+    })),
   }).index("by_userId", ["userId"])
     .index("by_userId_status", ["userId", "status"]),
 

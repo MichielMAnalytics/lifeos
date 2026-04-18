@@ -42,7 +42,8 @@ import { WeeklyPlan } from './sections/weekly-plan';
 import { ReviewsTimeline } from './sections/reviews-timeline';
 import { ReviewsSchedule } from './sections/reviews-schedule';
 import { WeeklyReviewForm } from './sections/weekly-review-form';
-import { QuarterlyReviewForm } from './sections/quarterly-review-form';
+import { MonthlyReviewForm } from './sections/monthly-review-form';
+import { MovingFutureForm } from './sections/moving-future-form';
 import { ThoughtsList } from './sections/thoughts-list';
 import { ResourcesGrid } from './sections/resources-grid';
 import { CalendarWeekly } from './sections/calendar-weekly';
@@ -110,7 +111,11 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'reviews-timeline': ReviewsTimeline,
   'reviews-schedule': ReviewsSchedule,
   'weekly-review-form': WeeklyReviewForm,
-  'quarterly-review-form': QuarterlyReviewForm,
+  'monthly-review-form': MonthlyReviewForm,
+  'moving-future-form': MovingFutureForm,
+  // Backwards compat: any preset still pointing at the old quarterly form ID
+  // gets the new Moving Future flow.
+  'quarterly-review-form': MovingFutureForm,
 
   // Resources page sections
   'resources-database': ResourcesGrid,

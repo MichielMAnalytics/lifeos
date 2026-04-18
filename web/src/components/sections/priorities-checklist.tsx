@@ -204,18 +204,25 @@ function formatDueDate(dueDate?: string): string | null {
 function TaskPickerDropdown({
   tasks,
   onSelect,
+  onCreate,
   onClose,
   anchorRef,
+  initialQuery,
+  currentTaskId,
 }: {
   tasks: TaskItem[];
   onSelect: (taskId: Id<'tasks'>) => void;
+  onCreate: (title: string) => Promise<Id<'tasks'>>;
   onClose: () => void;
   anchorRef: React.RefObject<HTMLDivElement | null>;
+  initialQuery?: string;
+  currentTaskId?: Id<'tasks'>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery ?? '');
+  const [creating, setCreating] = useState(false);
   // Default expanded set: today + overdue. Everything else collapsed.
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['today', 'overdue']));
 
@@ -230,10 +237,16 @@ function TaskPickerDropdown({
     });
   }, [anchorRef]);
 
-  // Auto-focus search input
+  // Auto-focus search input. When opened over an existing task, the title is
+  // pre-filled and select-all so the user can replace it just by typing.
   useEffect(() => {
-    requestAnimationFrame(() => inputRef.current?.focus());
-  }, []);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      if (initialQuery && initialQuery.length > 0) {
+        inputRef.current?.select();
+      }
+    });
+  }, [initialQuery]);
 
   // Reposition on scroll/resize
   useEffect(() => {
@@ -279,6 +292,25 @@ function TaskPickerDropdown({
   const isSearching = query.trim().length > 0;
   const totalFiltered = filteredTasks.length;
 
+  // Check if the query exactly matches an existing task title (case-insensitive)
+  const hasExactMatch = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true; // Don't show create when empty
+    return tasks.some((t) => t.title.toLowerCase() === q);
+  }, [tasks, query]);
+
+  const handleCreateAndSelect = useCallback(async () => {
+    const trimmed = query.trim();
+    if (!trimmed || creating) return;
+    setCreating(true);
+    try {
+      const newId = await onCreate(trimmed);
+      onSelect(newId);
+    } finally {
+      setCreating(false);
+    }
+  }, [query, creating, onCreate, onSelect]);
+
   function toggleGroup(key: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -313,7 +345,27 @@ function TaskPickerDropdown({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search tasks…"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              // User kept the current task's title — just close, no change.
+              if (
+                currentTaskId &&
+                hasExactMatch &&
+                totalFiltered === 1 &&
+                filteredTasks[0]._id === currentTaskId
+              ) {
+                onClose();
+                return;
+              }
+              if (totalFiltered === 1) {
+                onSelect(filteredTasks[0]._id);
+              } else if (!hasExactMatch && query.trim()) {
+                void handleCreateAndSelect();
+              }
+            }
+          }}
+          placeholder="Search or create a task…"
           className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted focus:outline-none"
         />
         {query && (
@@ -329,14 +381,13 @@ function TaskPickerDropdown({
 
       {/* Groups list */}
       <div className="flex-1 overflow-y-auto py-1">
-        {totalFiltered === 0 ? (
+        {totalFiltered === 0 && !isSearching ? (
           <div className="p-4 text-center">
-            <p className="text-xs text-text-muted">
-              {isSearching ? `No tasks match "${query}"` : 'No tasks available'}
-            </p>
+            <p className="text-xs text-text-muted">No tasks available</p>
           </div>
         ) : (
-          groups.map((group) => {
+          <>
+          {groups.map((group) => {
             // When searching, force-expand all groups
             const isOpen = isSearching || expanded.has(group.key);
             return (
@@ -387,7 +438,27 @@ function TaskPickerDropdown({
                 })}
               </div>
             );
-          })
+          })}
+          {/* Create new task option */}
+          {isSearching && !hasExactMatch && (
+            <button
+              type="button"
+              onClick={() => void handleCreateAndSelect()}
+              disabled={creating}
+              className="w-full text-left px-3 py-2.5 text-sm hover:bg-surface-hover transition-colors flex items-center gap-2 border-t border-border-subtle"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent shrink-0">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="16" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+              </svg>
+              <span className="text-accent font-medium">
+                {creating ? 'Creating...' : `Create "${query.trim()}"`}
+              </span>
+              <span className="ml-auto text-[10px] text-text-muted">↵</span>
+            </button>
+          )}
+          </>
         )}
       </div>
     </div>
@@ -407,6 +478,8 @@ function PriorityRow({
   allTasks,
   assignedIds,
   onAssign,
+  onCreate,
+  onClear,
 }: {
   config: PriorityConfig;
   taskId: Id<'tasks'> | undefined;
@@ -415,6 +488,8 @@ function PriorityRow({
   allTasks: TaskItem[] | undefined;
   assignedIds: Set<string>;
   onAssign: (taskId: Id<'tasks'>) => void;
+  onCreate: (title: string) => Promise<Id<'tasks'>>;
+  onClear: () => void;
 }) {
   const task = useQuery(api.tasks.get, taskId ? { id: taskId } : 'skip');
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -423,8 +498,11 @@ function PriorityRow({
   const title = task?.title ?? (taskId ? 'Loading...' : 'Not assigned');
   const isLoading = taskId !== undefined && task === undefined;
 
-  // Filter out tasks already assigned to other priority slots
-  const availableTasks = allTasks?.filter((t) => !assignedIds.has(t._id)) ?? [];
+  // Filter out tasks already assigned to OTHER priority slots, but keep the
+  // current row's own task in the list so it stays selectable when re-opening.
+  const availableTasks = allTasks?.filter(
+    (t) => !assignedIds.has(t._id) || t._id === taskId,
+  ) ?? [];
 
   const rowRef = useRef<HTMLDivElement>(null);
 
@@ -545,19 +623,35 @@ function PriorityRow({
         </button>
       )}
 
-      {/* Change indicator */}
+      {/* Change + Clear indicators (only when assigned and not done) */}
       {taskId && !done && (
-        <button
-          onClick={() => setPickerOpen((v) => !v)}
-          className="opacity-0 group-hover:opacity-100 flex h-5 w-5 items-center justify-center rounded-md text-text-muted hover:text-accent hover:bg-surface-hover transition-all"
-          aria-label={`Change ${config.label} task`}
-          title="Change task"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+          <button
+            onClick={() => setPickerOpen((v) => !v)}
+            className="flex h-5 w-5 items-center justify-center rounded-md text-text-muted hover:text-accent hover:bg-surface-hover transition-colors"
+            aria-label={`Change ${config.label} task`}
+            title="Change task"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear();
+            }}
+            className="flex h-5 w-5 items-center justify-center rounded-md text-text-muted hover:text-danger hover:bg-surface-hover transition-colors"
+            aria-label={`Clear ${config.label} task`}
+            title="Clear task"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
       )}
 
       {/* Done indicator */}
@@ -567,14 +661,21 @@ function PriorityRow({
         </span>
       )}
 
-      {/* Task picker dropdown (portal) */}
+      {/* Task picker dropdown (portal). Pre-fills with the current task title
+          and selects all so the user can replace it just by typing. */}
       {pickerOpen && (
         <TaskPickerDropdown
           tasks={availableTasks}
           anchorRef={rowRef}
+          initialQuery={task?.title}
+          currentTaskId={taskId}
           onSelect={(id) => {
             onAssign(id);
             setPickerOpen(false);
+          }}
+          onCreate={async (title) => {
+            const id = await onCreate(title);
+            return id;
           }}
           onClose={() => setPickerOpen(false)}
         />
@@ -589,6 +690,8 @@ export function PrioritiesChecklist() {
   const { date } = useTodayDate();
   const dayPlan = useQuery(api.dayPlans.getByDate, { date });
   const upsert = useMutation(api.dayPlans.upsert);
+  const clearPriority = useMutation(api.dayPlans.clearPriority);
+  const createTask = useMutation(api.tasks.create);
 
   // Fetch ALL todo tasks for the task picker dropdown
   const allTasks = useQuery(api.tasks.list, { status: 'todo' });
@@ -638,6 +741,15 @@ export function PrioritiesChecklist() {
     void upsert({ date, [taskIdField]: taskId });
   };
 
+  const handleClear = (slot: 'mit' | 'p1' | 'p2') => {
+    void clearPriority({ date, slot });
+  };
+
+  const handleCreate = async (title: string): Promise<Id<'tasks'>> => {
+    const task = await createTask({ title, dueDate: date });
+    return task!._id;
+  };
+
   // Collect IDs already assigned to priority slots
   const assignedIds = new Set(
     [dayPlan?.mitTaskId, dayPlan?.p1TaskId, dayPlan?.p2TaskId].filter(Boolean) as string[],
@@ -669,6 +781,8 @@ export function PrioritiesChecklist() {
             allTasks={allTasks}
             assignedIds={assignedIds}
             onAssign={(taskId) => handleAssign(config.taskIdField, taskId)}
+            onCreate={handleCreate}
+            onClear={() => handleClear(config.key)}
           />
         ))}
       </div>

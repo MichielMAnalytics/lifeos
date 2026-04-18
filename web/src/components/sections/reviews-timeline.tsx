@@ -32,6 +32,14 @@ function extractHighlights(content: Record<string, unknown>): string | null {
 // ── Expanded content view ────────────────────────────
 
 function ReviewContentExpanded({ content }: { content: Record<string, unknown> }) {
+  // Moving Future has a discriminator so we render it as a distinct view
+  // rather than the generic legacy quarterly layout.
+  const isMovingFuture = content.type === 'moving-future';
+
+  if (isMovingFuture) {
+    return <MovingFutureContent content={content} />;
+  }
+
   const highlights = content.highlights;
   const challenges = content.challenges;
   const goalUpdates = content.goalUpdates;
@@ -41,11 +49,18 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
   const whatDidntWork = content.whatDidntWork;
   const nextQuarterGoals = content.nextQuarterGoals;
   const quarterLabel = content.quarterLabel;
+  const monthLabel = content.monthLabel;
+  const nextMonthFocus = content.nextMonthFocus;
   const weeklyReviewCount = content.weeklyReviewCount;
   const completedGoals = content.completedGoals;
 
   return (
     <div className="space-y-5">
+      {typeof monthLabel === 'string' && (
+        <div>
+          <span className="text-xs text-text-muted">{monthLabel}</span>
+        </div>
+      )}
       {/* Quarter label (quarterly reviews) */}
       {typeof quarterLabel === 'string' && (
         <div className="flex items-center gap-2">
@@ -220,6 +235,122 @@ function ReviewContentExpanded({ content }: { content: Record<string, unknown> }
           </ul>
         </div>
       )}
+
+      {/* Next Month Focus (monthly reviews) */}
+      {typeof nextMonthFocus === 'string' && nextMonthFocus.length > 0 && (
+        <div>
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
+            Focus for next month
+          </span>
+          <p className="mt-2 text-sm text-text leading-relaxed whitespace-pre-line">
+            {nextMonthFocus}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Moving Future content view ───────────────────────
+
+function MovingFutureContent({ content }: { content: Record<string, unknown> }) {
+  const morale = content.morale as { proudest?: string; wins?: string[] } | undefined;
+  const momentum = content.momentum as { confidentAbout?: string } | undefined;
+  const motivation = content.motivation as { excitedAbout?: string; leap?: string } | undefined;
+  const priorities = content.priorities as
+    | Array<{ title: string; createdAsGoal?: boolean }>
+    | undefined;
+  const quarterLabel = content.quarterLabel;
+  const nextQuarterLabel = content.nextQuarterLabel;
+  const createdGoalIds = content.createdGoalIds as string[] | undefined;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-baseline gap-3 flex-wrap">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-accent">
+          Moving Future
+        </span>
+        {typeof quarterLabel === 'string' && (
+          <span className="text-xs text-text-muted">
+            Reflecting on {quarterLabel}
+          </span>
+        )}
+        {typeof nextQuarterLabel === 'string' && (
+          <span className="text-xs text-text-muted">→ Setting {nextQuarterLabel}</span>
+        )}
+      </div>
+
+      {morale && (morale.proudest || (morale.wins && morale.wins.length > 0)) && (
+        <div>
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
+            Morale
+          </span>
+          {morale.proudest && (
+            <p className="mt-2 text-sm text-text leading-relaxed whitespace-pre-line">
+              {morale.proudest}
+            </p>
+          )}
+          {morale.wins && morale.wins.length > 0 && (
+            <ul className="mt-3 space-y-1.5">
+              {morale.wins.map((w, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0 text-success">
+                    <polyline points="3 7 6 10 11 4" />
+                  </svg>
+                  <span className="text-text">{w}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {momentum?.confidentAbout && (
+        <div>
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
+            Momentum
+          </span>
+          <p className="mt-2 text-sm text-text leading-relaxed whitespace-pre-line">
+            {momentum.confidentAbout}
+          </p>
+        </div>
+      )}
+
+      {motivation?.excitedAbout && (
+        <div>
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
+            Motivation
+          </span>
+          <p className="mt-2 text-sm text-text leading-relaxed whitespace-pre-line">
+            {motivation.excitedAbout}
+          </p>
+        </div>
+      )}
+
+      {priorities && priorities.length > 0 && (
+        <div>
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
+            {typeof nextQuarterLabel === 'string' ? `${nextQuarterLabel} priorities` : 'Priorities'}
+          </span>
+          <ol className="mt-2 space-y-1.5 list-decimal list-inside">
+            {priorities.map((p, i) => (
+              <li key={i} className="text-sm text-text">
+                {p.title}
+                {p.createdAsGoal && (
+                  <span className="ml-2 text-[10px] font-medium uppercase tracking-wider text-accent/80">
+                    → goal
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+          {createdGoalIds && createdGoalIds.length > 0 && (
+            <p className="mt-2 text-xs text-text-muted">
+              {createdGoalIds.length} goal{createdGoalIds.length !== 1 ? 's' : ''} created
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -310,16 +441,22 @@ export function ReviewsTimeline() {
   );
 
   return (
-    <div className="max-w-none space-y-8">
-      {/* Header */}
-      <h1 className="text-2xl font-bold tracking-tight text-text">
-        Reviews
-      </h1>
+    <div className="max-w-none space-y-4">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
+          Past reviews
+        </h2>
+        {reviews.length > 0 && (
+          <span className="text-xs text-text-muted">
+            {reviews.length} total
+          </span>
+        )}
+      </div>
 
       {reviews.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-base font-medium text-text">No reviews yet</p>
-          <p className="text-sm text-text-muted mt-1">Complete a daily or weekly review to see it here.</p>
+        <div className="flex flex-col items-center justify-center py-12 border border-dashed border-border/60 rounded-xl">
+          <p className="text-sm font-medium text-text">No past reviews yet</p>
+          <p className="text-xs text-text-muted mt-1">Complete a review above to start your history.</p>
         </div>
       ) : (
         <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">

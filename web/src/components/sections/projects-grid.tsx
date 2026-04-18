@@ -230,10 +230,18 @@ export function ProjectsGrid() {
                   )}
 
                   {/* Footer */}
-                  <div className="mt-auto pt-4 border-t border-border">
+                  <div className="mt-auto pt-4 border-t border-border flex items-center justify-between gap-2">
                     <span className="text-xs text-text-muted">
                       {formatDate(createdDate)}
                     </span>
+                    {project.impactFilter && (
+                      <span
+                        title="Impact Filter complete"
+                        className="text-[10px] font-semibold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded-full"
+                      >
+                        Filter
+                      </span>
+                    )}
                   </div>
               </div>
             );

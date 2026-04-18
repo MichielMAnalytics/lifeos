@@ -6,6 +6,7 @@ import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { SidePeek } from '@/components/side-peek';
+import { ImpactFilterWizard, ImpactFilterView } from '@/components/impact-filter-wizard';
 
 type ProjectStatus = 'active' | 'completed' | 'archived';
 
@@ -25,6 +26,7 @@ export function ProjectDetailModal({
   const projectDetail = useQuery(api.projects.get, { id: projectId });
   const updateProject = useMutation(api.projects.update);
   const removeProject = useMutation(api.projects.remove);
+  const clearImpactFilter = useMutation(api.projects.clearImpactFilter);
   const createTask = useMutation(api.tasks.create);
   const completeTask = useMutation(api.tasks.complete);
 
@@ -35,6 +37,7 @@ export function ProjectDetailModal({
   const [editingTitle, setEditingTitle] = useState(false);
   const [addingTask, setAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [impactFilterMode, setImpactFilterMode] = useState<'view' | 'wizard'>('view');
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -299,6 +302,50 @@ export function ProjectDetailModal({
             rows={3}
             className="w-full bg-transparent text-sm text-text placeholder:text-text-muted/70 focus:outline-none resize-none leading-relaxed"
           />
+        </div>
+
+        {/* Impact Filter — wizard takeover OR filled view OR empty CTA */}
+        <div className="mb-8">
+          {impactFilterMode === 'wizard' ? (
+            <ImpactFilterWizard
+              projectId={projectId}
+              initial={projectDetail.impactFilter}
+              onDone={() => setImpactFilterMode('view')}
+              onCancel={() => setImpactFilterMode('view')}
+            />
+          ) : projectDetail.impactFilter ? (
+            <ImpactFilterView
+              project={projectDetail}
+              onEdit={() => setImpactFilterMode('wizard')}
+              onClear={async () => {
+                try {
+                  await clearImpactFilter({ id: projectId });
+                } catch (err) {
+                  console.error('Failed to clear impact filter:', err);
+                }
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setImpactFilterMode('wizard')}
+              className="w-full text-left border border-dashed border-border/60 rounded-xl px-4 py-3 hover:border-accent/40 hover:bg-accent/5 transition-colors group"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted/80 block">
+                    Impact Filter
+                  </span>
+                  <span className="text-sm text-text-muted group-hover:text-text transition-colors">
+                    Run before delegating · 7 questions
+                  </span>
+                </div>
+                <span className="text-xs font-semibold uppercase tracking-wide text-accent group-hover:text-accent-hover transition-colors">
+                  Run →
+                </span>
+              </div>
+            </button>
+          )}
         </div>
 
         {/* Linked Tasks */}

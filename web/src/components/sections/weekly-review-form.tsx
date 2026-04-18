@@ -64,13 +64,28 @@ function GoalHealthBadge({ goalId }: { goalId: Id<"goals"> }) {
 // ── Props ────────────────────────────────────────────
 
 interface WeeklyReviewFormProps {
+  /** Reflect on this specific week (Monday). Defaults to the current week. */
+  weekStart?: Date;
+  weekEnd?: Date;
   onSaved?: () => void;
+}
+
+function weekFromMonday(monday: Date): { start: Date; end: Date } {
+  const start = new Date(monday);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start, end };
 }
 
 // ── Main component ───────────────────────────────────
 
-export function WeeklyReviewForm({ onSaved }: WeeklyReviewFormProps = {}) {
-  const { start, end } = useMemo(() => getCurrentWeekRange(), []);
+export function WeeklyReviewForm({ weekStart, weekEnd, onSaved }: WeeklyReviewFormProps = {}) {
+  const { start, end } = useMemo(() => {
+    if (weekStart) return weekFromMonday(weekStart);
+    return getCurrentWeekRange();
+  }, [weekStart]);
+  void weekEnd;
   const weekStartStr = toDateStr(start);
   const weekEndStr = toDateStr(end);
 

@@ -137,6 +137,53 @@ export const upsert = mutation({
   },
 });
 
+// ── clearPriority ────────────────────────────────────
+// Explicitly clears a priority slot (MIT/P1/P2). We can't express "set to
+// undefined" through the upsert path because that path treats undefined as
+// "leave alone," so this is the dedicated escape hatch.
+
+export const clearPriority = mutation({
+  args: {
+    date: v.string(),
+    slot: v.union(v.literal("mit"), v.literal("p1"), v.literal("p2")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existing = await ctx.db
+      .query("dayPlans")
+      .withIndex("by_userId_planDate", (q) =>
+        q.eq("userId", userId).eq("planDate", args.date),
+      )
+      .unique();
+
+    if (!existing) return null;
+
+    const taskIdField = `${args.slot}TaskId` as const;
+    const doneField = `${args.slot}Done` as const;
+
+    const updates: Record<string, unknown> = {
+      [taskIdField]: undefined,
+      [doneField]: false,
+    };
+
+    await ctx.db.patch(existing._id, updates);
+    const updated = await ctx.db.get(existing._id);
+
+    await ctx.db.insert("mutationLog", {
+      userId,
+      action: "update",
+      tableName: "dayPlans",
+      recordId: existing._id,
+      beforeData: existing,
+      afterData: updated,
+    });
+
+    return updated;
+  },
+});
+
 // ── patch ────────────────────────────────────────────
 
 export const patch = mutation({
