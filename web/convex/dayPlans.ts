@@ -138,9 +138,10 @@ export const upsert = mutation({
 });
 
 // ── clearPriority ────────────────────────────────────
-// Explicitly clears a priority slot (MIT/P1/P2). We can't express "set to
-// undefined" through the upsert path because that path treats undefined as
-// "leave alone," so this is the dedicated escape hatch.
+// Explicitly clears a priority slot (MIT/P1/P2). Uses `replace` because
+// `patch` with `{ field: undefined }` doesn't reliably remove an optional
+// field — undefined values get dropped during arg validation, so the
+// field is left untouched. Replacing with the field omitted is unambiguous.
 
 export const clearPriority = mutation({
   args: {
@@ -163,12 +164,13 @@ export const clearPriority = mutation({
     const taskIdField = `${args.slot}TaskId` as const;
     const doneField = `${args.slot}Done` as const;
 
-    const updates: Record<string, unknown> = {
-      [taskIdField]: undefined,
-      [doneField]: false,
-    };
+    // Strip system fields, drop the cleared id, force the done flag false.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _id, _creationTime, ...rest } = existing;
+    const next = { ...rest, [doneField]: false } as typeof rest;
+    delete (next as Record<string, unknown>)[taskIdField];
 
-    await ctx.db.patch(existing._id, updates);
+    await ctx.db.replace(existing._id, next);
     const updated = await ctx.db.get(existing._id);
 
     await ctx.db.insert("mutationLog", {

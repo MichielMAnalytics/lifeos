@@ -212,6 +212,7 @@ export function MovingFutureForm({
     );
   }
 
+  const STAGE_NAMES = ['Morale', 'Momentum', 'Motivation', 'Save'] as const;
   return (
     <div className="border border-border rounded-xl">
       <div className="px-6 py-4 border-b border-border">
@@ -222,11 +223,41 @@ export function MovingFutureForm({
               Reflect on the past 90 days, then set the next.
             </p>
           </div>
-          <span className="text-[10px] font-semibold text-text-muted/80 tabular-nums uppercase tracking-wider">
-            Step {step} of 4
-          </span>
+          <div className="text-right">
+            <div className="text-[10px] font-semibold text-text-muted/80 tabular-nums uppercase tracking-wider">
+              Step {step} of 4
+            </div>
+            <div className="text-sm font-semibold text-accent mt-0.5">
+              {STAGE_NAMES[step - 1]}
+            </div>
+          </div>
         </div>
         <StepIndicator current={step} total={4} />
+        {/* Breadcrumb of all stages */}
+        <ol className="mt-3 flex items-center gap-1.5 text-[10px] uppercase tracking-wider">
+          {STAGE_NAMES.map((name, i) => {
+            const stepNum = i + 1;
+            const done = stepNum < step;
+            const current = stepNum === step;
+            return (
+              <li key={name} className="flex items-center gap-1.5">
+                <span
+                  className={cn(
+                    'font-semibold',
+                    current && 'text-accent',
+                    done && 'text-success/80',
+                    !current && !done && 'text-text-muted/60',
+                  )}
+                >
+                  {name}
+                </span>
+                {i < STAGE_NAMES.length - 1 && (
+                  <span className="text-text-muted/40">›</span>
+                )}
+              </li>
+            );
+          })}
+        </ol>
       </div>
 
       <div className="p-6">

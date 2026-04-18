@@ -219,6 +219,9 @@ export const setImpactFilter = mutation({
 });
 
 // ── clearImpactFilter ────────────────────────────────
+// `replace` instead of `patch` for the same reason as dayPlans.clearPriority:
+// patch with explicit undefined doesn't reliably drop optional fields once
+// the value is serialized.
 
 export const clearImpactFilter = mutation({
   args: { id: v.id("projects") },
@@ -231,7 +234,9 @@ export const clearImpactFilter = mutation({
       throw new Error("Project not found");
     }
 
-    await ctx.db.patch(args.id, { impactFilter: undefined });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _id, _creationTime, impactFilter: _f, ...rest } = existing;
+    await ctx.db.replace(args.id, rest);
     const updated = await ctx.db.get(args.id);
 
     await ctx.db.insert("mutationLog", {

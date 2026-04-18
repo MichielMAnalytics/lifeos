@@ -326,19 +326,33 @@ export function ReviewsSchedule() {
           )}
 
           {otherPending.length > 0 && (
-            <div className="px-6 pb-5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted/80 block mb-2">
-                Coming up
-              </span>
-              <ul className="divide-y divide-border/60 border border-border rounded-lg overflow-hidden">
-                {otherPending.map((p) => (
-                  <PendingRow
-                    key={`${p.type}-${p.periodStart}`}
-                    period={p}
-                    onStart={() => startForm(p)}
-                  />
-                ))}
-              </ul>
+            <div className="px-6 pb-5 space-y-4">
+              {(['weekly', 'monthly', 'quarterly'] as const).map((groupType) => {
+                const groupItems = otherPending.filter((p) => p.type === groupType);
+                if (groupItems.length === 0) return null;
+                const heading =
+                  groupType === 'weekly'
+                    ? 'Weekly'
+                    : groupType === 'monthly'
+                      ? 'Monthly'
+                      : 'Quarterly · Moving Future';
+                return (
+                  <div key={groupType}>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted/80 block mb-2">
+                      {heading}
+                    </span>
+                    <ul className="divide-y divide-border/60 border border-border rounded-lg overflow-hidden">
+                      {groupItems.map((p) => (
+                        <PendingRow
+                          key={`${p.type}-${p.periodStart}`}
+                          period={p}
+                          onStart={() => startForm(p)}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
             </div>
           )}
 
