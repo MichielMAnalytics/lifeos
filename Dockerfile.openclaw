@@ -17,7 +17,7 @@ WORKDIR /app
 # including extensions/*/package.json — are present before pnpm install,
 # so pnpm properly resolves and links extension dependencies
 # (e.g. google-auth-library for googlechat).
-ARG OPENCLAW_VERSION=v2026.4.5
+ARG OPENCLAW_VERSION=v2026.4.15
 RUN git clone --depth 1 --branch ${OPENCLAW_VERSION} https://github.com/openclaw/openclaw.git .
 
 RUN pnpm install --frozen-lockfile
@@ -67,11 +67,29 @@ ENV NODE_COMPILE_CACHE=/app/.compile-cache
 RUN mkdir -p /home/linuxbrew/.linuxbrew \
     && chown -R node:node /home/linuxbrew/.linuxbrew
 
-# Let `node` user do global npm installs (OpenClaw skills use `npm install -g`)
-RUN chown -R node:node /usr/local/lib/node_modules /usr/local/bin
+# NOTE: Do not chown /usr/local/bin — doing so triggers an overlay FS copy-up
+# of /usr/local/bin/node, which invalidates the V8 compile cache key between
+# build-time warmup and runtime. Cache dir `v22.22.2-x64-<hash>-<uid>` — hash
+# derived from Node binary identity, so touching it breaks cache reuse across
+# build and runtime. All /usr/local/bin writes must happen as root, before
+# the USER node switch below.
 
-# Pre-install LifeOS CLI so pods have it on first boot
+# Pre-install LifeOS CLI so pods have it on first boot (root — writes to /usr/local/lib)
 RUN npm install -g lifeos-cli
+
+# GitHub CLI — installed as standalone binary to /usr/local/bin because
+# the Homebrew prefix is overlaid by a PVC mount at runtime in K8s.
+RUN GH_VERSION=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/') \
+  && curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz" \
+     | tar -xz --strip-components=2 -C /usr/local/bin "gh_${GH_VERSION}_linux_amd64/bin/gh"
+
+# Provide an openclaw executable (root — writes to /usr/local/bin)
+RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /app/openclaw.mjs "$@"' > /usr/local/bin/openclaw \
+  && chmod +x /usr/local/bin/openclaw
+
+# Expose the Pi coding-agent binary (root — writes to /usr/local/bin)
+RUN printf '%s\n' '#!/usr/bin/env bash' 'exec /app/node_modules/.bin/pi "$@"' > /usr/local/bin/pi \
+  && chmod +x /usr/local/bin/pi
 
 # Stage LifeOS skills for seeding into user PVCs
 COPY packages/cli/skills/ /app/lifeos-skills/
@@ -86,21 +104,6 @@ USER node
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ENV HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
 ENV PATH="${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}"
-
-# GitHub CLI — installed as standalone binary to /usr/local/bin because
-# the Homebrew prefix is overlaid by a PVC mount at runtime in K8s.
-RUN GH_VERSION=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/') \
-  && curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz" \
-     | tar -xz --strip-components=2 -C /usr/local/bin "gh_${GH_VERSION}_linux_amd64/bin/gh"
-
-# Provide an openclaw executable
-RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /app/openclaw.mjs "$@"' > /usr/local/bin/openclaw \
-  && chmod +x /usr/local/bin/openclaw
-
-# Expose the Pi coding-agent binary (bundled via @mariozechner/pi-coding-agent).
-# pnpm links it into node_modules/.bin/pi but that dir isn't on PATH.
-RUN printf '%s\n' '#!/usr/bin/env bash' 'exec /app/node_modules/.bin/pi "$@"' > /usr/local/bin/pi \
-  && chmod +x /usr/local/bin/pi
 
 # Pre-warm the V8 compile cache by booting the gateway with a synthetic config
 # that enables all plugins/channels used at runtime. Without this, the warmup

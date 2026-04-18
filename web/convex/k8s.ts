@@ -214,6 +214,10 @@ function buildOpenClawConfig(
           apiKey: "gateway-managed",
           api: "anthropic-messages",
           headers: { "X-Pod-Secret": podSecretEnvRef },
+          // Required for OpenClaw v2026.4.10+ SSRF guard — the in-cluster
+          // ai-gateway URL resolves to a private 10.x address which is
+          // blocked by default.
+          request: { allowPrivateNetwork: true },
           models: [
             { id: "claude-opus-4-6", name: "Claude Opus 4.6", contextWindow: 1000000, maxTokens: 32000, input: ["text", "image"] },
             { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", contextWindow: 200000, maxTokens: 16000, input: ["text", "image"] },
@@ -225,6 +229,7 @@ function buildOpenClawConfig(
           apiKey: "gateway-managed",
           api: "openai-responses",
           headers: { "X-Pod-Secret": podSecretEnvRef },
+          request: { allowPrivateNetwork: true },
           models: [
             { id: "gpt-5.4-2026-03-05", name: "GPT 5.4", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
             { id: "gpt-5.2", name: "GPT 5.2", contextWindow: 1000000, maxTokens: 32000, input: ["text", "image"] },
@@ -236,9 +241,8 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/kimi`,
           apiKey: "gateway-managed",
           api: "openai-completions",
-
           headers: { "X-Pod-Secret": podSecretEnvRef },
-
+          request: { allowPrivateNetwork: true },
           models: [
             { id: "moonshotai/kimi-k2-thinking-maas", name: "Kimi K2 Thinking", reasoning: true, contextWindow: 262144, maxTokens: 65536, compat: { supportsDeveloperRole: false } },
             { id: "moonshotai/kimi-k2.5", name: "Kimi K2.5", reasoning: false, contextWindow: 262144, maxTokens: 8192, input: ["text", "image"], compat: { supportsDeveloperRole: false } },
@@ -250,9 +254,8 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/gemini`,
           apiKey: "gateway-managed",
           api: "openai-completions",
-
           headers: { "X-Pod-Secret": podSecretEnvRef },
-
+          request: { allowPrivateNetwork: true },
           models: [
             { id: "google/gemini-3.1-pro-preview", name: "Gemini 3.1 Pro", reasoning: false, contextWindow: 1000000, maxTokens: 65536, input: ["text", "image"] },
             { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash", reasoning: false, contextWindow: 1000000, maxTokens: 65536, input: ["text", "image"] },
@@ -262,9 +265,8 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/minimax`,
           apiKey: "gateway-managed",
           api: "openai-completions",
-
           headers: { "X-Pod-Secret": podSecretEnvRef },
-
+          request: { allowPrivateNetwork: true },
           models: [
             { id: "MiniMax-M2.1", name: "MiniMax M2.1", contextWindow: 200000, maxTokens: 8192, input: ["text"] },
             { id: "MiniMax-M2.5", name: "MiniMax M2.5", reasoning: true, contextWindow: 200000, maxTokens: 8192, input: ["text"] },
@@ -274,9 +276,8 @@ function buildOpenClawConfig(
           baseUrl: `${gatewayUrl}/v1/qwen`,
           apiKey: "gateway-managed",
           api: "openai-completions",
-
           headers: { "X-Pod-Secret": podSecretEnvRef },
-
+          request: { allowPrivateNetwork: true },
           models: [
             { id: "qwen/qwen3-coder-480b-a35b-instruct-maas", name: "Qwen3 Coder 480B", contextWindow: 262144, maxTokens: 65536, input: ["text"] },
             { id: "qwen/qwen3-235b-a22b-instruct-2507-maas", name: "Qwen3 235B", contextWindow: 262144, maxTokens: 8192, input: ["text"] },
@@ -481,8 +482,6 @@ fs.writeFileSync(cf, JSON.stringify(c));
                   ].join(" && ")
                   + ` && node --disable-warning=ExperimentalWarning openclaw.mjs gateway --allow-unconfigured --bind lan &`
                   + ` until curl -sf http://127.0.0.1:18789 >/dev/null 2>&1; do sleep 0.5; done`
-                  + ` && node openclaw.mjs config set gateway.controlUi.allowedOrigins '["http://localhost:4101","https://lifeos.zone","https://www.lifeos.zone","https://app.lifeos.zone"]' 2>/dev/null || true`
-                  + ` && node openclaw.mjs config set gateway.controlUi.dangerouslyDisableDeviceAuth true 2>/dev/null || true`
                   + ` && exec node /app/file-server.mjs`;
                 })(),
               ],
@@ -524,9 +523,9 @@ fs.writeFileSync(cf, JSON.stringify(c));
               },
               livenessProbe: {
                 httpGet: { path: "/", port: 18789 },
-                periodSeconds: 20,
-                timeoutSeconds: 5,
-                failureThreshold: 3,
+                periodSeconds: 30,
+                timeoutSeconds: 15,
+                failureThreshold: 10,
               },
             },
           ],
@@ -685,9 +684,9 @@ export async function patchStatefulSet(
     },
     livenessProbe: {
       httpGet: { path: "/", port: 18789 },
-      periodSeconds: 20,
-      timeoutSeconds: 5,
-      failureThreshold: 3,
+      periodSeconds: 30,
+      timeoutSeconds: 15,
+      failureThreshold: 10,
     },
   };
 
@@ -737,8 +736,6 @@ fs.writeFileSync(cf, JSON.stringify(c));
     ].join(" && ")
     + ` && node openclaw.mjs gateway --allow-unconfigured --bind lan &`
     + ` until curl -sf http://127.0.0.1:18789 >/dev/null 2>&1; do sleep 0.5; done`
-    + ` && node openclaw.mjs config set gateway.controlUi.allowedOrigins '["http://localhost:4101","https://lifeos.zone","https://www.lifeos.zone","https://app.lifeos.zone"]' 2>/dev/null || true`
-    + ` && node openclaw.mjs config set gateway.controlUi.dangerouslyDisableDeviceAuth true 2>/dev/null || true`
     + ` && exec node /app/file-server.mjs`;
 
     openclawContainer.command = ["sh", "-c", command];

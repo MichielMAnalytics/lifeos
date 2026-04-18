@@ -153,13 +153,17 @@ proxy.all("/:provider/*", async (c) => {
     }
   }
 
-  // Detect OpenAI Codex OAuth (stored as JSON with access_token + refresh_token)
-  // Audio/multipart requests can't go through Codex — fall back to platform key
+  // Detect OpenAI Codex OAuth (stored as JSON with access_token + refresh_token).
+  // Codex OAuth tokens target https://chatgpt.com/backend-api/codex/responses,
+  // which doesn't serve /audio/* endpoints — and audio requests can arrive as
+  // either multipart (classic whisper) or JSON+base64 (gpt-4o-mini-transcribe),
+  // so we must exclude audio endpoints regardless of Content-Type.
   const earlyContentType = c.req.header("Content-Type") ?? "";
   const isEarlyMultipart = earlyContentType.includes("multipart/");
+  const earlyIsAudio = c.req.path.includes("/audio/");
   let isOpenAICodexOAuth = false;
   let codexAccessToken: string | undefined;
-  if (provider === "openai" && isBYOK && apiKey.startsWith("{") && !isEarlyMultipart) {
+  if (provider === "openai" && isBYOK && apiKey.startsWith("{") && !isEarlyMultipart && !earlyIsAudio) {
     const parsed = parseCodexTokens(apiKey);
     if (parsed) {
       isOpenAICodexOAuth = true;
@@ -171,11 +175,11 @@ proxy.all("/:provider/*", async (c) => {
       }
     }
   }
-  // For multipart OpenAI BYOK requests (audio), use platform key instead of Codex
-  if (provider === "openai" && isBYOK && isEarlyMultipart && apiKey.startsWith("{")) {
+  // Audio or multipart OpenAI BYOK requests can't use Codex OAuth — fall back to platform key
+  if (provider === "openai" && isBYOK && (isEarlyMultipart || earlyIsAudio) && apiKey.startsWith("{")) {
     apiKey = getPlatformKey("openai");
     isBYOK = false;
-    console.log(`[proxy] Multipart request (audio) — falling back to platform OpenAI key`);
+    console.log(`[proxy] Audio/multipart request — falling back to platform OpenAI key`);
   }
 
   // Parse request body (need it to extract model and potentially modify for OpenAI streaming)

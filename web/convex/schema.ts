@@ -15,6 +15,8 @@ export default defineSchema({
     isAnonymous: v.optional(v.boolean()),
     // LifeOS custom fields
     timezone: v.optional(v.string()),
+    // Cross-replica lease for OpenAI OAuth token refresh (epoch ms; lock held until this timestamp)
+    openaiRefreshLockedUntil: v.optional(v.number()),
   }).index("email", ["email"]),
 
   // ── API Keys ───────────────────────────────────────

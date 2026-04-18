@@ -8,7 +8,7 @@ config:
   lifeos:jwtSigningKey: 78a1710deae11f3c62c25e907ab15bd4
   lifeos:convexSiteUrl: https://proper-cormorant-28.eu-west-1.convex.site
   lifeos:gatewaySystemKey: 78a1710deae11f3c62c25e907ab15bd4
-  lifeos:gatewayImageName: europe-west3-docker.pkg.dev/acquired-racer-491202-b4/lifeos-dev/ai-gateway:latest
+  lifeos:gatewayImageName: europe-west3-docker.pkg.dev/acquired-racer-491202-b4/lifeos-dev/ai-gateway:oauth-lock-v2
   lifeos:backends:
     - id: "default"
       convexSiteUrl: "https://proper-cormorant-28.eu-west-1.convex.site"

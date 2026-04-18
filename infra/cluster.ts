@@ -17,7 +17,10 @@ export function createCluster() {
     purpose: "ENCRYPT_DECRYPT",
   });
 
-  const cluster = new gcp.container.Cluster("lifeos-cluster-v2", {
+  // Dev state was created before the v2 rename; keep the original logical name
+  // for dev to avoid cluster replacement. Prod stays on v2.
+  const clusterLogicalName = pulumi.getStack() === "prod" ? "lifeos-cluster-v2" : "lifeos-cluster";
+  const cluster = new gcp.container.Cluster(clusterLogicalName, {
     location: region,
     enableAutopilot: true,
     ipAllocationPolicy: {},

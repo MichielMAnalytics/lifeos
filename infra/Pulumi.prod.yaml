@@ -5,7 +5,7 @@ config:
   lifeos:domain: lifeos.zone
   lifeos:openclawImageTag: latest
   lifeos:convexSiteUrl: https://charming-squid-23.eu-west-1.convex.site
-  lifeos:gatewayImageName: europe-west3-docker.pkg.dev/lifeos-prod-491301/lifeos-prod/ai-gateway:latest
+  lifeos:gatewayImageName: europe-west3-docker.pkg.dev/lifeos-prod-491301/lifeos-prod/ai-gateway:oauth-lock-v2
   lifeos:backends:
     - id: "default"
       convexSiteUrl: "https://charming-squid-23.eu-west-1.convex.site"

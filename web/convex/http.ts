@@ -2528,6 +2528,43 @@ http.route({
   }),
 });
 
+// ── OpenAI OAuth Refresh Lock (AI Gateway -> Convex) ──
+// Cross-replica coordination so only one ai-gateway replica refreshes a
+// given user's OpenAI OAuth token at a time. Without this, parallel
+// refreshes race on the rotating refresh_token and OpenAI invalidates
+// the entire token chain.
+http.route({
+  path: "/api/openaiOAuthLock/acquire",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const systemKey = request.headers.get("X-System-Key");
+    if (!systemKey || systemKey !== serverEnv.GATEWAY_SYSTEM_KEY) return new Response("Unauthorized", { status: 401 });
+    const { userId, ttlMs } = (await request.json()) as { userId?: string; ttlMs?: number };
+    if (!userId) return new Response("Missing userId", { status: 400 });
+    const ttl = typeof ttlMs === "number" && ttlMs > 0 && ttlMs <= 120_000 ? ttlMs : 30_000;
+    const result = await ctx.runMutation(internal.openaiOAuthLock._tryAcquireLock, {
+      userId: userId as Id<"users">,
+      ttlMs: ttl,
+    });
+    return new Response(JSON.stringify(result), { status: 200, headers: { "Content-Type": "application/json" } });
+  }),
+});
+
+http.route({
+  path: "/api/openaiOAuthLock/release",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const systemKey = request.headers.get("X-System-Key");
+    if (!systemKey || systemKey !== serverEnv.GATEWAY_SYSTEM_KEY) return new Response("Unauthorized", { status: 401 });
+    const { userId } = (await request.json()) as { userId?: string };
+    if (!userId) return new Response("Missing userId", { status: 400 });
+    const result = await ctx.runMutation(internal.openaiOAuthLock._releaseLock, {
+      userId: userId as Id<"users">,
+    });
+    return new Response(JSON.stringify(result), { status: 200, headers: { "Content-Type": "application/json" } });
+  }),
+});
+
 // ════════════════════════════════════════════════════════
 // WORKOUTS
 // ════════════════════════════════════════════════════════

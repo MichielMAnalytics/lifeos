@@ -36,6 +36,7 @@ import type * as macroGoals from "../macroGoals.js";
 import type * as modelProxy from "../modelProxy.js";
 import type * as mutationLog from "../mutationLog.js";
 import type * as openaiDeviceAuth from "../openaiDeviceAuth.js";
+import type * as openaiOAuthLock from "../openaiOAuthLock.js";
 import type * as programmes from "../programmes.js";
 import type * as projects from "../projects.js";
 import type * as reminders from "../reminders.js";
@@ -91,6 +92,7 @@ declare const fullApi: ApiFromModules<{
   modelProxy: typeof modelProxy;
   mutationLog: typeof mutationLog;
   openaiDeviceAuth: typeof openaiDeviceAuth;
+  openaiOAuthLock: typeof openaiOAuthLock;
   programmes: typeof programmes;
   projects: typeof projects;
   reminders: typeof reminders;
