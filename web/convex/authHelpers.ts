@@ -156,60 +156,9 @@ export const listApiKeys = query({
   },
 });
 
-// ── Telegram link code (mutation) ────────────────────
-// Authenticated user requests a one-time 6-char code; pasting it into the
-// LifeOS Telegram bot as `/start <CODE>` binds that chat to this user.
-// Codes expire in 10 minutes. Email-based linking was rejected because
-// anyone who knows your email could claim the channel before you do.
-
-const LINK_CODE_TTL_MS = 10 * 60_000;
-const LINK_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/I/1
-const LINK_CODE_LENGTH = 6;
-
-function generateLinkCode(): string {
-  let out = "";
-  for (let i = 0; i < LINK_CODE_LENGTH; i++) {
-    out += LINK_CODE_ALPHABET[Math.floor(Math.random() * LINK_CODE_ALPHABET.length)];
-  }
-  return out;
-}
-
-export const generateTelegramLinkCode = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
-    // Retry until we land on a code no other user is currently holding.
-    // 32^6 ≈ 1B combinations and we typically have ≤1 active code per
-    // user, so a clean draw is overwhelmingly likely on the first try.
-    let code = "";
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const candidate = generateLinkCode();
-      const collision = await ctx.db
-        .query("users")
-        .withIndex("by_telegramLinkCode", (q) => q.eq("telegramLinkCode", candidate))
-        .first();
-      // Either nobody else has it, or only the current user does (re-roll
-      // for the same user is fine — we'll overwrite their old code below).
-      if (!collision || collision._id === userId) {
-        code = candidate;
-        break;
-      }
-    }
-    if (!code) {
-      throw new Error("Could not generate a unique link code; please try again");
-    }
-
-    const expiresAt = Date.now() + LINK_CODE_TTL_MS;
-    await ctx.db.patch(userId, {
-      telegramLinkCode: code,
-      telegramLinkExpiresAt: expiresAt,
-    });
-
-    return { code, expiresAt };
-  },
-});
+// (`generateTelegramLinkCode` removed: the user's bot's webhook is owned
+// by OpenClaw, so /start CODE never reaches LifeOS. Chat ID is set
+// directly via `auth.updateMe { telegramChatId }` from the setup card.)
 
 // ── deleteApiKey (mutation) ──────────────────────────
 

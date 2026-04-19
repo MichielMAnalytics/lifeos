@@ -1,12 +1,18 @@
 'use client';
 
-// Telegram delivery setup card. Surfaces the status of the per-user
-// Telegram link and lets the user:
-//   1. Generate a one-time link code → paste into the bot via /start <CODE>
-//   2. Trigger a "send me a test message right now" to verify the
-//      whole pipeline (token + chat ID + webhook reachability)
+// Telegram delivery setup card.
 //
-// The card stays compact when everything is wired up.
+// The bot is the same one configured during OpenClaw channel setup —
+// LifeOS reads the token from GCP Secret Manager via `readByokSecret`,
+// so there's no second token to enter here. The only thing we need
+// from the user is the Telegram chat ID where reminders should land
+// (LifeOS can't auto-detect because the bot's webhook points at the
+// pod, not Convex).
+//
+// The card lets the user:
+//   1. Paste / clear their chat ID (saved via `auth.updateMe`)
+//   2. Send a test message right now (real delivery result, not just
+//      "scheduled") to verify the whole pipeline.
 
 import { useState, useEffect } from 'react';
 import { useAction, useMutation } from 'convex/react';
@@ -22,27 +28,19 @@ type TestState =
 
 export function TelegramSetup() {
   const user = useCurrentUser();
-  const generateCode = useMutation(api.authHelpers.generateTelegramLinkCode);
-  // Test path is an action because it has to actually hit Telegram and
-  // return the real delivery result (not just "scheduled").
+  const updateMe = useMutation(api.authHelpers.updateMe);
   const sendTest = useAction(api.reminderDispatch.sendTestTelegram);
 
-  const [code, setCode] = useState<{ code: string; expiresAt: number } | null>(null);
-  const [generating, setGenerating] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
   const [test, setTest] = useState<TestState>({ state: 'idle' });
-  const [copied, setCopied] = useState(false);
 
-  // Auto-clear "sent" / "copied" state after a few seconds.
   useEffect(() => {
     if (test.state !== 'sent') return;
     const t = setTimeout(() => setTest({ state: 'idle' }), 4000);
     return () => clearTimeout(t);
   }, [test.state]);
-  useEffect(() => {
-    if (!copied) return;
-    const t = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(t);
-  }, [copied]);
 
   if (user === undefined) {
     return (
@@ -55,13 +53,24 @@ export function TelegramSetup() {
 
   const isLinked = !!user.telegramChatId;
 
-  async function handleGenerate() {
-    setGenerating(true);
+  async function handleSave() {
+    setSaving(true);
     try {
-      const res = await generateCode({});
-      setCode(res);
+      await updateMe({ telegramChatId: draft.trim() });
+      setEditing(false);
     } finally {
-      setGenerating(false);
+      setSaving(false);
+    }
+  }
+
+  async function handleClear() {
+    if (saving) return;
+    setSaving(true);
+    try {
+      // Empty string — `updateMe` interprets it as "clear" via trim.
+      await updateMe({ telegramChatId: '' });
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -82,10 +91,6 @@ export function TelegramSetup() {
     }
   }
 
-  function handleCopy(text: string) {
-    void navigator.clipboard.writeText(text).then(() => setCopied(true));
-  }
-
   return (
     <div className="border border-border rounded-xl">
       <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-border">
@@ -99,10 +104,10 @@ export function TelegramSetup() {
           />
           <h3 className="text-sm font-semibold text-text">Telegram delivery</h3>
           <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted/80">
-            {isLinked ? 'Linked' : 'Not linked'}
+            {isLinked ? 'Linked' : 'Chat ID needed'}
           </span>
         </div>
-        {isLinked && (
+        {isLinked && !editing && (
           <button
             type="button"
             onClick={handleSendTest}
@@ -117,62 +122,112 @@ export function TelegramSetup() {
       </div>
 
       <div className="px-5 py-4 space-y-3">
-        {!isLinked && !code && (
+        {!isLinked && !editing && (
           <>
             <p className="text-xs text-text-muted leading-relaxed">
-              Reminders fire to Telegram at their scheduled time with{' '}
-              <span className="text-text">Done / Snooze 1h / Cancel</span> buttons.
-              Generate a one-time code below, then send <code className="text-text bg-bg-subtle px-1 rounded">/start CODE</code> to
-              the LifeOS bot to link your chat.
+              Reminders fire to Telegram via the bot you configured during
+              channel setup. Paste your Telegram chat ID below to enable
+              delivery — find it by sending any message to{' '}
+              <a
+                href="https://t.me/userinfobot"
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent hover:underline"
+              >
+                @userinfobot
+              </a>.
             </p>
             <button
               type="button"
-              onClick={handleGenerate}
-              disabled={generating}
-              className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-md bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
+              onClick={() => {
+                setDraft('');
+                setEditing(true);
+              }}
+              className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-md bg-accent text-white hover:bg-accent-hover transition-colors"
             >
-              {generating ? 'Generating…' : 'Generate link code'}
+              Add chat ID
             </button>
           </>
         )}
 
-        {!isLinked && code && (
+        {editing && (
           <div className="space-y-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted/80">
-              Send this to the bot:
-            </span>
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted/80 block">
+              Telegram chat ID
+            </label>
+            <input
+              type="text"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="e.g. 123456789"
+              autoFocus
+              className="w-full bg-bg-subtle border border-border rounded-lg px-3 py-2 text-sm font-mono text-text placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors"
+            />
             <div className="flex items-center gap-2">
-              <code className="flex-1 bg-bg-subtle border border-border rounded-lg px-3 py-2 text-base font-mono tracking-[0.2em] text-text">
-                /start {code.code}
-              </code>
               <button
                 type="button"
-                onClick={() => handleCopy(`/start ${code.code}`)}
-                className="text-[11px] font-semibold uppercase tracking-wide px-3 py-2 rounded-md border border-border hover:border-text-muted transition-colors"
+                onClick={handleSave}
+                disabled={saving || !draft.trim()}
+                className="text-[11px] font-semibold uppercase tracking-wide px-3 py-1.5 rounded-md bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
               >
-                {copied ? '✓ Copied' : 'Copy'}
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className="text-[11px] font-medium text-text-muted hover:text-text transition-colors px-2 py-1.5"
+              >
+                Cancel
               </button>
             </div>
-            <p className="text-[11px] text-text-muted">
-              Expires in {Math.max(0, Math.ceil((code.expiresAt - Date.now()) / 60_000))} min.
-              The card will refresh on its own once the bot sees your message.
+            <p className="text-[11px] text-text-muted/80">
+              Numeric — usually 9–10 digits. Send /start (or any message)
+              to your bot first; then look up the chat ID with{' '}
+              <a
+                href="https://t.me/userinfobot"
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent hover:underline"
+              >
+                @userinfobot
+              </a>.
             </p>
           </div>
         )}
 
-        {isLinked && (
+        {isLinked && !editing && (
           <p className="text-xs text-text-muted">
             Linked to chat <code className="text-text bg-bg-subtle px-1 rounded">{user.telegramChatId}</code>.
-            Reminders fire automatically at their scheduled time. Use “Send test” above to verify the bot can reach you.
+            Reminders fire automatically using your configured bot.{' '}
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(user?.telegramChatId ?? '');
+                setEditing(true);
+              }}
+              className="text-accent hover:underline"
+            >
+              Change
+            </button>
+            {' · '}
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={saving}
+              className="text-text-muted hover:text-danger transition-colors"
+            >
+              Clear
+            </button>
           </p>
         )}
 
         {test.state === 'error' && (
           <div className="text-xs text-danger bg-danger/10 border border-danger/30 rounded-md px-3 py-2">
-            <strong>Test failed:</strong> {test.reason === 'no-chat-id'
-              ? 'no chat ID linked yet'
-              : test.reason === 'no-token'
-                ? 'TELEGRAM_BOT_TOKEN env var is not set in Convex'
+            <strong>Test failed:</strong>{' '}
+            {test.reason === 'no-chat-id'
+              ? 'no chat ID set yet'
+              : test.reason === 'no-bot-token'
+                ? 'no Telegram bot token in your channel setup — configure it in Settings → AI Agent'
                 : test.reason}
           </div>
         )}
