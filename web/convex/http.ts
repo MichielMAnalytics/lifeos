@@ -175,6 +175,7 @@ http.route({
         userId,
         name: body.name as string | undefined,
         timezone: body.timezone as string | undefined,
+        telegramChatId: body.telegramChatId as string | undefined,
       });
       return json({ data: user });
     } catch (e: unknown) {
@@ -545,6 +546,21 @@ http.route({
     if (!rawId) return err("Missing project id", 400);
     const id = await resolveEntityId(ctx, userId, "projects", rawId);
     if (!id) return err("Project not found", 404);
+
+    // DELETE /api/v1/projects/:id/impact-filter
+    const action = extractAction(url, "/api/v1/projects");
+    if (action === "impact-filter") {
+      try {
+        const project = await ctx.runMutation(internal.projects._clearImpactFilter, {
+          userId,
+          id,
+        });
+        return json({ data: project });
+      } catch (e: unknown) {
+        return err(e instanceof Error ? e.message : "Clear failed", 404);
+      }
+    }
+
     try {
       const result = await ctx.runMutation(internal.projects._remove, {
         userId,
@@ -554,6 +570,70 @@ http.route({
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Delete failed";
       return err(message, 404);
+    }
+  }),
+});
+
+// POST /api/v1/projects/:id/impact-filter — set the Impact Filter
+http.route({
+  pathPrefix: "/api/v1/projects/",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/projects");
+    if (!rawId) return err("Missing project id", 400);
+    const id = await resolveEntityId(ctx, userId, "projects", rawId);
+    if (!id) return err("Project not found", 404);
+
+    const action = extractAction(url, "/api/v1/projects");
+    if (action !== "impact-filter") {
+      return err("Unknown projects action", 400);
+    }
+
+    const body = await parseBody<{
+      purpose?: string;
+      importance?: string;
+      idealOutcome?: string;
+      worstResult?: string;
+      bestResult?: string;
+      successCriteria?: string[];
+      who?: string;
+    }>(request);
+    const required = ["purpose", "importance", "idealOutcome", "worstResult", "bestResult"] as const;
+    for (const f of required) {
+      if (typeof body[f] !== "string" || !body[f]!.trim()) {
+        return err(`Missing or empty required field: ${f}`, 400);
+      }
+    }
+    if (!Array.isArray(body.successCriteria) || body.successCriteria.length === 0) {
+      return err("successCriteria must be a non-empty array of strings", 400);
+    }
+    // Drop blank entries; refuse the request if nothing meaningful is left.
+    const cleanedCriteria = body.successCriteria
+      .filter((c): c is string => typeof c === "string")
+      .map((c) => c.trim())
+      .filter((c) => c.length > 0);
+    if (cleanedCriteria.length === 0) {
+      return err("successCriteria must contain at least one non-empty string", 400);
+    }
+
+    try {
+      const project = await ctx.runMutation(internal.projects._setImpactFilter, {
+        userId,
+        id,
+        purpose: body.purpose!.trim(),
+        importance: body.importance!.trim(),
+        idealOutcome: body.idealOutcome!.trim(),
+        worstResult: body.worstResult!.trim(),
+        bestResult: body.bestResult!.trim(),
+        successCriteria: cleanedCriteria,
+        who: body.who?.trim() || undefined,
+      });
+      return json({ data: project });
+    } catch (e: unknown) {
+      return err(e instanceof Error ? e.message : "Set failed", 404);
     }
   }),
 });
@@ -1592,6 +1672,86 @@ http.route({
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Delete failed";
       return err(message, 404);
+    }
+  }),
+});
+
+// POST /api/v1/reviews/moving-future — quarterly Moving Future check-in.
+// Atomic: creates the review row + spawns goals for any priorities flagged
+// `createAsGoal: true`. Body matches the public mutation arg shape.
+http.route({
+  path: "/api/v1/reviews/moving-future",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/reviews/moving-future",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody<{
+      periodStart?: string;
+      periodEnd?: string;
+      quarterLabel?: string;
+      nextQuarterLabel?: string;
+      nextQuarterGoalKey?: string;
+      morale?: { proudest?: string; wins?: string[] };
+      momentum?: { confidentAbout?: string };
+      motivation?: { excitedAbout?: string };
+      priorities?: Array<{ title?: string; createAsGoal?: boolean }>;
+      score?: number;
+    }>(request);
+
+    const required = ["periodStart", "periodEnd", "quarterLabel", "nextQuarterLabel", "nextQuarterGoalKey"] as const;
+    for (const f of required) {
+      if (typeof body[f] !== "string" || !body[f]) {
+        return err(`Missing required field: ${f}`, 400);
+      }
+    }
+    if (!body.morale || typeof body.morale.proudest !== "string" || !body.morale.proudest.trim()) {
+      return err("Missing or empty morale.proudest", 400);
+    }
+    if (!body.momentum || typeof body.momentum.confidentAbout !== "string" || !body.momentum.confidentAbout.trim()) {
+      return err("Missing or empty momentum.confidentAbout", 400);
+    }
+    if (!body.motivation || typeof body.motivation.excitedAbout !== "string" || !body.motivation.excitedAbout.trim()) {
+      return err("Missing or empty motivation.excitedAbout", 400);
+    }
+    if (!Array.isArray(body.priorities)) return err("priorities must be an array", 400);
+    const cleanedPriorities = body.priorities
+      .filter((p) => p && typeof p.title === "string" && p.title.trim())
+      .map((p) => ({
+        title: p.title!.trim(),
+        createAsGoal: p.createAsGoal !== false, // default true
+      }));
+    if (cleanedPriorities.length === 0) {
+      return err("priorities must contain at least one priority with a non-empty title", 400);
+    }
+
+    try {
+      const result = await ctx.runMutation(internal.reviews._createMovingFuture, {
+        userId,
+        periodStart: body.periodStart!,
+        periodEnd: body.periodEnd!,
+        quarterLabel: body.quarterLabel!,
+        nextQuarterLabel: body.nextQuarterLabel!,
+        nextQuarterGoalKey: body.nextQuarterGoalKey!,
+        morale: {
+          proudest: body.morale.proudest.trim(),
+          wins: Array.isArray(body.morale.wins)
+            ? body.morale.wins.filter((w): w is string => typeof w === "string" && !!w.trim()).map((w) => w.trim())
+            : [],
+        },
+        momentum: { confidentAbout: body.momentum.confidentAbout.trim() },
+        motivation: { excitedAbout: body.motivation.excitedAbout.trim() },
+        priorities: cleanedPriorities,
+        score: typeof body.score === "number" ? body.score : undefined,
+      });
+      return json({ data: result }, 201);
+    } catch (e: unknown) {
+      return err(e instanceof Error ? e.message : "Create failed", 400);
     }
   }),
 });

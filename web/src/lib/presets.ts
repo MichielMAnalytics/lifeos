@@ -13,7 +13,7 @@ export interface PagePreset {
 }
 
 export type PresetKey = string;
-export type PageKey = "life-coach" | "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "calendar" | "health";
+export type PageKey = "life-coach" | "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "schedules" | "health";
 
 // ═══════════════════════════════════════════════════════════
 // Every persona appears on every page.
@@ -588,13 +588,12 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
     },
   },
 
-  // ── CALENDAR ──────────────────────────────────────
-  calendar: {
+  // ── SCHEDULES ──────────────────────────────────────
+  schedules: {
     default: {
       name: "Default",
       description: "Weekly calendar with reminders",
       sections: [
-        { id: "telegram-setup", label: "Telegram delivery", span: "full" },
         { id: "calendar-weekly", label: "Weekly View", span: "full" },
         { id: "reminders-upcoming", label: "Reminders", span: "full" },
       ],
@@ -725,7 +724,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
 export const ALL_PRESET_KEYS = ["default", "solopreneur", "content-creator", "developer", "executive", "minimalist", "journaler"];
 
 export const DEFAULT_NAV_ORDER: PageKey[] = [
-  "life-coach", "today", "tasks", "journal", "projects", "goals", "ideas", "thoughts", "resources", "reviews", "calendar", "health",
+  "life-coach", "today", "tasks", "journal", "projects", "goals", "ideas", "thoughts", "resources", "reviews", "schedules", "health",
 ];
 
 export function getPreset(page: PageKey, presetKey: string): PagePreset {

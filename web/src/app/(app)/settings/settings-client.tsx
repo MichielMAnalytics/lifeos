@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
@@ -14,9 +14,11 @@ import { InstanceTools } from '@/components/ai-agent/instance-tools';
 import { ConfigCard } from '@/components/ai-agent/config-card';
 import { PaymentStatus } from '@/components/ai-agent/payment-status';
 import { useTheme } from '@/components/theme-provider';
+import { useTimeFormat, type TimeFormat } from '@/components/time-format-provider';
 import { themes, themeKeys, systemThemeEntry } from '@/lib/themes';
 import { useDashboardConfig } from '@/lib/dashboard-config';
 import { capture, EVENTS } from '@/lib/analytics';
+import { TelegramSetup } from '@/components/sections/telegram-setup';
 
 /* ================================================================== */
 /*  Types                                                              */
@@ -38,7 +40,7 @@ interface ApiKeyEntry {
   lastUsedAt?: number;
 }
 
-type SettingsTab = 'account' | 'billing' | 'life-coach' | 'api-keys' | 'appearance';
+type SettingsTab = 'account' | 'billing' | 'life-coach' | 'integrations' | 'api-keys' | 'appearance';
 
 /* ================================================================== */
 /*  Fonts                                                              */
@@ -96,6 +98,160 @@ function getDetectedTimezone(): string {
 }
 
 /* ================================================================== */
+/*  Timezone picker                                                    */
+/* ================================================================== */
+
+const COMMON_TIMEZONES = [
+  'Africa/Cairo', 'Africa/Johannesburg', 'Africa/Lagos', 'Africa/Nairobi',
+  'America/Anchorage', 'America/Argentina/Buenos_Aires', 'America/Bogota',
+  'America/Chicago', 'America/Denver', 'America/Halifax', 'America/Lima',
+  'America/Los_Angeles', 'America/Mexico_City', 'America/New_York',
+  'America/Phoenix', 'America/Santiago', 'America/Sao_Paulo', 'America/Toronto',
+  'America/Vancouver',
+  'Asia/Bangkok', 'Asia/Colombo', 'Asia/Dubai', 'Asia/Hong_Kong',
+  'Asia/Jakarta', 'Asia/Karachi', 'Asia/Kolkata', 'Asia/Kuala_Lumpur',
+  'Asia/Manila', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Singapore',
+  'Asia/Taipei', 'Asia/Tehran', 'Asia/Tokyo',
+  'Atlantic/Reykjavik',
+  'Australia/Melbourne', 'Australia/Perth', 'Australia/Sydney',
+  'Europe/Amsterdam', 'Europe/Athens', 'Europe/Berlin', 'Europe/Brussels',
+  'Europe/Dublin', 'Europe/Helsinki', 'Europe/Istanbul', 'Europe/Lisbon',
+  'Europe/London', 'Europe/Madrid', 'Europe/Moscow', 'Europe/Oslo',
+  'Europe/Paris', 'Europe/Prague', 'Europe/Rome', 'Europe/Stockholm',
+  'Europe/Vienna', 'Europe/Warsaw', 'Europe/Zurich',
+  'Pacific/Auckland', 'Pacific/Fiji', 'Pacific/Honolulu',
+  'UTC',
+];
+
+function getTimezoneInfo(tz: string): { offset: string; currentTime: string; offsetMinutes: number } {
+  try {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    const currentTime = formatter.format(now);
+
+    // Calculate GMT offset
+    const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+    const tzDate = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+    const diffMs = tzDate.getTime() - utcDate.getTime();
+    const diffMinutes = Math.round(diffMs / 60000);
+    const sign = diffMinutes >= 0 ? '+' : '-';
+    const absMinutes = Math.abs(diffMinutes);
+    const hours = Math.floor(absMinutes / 60);
+    const mins = absMinutes % 60;
+    const offset = mins === 0 ? `GMT${sign}${hours}` : `GMT${sign}${hours}:${mins.toString().padStart(2, '0')}`;
+
+    return { offset, currentTime, offsetMinutes: diffMinutes };
+  } catch {
+    return { offset: 'GMT+0', currentTime: '--:--', offsetMinutes: 0 };
+  }
+}
+
+function TimezoneSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (tz: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    requestAnimationFrame(() => inputRef.current?.focus());
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch('');
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setOpen(false); setSearch(''); }
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [open]);
+
+  const options = useMemo(() => {
+    const q = search.toLowerCase();
+    const tzList = COMMON_TIMEZONES.filter((tz) =>
+      tz.toLowerCase().includes(q) || tz.replace(/_/g, ' ').toLowerCase().includes(q)
+    );
+    return tzList.map((tz) => ({ tz, ...getTimezoneInfo(tz) }))
+      .sort((a, b) => a.offsetMinutes - b.offsetMinutes);
+  }, [search]);
+
+  const currentInfo = getTimezoneInfo(value);
+  const displayLabel = value ? `${value.replace(/_/g, ' ')} (${currentInfo.offset})` : 'Select timezone...';
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-3 py-2 text-sm bg-transparent border border-border text-text hover:border-text/30 transition-colors text-left"
+      >
+        <span className="truncate">{displayLabel}</span>
+        <span className="text-text-muted text-xs shrink-0 ml-2">{currentInfo.currentTime}</span>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 border border-border bg-surface rounded-lg shadow-2xl max-h-[320px] flex flex-col overflow-hidden">
+          <div className="px-3 py-2 border-b border-border-subtle shrink-0">
+            <input
+              ref={inputRef}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search timezones..."
+              className="w-full bg-transparent text-sm text-text placeholder:text-text-muted focus:outline-none"
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto py-1">
+            {options.length === 0 ? (
+              <p className="px-3 py-3 text-xs text-text-muted text-center">No timezones match</p>
+            ) : (
+              options.map(({ tz, offset, currentTime }) => (
+                <button
+                  key={tz}
+                  type="button"
+                  onClick={() => {
+                    onChange(tz);
+                    setOpen(false);
+                    setSearch('');
+                  }}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-surface-hover transition-colors text-left',
+                    tz === value && 'bg-surface-hover text-accent',
+                  )}
+                >
+                  <span className="truncate">{tz.replace(/_/g, ' ')}</span>
+                  <span className="flex items-center gap-2 shrink-0 ml-2">
+                    <span className="text-[10px] text-text-muted font-mono">{offset}</span>
+                    <span className="text-[10px] text-text-muted/70 tabular-nums w-[60px] text-right">{currentTime}</span>
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================== */
 /*  Main Component                                                     */
 /* ================================================================== */
 
@@ -115,6 +271,7 @@ export function SettingsClient({
     { id: 'account', label: 'Account', icon: UserIcon },
     { id: 'billing', label: 'Billing', icon: CreditCardIcon },
     ...(showLifeCoach ? [{ id: 'life-coach' as SettingsTab, label: 'Life Coach', icon: BotIcon }] : []),
+    { id: 'integrations', label: 'Integrations', icon: LinkIcon },
     { id: 'api-keys', label: 'API Keys', icon: KeyIcon },
     { id: 'appearance', label: 'Appearance', icon: PaletteIcon },
   ];
@@ -181,6 +338,7 @@ export function SettingsClient({
             {activeTab === 'account' && <AccountTab user={user} />}
             {activeTab === 'billing' && <BillingTab />}
             {activeTab === 'life-coach' && <LifeCoachTab />}
+            {activeTab === 'integrations' && <IntegrationsTab />}
             {activeTab === 'api-keys' && <ApiKeysTab apiKeys={initialApiKeys} />}
             {activeTab === 'appearance' && <AppearanceTab />}
           </div>
@@ -358,12 +516,9 @@ function AccountTab({ user }: { user: User | null }) {
               Detect from browser
             </button>
           </div>
-          <input
-            type="text"
+          <TimezoneSelect
             value={editTimezone}
-            onChange={(e) => setEditTimezone(e.target.value)}
-            placeholder="e.g. Europe/Amsterdam"
-            className="w-full px-3 py-2 text-sm bg-transparent border border-border text-text font-mono placeholder:text-text-muted/70 focus:border-text/30 focus:outline-none"
+            onChange={(tz) => setEditTimezone(tz)}
           />
         </div>
 
@@ -850,6 +1005,7 @@ function CliStep({ step, title, children }: { step: number; title: string; child
 function AppearanceTab() {
   const { theme, setTheme } = useTheme();
   const { config, setNavMode } = useDashboardConfig();
+  const { timeFormat, setTimeFormat } = useTimeFormat();
   const [activeFont, setActiveFont] = useState('geist');
 
   useEffect(() => {
@@ -933,6 +1089,32 @@ function AppearanceTab() {
         </div>
       </div>
 
+      {/* Time format */}
+      <div className="border border-border p-5 space-y-4">
+        <p className="text-xs font-medium text-text">Time format</p>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { key: '12h' as TimeFormat, label: '12-hour', example: '2:30 PM' },
+            { key: '24h' as TimeFormat, label: '24-hour', example: '14:30' },
+          ]).map(({ key, label, example }) => {
+            const isActive = timeFormat === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setTimeFormat(key)}
+                className={cn(
+                  'py-3 border transition-all cursor-pointer text-center',
+                  isActive ? 'border-text text-text font-medium' : 'border-border text-text-muted hover:border-text/30 hover:text-text',
+                )}
+              >
+                <p className="text-xs">{label}</p>
+                <p className="text-[9px] text-text-muted mt-0.5 tabular-nums">{example}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Navigation mode */}
       <div className="border border-border p-5 space-y-4">
         <p className="text-xs font-medium text-text">Navigation mode</p>
@@ -957,6 +1139,177 @@ function AppearanceTab() {
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Tab: Integrations                                                  */
+/* ================================================================== */
+
+type IntegrationStatus = 'wireable' | 'needs-michiel' | 'coming-soon';
+
+interface IntegrationDef {
+  name: string;
+  status: IntegrationStatus;
+  description: string;
+  blocker?: string;
+}
+
+const INTEGRATION_GROUPS: { title: string; items: IntegrationDef[] }[] = [
+  {
+    title: 'Messaging',
+    items: [
+      // Telegram is special — rendered via the live <TelegramSetup /> below.
+      {
+        name: 'WhatsApp',
+        status: 'needs-michiel',
+        description: 'Send reminders + chat with your agent over WhatsApp.',
+        blocker: 'Needs Twilio or Meta Business API account + token routing.',
+      },
+      {
+        name: 'Discord',
+        status: 'needs-michiel',
+        description: 'Channel-based notifications and command DMs.',
+        blocker: 'Bot token field exists in deployment settings; pod-side handler not wired yet.',
+      },
+    ],
+  },
+  {
+    title: 'Google Workspace',
+    items: [
+      {
+        name: 'Calendar',
+        status: 'needs-michiel',
+        description: 'Two-way sync between Day Plan blocks and Google Calendar events.',
+        blocker: 'Needs Google OAuth client (Cloud Console) + redirect URIs configured.',
+      },
+      {
+        name: 'Gmail',
+        status: 'needs-michiel',
+        description: 'Triage inbox into reminders/ideas; send drafts from the agent.',
+        blocker: 'Needs Google OAuth client + Gmail API scope approved.',
+      },
+      {
+        name: 'Drive',
+        status: 'needs-michiel',
+        description: 'Attach docs to projects and journal entries.',
+        blocker: 'Needs Google OAuth client + Drive scope.',
+      },
+      {
+        name: 'Tasks',
+        status: 'needs-michiel',
+        description: 'Sync Google Tasks with LifeOS tasks.',
+        blocker: 'Needs Google OAuth client + Tasks API scope.',
+      },
+      {
+        name: 'Docs',
+        status: 'needs-michiel',
+        description: 'Drop journal entries / reviews into a doc, or pull notes back.',
+        blocker: 'Needs Google OAuth client + Docs scope.',
+      },
+      {
+        name: 'Sheets',
+        status: 'needs-michiel',
+        description: 'Push wins / metrics to a sheet for tracking.',
+        blocker: 'Needs Google OAuth client + Sheets scope.',
+      },
+      {
+        name: 'Contacts',
+        status: 'needs-michiel',
+        description: 'Resolve Who? in Impact Filters to real people.',
+        blocker: 'Needs Google OAuth client + People API scope.',
+      },
+    ],
+  },
+  {
+    title: 'Other',
+    items: [
+      {
+        name: 'iCal feed',
+        status: 'coming-soon',
+        description: 'Subscribe to your reminders + day-plan blocks from any calendar app.',
+        blocker: 'No external dependencies — just needs to be built.',
+      },
+      {
+        name: 'Webhooks',
+        status: 'coming-soon',
+        description: 'Outbound webhooks on reminder fires, task completes, etc.',
+        blocker: 'No external dependencies — just needs to be built.',
+      },
+    ],
+  },
+];
+
+function IntegrationsTab() {
+  return (
+    <div className="space-y-8">
+      <TabHeader
+        title="Integrations"
+        subtitle="Connect LifeOS to the tools you already use."
+      />
+
+      {/* Telegram — wireable; rendered with the live setup card */}
+      <div>
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted/80 mb-3">
+          Messaging — Telegram
+        </h2>
+        <TelegramSetup />
+      </div>
+
+      {INTEGRATION_GROUPS.map((group) => (
+        <div key={group.title}>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted/80 mb-3">
+            {group.title}
+          </h2>
+          <div className="border border-border divide-y divide-border">
+            {group.items.map((it) => (
+              <IntegrationRow key={it.name} integration={it} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function IntegrationRow({ integration }: { integration: IntegrationDef }) {
+  const badge =
+    integration.status === 'wireable'
+      ? { label: 'Available', cls: 'bg-success/15 text-success' }
+      : integration.status === 'needs-michiel'
+        ? { label: 'Needs Michiel', cls: 'bg-warning/15 text-warning' }
+        : { label: 'Coming soon', cls: 'bg-text-muted/15 text-text-muted' };
+  return (
+    <div className="px-5 py-4 flex items-start justify-between gap-4">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-sm font-semibold text-text">{integration.name}</p>
+          <span
+            className={cn(
+              'text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full',
+              badge.cls,
+            )}
+          >
+            {badge.label}
+          </span>
+        </div>
+        <p className="text-xs text-text-muted leading-relaxed">{integration.description}</p>
+        {integration.blocker && (
+          <p className="text-[11px] text-text-muted/80 mt-1.5 italic">
+            {integration.status === 'needs-michiel' ? '🔒 ' : '⏳ '}
+            {integration.blocker}
+          </p>
+        )}
+      </div>
+      <button
+        type="button"
+        disabled
+        className="text-[11px] font-semibold uppercase tracking-wide px-3 py-1.5 rounded-md border border-border text-text-muted/70 cursor-not-allowed shrink-0"
+        title={integration.blocker ?? 'Not yet wired'}
+      >
+        Connect
+      </button>
     </div>
   );
 }
@@ -1007,6 +1360,15 @@ function KeyIcon({ active }: { active: boolean }) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} className="flex-shrink-0">
       <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+    </svg>
+  );
+}
+
+function LinkIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
     </svg>
   );
 }

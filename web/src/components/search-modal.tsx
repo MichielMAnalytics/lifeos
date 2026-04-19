@@ -241,7 +241,7 @@ export function SearchModal() {
       { id: 'go-thoughts', label: 'Go to Thoughts', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/thoughts'), keywords: ['thoughts', 'notes'] },
       { id: 'go-reviews', label: 'Go to Reviews', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/reviews'), keywords: ['reviews', 'reflect'] },
       { id: 'go-resources', label: 'Go to Resources', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/resources'), keywords: ['resources', 'links', 'bookmarks'] },
-      { id: 'go-schedules', label: 'Go to Schedules', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/calendar'), keywords: ['calendar', 'schedules', 'plan'] },
+      { id: 'go-schedules', label: 'Go to Schedules', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/schedules'), keywords: ['calendar', 'schedules', 'plan'] },
       { id: 'go-settings', label: 'Go to Settings', category: 'navigate' as const, icon: <ArrowRightIcon />, action: nav('/settings'), keywords: ['settings', 'preferences', 'config'] },
 
       // Actions

@@ -80,6 +80,24 @@ profileCommand
     }
   });
 
+profileCommand
+  .command('set-telegram-chat-id <chatId>')
+  .description('Link this LifeOS account to a Telegram chat (so reminders fire there). Pass an empty string to clear.')
+  .action(async (chatId: string) => {
+    try {
+      const client = createClient();
+      await client.patch('/api/v1/auth/me', { telegramChatId: chatId });
+      if (chatId.trim()) {
+        printSuccess(`Telegram chat ID set to ${chatId}. Reminders will fire to this chat via your bot.`);
+      } else {
+        printSuccess('Telegram chat ID cleared.');
+      }
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
 // ── Register subcommands ─────────────────────────────────
 program.addCommand(profileCommand);
 program.addCommand(configCommand);

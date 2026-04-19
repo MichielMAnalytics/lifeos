@@ -123,6 +123,24 @@ planCommand
   });
 
 planCommand
+  .command('show <date>')
+  .description('Show the plan for any date (YYYY-MM-DD), including all schedule blocks')
+  .action(async (date: string) => {
+    try {
+      const client = createClient();
+      const res = await client.get<ApiResponse<DayPlan>>(`/api/v1/day-plans/${date}`);
+      if (isJsonMode()) {
+        printJson(res);
+        return;
+      }
+      printPlan(res.data);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+planCommand
   .command('set <date>')
   .description('Create or update a day plan')
   .option('-w, --wake <time>', 'Wake time (HH:MM)')
@@ -361,6 +379,48 @@ planCommand
       }
 
       printSuccess('P2 marked as done.');
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+planCommand
+  .command('remove-block <date> <index>')
+  .description('Remove the Nth schedule block from a day plan (0-based, see `plan show` for the order)')
+  .action(async (date: string, indexStr: string) => {
+    try {
+      const idx = parseInt(indexStr, 10);
+      if (!Number.isFinite(idx) || idx < 0) {
+        printError('Index must be a non-negative integer.');
+        process.exitCode = 1;
+        return;
+      }
+      const client = createClient();
+      let existingSchedule: { start: string; end: string; label: string; type: string; taskId?: string }[] = [];
+      try {
+        const existing = await client.get<ApiResponse<DayPlan>>(`/api/v1/day-plans/${date}`);
+        if (existing.data?.schedule) {
+          existingSchedule = existing.data.schedule.map((b) => ({
+            start: b.start,
+            end: b.end,
+            label: b.label,
+            type: b.type,
+            taskId: (b as { taskId?: string }).taskId,
+          }));
+        }
+      } catch {
+        // No existing plan — nothing to remove.
+      }
+      if (idx >= existingSchedule.length) {
+        printError(`Index ${idx} out of range (have ${existingSchedule.length} blocks).`);
+        process.exitCode = 1;
+        return;
+      }
+      const removed = existingSchedule[idx];
+      const newSchedule = existingSchedule.filter((_, i) => i !== idx);
+      await client.put<ApiResponse<DayPlan>>(`/api/v1/day-plans/${date}`, { schedule: newSchedule });
+      printSuccess(`Removed block from ${date}: ${removed.start}-${removed.end} ${removed.label}`);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;

@@ -62,9 +62,13 @@ export function DashboardConfigProvider({ children }: { children: React.ReactNod
   const subscription = useQuery(api.stripe.getMySubscription);
   const showLifeCoach = subscription?.planType !== 'dashboard';
 
-  // Ensure new pages from DEFAULT_NAV_ORDER are merged into existing configs
+  // Ensure new pages from DEFAULT_NAV_ORDER are merged into existing configs.
+  // Also migrate the legacy `calendar` page key to `schedules` (the route was
+  // renamed) so users with a custom nav order don't see a broken link.
   const savedOrder = rawConfig?.navOrder ?? [...DEFAULT_NAV_ORDER];
-  const mergedOrder = savedOrder.filter((p) => p !== 'life-coach' && p !== 'plan');
+  const mergedOrder = savedOrder
+    .map((p) => (p === 'calendar' ? 'schedules' : p))
+    .filter((p) => p !== 'life-coach' && p !== 'plan');
   for (const page of DEFAULT_NAV_ORDER) {
     if (page !== 'life-coach' && !mergedOrder.includes(page)) {
       mergedOrder.push(page);
@@ -73,13 +77,28 @@ export function DashboardConfigProvider({ children }: { children: React.ReactNod
   if (showLifeCoach) {
     mergedOrder.unshift('life-coach');
   }
+  // Migrate hidden + per-page presets the same way.
+  const navHidden = (rawConfig?.navHidden ?? []).map((p) =>
+    p === 'calendar' ? 'schedules' : p,
+  );
+  const rawPresets = (rawConfig?.pagePresets ?? {}) as Record<string, string>;
+  const pagePresets: Record<string, string> = { ...rawPresets };
+  // Aggressive migration: if the legacy `calendar` key exists, treat it as
+  // the user's authoritative choice and overwrite any stale `schedules`
+  // value that may have been set during a brief default-config load before
+  // `rawConfig` resolved (Codex flagged this race). After the next write
+  // both stay in sync because `setPagePreset` only writes the new key.
+  if (pagePresets.calendar) {
+    pagePresets.schedules = pagePresets.calendar;
+    delete pagePresets.calendar;
+  }
 
   const config: DashboardConfig = rawConfig
     ? {
         navMode: (rawConfig.navMode as "sidebar" | "header") ?? "sidebar",
         navOrder: mergedOrder,
-        navHidden: rawConfig.navHidden ?? [],
-        pagePresets: (rawConfig.pagePresets ?? {}) as Record<string, string>,
+        navHidden,
+        pagePresets,
         customTheme: rawConfig.customTheme as Record<string, string> | undefined,
       }
     : DEFAULT_CONFIG;

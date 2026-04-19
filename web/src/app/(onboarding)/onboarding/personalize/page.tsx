@@ -36,7 +36,7 @@ function PersonalizeInner() {
     if (!isDevMode) {
       try {
         const presetMap: Record<string, string> = {};
-        const pages = ['today', 'tasks', 'projects', 'goals', 'journal', 'ideas', 'plan', 'reviews', 'life-coach', 'thoughts', 'resources', 'calendar', 'health'];
+        const pages = ['today', 'tasks', 'projects', 'goals', 'journal', 'ideas', 'plan', 'reviews', 'life-coach', 'thoughts', 'resources', 'schedules', 'health'];
         for (const page of pages) presetMap[page] = selected;
         await updateConfig({ pagePresets: presetMap });
       } catch (err) {

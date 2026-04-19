@@ -6,9 +6,15 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 
 // ── Default Config ───────────────────────────────────
 
+// Keep this in sync with `web/src/lib/presets.ts → DEFAULT_NAV_ORDER`.
+// Anything that reads dashboard config directly (CLI, API consumers) sees
+// this shape, so the page key must match what the client renders.
 const DEFAULT_CONFIG = {
   navMode: "sidebar" as const,
-  navOrder: ["today", "tasks", "projects", "goals", "journal", "ideas", "plan", "reviews"],
+  navOrder: [
+    "life-coach", "today", "tasks", "journal", "projects", "goals",
+    "ideas", "thoughts", "resources", "reviews", "schedules", "health",
+  ],
   navHidden: [] as string[],
   pagePresets: {} as Record<string, string>,
   customTheme: undefined as undefined,

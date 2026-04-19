@@ -252,6 +252,74 @@ export const clearImpactFilter = mutation({
   },
 });
 
+// ── Internal versions of impact filter mutations (for HTTP/CLI) ──
+
+export const _setImpactFilter = internalMutation({
+  args: {
+    userId: v.id("users"),
+    id: v.id("projects"),
+    purpose: v.string(),
+    importance: v.string(),
+    idealOutcome: v.string(),
+    worstResult: v.string(),
+    bestResult: v.string(),
+    successCriteria: v.array(v.string()),
+    who: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== args.userId) {
+      throw new Error("Project not found");
+    }
+    const now = Date.now();
+    const impactFilter = {
+      purpose: args.purpose,
+      importance: args.importance,
+      idealOutcome: args.idealOutcome,
+      worstResult: args.worstResult,
+      bestResult: args.bestResult,
+      successCriteria: args.successCriteria,
+      who: args.who,
+      completedAt: existing.impactFilter?.completedAt ?? now,
+      updatedAt: now,
+    };
+    await ctx.db.patch(args.id, { impactFilter });
+    const updated = await ctx.db.get(args.id);
+    await ctx.db.insert("mutationLog", {
+      userId: args.userId,
+      action: "update",
+      tableName: "projects",
+      recordId: args.id,
+      beforeData: existing,
+      afterData: updated,
+    });
+    return updated;
+  },
+});
+
+export const _clearImpactFilter = internalMutation({
+  args: { userId: v.id("users"), id: v.id("projects") },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== args.userId) {
+      throw new Error("Project not found");
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _id, _creationTime, impactFilter: _f, ...rest } = existing;
+    await ctx.db.replace(args.id, rest);
+    const updated = await ctx.db.get(args.id);
+    await ctx.db.insert("mutationLog", {
+      userId: args.userId,
+      action: "update",
+      tableName: "projects",
+      recordId: args.id,
+      beforeData: existing,
+      afterData: updated,
+    });
+    return updated;
+  },
+});
+
 // ── Internal functions (for HTTP router) ─────────────
 
 export const _list = internalQuery({

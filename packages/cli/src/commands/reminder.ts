@@ -169,6 +169,39 @@ reminderCommand
   });
 
 reminderCommand
+  .command('reschedule <id>')
+  .description('Reschedule a reminder to a new time. Sugar over `update --at`. Use --rearm to also flip status back to pending (only valid for snoozed/delivered reminders — not done).')
+  .requiredOption('-a, --at <datetime>', 'New scheduled time (ISO datetime)')
+  .option('--rearm', 'Force status back to pending so the cron will fire it again. Refused if status=done.')
+  .action(async (id: string, opts: { at: string; rearm?: boolean }) => {
+    try {
+      const client = createClient();
+      const payload: Record<string, unknown> = { scheduledAt: opts.at };
+      if (opts.rearm) {
+        // Look up the current status before forcing pending; never resurrect
+        // a `done` reminder accidentally — the user has to delete + recreate
+        // if they really want that.
+        const cur = await client.get<ApiResponse<Reminder>>(`/api/v1/reminders/${id}`);
+        if (cur.data.status === 'done') {
+          printError('Refusing to re-arm a reminder marked done. Delete and recreate, or omit --rearm.');
+          process.exitCode = 1;
+          return;
+        }
+        payload.status = 'pending';
+      }
+      const res = await client.patch<ApiResponse<Reminder>>(`/api/v1/reminders/${id}`, payload);
+      if (isJsonMode()) {
+        printJson(res);
+        return;
+      }
+      printSuccess(`Reminder rescheduled to ${opts.at}.`);
+    } catch (err) {
+      printError(err instanceof Error ? err.message : String(err));
+      process.exitCode = 1;
+    }
+  });
+
+reminderCommand
   .command('done <id>')
   .description('Mark a reminder as done')
   .action(async (id: string) => {

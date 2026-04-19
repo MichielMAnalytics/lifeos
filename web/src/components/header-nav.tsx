@@ -23,7 +23,7 @@ const allPages: Record<string, { label: string }> = {
   thoughts: { label: 'Thoughts' },
   reviews: { label: 'Reviews' },
   resources: { label: 'Resources' },
-  calendar: { label: 'Schedules' },
+  schedules: { label: 'Schedules' },
 };
 
 /* ── SVG icon components ─────────────────────────────────── */

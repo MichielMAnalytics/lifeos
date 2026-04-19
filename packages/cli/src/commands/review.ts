@@ -213,3 +213,79 @@ reviewCommand
       process.exitCode = 1;
     }
   });
+
+// ── Quarterly Moving Future ──────────────────────────
+// Dan Sullivan's three-M check-in. CLI version mirrors the wizard:
+// Morale (proudest + wins), Momentum (what's working), Motivation (what's
+// next) → spawns 0–N goals with the next quarter stamped on them.
+// Atomic on the Convex side (review row + goals land together or not at all).
+
+reviewCommand
+  .command('quarterly')
+  .description('Save a quarterly Moving Future check-in (creates the review row + N goals atomically).')
+  .requiredOption('--period-start <date>', 'Closing quarter start (YYYY-MM-DD)')
+  .requiredOption('--period-end <date>', 'Closing quarter end (YYYY-MM-DD)')
+  .requiredOption('--quarter-label <label>', 'e.g. "Q1 2026"')
+  .requiredOption('--next-quarter-label <label>', 'e.g. "Q2 2026"')
+  .requiredOption('--next-quarter-key <key>', 'goals.quarter value, e.g. "2026-Q2"')
+  .requiredOption('--proudest <text>', 'Morale: what you\'re most proud of')
+  .requiredOption('--confident-about <text>', 'Momentum: what\'s working right now')
+  .requiredOption('--excited-about <text>', 'Motivation: what\'s next')
+  .option('--wins <list>', 'Morale wins, newline-separated')
+  .option('--priorities <list>', 'Next-quarter priorities, newline-separated. Each becomes a goal unless prefixed with `-` (skip).')
+  .option('--score <n>', 'Score 1–10', '8')
+  .action(
+    async (opts: {
+      periodStart: string;
+      periodEnd: string;
+      quarterLabel: string;
+      nextQuarterLabel: string;
+      nextQuarterKey: string;
+      proudest: string;
+      confidentAbout: string;
+      excitedAbout: string;
+      wins?: string;
+      priorities?: string;
+      score: string;
+    }) => {
+      try {
+        const wins = (opts.wins ?? '').split('\n').map((w) => w.trim()).filter(Boolean);
+        const priorities = (opts.priorities ?? '')
+          .split('\n')
+          .map((p) => p.trim())
+          .filter(Boolean)
+          .map((line) => {
+            const skip = line.startsWith('-');
+            return {
+              title: skip ? line.slice(1).trim() : line,
+              createAsGoal: !skip,
+            };
+          });
+        const score = Number(opts.score);
+        const client = createClient();
+        const res = await client.post('/api/v1/reviews/moving-future', {
+          periodStart: opts.periodStart,
+          periodEnd: opts.periodEnd,
+          quarterLabel: opts.quarterLabel,
+          nextQuarterLabel: opts.nextQuarterLabel,
+          nextQuarterGoalKey: opts.nextQuarterKey,
+          morale: { proudest: opts.proudest, wins },
+          momentum: { confidentAbout: opts.confidentAbout },
+          motivation: { excitedAbout: opts.excitedAbout },
+          priorities,
+          score: Number.isFinite(score) ? score : undefined,
+        });
+        if (isJsonMode()) {
+          printJson(res);
+          return;
+        }
+        const goalsCreated = priorities.filter((p) => p.createAsGoal).length;
+        printSuccess(
+          `Moving Future saved for ${opts.quarterLabel} (${goalsCreated} ${opts.nextQuarterLabel} goal${goalsCreated === 1 ? '' : 's'} created).`,
+        );
+      } catch (err) {
+        printError(err instanceof Error ? err.message : String(err));
+        process.exitCode = 1;
+      }
+    },
+  );

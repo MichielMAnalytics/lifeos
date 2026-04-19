@@ -1,7 +1,10 @@
 'use client';
 
-import { PageShell } from '@/components/page-shell';
+// Old `/calendar` URL is now `/schedules`. Keep this file as a redirect
+// so existing bookmarks / links don't 404.
 
-export default function CalendarPage() {
-  return <PageShell page="calendar" title="Schedules" subtitle="Your week at a glance" />;
+import { redirect } from 'next/navigation';
+
+export default function CalendarRedirect() {
+  redirect('/schedules');
 }

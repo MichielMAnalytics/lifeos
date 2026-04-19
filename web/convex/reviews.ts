@@ -205,6 +205,85 @@ export const createMovingFuture = mutation({
   },
 });
 
+// Internal version of createMovingFuture so the HTTP / CLI layer (which
+// authenticates via API key, not Convex Auth) can call it. Mirrors the
+// public mutation body exactly — userId comes from the route, not from
+// `getAuthUserId`.
+export const _createMovingFuture = internalMutation({
+  args: {
+    userId: v.id("users"),
+    periodStart: v.string(),
+    periodEnd: v.string(),
+    quarterLabel: v.string(),
+    nextQuarterLabel: v.string(),
+    nextQuarterGoalKey: v.string(),
+    morale: v.object({ proudest: v.string(), wins: v.array(v.string()) }),
+    momentum: v.object({ confidentAbout: v.string() }),
+    motivation: v.object({ excitedAbout: v.string() }),
+    priorities: v.array(v.object({
+      title: v.string(),
+      createAsGoal: v.boolean(),
+    })),
+    score: v.optional(v.float64()),
+  },
+  handler: async (ctx, args) => {
+    const createdGoalIds: string[] = [];
+    for (const p of args.priorities) {
+      if (!p.createAsGoal || !p.title.trim()) continue;
+      const goalId = await ctx.db.insert("goals", {
+        userId: args.userId,
+        title: p.title.trim(),
+        status: "active",
+        quarter: args.nextQuarterGoalKey,
+      });
+      createdGoalIds.push(goalId);
+      await ctx.db.insert("mutationLog", {
+        userId: args.userId,
+        action: "create",
+        tableName: "goals",
+        recordId: goalId,
+        beforeData: null,
+        afterData: await ctx.db.get(goalId),
+      });
+    }
+
+    const reviewId = await ctx.db.insert("reviews", {
+      userId: args.userId,
+      reviewType: "quarterly",
+      periodStart: args.periodStart,
+      periodEnd: args.periodEnd,
+      content: {
+        type: "moving-future",
+        quarterLabel: args.quarterLabel,
+        nextQuarterLabel: args.nextQuarterLabel,
+        morale: args.morale,
+        momentum: args.momentum,
+        motivation: args.motivation,
+        priorities: args.priorities
+          .filter((p) => p.title.trim().length > 0)
+          .map((p) => ({
+            title: p.title.trim(),
+            createdAsGoal: p.createAsGoal,
+          })),
+        createdGoalIds,
+      },
+      score: args.score,
+    });
+
+    const review = await ctx.db.get(reviewId);
+    await ctx.db.insert("mutationLog", {
+      userId: args.userId,
+      action: "create",
+      tableName: "reviews",
+      recordId: reviewId,
+      beforeData: null,
+      afterData: review,
+    });
+
+    return { review, createdGoalIds };
+  },
+});
+
 // ── remove ────────────────────────────────────────────
 
 export const remove = mutation({

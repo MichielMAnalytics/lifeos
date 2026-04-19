@@ -126,17 +126,27 @@ export function TelegramSetup() {
           <>
             <p className="text-xs text-text-muted leading-relaxed">
               Reminders fire to Telegram via the bot you configured during
-              channel setup. Paste your Telegram chat ID below to enable
-              delivery — find it by sending any message to{' '}
-              <a
-                href="https://t.me/userinfobot"
-                target="_blank"
-                rel="noreferrer"
-                className="text-accent hover:underline"
-              >
-                @userinfobot
-              </a>.
+              channel setup. Two ways to link your chat:
             </p>
+            <ul className="text-xs text-text-muted leading-relaxed list-disc list-inside space-y-1 ml-1">
+              <li>
+                <strong className="text-text">Automatic:</strong> the next time you message your bot,
+                ask it to <em>“link my chat to LifeOS”</em>. Your agent (which has the LifeOS CLI)
+                will run <code className="text-text bg-bg-subtle px-1 rounded">lifeos profile set-telegram-chat-id &lt;chat&gt;</code>.
+              </li>
+              <li>
+                <strong className="text-text">Manual:</strong> paste your chat ID below. Find it by
+                sending any message to{' '}
+                <a
+                  href="https://t.me/userinfobot"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-accent hover:underline"
+                >
+                  @userinfobot
+                </a>.
+              </li>
+            </ul>
             <button
               type="button"
               onClick={() => {
@@ -145,7 +155,7 @@ export function TelegramSetup() {
               }}
               className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-md bg-accent text-white hover:bg-accent-hover transition-colors"
             >
-              Add chat ID
+              Paste chat ID
             </button>
           </>
         )}
