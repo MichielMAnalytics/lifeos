@@ -28,6 +28,40 @@ import type { Doc, Id } from "./_generated/dataModel";
 
 const TELEGRAM_API = "https://api.telegram.org";
 
+// ── sendTestMessage ──────────────────────────────────
+// Triggered from `reminderHelpers.sendTestTelegram` (a user clicking the
+// "Test now" button). Sends a plain confirmation to the user's chat and
+// returns the result so the UI can surface it. We deliberately use plain
+// text (no MarkdownV2) so this works even if escaping has a regression.
+
+export const sendTestMessage = internalAction({
+  args: { chatId: v.string() },
+  handler: async (_ctx, args) => {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) {
+      console.error("[telegram-test] TELEGRAM_BOT_TOKEN is not set in Convex env");
+      return { ok: false as const, reason: "no-token" as const };
+    }
+    const res = await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: args.chatId,
+        text:
+          "✅ LifeOS test\n\n" +
+          "If you see this, your Telegram delivery is working. " +
+          "Reminders set in LifeOS will arrive here at their scheduled time.",
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      console.error("[telegram-test] sendMessage failed", res.status, body);
+      return { ok: false as const, reason: `telegram-${res.status}` as const, detail: body };
+    }
+    return { ok: true as const };
+  },
+});
+
 // ── The cron tick ────────────────────────────────────
 
 export const tick = internalAction({

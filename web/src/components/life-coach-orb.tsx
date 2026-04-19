@@ -295,6 +295,15 @@ export function LifeCoachOrb() {
                 )}
               </div>
             ))}
+            {/* Typing bubble while waiting for the first delta. Once a stream
+                message is created above, the inline cursor takes over. */}
+            {isStreaming && streamMessageIdRef.current === null && (
+              <div className="mr-auto bg-bg-subtle text-text border border-border-subtle rounded-xl rounded-bl-sm px-3 py-2.5 inline-flex items-center gap-1">
+                <span className="block h-1.5 w-1.5 rounded-full bg-text-muted/70 animate-[bounce_1.4s_ease-in-out_0s_infinite]" />
+                <span className="block h-1.5 w-1.5 rounded-full bg-text-muted/70 animate-[bounce_1.4s_ease-in-out_0.15s_infinite]" />
+                <span className="block h-1.5 w-1.5 rounded-full bg-text-muted/70 animate-[bounce_1.4s_ease-in-out_0.3s_infinite]" />
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 

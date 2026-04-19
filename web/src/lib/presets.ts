@@ -594,6 +594,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       name: "Default",
       description: "Weekly calendar with reminders",
       sections: [
+        { id: "telegram-setup", label: "Telegram delivery", span: "full" },
         { id: "calendar-weekly", label: "Weekly View", span: "full" },
         { id: "reminders-upcoming", label: "Reminders", span: "full" },
       ],

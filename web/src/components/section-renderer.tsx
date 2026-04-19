@@ -48,6 +48,7 @@ import { ThoughtsList } from './sections/thoughts-list';
 import { ResourcesGrid } from './sections/resources-grid';
 import { CalendarWeekly } from './sections/calendar-weekly';
 import { RemindersUpcoming } from './sections/reminders-upcoming';
+import { TelegramSetup } from './sections/telegram-setup';
 import { WorkoutLog } from './sections/workout-log';
 import { ActiveProgramme } from './sections/active-programme';
 import { HealthSummary } from './sections/health-summary';
@@ -124,6 +125,7 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   // Calendar page sections
   'calendar-weekly': CalendarWeekly,
   'reminders-upcoming': RemindersUpcoming,
+  'telegram-setup': TelegramSetup,
 
   // Health page sections
   'workout-log': WorkoutLog,

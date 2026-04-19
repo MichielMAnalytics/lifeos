@@ -4,7 +4,9 @@
 // actions — queries and mutations must stay in the default V8 runtime.
 
 import { v } from "convex/values";
-import { internalMutation, internalQuery } from "./_generated/server";
+import { internalMutation, internalQuery, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const _findDue = internalQuery({
   args: {},
@@ -82,6 +84,32 @@ export const _snoozeReminder = internalMutation({
       beforeData: existing,
       afterData: await ctx.db.get(args.id),
     });
+  },
+});
+
+// ── sendTestTelegram (public mutation) ──────────────
+// User-triggered "send me a test reminder right now" — useful to confirm
+// the whole pipeline (token + chat ID + webhook reachability) works
+// without waiting for a real reminder to come due.
+//
+// Uses scheduler.runAfter(0) so the actual Telegram fetch happens in a
+// Node action; the mutation only validates and returns immediately.
+export const sendTestTelegram = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const user = await ctx.db.get(userId);
+    if (!user?.telegramChatId) {
+      return { ok: false as const, reason: "no-chat-id" as const };
+    }
+
+    await ctx.scheduler.runAfter(0, internal.reminderDispatch.sendTestMessage, {
+      chatId: user.telegramChatId,
+    });
+
+    return { ok: true as const };
   },
 });
 
