@@ -106,11 +106,21 @@ ENV HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
 ENV PATH="${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}"
 
 # Pre-warm the V8 compile cache by booting the gateway with a synthetic config
-# that enables all plugins/channels used at runtime. Without this, the warmup
-# only caches core gateway code (~12MB) and misses plugin modules (~7MB) that
-# then need JIT compilation at runtime, adding 2+ minutes to startup.
+# that mirrors the runtime config shape as closely as possible, so every module
+# the runtime imports is also imported here and its compiled bytecode lands in
+# /app/.compile-cache. Discard-port (127.0.0.1:9) baseUrls keep us offline.
+#
+# Rules that govern what gets cached:
+#   1. A module only enters the cache if it's IMPORTED during warmup.
+#   2. OpenClaw loads provider adapters lazily, keyed on `api` (anthropic-messages,
+#      openai-responses, openai-completions). Include one provider per adapter.
+#   3. `tools.media.audio`, `skills.load`, `gateway.trustedProxies`,
+#      `controlUi.allowedOrigins`, and per-provider `request.allowPrivateNetwork`
+#      each trigger their own module graph.
+#   4. Channel init happens AFTER the HTTP server binds — sleep after port 200
+#      so "starting channels and sidecars…" completes before we kill.
 RUN mkdir -p /tmp/warmup-home/.openclaw \
-    && echo '{"gateway":{"auth":{"mode":"token","token":"warmup-token"},"controlUi":{"dangerouslyDisableDeviceAuth":true}},"browser":{"enabled":true,"headless":true,"noSandbox":true},"channels":{"telegram":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]},"whatsapp":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]}},"plugins":{"entries":{"whatsapp":{"enabled":true},"telegram":{"enabled":true}}}}' \
+    && echo '{"gateway":{"auth":{"mode":"token","token":"warmup-token"},"controlUi":{"dangerouslyDisableDeviceAuth":true,"allowedOrigins":["http://localhost:4101","https://lifeos.zone"]},"trustedProxies":["10.0.0.0/8"]},"browser":{"enabled":true,"headless":true,"noSandbox":true,"defaultProfile":"openclaw"},"models":{"mode":"replace","providers":{"anthropic":{"baseUrl":"http://127.0.0.1:9","apiKey":"warmup","api":"anthropic-messages","headers":{"X-Warmup":"1"},"request":{"allowPrivateNetwork":true},"models":[{"id":"claude-opus-4-6","name":"Claude Opus","contextWindow":1000000,"maxTokens":32000,"input":["text","image"]}]},"openai":{"baseUrl":"http://127.0.0.1:9","apiKey":"warmup","api":"openai-responses","headers":{"X-Warmup":"1"},"request":{"allowPrivateNetwork":true},"models":[{"id":"gpt-5.4-2026-03-05","name":"GPT 5.4","contextWindow":1048576,"maxTokens":32000,"input":["text","image"]}]},"kimi":{"baseUrl":"http://127.0.0.1:9","apiKey":"warmup","api":"openai-completions","headers":{"X-Warmup":"1"},"request":{"allowPrivateNetwork":true},"models":[{"id":"moonshotai/kimi-k2-thinking-maas","name":"Kimi","contextWindow":262144,"maxTokens":65536}]},"gemini":{"baseUrl":"http://127.0.0.1:9","apiKey":"warmup","api":"openai-completions","headers":{"X-Warmup":"1"},"request":{"allowPrivateNetwork":true},"models":[{"id":"google/gemini-3.1-pro-preview","name":"Gemini","contextWindow":1000000,"maxTokens":65536}]},"minimax":{"baseUrl":"http://127.0.0.1:9","apiKey":"warmup","api":"openai-completions","headers":{"X-Warmup":"1"},"request":{"allowPrivateNetwork":true},"models":[{"id":"MiniMax-M2.1","name":"MiniMax","contextWindow":200000,"maxTokens":8192}]},"qwen-vertex":{"baseUrl":"http://127.0.0.1:9","apiKey":"warmup","api":"openai-completions","headers":{"X-Warmup":"1"},"request":{"allowPrivateNetwork":true},"models":[{"id":"qwen/qwen3-coder-480b-a35b-instruct-maas","name":"Qwen","contextWindow":262144,"maxTokens":65536}]}}},"agents":{"defaults":{"model":{"primary":"openai/gpt-5.4-2026-03-05"}}},"tools":{"media":{"audio":{"enabled":true,"echoTranscript":true,"models":[{"provider":"openai","model":"gpt-4o-mini-transcribe"}]}}},"skills":{"load":{"extraDirs":["/tmp/warmup-home/.openclaw/skills"]}},"channels":{"telegram":{"enabled":true,"dmPolicy":"open","allowFrom":["*"]}},"plugins":{"deny":["whatsapp","discord","googlechat","acpx","device-pair","phone-control","talk-voice","memory-core","active-memory"],"entries":{"telegram":{"enabled":true}}}}' \
        > /tmp/warmup-home/.openclaw/openclaw.json
 RUN HOME=/tmp/warmup-home node --disable-warning=ExperimentalWarning openclaw.mjs gateway --allow-unconfigured &\
     pid=$!; \
@@ -118,6 +128,8 @@ RUN HOME=/tmp/warmup-home node --disable-warning=ExperimentalWarning openclaw.mj
       if curl -sf http://127.0.0.1:18789 >/dev/null 2>&1; then break; fi; \
       sleep 1; \
     done; \
+    curl -sf http://127.0.0.1:18789/ >/dev/null 2>&1 || true; \
+    sleep 45; \
     kill $pid 2>/dev/null; wait $pid 2>/dev/null || true; \
     rm -rf /tmp/warmup-home
 

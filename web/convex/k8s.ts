@@ -189,7 +189,6 @@ function buildOpenClawConfig(
   const ch = enabledChannels ?? {};
   const hasTelegram = ch.telegram ?? false;
   const hasDiscord = ch.discord ?? false;
-  const hasWhatsapp = ch.whatsapp ?? true; // WhatsApp uses QR pairing, always available
 
   return {
     gateway: {
@@ -310,14 +309,25 @@ function buildOpenClawConfig(
     channels: {
       ...(hasTelegram ? { telegram: { enabled: true, dmPolicy: "open", allowFrom: ["*"] } } : {}),
       ...(hasDiscord ? { discord: { enabled: true, dmPolicy: "open", allowFrom: ["*"], groupPolicy: "open" } } : {}),
-      ...(hasWhatsapp ? { whatsapp: { dmPolicy: "open", allowFrom: ["*"] } } : {}),
     },
     plugins: {
+      // Deny v4.15 auto-loaded plugins we don't use. Every denied plugin skips
+      // its module graph at boot, shrinking the JIT/import work on cold starts.
+      // Keep `browser` and `telegram` (implicit auto-enable defaults).
+      deny: [
+        "whatsapp",
+        "discord",
+        "googlechat",
+        "acpx",
+        "device-pair",
+        "phone-control",
+        "talk-voice",
+        "memory-core",
+        "active-memory",
+      ],
       entries: {
-        ...(hasWhatsapp ? { whatsapp: { enabled: true } } : {}),
         ...(hasTelegram ? { telegram: { enabled: true } } : {}),
         ...(hasDiscord ? { discord: { enabled: true } } : {}),
-        googlechat: { enabled: true },
       },
     },
   };
@@ -514,12 +524,12 @@ fs.writeFileSync(cf, JSON.stringify(c));
                 initialDelaySeconds: 10,
                 periodSeconds: 10,
                 timeoutSeconds: 5,
-                failureThreshold: 60, // 10 + 60×10 = 610s max startup
+                failureThreshold: 120, // 10 + 120×10 = 1210s max startup (20min — accommodates slow disk first-boot after image change)
               },
               readinessProbe: {
                 httpGet: { path: "/", port: 18789 },
-                periodSeconds: 5,
-                timeoutSeconds: 3,
+                periodSeconds: 10,
+                timeoutSeconds: 15,
               },
               livenessProbe: {
                 httpGet: { path: "/", port: 18789 },
@@ -675,12 +685,12 @@ export async function patchStatefulSet(
       initialDelaySeconds: 10,
       periodSeconds: 10,
       timeoutSeconds: 5,
-      failureThreshold: 60,
+      failureThreshold: 120, // 10 + 120×10 = 1210s max startup (20min — accommodates slow disk first-boot after image change)
     },
     readinessProbe: {
       httpGet: { path: "/", port: 18789 },
-      periodSeconds: 5,
-      timeoutSeconds: 3,
+      periodSeconds: 10,
+      timeoutSeconds: 15,
     },
     livenessProbe: {
       httpGet: { path: "/", port: 18789 },
