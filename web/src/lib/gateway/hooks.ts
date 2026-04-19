@@ -2,7 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGateway } from './context';
+import type { GatewayClient } from './client';
 import type { GatewayConnectionState } from './types';
+
+export interface GatewayConnection {
+  status: GatewayConnectionState;
+  client: GatewayClient | null;
+}
 
 /** Execute a gateway RPC call. Returns { data, error, loading, refetch }. */
 export function useGatewayQuery<T = unknown>(
@@ -52,8 +58,10 @@ export function useGatewaySubscription(
   }, [event, client]);
 }
 
-/** Get the current gateway connection state. */
-export function useGatewayConnection(): GatewayConnectionState {
-  const { state } = useGateway();
-  return state;
+/** Get the current gateway connection — both status and the client handle.
+ * Consumers commonly need both (gate UI on `status === 'connected'`, then
+ * use `client.call(...)`), so we expose them together. */
+export function useGatewayConnection(): GatewayConnection {
+  const { client, state } = useGateway();
+  return { status: state, client };
 }

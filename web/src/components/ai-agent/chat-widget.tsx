@@ -94,7 +94,8 @@ export function ChatWidget() {
   // Receive streaming chat responses
   useGatewaySubscription(
     isConnected ? 'chat' : null,
-    useCallback((data: { content?: string; done?: boolean; chunk?: string }) => {
+    useCallback((raw: unknown) => {
+      const data = raw as { content?: string; done?: boolean; chunk?: string };
       const chunk = data.chunk ?? data.content ?? '';
 
       if (chunk) {

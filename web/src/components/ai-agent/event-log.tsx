@@ -59,7 +59,8 @@ export function EventLog() {
   useGatewaySubscription(
     connection.status === 'connected' ? '*' : null,
     useCallback(
-      (data: { event?: string; type?: string; [key: string]: unknown }) => {
+      (raw: unknown) => {
+        const data = raw as { event?: string; type?: string; [key: string]: unknown };
         const eventName = data.event ?? data.type ?? 'unknown';
 
         knownEvents.current.add(eventName);

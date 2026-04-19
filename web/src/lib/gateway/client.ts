@@ -3,6 +3,14 @@ import type { GatewayConnectionState } from './types';
 type EventHandler = (data: unknown) => void;
 type StateHandler = (state: GatewayConnectionState) => void;
 
+// App-level heartbeat. We send a no-op `ping` request every PING_INTERVAL_MS
+// and treat the lack of a reply within PING_TIMEOUT_MS as a dead connection.
+// The browser doesn't expose native WS ping/pong frames, and idle WSs die
+// behind load balancers without any close event firing — so this is the only
+// way to detect a half-open connection and force a reconnect.
+const PING_INTERVAL_MS = 30_000;
+const PING_TIMEOUT_MS = 10_000;
+
 export class GatewayClient {
   private ws: WebSocket | null = null;
   private url: string;
@@ -17,6 +25,7 @@ export class GatewayClient {
   private maxReconnectDelay = 30000;
   private disposed = false;
   private authenticated = false;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(url: string, token: string) {
     this.url = url;
@@ -87,6 +96,7 @@ export class GatewayClient {
     this.ws.onclose = () => {
       this.ws = null;
       this.authenticated = false;
+      this.stopHeartbeat();
       for (const [, { reject }] of this.pending) {
         reject(new Error('Connection closed'));
       }
@@ -130,6 +140,7 @@ export class GatewayClient {
       resolve: () => {
         this.authenticated = true;
         this.setState('connected');
+        this.startHeartbeat();
       },
       reject: (err) => {
         console.error('[gateway] connect failed:', err.message);
@@ -141,24 +152,69 @@ export class GatewayClient {
     this.ws!.send(JSON.stringify(connectMsg));
   }
 
+  /** Start sending periodic pings to detect dead connections. Each ping is a
+   * normal RPC call with a short timeout — if it fails the WS is half-open
+   * and we tear it down so reconnect kicks in. */
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.authenticated) {
+        return;
+      }
+      const id = String(++this.requestId);
+      const timeout = setTimeout(() => {
+        if (this.pending.has(id)) {
+          this.pending.delete(id);
+          console.warn('[gateway] heartbeat timeout — forcing reconnect');
+          // Closing triggers onclose → reconnect with backoff.
+          this.ws?.close();
+        }
+      }, PING_TIMEOUT_MS);
+      this.pending.set(id, {
+        resolve: () => clearTimeout(timeout),
+        reject: () => {
+          // The server explicitly rejected ping (unsupported method); that's
+          // fine — connection is alive. Treat as a successful heartbeat.
+          clearTimeout(timeout);
+        },
+      });
+      try {
+        this.ws.send(JSON.stringify({ type: 'req', id, method: 'ping', params: {} }));
+      } catch {
+        clearTimeout(timeout);
+        this.pending.delete(id);
+      }
+    }, PING_INTERVAL_MS);
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
   async call<T = unknown>(method: string, params?: Record<string, unknown>): Promise<T> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.authenticated) {
       throw new Error('Not connected');
     }
     const id = String(++this.requestId);
     return new Promise<T>((resolve, reject) => {
-      this.pending.set(id, {
-        resolve: resolve as (v: unknown) => void,
-        reject,
-      });
-      // OpenClaw protocol: { type: "req", id, method, params }
-      this.ws!.send(JSON.stringify({ type: 'req', id, method, params: params ?? {} }));
-      setTimeout(() => {
+      // Wrap resolve/reject so they also clear the timeout — otherwise we
+      // leak orphaned setTimeouts after disconnect/cleanup. 90s timeout
+      // matches Michiel's tweak (some agent calls take longer than 30s).
+      const timeoutHandle = setTimeout(() => {
         if (this.pending.has(id)) {
           this.pending.delete(id);
           reject(new Error(`Request ${method} timed out`));
         }
       }, 90000);
+      this.pending.set(id, {
+        resolve: ((v: unknown) => { clearTimeout(timeoutHandle); resolve(v as T); }) as (v: unknown) => void,
+        reject: (err: Error) => { clearTimeout(timeoutHandle); reject(err); },
+      });
+      // OpenClaw protocol: { type: "req", id, method, params }
+      this.ws!.send(JSON.stringify({ type: 'req', id, method, params: params ?? {} }));
     });
   }
 
@@ -178,6 +234,15 @@ export class GatewayClient {
   disconnect() {
     this.disposed = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.stopHeartbeat();
+    // Reject any in-flight RPCs so callers don't hang forever waiting on
+    // a response that will never come. Each pending entry's reject is also
+    // wired to clear its own setTimeout (see `call` and `startHeartbeat`),
+    // so this also cleans up the per-request timeout handles.
+    for (const [, { reject }] of this.pending) {
+      reject(new Error('Connection disposed'));
+    }
+    this.pending.clear();
     if (this.ws) {
       this.ws.onclose = null;
       this.ws.close();

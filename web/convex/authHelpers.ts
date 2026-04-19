@@ -101,6 +101,7 @@ export const updateMe = mutation({
   args: {
     name: v.optional(v.string()),
     timezone: v.optional(v.string()),
+    telegramChatId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -114,6 +115,10 @@ export const updateMe = mutation({
     const updates: Record<string, unknown> = {};
     if (args.name !== undefined) updates.name = args.name;
     if (args.timezone !== undefined) updates.timezone = args.timezone;
+    if (args.telegramChatId !== undefined) {
+      // Allow clearing by passing an empty string.
+      updates.telegramChatId = args.telegramChatId.trim() || undefined;
+    }
 
     if (Object.keys(updates).length === 0) {
       throw new Error("No fields to update");
@@ -148,6 +153,42 @@ export const listApiKeys = query({
       name: k.name,
       lastUsedAt: k.lastUsedAt,
     }));
+  },
+});
+
+// ── Telegram link code (mutation) ────────────────────
+// Authenticated user requests a one-time 6-char code; pasting it into the
+// LifeOS Telegram bot as `/start <CODE>` binds that chat to this user.
+// Codes expire in 10 minutes. Email-based linking was rejected because
+// anyone who knows your email could claim the channel before you do.
+
+const LINK_CODE_TTL_MS = 10 * 60_000;
+const LINK_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/I/1
+const LINK_CODE_LENGTH = 6;
+
+function generateLinkCode(): string {
+  let out = "";
+  for (let i = 0; i < LINK_CODE_LENGTH; i++) {
+    out += LINK_CODE_ALPHABET[Math.floor(Math.random() * LINK_CODE_ALPHABET.length)];
+  }
+  return out;
+}
+
+export const generateTelegramLinkCode = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const code = generateLinkCode();
+    const expiresAt = Date.now() + LINK_CODE_TTL_MS;
+
+    await ctx.db.patch(userId, {
+      telegramLinkCode: code,
+      telegramLinkExpiresAt: expiresAt,
+    });
+
+    return { code, expiresAt };
   },
 });
 
@@ -190,6 +231,7 @@ export const _updateMe = internalMutation({
     userId: v.id("users"),
     name: v.optional(v.string()),
     timezone: v.optional(v.string()),
+    telegramChatId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db.get(args.userId);
@@ -200,6 +242,9 @@ export const _updateMe = internalMutation({
     const updates: Record<string, unknown> = {};
     if (args.name !== undefined) updates.name = args.name;
     if (args.timezone !== undefined) updates.timezone = args.timezone;
+    if (args.telegramChatId !== undefined) {
+      updates.telegramChatId = args.telegramChatId.trim() || undefined;
+    }
 
     if (Object.keys(updates).length === 0) {
       throw new Error("No fields to update");

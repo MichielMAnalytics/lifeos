@@ -3006,4 +3006,85 @@ http.route({
   }),
 });
 
+// ════════════════════════════════════════════════════════
+// TELEGRAM webhook — receives button-tap callbacks for reminders. Telegram
+// is configured to POST to <CONVEX_SITE_URL>/api/v1/telegram/webhook. The
+// payload format is the standard Bot API Update object; we only care about
+// the `callback_query` field.
+//
+// Auth: Telegram doesn't sign payloads. We use the bot's secret_token
+// header (set when registering the webhook) — the value lives in the
+// `TELEGRAM_WEBHOOK_SECRET` env var. If unset, the route accepts any POST
+// (acceptable in dev; required in prod).
+// ════════════════════════════════════════════════════════
+
+http.route({
+  path: "/api/v1/telegram/webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    if (secret) {
+      const provided = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
+      if (provided !== secret) {
+        return new Response("forbidden", { status: 403 });
+      }
+    }
+
+    let update: Record<string, unknown>;
+    try {
+      update = await request.json();
+    } catch {
+      return new Response("bad json", { status: 400 });
+    }
+
+    const cb = update.callback_query as
+      | {
+          id?: string;
+          data?: string;
+          message?: { chat?: { id?: number }; message_id?: number };
+          from?: { id?: number };
+        }
+      | undefined;
+
+    // Auto-link flow: user generates a one-time code in the dashboard
+    // (`auth.generateTelegramLinkCode`), then sends `/start <CODE>` to the
+    // bot. We look the code up against `users.telegramLinkCode` and bind
+    // the chat. Anything else under `/start` is a no-op.
+    const message = update.message as
+      | {
+          text?: string;
+          chat?: { id?: number };
+          from?: { id?: number };
+        }
+      | undefined;
+
+    if (message?.text?.startsWith("/start")) {
+      const parts = message.text.trim().split(/\s+/);
+      const code = parts[1];
+      const chatId = message.chat?.id;
+      if (code && chatId !== undefined) {
+        await ctx.runMutation(internal.reminderHelpers._claimLinkCode, {
+          code,
+          chatId: String(chatId),
+        });
+      }
+      // Always 200 to Telegram — no further action.
+      return new Response("ok", { status: 200 });
+    }
+
+    if (!cb || !cb.data || !cb.id) {
+      return new Response("ok", { status: 200 });
+    }
+
+    await ctx.runAction(internal.reminderDispatch.handleCallback, {
+      callbackQueryId: cb.id,
+      data: cb.data,
+      chatId: cb.message?.chat?.id !== undefined ? String(cb.message.chat.id) : undefined,
+      messageId: cb.message?.message_id,
+    });
+
+    return new Response("ok", { status: 200 });
+  }),
+});
+
 export default http;
