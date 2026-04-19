@@ -11,6 +11,7 @@ import { ContextMenu, type ContextMenuItem } from '@/components/context-menu';
 import { formatRelativeDate, cn } from '@/lib/utils';
 import { TasksToolbar, type TaskDensity, type TaskSortBy } from '@/components/tasks-toolbar';
 import { Skeleton, SkeletonRow } from '@/components/ui/skeleton';
+import { useTimeFormat } from '@/components/time-format-provider';
 
 // ── Date helpers ─────────────────────────────────────
 
@@ -851,7 +852,7 @@ function BucketColumn({ bucket, dragOverKey, selectedIds, scheduledTimes, onDrag
               showDate={true}
               bucketKey={bucket.key}
               isSelected={selectedIds.has(task._id)}
-              scheduledTime={scheduledTimes.get(task._id)}
+              scheduledTime={bucket.key === 'today' ? scheduledTimes.get(task._id) : undefined}
               onDragStart={onDragStart}
               onClick={(e) => onTaskClick(task._id, e)}
               onComplete={() => onTaskComplete(task._id)}
@@ -895,6 +896,7 @@ export function TasksBucketed() {
   const tasks = useQuery(api.tasks.list, { status: 'todo' });
   // Today's day plan — used to surface scheduled time on task cards (FR-1)
   const todayDayPlan = useQuery(api.dayPlans.getByDate, { date: todayISO() });
+  const { formatTime } = useTimeFormat();
   const updateTask = useMutation(api.tasks.update);
   const completeTaskMut = useMutation(api.tasks.complete);
   const removeTaskMut = useMutation(api.tasks.remove);
@@ -909,22 +911,15 @@ export function TasksBucketed() {
   const [density, setDensity] = useState<TaskDensity>('comfortable');
   const [sortBy, setSortBy] = useState<TaskSortBy>('manual');
 
-  // Build a map of taskId → formatted scheduled time (e.g. "9:00 AM") for any
-  // task that's part of today's day plan schedule. Hidden when no plan exists.
+  // Build a map of taskId → formatted scheduled time (e.g. "9:00 AM" or "09:00")
+  // for any task that's part of today's day plan schedule.
   const scheduledTimes = (() => {
     const map = new Map<string, string>();
     const schedule = todayDayPlan?.schedule;
     if (!schedule) return map;
     for (const block of schedule) {
       if (!block.taskId) continue;
-      const [hStr, mStr] = block.start.split(':');
-      const h = Number(hStr);
-      const m = Number(mStr);
-      if (!Number.isFinite(h) || !Number.isFinite(m)) continue;
-      const suffix = h >= 12 ? 'PM' : 'AM';
-      const display = h === 0 ? 12 : h > 12 ? h - 12 : h;
-      const minutes = m.toString().padStart(2, '0');
-      map.set(block.taskId, `${display}:${minutes} ${suffix}`);
+      map.set(block.taskId, formatTime(block.start));
     }
     return map;
   })();

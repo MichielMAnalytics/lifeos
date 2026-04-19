@@ -12,6 +12,7 @@ import { LoadingScreen } from '@/components/loading-screen';
 import { GlobalUndo } from '@/components/global-undo';
 import { LifeCoachOrb } from '@/components/life-coach-orb';
 import { SetupHints } from '@/components/setup-hints';
+import { TimeFormatProvider } from '@/components/time-format-provider';
 
 function RedirectToLogin() {
   const router = useRouter();
@@ -90,7 +91,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <Authenticated>
         <DashboardConfigProvider>
-          <AppShell>{children}</AppShell>
+          <TimeFormatProvider>
+            <AppShell>{children}</AppShell>
+          </TimeFormatProvider>
         </DashboardConfigProvider>
       </Authenticated>
     </>
