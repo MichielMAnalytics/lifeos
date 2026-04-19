@@ -9,7 +9,7 @@
 // The card stays compact when everything is wired up.
 
 import { useState, useEffect } from 'react';
-import { useMutation } from 'convex/react';
+import { useAction, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { useCurrentUser } from '@/lib/useCurrentUser';
 import { cn } from '@/lib/utils';
@@ -23,7 +23,9 @@ type TestState =
 export function TelegramSetup() {
   const user = useCurrentUser();
   const generateCode = useMutation(api.authHelpers.generateTelegramLinkCode);
-  const sendTest = useMutation(api.reminderHelpers.sendTestTelegram);
+  // Test path is an action because it has to actually hit Telegram and
+  // return the real delivery result (not just "scheduled").
+  const sendTest = useAction(api.reminderDispatch.sendTestTelegram);
 
   const [code, setCode] = useState<{ code: string; expiresAt: number } | null>(null);
   const [generating, setGenerating] = useState(false);

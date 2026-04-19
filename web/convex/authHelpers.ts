@@ -180,9 +180,28 @@ export const generateTelegramLinkCode = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const code = generateLinkCode();
-    const expiresAt = Date.now() + LINK_CODE_TTL_MS;
+    // Retry until we land on a code no other user is currently holding.
+    // 32^6 ≈ 1B combinations and we typically have ≤1 active code per
+    // user, so a clean draw is overwhelmingly likely on the first try.
+    let code = "";
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const candidate = generateLinkCode();
+      const collision = await ctx.db
+        .query("users")
+        .withIndex("by_telegramLinkCode", (q) => q.eq("telegramLinkCode", candidate))
+        .first();
+      // Either nobody else has it, or only the current user does (re-roll
+      // for the same user is fine — we'll overwrite their old code below).
+      if (!collision || collision._id === userId) {
+        code = candidate;
+        break;
+      }
+    }
+    if (!code) {
+      throw new Error("Could not generate a unique link code; please try again");
+    }
 
+    const expiresAt = Date.now() + LINK_CODE_TTL_MS;
     await ctx.db.patch(userId, {
       telegramLinkCode: code,
       telegramLinkExpiresAt: expiresAt,

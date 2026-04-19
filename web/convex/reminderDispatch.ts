@@ -22,31 +22,47 @@
 "use node";
 
 import { v } from "convex/values";
-import { internalAction } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Doc, Id } from "./_generated/dataModel";
 
 const TELEGRAM_API = "https://api.telegram.org";
 
-// ── sendTestMessage ──────────────────────────────────
-// Triggered from `reminderHelpers.sendTestTelegram` (a user clicking the
-// "Test now" button). Sends a plain confirmation to the user's chat and
-// returns the result so the UI can surface it. We deliberately use plain
-// text (no MarkdownV2) so this works even if escaping has a regression.
+// ── sendTestTelegram ─────────────────────────────────
+// Public action triggered from the Telegram setup card. Lives here (not in
+// reminderHelpers) because it has to hit the Telegram Bot API and read the
+// token from env — both Node-only. Returns the real delivery result, not
+// just "scheduled," so the UI can show whether the message actually got
+// to Telegram or whether the env var / chat ID / network failed.
 
-export const sendTestMessage = internalAction({
-  args: { chatId: v.string() },
-  handler: async (_ctx, args) => {
+export const sendTestTelegram = action({
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<
+    | { ok: true }
+    | { ok: false; reason: "no-chat-id" | "no-token" | string; detail?: string }
+  > => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const chatId = (await ctx.runQuery(internal.reminderHelpers._getUserChatId, {
+      userId,
+    })) as string | null;
+    if (!chatId) return { ok: false, reason: "no-chat-id" };
+
     const token = process.env.TELEGRAM_BOT_TOKEN;
     if (!token) {
       console.error("[telegram-test] TELEGRAM_BOT_TOKEN is not set in Convex env");
-      return { ok: false as const, reason: "no-token" as const };
+      return { ok: false, reason: "no-token" };
     }
+
     const res = await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        chat_id: args.chatId,
+        chat_id: chatId,
         text:
           "✅ LifeOS test\n\n" +
           "If you see this, your Telegram delivery is working. " +
@@ -56,9 +72,9 @@ export const sendTestMessage = internalAction({
     if (!res.ok) {
       const body = await res.text();
       console.error("[telegram-test] sendMessage failed", res.status, body);
-      return { ok: false as const, reason: `telegram-${res.status}` as const, detail: body };
+      return { ok: false, reason: `telegram-${res.status}`, detail: body };
     }
-    return { ok: true as const };
+    return { ok: true };
   },
 });
 
