@@ -27,24 +27,21 @@ export const list = query({
 });
 
 // ── latestOfType ──────────────────────────────────────
-// Returns the single most-recent review of a given type. Iterates the
-// `by_userId` index in descending creation-time order and stops at the
-// first match — bounded short-circuit instead of a full history scan.
-// Used by the Today page's "This week" card so it doesn't re-fetch every
-// review on every render.
+// Returns the single most-recent review of a given type. Scans the
+// user's reviews in desc creation-time order and returns the first
+// match. Used by the Today page's "This week" card.
 
 export const latestOfType = query({
   args: { reviewType: v.string() },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
-    for await (const review of ctx.db
+    const reviews = await ctx.db
       .query("reviews")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .order("desc")) {
-      if (review.reviewType === args.reviewType) return review;
-    }
-    return null;
+      .order("desc")
+      .collect();
+    return reviews.find((r) => r.reviewType === args.reviewType) ?? null;
   },
 });
 
