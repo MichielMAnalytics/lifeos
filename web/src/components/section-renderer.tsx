@@ -49,6 +49,7 @@ import { ResourcesGrid } from './sections/resources-grid';
 import { CalendarWeekly } from './sections/calendar-weekly';
 import { RemindersUpcoming } from './sections/reminders-upcoming';
 import { TelegramSetup } from './sections/telegram-setup';
+import { WeeklyPriorities } from './sections/weekly-priorities';
 import { WorkoutLog } from './sections/workout-log';
 import { ActiveProgramme } from './sections/active-programme';
 import { HealthSummary } from './sections/health-summary';
@@ -74,6 +75,7 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'quotes': Quotes,
   'task-status-bar': TaskStatusBar,
   'today-shell': TodayShell,
+  'weekly-priorities': WeeklyPriorities,
 
   // Tasks page sections
   'tasks-bucketed': TasksBucketed,

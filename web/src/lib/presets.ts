@@ -40,6 +40,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       sections: [
         { id: "day-nav", label: "Date Navigation", span: "full" },
         { id: "task-status-bar", label: "Task Status", span: "full" },
+        { id: "weekly-priorities", label: "This Week", span: "full" },
         { id: "today-shell", label: "Today Two-Pane", span: "full" },
         { id: "quotes", label: "Daily Quote", span: "full" },
       ],

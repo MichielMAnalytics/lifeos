@@ -8,6 +8,7 @@ import { useTodayDate } from '@/lib/today-date-context';
 import { cn, formatRelativeDate } from '@/lib/utils';
 import { CalendarDatePicker } from '@/components/calendar-date-picker';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTimeFormat } from '@/components/time-format-provider';
 
 // ── Block type colors ────────────────────────────────────
 // Sunset Gradient palette (Section 2B pick): MIT #FF4D4F · P1 #FB923C · P2 #FCD34D
@@ -79,7 +80,8 @@ function positionToMinutes(y: number): number {
   return (y / HOUR_HEIGHT) * 60 + GRID_START_HOUR * 60;
 }
 
-function formatHour(hour: number): string {
+function formatHour(hour: number, is24h = false): string {
+  if (is24h) return `${hour.toString().padStart(2, '0')}:00`;
   if (hour === 0 || hour === 24) return '12 AM';
   if (hour === 12) return '12 PM';
   if (hour < 12) return `${hour} AM`;
@@ -219,6 +221,7 @@ function EventCard({
   overrideStartMin,
   overrideEndMin,
   isResizing,
+  formatTimeFn,
 }: {
   block: ScheduleBlock;
   blockIndex: number;
@@ -228,18 +231,12 @@ function EventCard({
   overrideStartMin?: number;
   overrideEndMin?: number;
   isResizing: boolean;
+  formatTimeFn: (t: string) => string;
 }) {
   const startMin = overrideStartMin ?? timeToMinutes(block.start);
   const endMin = overrideEndMin ?? timeToMinutes(block.end);
   const top = minutesToPosition(startMin);
   const height = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT, 20);
-
-  const formatTime = (t: string) => {
-    const [h, m] = t.split(':').map(Number);
-    const suffix = h >= 12 ? 'PM' : 'AM';
-    const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    return `${displayH}:${m.toString().padStart(2, '0')} ${suffix}`;
-  };
 
   const displayStart = overrideStartMin != null ? minutesToTimeString(overrideStartMin) : block.start;
   const displayEnd = overrideEndMin != null ? minutesToTimeString(overrideEndMin) : block.end;
@@ -251,6 +248,10 @@ function EventCard({
       return;
     }
     e.dataTransfer.setData('application/x-timeline-block-index', String(blockIndex));
+    // Stable identity for the block — index alone is unsafe if the schedule
+    // re-orders between drag-start and drop. Receivers should match by
+    // (start, label, taskId) first, fall back to index.
+    e.dataTransfer.setData('application/x-block-start', block.start);
     e.dataTransfer.setData('application/x-block-label', block.label);
     e.dataTransfer.setData('application/x-block-type', block.type);
     e.dataTransfer.setData('application/x-block-task-id', block.taskId ?? '');
@@ -331,7 +332,7 @@ function EventCard({
           </p>
           {height >= 36 && (
             <p className="text-xs text-text-muted mt-0.5">
-              {formatTime(displayStart)} - {formatTime(displayEnd)}
+              {formatTimeFn(displayStart)} - {formatTimeFn(displayEnd)}
             </p>
           )}
         </div>
@@ -565,6 +566,8 @@ export function DayTimeline({ hideSidebar = false }: { hideSidebar?: boolean } =
 
   const todayTasks = useQuery(api.tasks.list, { status: 'todo', due: 'today' });
   const overdueTasks = useQuery(api.tasks.list, { status: 'todo', due: 'overdue' });
+  const { formatTime, timeFormat } = useTimeFormat();
+  const is24h = timeFormat === '24h';
 
   const [now, setNow] = useState(() => new Date());
   const [dropTargetMinutes, setDropTargetMinutes] = useState<number | null>(null);
@@ -916,7 +919,7 @@ export function DayTimeline({ hideSidebar = false }: { hideSidebar?: boolean } =
                   style={{ height: `${HOUR_HEIGHT}px` }}
                 >
                   <span className="absolute -top-[9px] right-3 text-[11px] text-text-muted select-none">
-                    {formatHour(hour)}
+                    {formatHour(hour, is24h)}
                   </span>
                 </div>
               ))}
@@ -994,6 +997,7 @@ export function DayTimeline({ hideSidebar = false }: { hideSidebar?: boolean } =
                       overrideStartMin={isBeingResized ? resizePreview?.startMin : undefined}
                       overrideEndMin={isBeingResized ? resizePreview?.endMin : undefined}
                       isResizing={isBeingResized}
+                      formatTimeFn={formatTime}
                     />
                   );
                 })}
