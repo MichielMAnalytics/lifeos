@@ -906,9 +906,101 @@ function ApiKeysTab({ apiKeys }: { apiKeys: ApiKeyEntry[] }) {
   const deleteApiKeyMutation = useMutation(api.authHelpers.deleteApiKey);
   const subscription = useQuery(api.stripe.getMySubscription);
 
+  const createApiKey = useAction(api.apiKeyAuth.createMyApiKey);
+  const [creating, setCreating] = useState(false);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [revealedKey, setRevealedKey] = useState<{ key: string; name?: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCreate() {
+    const trimmed = newKeyName.trim();
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const result = await createApiKey({ name: trimmed || undefined });
+      setRevealedKey({ key: result.key, name: result.name });
+      setNewKeyName('');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to create key';
+      setCreateError(msg);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function handleCopy() {
+    if (!revealedKey) return;
+    try {
+      await navigator.clipboard.writeText(revealedKey.key);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // silent
+    }
+  }
+
   return (
     <div className="space-y-6">
       <TabHeader title="API Keys" subtitle="Manage keys for the CLI and external integrations" />
+
+      {/* Revealed key (shown once after creation) */}
+      {revealedKey && (
+        <div className="border border-accent/40 bg-accent/5 p-5 space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-medium text-text">
+                Your new API key{revealedKey.name ? ` — ${revealedKey.name}` : ''}
+              </p>
+              <p className="text-[11px] text-text-muted mt-1">
+                Copy it now — for security, you won&apos;t be able to see it again.
+              </p>
+            </div>
+            <button
+              onClick={() => setRevealedKey(null)}
+              className="text-text-muted hover:text-text transition-colors cursor-pointer text-xs"
+              title="Dismiss"
+            >
+              Done
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <pre className="flex-1 border border-border/40 bg-surface/40 px-3 py-2 text-xs font-mono text-text/80 overflow-x-auto">
+              {revealedKey.key}
+            </pre>
+            <button
+              onClick={() => void handleCopy()}
+              className="px-3 py-2 text-xs border border-border text-text-muted hover:text-text hover:border-text/30 transition-colors cursor-pointer whitespace-nowrap"
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Create new key */}
+      <div className="border border-border p-5 space-y-3">
+        <p className="text-xs font-medium text-text">Create a new API key</p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newKeyName}
+            onChange={(e) => { setNewKeyName(e.target.value); setCreateError(null); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') void handleCreate(); }}
+            placeholder="Key name (e.g. CLI, Laptop)"
+            disabled={creating}
+            className="flex-1 px-3 py-2 text-xs bg-transparent border border-border text-text placeholder:text-text-muted/70 focus:border-text/30 focus:outline-none disabled:opacity-50"
+          />
+          <button
+            onClick={() => void handleCreate()}
+            disabled={creating}
+            className="px-4 py-2 text-xs font-medium bg-text text-bg hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer whitespace-nowrap"
+          >
+            {creating ? 'Creating...' : '+ Create key'}
+          </button>
+        </div>
+        {createError && <p className="text-xs text-danger">{createError}</p>}
+      </div>
 
       <div className="border border-border">
         {apiKeys.length > 0 ? (

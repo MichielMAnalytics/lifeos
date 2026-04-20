@@ -3,6 +3,7 @@
 import { action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import * as crypto from "node:crypto";
 
@@ -40,6 +41,43 @@ export const createApiKey = action({
     const createdOrNull = await ctx.runMutation(
       internal.authHelpers._insertApiKey,
       { userId: args.userId, keyPrefix: prefix, keyHash, name: args.name },
+    );
+    const created = createdOrNull!;
+
+    return {
+      _id: created._id as string,
+      _creationTime: created._creationTime,
+      keyPrefix: created.keyPrefix,
+      name: created.name,
+      key: rawKey,
+    };
+  },
+});
+
+// ── createMyApiKey (authenticated dashboard callers) ─
+
+export const createMyApiKey = action({
+  args: {
+    name: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{
+    _id: string;
+    _creationTime: number;
+    keyPrefix: string;
+    name?: string;
+    key: string;
+  }> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const randomHex = crypto.randomBytes(32).toString("hex");
+    const rawKey = `lifeos_sk_${randomHex}`;
+    const prefix = randomHex.slice(0, 8);
+    const keyHash = hashKey(rawKey);
+
+    const createdOrNull = await ctx.runMutation(
+      internal.authHelpers._insertApiKey,
+      { userId, keyPrefix: prefix, keyHash, name: args.name },
     );
     const created = createdOrNull!;
 
