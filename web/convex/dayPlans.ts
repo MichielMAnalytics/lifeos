@@ -1,6 +1,8 @@
 import { query, mutation, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 
 const scheduleBlockValidator = v.object({
   start: v.string(),
@@ -9,6 +11,70 @@ const scheduleBlockValidator = v.object({
   type: v.string(),
   taskId: v.optional(v.string()),
 });
+
+/** Tight YYYY-MM-DD check so we never write garbage like "today" into a
+ * task's `dueDate`. Mutations accept `v.string()` for date so the helper
+ * has to validate. */
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** When a schedule block references a task, bump that task's `dueDate` to
+ * match the plan's date. Intent: putting a task on today's plan means
+ * "this is due today" — the scheduled-time chip then shows, the task
+ * shows up in the today bucket, and reminders/filters line up with user
+ * expectation. No-op for blocks without a taskId and for tasks already
+ * dated to that day.
+ *
+ * Trade-offs:
+ * - **Multi-plan ping-pong**: a task scheduled on both today and tomorrow
+ *   will have its dueDate set to whichever plan was written most recently.
+ *   Acceptable — multiple plans for the same task is rare, and the user
+ *   can always manually pin the dueDate via `task update`.
+ * - **Removal**: removing a block does NOT revert the dueDate. We have no
+ *   provenance for whether it came from a previous schedule or a manual
+ *   edit, so guessing would be destructive.
+ *
+ * Each task patch gets its own `mutationLog` entry with action
+ * `"auto-due-from-plan"` so `lifeos undo` can revert it (one undo per
+ * affected task plus one for the day plan itself). */
+async function syncTaskDueDatesToPlanDate(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  planDate: string,
+  schedule: ReadonlyArray<{ taskId?: string }>,
+): Promise<void> {
+  if (!DATE_RE.test(planDate)) return; // Bad shape — refuse to corrupt task data.
+  const taskIds = new Set<string>();
+  for (const b of schedule) {
+    if (b.taskId) taskIds.add(b.taskId);
+  }
+  for (const rawId of taskIds) {
+    // Wrap the whole per-task block: any failure (bad ID format, foreign
+    // table doc that somehow has a matching userId, schema patch reject)
+    // skips that task without aborting the day-plan write.
+    try {
+      const task = await ctx.db.get(rawId as Id<"tasks">);
+      if (!task) continue;
+      const taskDoc = task as { userId?: Id<"users">; dueDate?: string; _id: Id<"tasks"> };
+      if (taskDoc.userId !== userId) continue;
+      if (taskDoc.dueDate === planDate) continue;
+      const before = task;
+      await ctx.db.patch(taskDoc._id, { dueDate: planDate, updatedAt: Date.now() });
+      const after = await ctx.db.get(taskDoc._id);
+      // Log so `lifeos undo` can revert. Tagged with a distinct action so
+      // it's easy to spot in the audit trail.
+      await ctx.db.insert("mutationLog", {
+        userId,
+        action: "auto-due-from-plan",
+        tableName: "tasks",
+        recordId: taskDoc._id,
+        beforeData: before,
+        afterData: after,
+      });
+    } catch {
+      continue;
+    }
+  }
+}
 
 // ── getByDate ─────────────────────────────────────────
 
@@ -93,6 +159,9 @@ export const upsert = mutation({
       if (args.p2Done !== undefined) updates.p2Done = args.p2Done;
 
       await ctx.db.patch(existing._id, updates);
+      if (args.schedule !== undefined) {
+        await syncTaskDueDatesToPlanDate(ctx, userId, args.date, args.schedule);
+      }
       const updated = await ctx.db.get(existing._id);
 
       await ctx.db.insert("mutationLog", {
@@ -120,6 +189,10 @@ export const upsert = mutation({
         p1Done: args.p1Done ?? false,
         p2Done: args.p2Done ?? false,
       });
+
+      if (args.schedule && args.schedule.length > 0) {
+        await syncTaskDueDatesToPlanDate(ctx, userId, args.date, args.schedule);
+      }
 
       const plan = await ctx.db.get(planId);
 
@@ -228,6 +301,9 @@ export const patch = mutation({
     if (args.p2Done !== undefined) updates.p2Done = args.p2Done;
 
     await ctx.db.patch(existing._id, updates);
+    if (args.schedule !== undefined) {
+      await syncTaskDueDatesToPlanDate(ctx, userId, args.date, args.schedule);
+    }
     const updated = await ctx.db.get(existing._id);
 
     await ctx.db.insert("mutationLog", {
@@ -293,6 +369,9 @@ export const _upsert = internalMutation({
       if (args.p2Done !== undefined) updates.p2Done = args.p2Done;
 
       await ctx.db.patch(existing._id, updates);
+      if (args.schedule !== undefined) {
+        await syncTaskDueDatesToPlanDate(ctx, args.userId, args.planDate, args.schedule);
+      }
       const updated = await ctx.db.get(existing._id);
 
       await ctx.db.insert("mutationLog", {
@@ -319,6 +398,10 @@ export const _upsert = internalMutation({
         p1Done: args.p1Done ?? false,
         p2Done: args.p2Done ?? false,
       });
+
+      if (args.schedule && args.schedule.length > 0) {
+        await syncTaskDueDatesToPlanDate(ctx, args.userId, args.planDate, args.schedule);
+      }
 
       const plan = await ctx.db.get(planId);
 
@@ -406,6 +489,9 @@ export const _patch = internalMutation({
     if (args.p2Done !== undefined) updates.p2Done = args.p2Done;
 
     await ctx.db.patch(existing._id, updates);
+    if (args.schedule !== undefined) {
+      await syncTaskDueDatesToPlanDate(ctx, args.userId, args.planDate, args.schedule);
+    }
     const updated = await ctx.db.get(existing._id);
 
     await ctx.db.insert("mutationLog", {
