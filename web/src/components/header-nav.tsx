@@ -24,6 +24,7 @@ const allPages: Record<string, { label: string }> = {
   reviews: { label: 'Reviews' },
   resources: { label: 'Resources' },
   schedules: { label: 'Schedules' },
+  meetings: { label: 'Meetings' },
 };
 
 /* ── SVG icon components ─────────────────────────────────── */

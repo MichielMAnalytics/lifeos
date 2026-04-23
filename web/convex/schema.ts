@@ -26,6 +26,13 @@ export default defineSchema({
     // One-time link code for Telegram pairing. 10-min expiry.
     telegramLinkCode: v.optional(v.string()),
     telegramLinkExpiresAt: v.optional(v.float64()),
+    // Granola integration — the API key itself lives in GCP Secret Manager
+    // as `byok-{userId}-granola` (same pattern as the Telegram bot token).
+    // We only stamp connection + sync timestamps here so the dashboard can
+    // render status without a Secret Manager round-trip on every render.
+    granolaConnectedAt: v.optional(v.float64()),
+    granolaSyncedAt: v.optional(v.float64()),
+    granolaSyncError: v.optional(v.string()),
   }).index("email", ["email"])
     .index("by_telegramLinkCode", ["telegramLinkCode"]),
 
@@ -215,6 +222,29 @@ export default defineSchema({
     // The dispatcher cron polls "pending" reminders ordered by scheduledAt.
     // This index lets us scan only the pending tail instead of the full table.
     .index("by_status_scheduledAt", ["status", "scheduledAt"]),
+
+  // ── Meetings ───────────────────────────────────────
+  // Synced from Granola via the Personal API. The transcript is stored as a
+  // pre-joined string (speaker-prefixed) instead of an array of segments —
+  // Convex docs cap at 1MB and the join keeps us well below for typical
+  // meeting lengths. If a meeting exceeds the cap we truncate at sync time
+  // and stamp `transcriptTruncated`.
+  meetings: defineTable({
+    userId: v.id("users"),
+    granolaId: v.string(),                 // "not_xxx" from Granola
+    title: v.string(),
+    summary: v.optional(v.string()),       // AI-generated overview
+    transcript: v.optional(v.string()),    // pre-joined, speaker-prefixed
+    transcriptTruncated: v.optional(v.boolean()),
+    attendees: v.optional(v.array(v.string())),
+    startedAt: v.optional(v.float64()),    // epoch ms — when the meeting happened
+    endedAt: v.optional(v.float64()),
+    granolaUrl: v.optional(v.string()),
+    syncedAt: v.float64(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_startedAt", ["userId", "startedAt"])
+    .index("by_userId_granolaId", ["userId", "granolaId"]),
 
   // ── Workouts ────────────────────────────────────────
   workouts: defineTable({

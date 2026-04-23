@@ -14,4 +14,15 @@ crons.interval(
   {},
 );
 
+// Granola sync — hourly poll of every connected user's account. Granola
+// has no webhooks, so we lean on polling. Hourly is comfortable inside
+// the 5 req/s sustained rate limit even at hundreds of connected users
+// and is fresh enough for "ask the bot about my last meeting".
+crons.interval(
+  "sync meetings from granola",
+  { hours: 1 },
+  internal.granolaSync.tick,
+  {},
+);
+
 export default crons;

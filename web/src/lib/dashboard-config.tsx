@@ -28,7 +28,10 @@ interface DashboardConfigCtx {
   setNavMode: (mode: "sidebar" | "header") => void;
   setNavOrder: (order: string[]) => void;
   togglePageVisibility: (page: string, visible: boolean) => void;
-  setPagePreset: (page: string, preset: string) => void;
+  // Returns a Promise so callers (e.g., the meetings inspiration chooser)
+  // can await the write before navigating away — otherwise the destination
+  // page can render with the previous preset for a frame.
+  setPagePreset: (page: string, preset: string) => Promise<void>;
   getActivePreset: (page: PageKey) => PagePreset;
   resetConfig: () => void;
 }
@@ -41,7 +44,7 @@ const DashboardConfigContext = createContext<DashboardConfigCtx>({
   setNavMode: () => {},
   setNavOrder: () => {},
   togglePageVisibility: () => {},
-  setPagePreset: () => {},
+  setPagePreset: async () => {},
   getActivePreset: (page) => getPreset(page, "default"),
   resetConfig: () => {},
 });
@@ -117,8 +120,8 @@ export function DashboardConfigProvider({ children }: { children: React.ReactNod
     void updateVisibility({ page, visible });
   }, [updateVisibility]);
 
-  const setPagePreset = useCallback((page: string, preset: string) => {
-    void updatePreset({ page, preset });
+  const setPagePreset = useCallback(async (page: string, preset: string) => {
+    await updatePreset({ page, preset });
   }, [updatePreset]);
 
   const getActivePreset = useCallback((page: PageKey): PagePreset => {

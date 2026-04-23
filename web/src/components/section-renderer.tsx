@@ -56,6 +56,11 @@ import { HealthSummary } from './sections/health-summary';
 import { NutritionPlan } from './sections/nutrition-plan';
 import { FoodLog } from './sections/food-log';
 import { MacrosTrend } from './sections/macros-trend';
+import { MeetingsTimeline } from './sections/meetings-timeline';
+import { MeetingsKanban } from './sections/meetings-kanban';
+import { MeetingsList } from './sections/meetings-list';
+import { MeetingsCards } from './sections/meetings-cards';
+import { GranolaSetup } from './sections/granola-setup';
 
 const SECTION_MAP: Record<string, React.ComponentType> = {
   // Today page sections
@@ -136,6 +141,13 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'nutrition-plan': NutritionPlan,
   'food-log': FoodLog,
   'macros-trend': MacrosTrend,
+
+  // Meetings page sections
+  'meetings-timeline': MeetingsTimeline,
+  'meetings-kanban': MeetingsKanban,
+  'meetings-list': MeetingsList,
+  'meetings-cards': MeetingsCards,
+  'granola-setup': GranolaSetup,
 };
 
 export function SectionRenderer({ section }: { section: SectionDef }) {

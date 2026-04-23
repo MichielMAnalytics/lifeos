@@ -26,6 +26,7 @@ const allPages: Record<string, { label: string; abbr: string; category?: string 
   resources: { label: 'Resources', abbr: 'Rs', category: 'Capture' },
   reviews: { label: 'Reviews', abbr: 'Re', category: 'Reflect' },
   schedules: { label: 'Schedules', abbr: 'Sc', category: 'Reflect' },
+  meetings: { label: 'Meetings', abbr: 'Me', category: 'Capture' },
   health: { label: 'Health', abbr: 'He', category: 'Daily' },
 };
 

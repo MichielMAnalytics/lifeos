@@ -170,6 +170,17 @@ export function MarkAiAgent({ className }: { className?: string }) {
   );
 }
 
+// Meetings — speech bubble with two voice lines (conversation, not chat)
+export function MarkMeetings({ className }: { className?: string }) {
+  return (
+    <M className={className}>
+      <path d="M2 4 L14 4 L14 11 L8 11 L5 14 L5 11 L2 11 Z" />
+      <line x1="5" y1="7" x2="11" y2="7" />
+      <line x1="5" y1="9" x2="9" y2="9" />
+    </M>
+  );
+}
+
 // Health — heartbeat pulse line
 export function MarkHealth({ className }: { className?: string }) {
   return (
@@ -201,6 +212,7 @@ export const NAV_MARKS: Record<string, React.ComponentType<{ className?: string 
   reviews: MarkReviews,
   resources: MarkResources,
   schedules: MarkCalendar,
+  meetings: MarkMeetings,
   'life-coach': MarkAiAgent,
   health: MarkHealth,
   settings: MarkSettings,

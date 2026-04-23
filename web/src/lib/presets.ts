@@ -13,7 +13,7 @@ export interface PagePreset {
 }
 
 export type PresetKey = string;
-export type PageKey = "life-coach" | "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "schedules" | "health";
+export type PageKey = "life-coach" | "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "schedules" | "health" | "meetings";
 
 // ═══════════════════════════════════════════════════════════
 // Every persona appears on every page.
@@ -651,6 +651,50 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       ],
     },
   },
+  // ── MEETINGS ────────────────────────────────────────────
+  // Four layout candidates surfaced in the /meetings inspiration chooser.
+  // Picking one writes `dashboardConfig.pagePresets.meetings`, so the
+  // /meetings page renders that layout going forward. The 4 personas
+  // beyond the first reuse one of the four — keep all 7 keys present so
+  // page-config logic stays uniform across pages.
+  meetings: {
+    default: {
+      name: "Timeline",
+      description: "Reverse-chronological cards with summary previews",
+      sections: [{ id: "meetings-timeline", label: "Meetings", span: "full" }],
+    },
+    solopreneur: {
+      name: "Cards",
+      description: "Magazine-style: latest meeting hero, the rest in a grid",
+      sections: [{ id: "meetings-cards", label: "Meetings", span: "full" }],
+    },
+    "content-creator": {
+      name: "Cards",
+      description: "Magazine-style: latest meeting hero, the rest in a grid",
+      sections: [{ id: "meetings-cards", label: "Meetings", span: "full" }],
+    },
+    developer: {
+      name: "Compact",
+      description: "Dense rows, fast scan",
+      sections: [{ id: "meetings-list", label: "Meetings", span: "full" }],
+    },
+    executive: {
+      name: "Kanban",
+      description: "Columns by week — Today / This week / Last week",
+      sections: [{ id: "meetings-kanban", label: "Meetings", span: "full" }],
+    },
+    minimalist: {
+      name: "Compact",
+      description: "Dense rows, fast scan",
+      sections: [{ id: "meetings-list", label: "Meetings", span: "full" }],
+    },
+    journaler: {
+      name: "Timeline",
+      description: "Reverse-chronological cards with summary previews",
+      sections: [{ id: "meetings-timeline", label: "Meetings", span: "full" }],
+    },
+  },
+
   // ── HEALTH ──────────────────────────────────────────────
   health: {
     default: {
@@ -725,7 +769,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
 export const ALL_PRESET_KEYS = ["default", "solopreneur", "content-creator", "developer", "executive", "minimalist", "journaler"];
 
 export const DEFAULT_NAV_ORDER: PageKey[] = [
-  "life-coach", "today", "tasks", "journal", "projects", "goals", "ideas", "thoughts", "resources", "reviews", "schedules", "health",
+  "life-coach", "today", "tasks", "journal", "projects", "goals", "ideas", "thoughts", "resources", "meetings", "reviews", "schedules", "health",
 ];
 
 export function getPreset(page: PageKey, presetKey: string): PagePreset {

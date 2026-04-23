@@ -19,6 +19,7 @@ import { themes, themeKeys, systemThemeEntry } from '@/lib/themes';
 import { useDashboardConfig } from '@/lib/dashboard-config';
 import { capture, EVENTS } from '@/lib/analytics';
 import { TelegramSetup } from '@/components/sections/telegram-setup';
+import { GranolaSetup } from '@/components/sections/granola-setup';
 
 /* ================================================================== */
 /*  Types                                                              */
@@ -1347,6 +1348,14 @@ function IntegrationsTab() {
           Messaging — Telegram
         </h2>
         <TelegramSetup />
+      </div>
+
+      {/* Granola — wireable; pulls meeting notes via Personal API */}
+      <div>
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted/80 mb-3">
+          Meetings — Granola
+        </h2>
+        <GranolaSetup />
       </div>
 
       {INTEGRATION_GROUPS.map((group) => (

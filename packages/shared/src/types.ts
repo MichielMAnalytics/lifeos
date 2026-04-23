@@ -220,6 +220,29 @@ export interface Reminder {
   createdAt?: string;
 }
 
+export interface Meeting {
+  id: string;
+  _id?: string;
+  granolaId?: string;
+  granola_id?: string;
+  title: string;
+  summary?: string | null;
+  transcript?: string | null;
+  transcriptTruncated?: boolean | null;
+  transcript_truncated?: boolean | null;
+  attendees?: string[] | null;
+  startedAt?: number | null;
+  started_at?: number | null;
+  endedAt?: number | null;
+  ended_at?: number | null;
+  granolaUrl?: string | null;
+  granola_url?: string | null;
+  syncedAt?: number;
+  synced_at?: number;
+  createdAt?: string;
+  created_at?: string;
+}
+
 export interface FinanceCategory {
   id: string;
   _id?: string;

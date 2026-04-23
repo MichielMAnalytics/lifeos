@@ -3171,4 +3171,108 @@ http.route({
 // outbound reminder messages via the user's bot token from Secret
 // Manager; it doesn't try to receive button callbacks here.)
 
+// ── Meetings ─────────────────────────────────────────
+// Read-only over HTTP (writes happen through the Granola sync action,
+// not through the CLI). The CLI exposes `lifeos meeting list/show/sync`
+// against these routes so the agent can surface meeting context.
+
+http.route({
+  path: "/api/v1/meetings",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/meetings",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const limitParam = url.searchParams.get("limit");
+    const limit = limitParam ? Number(limitParam) : undefined;
+    const result = await ctx.runQuery(internal.meetings._list, {
+      userId,
+      limit: Number.isFinite(limit) ? limit : undefined,
+    });
+    return json(result);
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/meetings/",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/meetings/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/meetings");
+    if (!rawId) return err("Missing meeting id", 400);
+    const id = await ctx.runQuery(internal.resolveId.resolveMeeting, {
+      userId,
+      prefix: rawId,
+    });
+    const fullId = (rawId.length >= 32 ? rawId : id) as Id<"meetings"> | null;
+    if (!fullId) return err("Meeting not found", 404);
+    const meeting = await ctx.runQuery(internal.meetings._get, { userId, id: fullId });
+    if (!meeting) return err("Meeting not found", 404);
+    return json({ data: meeting });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/meetings/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/meetings");
+    if (!rawId) return err("Missing meeting id", 400);
+    const id = await ctx.runQuery(internal.resolveId.resolveMeeting, {
+      userId,
+      prefix: rawId,
+    });
+    const fullId = (rawId.length >= 32 ? rawId : id) as Id<"meetings"> | null;
+    if (!fullId) return err("Meeting not found", 404);
+    try {
+      const result = await ctx.runMutation(internal.meetings._remove, { userId, id: fullId });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+// ── Granola integration ──────────────────────────────
+// `POST /api/v1/granola/sync` — manual sync trigger so the agent can refresh
+// before answering "what was my last meeting about?".
+
+http.route({
+  path: "/api/v1/granola/sync",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/granola/sync",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    // Per-user sync (the cron tick iterates everyone — this only refreshes
+    // the calling user, e.g. when the agent answers "what was my last
+    // meeting about?" and wants the freshest data).
+    const result = await ctx.runAction(internal.granolaSync._syncUser, { userId });
+    return json({ data: result });
+  }),
+});
+
 export default http;
