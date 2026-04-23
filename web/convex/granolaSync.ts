@@ -31,7 +31,9 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { readByokSecret, writeByokSecret } from "./k8s";
 import type { Id } from "./_generated/dataModel";
 
-const GRANOLA_API = "https://api.granola.ai";
+// Granola's Personal API lives on the `public-api` subdomain. `api.granola.ai`
+// returns 404 — that's their internal/private endpoint, not the documented one.
+const GRANOLA_API = "https://public-api.granola.ai";
 const TRANSCRIPT_MAX_BYTES = 800_000; // headroom under Convex's 1MB doc cap
 
 interface GranolaTranscriptSegment {
