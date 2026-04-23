@@ -33,16 +33,6 @@ export default defineSchema({
     granolaConnectedAt: v.optional(v.float64()),
     granolaSyncedAt: v.optional(v.float64()),
     granolaSyncError: v.optional(v.string()),
-    // Google Workspace integration — the access + refresh tokens live in GCP
-    // Secret Manager as `byok-{userId}-google-access` and
-    // `byok-{userId}-google-refresh`. We stamp the connection time + the set
-    // of granted scopes here so the dashboard can render status and the
-    // Calendar/Gmail/Drive actions can sanity-check what's allowed before
-    // making API calls.
-    googleConnectedAt: v.optional(v.float64()),
-    googleScopes: v.optional(v.array(v.string())),
-    googleAccessExpiresAt: v.optional(v.float64()), // epoch ms when access token expires
-    googleEmail: v.optional(v.string()),            // Workspace email (may differ from sign-in email)
   }).index("email", ["email"])
     .index("by_telegramLinkCode", ["telegramLinkCode"]),
 
