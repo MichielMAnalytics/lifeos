@@ -3,24 +3,26 @@ import { convexAuth } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
-// Workspace scopes we request alongside basic profile/email so a single
-// Google sign-in covers the whole integration. Keep this list authoritative —
-// downstream actions (googleCalendar, googleGmail, …) rely on these being
-// granted. If we add a new service later, add the scope here AND tell the
-// user to "Reconnect Google" in Settings → Integrations so they get a fresh
-// consent screen with the new scope.
-const GOOGLE_WORKSPACE_SCOPES = [
+// Sign-in scopes — kept to the non-sensitive set so Google doesn't gate
+// the consent screen behind verification or test-user allow-listing.
+//
+// We *would* like Calendar / Gmail / Drive / Tasks / Docs / Sheets /
+// Contacts here, but those are "sensitive" or "restricted" scopes that
+// trigger Google's verification flow. While the OAuth app sits in
+// "Testing" mode (managed in Google Cloud Console — Michiel-only), only
+// allow-listed test users can sign in if those scopes are requested. We
+// can't reach Console from LifeOS, so the only code-only fix is to keep
+// sign-in lean.
+//
+// Workspace features (Calendar, etc.) live behind a separate "Connect"
+// flow we can ship later once the app is verified or the user is added
+// as a test user. The integration code (googleCalendar.ts, googleAuth.ts,
+// googleAuthHelpers.ts) stays — it just isn't reachable from sign-in
+// until the consent gate opens up.
+const GOOGLE_SIGNIN_SCOPES = [
   "openid",
   "email",
   "profile",
-  "https://www.googleapis.com/auth/calendar",
-  "https://www.googleapis.com/auth/calendar.events",
-  "https://www.googleapis.com/auth/gmail.modify",
-  "https://www.googleapis.com/auth/drive.file",
-  "https://www.googleapis.com/auth/tasks",
-  "https://www.googleapis.com/auth/documents",
-  "https://www.googleapis.com/auth/spreadsheets",
-  "https://www.googleapis.com/auth/contacts.readonly",
 ] as const;
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
@@ -28,16 +30,10 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
     Google({
       authorization: {
         params: {
-          scope: GOOGLE_WORKSPACE_SCOPES.join(" "),
-          // `offline` returns a refresh_token — needed to refresh expired
-          // access tokens without forcing the user to re-authorise.
-          access_type: "offline",
-          // `consent` (instead of `select_account`) forces Google to show
-          // the consent screen every sign-in. We need this so existing users
-          // get prompted to grant the new Workspace scopes the first time
-          // they sign in after this ships. Without `consent`, Google
-          // silently re-uses the previously-granted (smaller) scope set.
-          prompt: "consent",
+          scope: GOOGLE_SIGNIN_SCOPES.join(" "),
+          // `select_account` lets users pick which Google account to use
+          // without forcing a consent screen on every sign-in.
+          prompt: "select_account",
         },
       },
     }),

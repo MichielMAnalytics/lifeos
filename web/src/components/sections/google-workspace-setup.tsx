@@ -2,11 +2,15 @@
 
 // Google Workspace setup card.
 //
-// The OAuth scopes (Calendar, Gmail, Drive, Tasks, Docs, Sheets, Contacts)
-// are requested up-front during Google sign-in. This card surfaces the
-// connection status and gives existing users — who signed in before the
-// Workspace scopes were added — a one-click "Reconnect" path that
-// re-triggers the consent screen so they can grant the missing scopes.
+// **Status: pending Google verification.** Sign-in only requests
+// non-sensitive scopes (openid/email/profile) so the consent screen
+// doesn't get gated behind Google's "verified app or test-user" check.
+// Workspace features (Calendar, Gmail, Drive, …) need either app
+// verification (4–6 weeks of paperwork) or the user to be on the Google
+// Cloud Console test-user list (Michiel-only). Until one of those, this
+// card just explains what's coming. Backend code (googleAuth, googleCalendar,
+// etc.) is wired and waiting — flip the scope set in `convex/auth.ts`
+// once verification is in place.
 
 import { useState, useEffect } from 'react';
 import { useAction } from 'convex/react';
@@ -141,10 +145,16 @@ export function GoogleWorkspaceSetup() {
       <div className="px-5 py-4 space-y-3">
         {!isConnected && (
           <>
+            <div className="text-xs leading-relaxed bg-warning/5 border border-warning/30 rounded-md px-3 py-2 text-text-muted">
+              <strong className="text-text">Pending Google verification.</strong>{' '}
+              Calendar / Gmail / Drive / Tasks / Docs / Sheets / Contacts all
+              require Google to verify the LifeOS app (or for the user to be
+              on the test-user allow-list). Backend integration is built and
+              waiting — once verification is in place, this card flips to
+              the standard Connect flow without any further code change.
+            </div>
             <p className="text-xs text-text-muted leading-relaxed">
-              Connect your Google account to read + write calendar events, send
-              Gmail drafts, save to Drive, and more. We request all scopes
-              up-front so you only consent once.
+              When live, a single sign-in will cover:
             </p>
             <ul className="text-xs text-text-muted leading-relaxed space-y-1 ml-1">
               {SERVICE_LIST.map((svc) => (
@@ -159,13 +169,11 @@ export function GoogleWorkspaceSetup() {
             </ul>
             <button
               type="button"
-              onClick={handleReconnect}
-              disabled={connectState.state === 'pending'}
-              className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-md bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
+              disabled
+              className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-md border border-border text-text-muted/70 cursor-not-allowed"
+              title="Pending Google verification"
             >
-              {connectState.state === 'pending'
-                ? 'Connecting…'
-                : 'Connect Google Workspace'}
+              Connect (pending verification)
             </button>
           </>
         )}
