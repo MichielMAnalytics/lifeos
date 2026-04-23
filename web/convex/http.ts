@@ -3451,4 +3451,233 @@ http.route({
   }),
 });
 
+// ── Google Calendar ──────────────────────────────────
+// CLI surface for the agent: list/create/update/delete calendar events.
+// Uses the user's OAuth token captured at sign-in.
+
+http.route({
+  path: "/api/v1/calendar/events",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/calendar/events",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const tmin = url.searchParams.get("timeMin");
+    const tmax = url.searchParams.get("timeMax");
+    const limit = url.searchParams.get("limit");
+    const result = (await ctx.runAction(internal.googleCalendar._listForUser, {
+      userId,
+      calendarId: url.searchParams.get("calendarId") ?? undefined,
+      timeMin: tmin ? Number(tmin) : undefined,
+      timeMax: tmax ? Number(tmax) : undefined,
+      limit: limit ? Number(limit) : undefined,
+    })) as { ok: boolean; events?: unknown[]; reason?: string };
+    if (!result.ok) return err(result.reason ?? "calendar-failed", 400);
+    return json({ data: result.events ?? [], count: (result.events ?? []).length });
+  }),
+});
+
+http.route({
+  path: "/api/v1/calendar/events",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody<{
+      summary?: string;
+      description?: string;
+      location?: string;
+      startMs?: number;
+      endMs?: number;
+      attendees?: string[];
+      calendarId?: string;
+    }>(request);
+    if (!body.summary || !Number.isFinite(body.startMs) || !Number.isFinite(body.endMs)) {
+      return err("summary, startMs and endMs are required", 400);
+    }
+    const result = (await ctx.runAction(internal.googleCalendar._createForUser, {
+      userId,
+      calendarId: body.calendarId,
+      summary: body.summary,
+      description: body.description,
+      location: body.location,
+      startMs: body.startMs!,
+      endMs: body.endMs!,
+      attendees: body.attendees,
+    })) as { ok: boolean; event?: unknown; reason?: string };
+    if (!result.ok) return err(result.reason ?? "calendar-failed", 400);
+    return json({ data: result.event });
+  }),
+});
+
+// ── Skills ───────────────────────────────────────────
+// User-managed agent rulebooks. CLI: lifeos skill list/show/create/update/delete/seed.
+
+http.route({
+  path: "/api/v1/skills",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/skills",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runQuery(internal.skills._list, { userId });
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/api/v1/skills",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody<{
+      name?: string;
+      summary?: string;
+      body?: string;
+      triggers?: string[];
+      enabled?: boolean;
+    }>(request);
+    if (!body.name || !body.summary || !body.body) {
+      return err("name, summary and body are required", 400);
+    }
+    try {
+      const skill = await ctx.runMutation(internal.skills._create, {
+        userId,
+        name: body.name,
+        summary: body.summary,
+        body: body.body,
+        triggers: body.triggers,
+        enabled: body.enabled ?? true,
+      });
+      return json({ data: skill });
+    } catch (e: unknown) {
+      return err(e instanceof Error ? e.message : "Create failed", 400);
+    }
+  }),
+});
+
+http.route({
+  path: "/api/v1/skills/seed",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runMutation(internal.skills._seedDefaults, { userId });
+    return json({ data: result });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/skills/",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/skills/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/skills");
+    if (!rawId) return err("Missing skill id", 400);
+    if (rawId.length < 32) return err("Provide a full skill id", 400);
+    const skill = await ctx.runQuery(internal.skills._get, {
+      userId,
+      id: rawId as Id<"skills">,
+    });
+    if (!skill) return err("Skill not found", 404);
+    return json({ data: skill });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/skills/",
+  method: "PATCH",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/skills");
+    if (!rawId || rawId.length < 32) return err("Provide a full skill id", 400);
+    const body = await parseBody<{
+      name?: string;
+      summary?: string;
+      body?: string;
+      triggers?: string[];
+      enabled?: boolean;
+    }>(request);
+    try {
+      const skill = await ctx.runMutation(internal.skills._update, {
+        userId,
+        id: rawId as Id<"skills">,
+        name: body.name,
+        summary: body.summary,
+        body: body.body,
+        triggers: body.triggers,
+        enabled: body.enabled,
+      });
+      return json({ data: skill });
+    } catch (e: unknown) {
+      return err(e instanceof Error ? e.message : "Update failed", 400);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/skills/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/skills");
+    if (!rawId || rawId.length < 32) return err("Provide a full skill id", 400);
+    try {
+      const result = await ctx.runMutation(internal.skills._remove, {
+        userId,
+        id: rawId as Id<"skills">,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      return err(e instanceof Error ? e.message : "Delete failed", 400);
+    }
+  }),
+});
+
+// ── Context (deterministic "what's happening right now") ──
+// Used by the agent's `lifeos context now` skill so it never has to do
+// timezone math in latent space — see the meeting-recall + context-now
+// default skills in `convex/skills.ts`.
+
+http.route({
+  path: "/api/v1/context/now",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/context/now",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runQuery(internal.context._now, { userId });
+    return json({ data: result });
+  }),
+});
+
 export default http;

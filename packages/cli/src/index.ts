@@ -28,6 +28,9 @@ import { workoutCommand } from './commands/workout.js';
 import { programmeCommand } from './commands/programme.js';
 import { healthCommand } from './commands/health.js';
 import { foodCommand } from './commands/food.js';
+import { calendarCommand } from './commands/calendar.js';
+import { skillCommand } from './commands/skill.js';
+import { contextCommand } from './commands/context.js';
 import { registerSkillsCommands } from './commands/skills.js';
 import { printUpdateNotice } from './update-check.js';
 
@@ -129,6 +132,9 @@ program.addCommand(workoutCommand);
 program.addCommand(programmeCommand);
 program.addCommand(healthCommand);
 program.addCommand(foodCommand);
+program.addCommand(calendarCommand);
+program.addCommand(skillCommand);
+program.addCommand(contextCommand);
 registerSkillsCommands(program);
 
 // Print update notice after command completes

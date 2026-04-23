@@ -20,6 +20,7 @@ import { useDashboardConfig } from '@/lib/dashboard-config';
 import { capture, EVENTS } from '@/lib/analytics';
 import { TelegramSetup } from '@/components/sections/telegram-setup';
 import { GranolaSetup } from '@/components/sections/granola-setup';
+import { GoogleWorkspaceSetup } from '@/components/sections/google-workspace-setup';
 
 /* ================================================================== */
 /*  Types                                                              */
@@ -1356,6 +1357,14 @@ function IntegrationsTab() {
           Meetings — Granola
         </h2>
         <GranolaSetup />
+      </div>
+
+      {/* Google Workspace — Calendar + Gmail + Drive + Tasks + Docs + Sheets + Contacts */}
+      <div>
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted/80 mb-3">
+          Google Workspace
+        </h2>
+        <GoogleWorkspaceSetup />
       </div>
 
       {INTEGRATION_GROUPS.map((group) => (

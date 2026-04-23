@@ -33,6 +33,16 @@ export default defineSchema({
     granolaConnectedAt: v.optional(v.float64()),
     granolaSyncedAt: v.optional(v.float64()),
     granolaSyncError: v.optional(v.string()),
+    // Google Workspace integration — the access + refresh tokens live in GCP
+    // Secret Manager as `byok-{userId}-google-access` and
+    // `byok-{userId}-google-refresh`. We stamp the connection time + the set
+    // of granted scopes here so the dashboard can render status and the
+    // Calendar/Gmail/Drive actions can sanity-check what's allowed before
+    // making API calls.
+    googleConnectedAt: v.optional(v.float64()),
+    googleScopes: v.optional(v.array(v.string())),
+    googleAccessExpiresAt: v.optional(v.float64()), // epoch ms when access token expires
+    googleEmail: v.optional(v.string()),            // Workspace email (may differ from sign-in email)
   }).index("email", ["email"])
     .index("by_telegramLinkCode", ["telegramLinkCode"]),
 
@@ -426,6 +436,26 @@ export default defineSchema({
     pagePresets: v.any(),          // { today: "solopreneur", ideas: "content-creator", ... }
     customTheme: v.optional(v.any()), // custom color overrides
   }).index("by_userId", ["userId"]),
+
+  // ── Skills ─────────────────────────────────────────
+  // Per-user skill manifests adapted from Garry Tan's "skillify" pattern.
+  // Each skill is a markdown rulebook the Life Coach reads on every turn so
+  // it knows when to use a deterministic CLI command instead of asking the
+  // LLM to guess. Example: "always run `lifeos meeting list --search X`
+  // before answering a question about meetings."
+  //
+  // Skills are user-owned so each LifeOS user can customise their agent.
+  // The `enabled` flag lets the user toggle a skill off without deleting it.
+  skills: defineTable({
+    userId: v.id("users"),
+    name: v.string(),                 // short slug, e.g. "meeting-recall"
+    summary: v.string(),              // one-line description for the index
+    body: v.string(),                 // markdown body — rules + example commands
+    triggers: v.optional(v.array(v.string())), // keyword hints for the resolver
+    enabled: v.boolean(),
+    updatedAt: v.float64(),
+  }).index("by_userId", ["userId"])
+    .index("by_userId_name", ["userId", "name"]),
 
   // ── Mutation Log ───────────────────────────────────
   mutationLog: defineTable({
