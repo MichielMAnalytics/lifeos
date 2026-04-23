@@ -37,10 +37,13 @@ const GRANOLA_API = "https://public-api.granola.ai";
 const TRANSCRIPT_MAX_BYTES = 800_000; // headroom under Convex's 1MB doc cap
 
 interface GranolaTranscriptSegment {
-  speaker?: string;
+  // Granola sends speaker as an object ({ source: "speaker" | "you" | "them" }),
+  // not a bare string. Old code typed this as `string` and crashed with
+  // `speaker?.trim is not a function` when it tried to format the line.
+  speaker?: { source?: string } | string;
   text?: string;
-  // Granola also returns timestamps and ids; we only need speaker + text
-  // for the joined transcript. Anything else is ignored.
+  start_time?: string;
+  end_time?: string;
 }
 
 interface GranolaOwner {
@@ -149,7 +152,18 @@ export const triggerSync = action({
   args: {},
   handler: async (
     ctx,
-  ): Promise<{ ok: true; created: number; updated: number } | { ok: false; reason: string }> => {
+  ): Promise<
+    | {
+        ok: true;
+        created: number;
+        updated: number;
+        detailFetched?: number;
+        detailFailed?: number;
+        detailCandidates?: number;
+        detailLastError?: string;
+      }
+    | { ok: false; reason: string }
+  > => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
     return await syncOneUser(ctx, userId);
@@ -204,7 +218,18 @@ export const tick = internalAction({
 async function syncOneUser(
   ctx: ActionCtx,
   userId: Id<"users">,
-): Promise<{ ok: true; created: number; updated: number } | { ok: false; reason: string }> {
+): Promise<
+  | {
+      ok: true;
+      created: number;
+      updated: number;
+      detailFetched?: number;
+      detailFailed?: number;
+      detailCandidates?: number;
+      detailLastError?: string;
+    }
+  | { ok: false; reason: string }
+> {
   const apiKey = await readByokSecret(userId, "granola");
   if (!apiKey) {
     await ctx.runMutation(internal.granolaHelpers._markSyncResult, {
@@ -283,16 +308,21 @@ async function syncOneUser(
   const DETAIL_CAP_PER_SYNC = 30;
   let detailFetched = 0;
   let detailFailed = 0;
+  let detailCandidates = -1;
+  let detailLastError: string | undefined;
   try {
     const candidates = (await ctx.runQuery(
       internal.meetings._listNeedingDetail,
       { userId, limit: DETAIL_CAP_PER_SYNC },
     )) as Array<{ granolaId: string; granolaUpdatedAt?: number }>;
+    detailCandidates = candidates.length;
+    console.log("[granolaSync] detail pass starting", { userId, candidateCount: candidates.length });
 
     for (const c of candidates) {
       const detailRes = await fetchGranolaNoteDetail(apiKey, c.granolaId);
       if (!detailRes.ok) {
         detailFailed++;
+        detailLastError = `${c.granolaId}:${detailRes.reason}`;
         if (detailRes.reason === "rate-limited") break; // back off rest of tick
         continue;
       }
@@ -307,10 +337,12 @@ async function syncOneUser(
       } catch (err) {
         console.error("[granolaSync] detail upsert failed for", c.granolaId, err);
         detailFailed++;
+        detailLastError = `${c.granolaId}:upsert:${err instanceof Error ? err.message : String(err)}`;
       }
     }
   } catch (err) {
     console.warn("[granolaSync] detail pass failed", err);
+    detailLastError = `outer:${err instanceof Error ? err.message : String(err)}`;
   }
 
   // Partial success: tell the user explicitly so they aren't surprised when
@@ -326,8 +358,19 @@ async function syncOneUser(
     userId,
     error: errorTag,
   });
-  return { ok: true, created, updated };
-  void detailFetched;
+  console.log("[granolaSync] sync complete", { userId, created, updated, detailCandidates, detailFetched, detailFailed, detailLastError });
+  // detailCandidates / detailLastError are temporary diagnostics — return them
+  // so the dashboard / triggerSync caller can see what the detail pass actually
+  // saw.
+  return {
+    ok: true,
+    created,
+    updated,
+    detailFetched,
+    detailFailed,
+    detailCandidates,
+    detailLastError,
+  } as const;
 }
 
 // ── Single-note detail fetch ───────────────────────
@@ -554,11 +597,26 @@ function collectAttendees(note: GranolaNote): string[] {
 function joinTranscript(segments: GranolaTranscriptSegment[] | undefined): string {
   if (!Array.isArray(segments) || segments.length === 0) return "";
   const lines: string[] = [];
+  let lastSpeaker: string | null = null;
   for (const seg of segments) {
-    const text = seg.text?.trim();
+    const text = typeof seg?.text === "string" ? seg.text.trim() : "";
     if (!text) continue;
-    const speaker = seg.speaker?.trim();
-    lines.push(speaker ? `${speaker}: ${text}` : text);
+    // Speaker is `{ source: string }` in Granola's response. Old code
+    // assumed plain string and crashed.
+    let speaker = "";
+    if (typeof seg.speaker === "string") speaker = seg.speaker.trim();
+    else if (seg.speaker && typeof seg.speaker === "object" && typeof seg.speaker.source === "string") {
+      speaker = seg.speaker.source.trim();
+    }
+    // Avoid repeating the same speaker label on every consecutive line —
+    // a transcript with 3000+ tiny segments would otherwise be mostly
+    // "you: word" repeated.
+    if (speaker && speaker !== lastSpeaker) {
+      lines.push(`${speaker}: ${text}`);
+      lastSpeaker = speaker;
+    } else {
+      lines.push(text);
+    }
   }
   return lines.join("\n");
 }
