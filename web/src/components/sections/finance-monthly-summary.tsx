@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import type { Doc, Id } from '@/lib/convex-api';
@@ -11,7 +11,10 @@ type MonthlySummary = {
   income: number;
   spend: number;
   net: number;
-  counts: { total: number; categorized: number; uncategorized: number };
+  // `unconverted` was added later — it's the count of non-USD rows whose
+  // FX rate failed to resolve and so were excluded from totals. Optional
+  // here so older mock fixtures (and the old return shape) still type-check.
+  counts: { total: number; categorized: number; uncategorized: number; unconverted?: number };
   byCategory: Record<string, number>;
 };
 
@@ -73,11 +76,6 @@ export function FinanceMonthlySummary({
     summaryProp?.yearMonth ?? currentYearMonth(),
   );
 
-  useEffect(() => {
-    if (usingProps) return;
-    void seedDefaults({});
-  }, [seedDefaults, usingProps]);
-
   const queriedSummary = useQuery(
     api.financeTransactions.monthlySummary,
     usingProps ? 'skip' : { yearMonth },
@@ -86,6 +84,23 @@ export function FinanceMonthlySummary({
     api.financeCategories.list,
     usingProps ? 'skip' : {},
   );
+
+  // Seed the 13 default categories on first render — but ONLY when the
+  // user actually has none yet. Firing unconditionally on every mount used
+  // to cause a redundant mutation per page visit (and one stray rejection
+  // when paired with stale auth state).
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (usingProps) return;
+    if (seededRef.current) return;
+    if (queriedCategories === undefined) return;
+    if (queriedCategories.length > 0) {
+      seededRef.current = true;
+      return;
+    }
+    seededRef.current = true;
+    void seedDefaults({});
+  }, [queriedCategories, seedDefaults, usingProps]);
 
   const summary = summaryProp ?? queriedSummary;
   const categories = categoriesProp ?? queriedCategories;
@@ -146,9 +161,9 @@ export function FinanceMonthlySummary({
       >
         <div className="flex flex-col items-center justify-center py-12 px-6 text-center gap-2">
           <p className="text-sm text-text-muted">No transactions this month yet.</p>
-          <a href="/finance/import" className="text-xs text-accent hover:underline">
-            Upload a CSV →
-          </a>
+          <p className="text-xs text-text-muted/70">
+            Drop a CSV in the Uploads card below to get started.
+          </p>
         </div>
       </Shell>
     );
@@ -239,9 +254,9 @@ export function FinanceMonthlySummary({
           {counts.categorized} of {counts.total} transactions categorised
         </span>
         {counts.uncategorized > 0 && (
-          <a href="/finance/inbox" className="text-[11px] text-accent hover:underline">
-            Review {counts.uncategorized} →
-          </a>
+          <span className="text-[11px] text-text-muted/70">
+            {counts.uncategorized} awaiting triage in the inbox above
+          </span>
         )}
       </div>
     </Shell>
