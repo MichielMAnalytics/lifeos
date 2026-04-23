@@ -396,7 +396,10 @@ export default defineSchema({
     focusAreas: v.optional(v.array(v.string())),
     communicationTone: v.optional(v.string()),
     workSchedule: v.optional(v.string()),
-    biggestChallenge: v.optional(v.string()),
+    // Multi-select in the UI ("most people share 2-3"). Union accepts the
+    // legacy string form so existing rows stamped before this fix still
+    // read; new writes use the array form.
+    biggestChallenge: v.optional(v.union(v.string(), v.array(v.string()))),
     accountabilityStyle: v.optional(v.string()),
     selectedUseCases: v.optional(v.array(v.string())),
     setupPath: v.optional(v.string()),
@@ -444,6 +447,7 @@ export default defineSchema({
       v.literal("byok"),
       v.literal("basic"),
       v.literal("standard"),
+      v.literal("pro"),
       v.literal("premium"),
     ),
     status: v.union(

@@ -81,7 +81,12 @@ export const sendTestTelegram = action({
 export const tick = internalAction({
   args: {},
   handler: async (ctx) => {
-    const due = (await ctx.runQuery(internal.reminderHelpers._findDue, {})) as Doc<"reminders">[];
+    // Atomic claim: flips pending → sending in one transaction so two
+    // overlapping ticks (cron fires while previous one still running) can't
+    // double-deliver the same reminder. The dispatcher must transition each
+    // claimed row to `delivered` on success or release back to `pending` on
+    // recoverable failure.
+    const due = (await ctx.runMutation(internal.reminderHelpers._claimDue, {})) as Doc<"reminders">[];
     let delivered = 0;
     let skipped = 0;
 
@@ -109,6 +114,10 @@ export const tick = internalAction({
         if (!chatId) {
           console.warn("[reminderDispatch] skipping", reminder._id, "no telegramChatId for user", uidKey);
           skipped++;
+          // Release the claim so the next tick can retry once the user
+          // links their chat (or we'd lose this reminder forever in the
+          // `sending` state).
+          await ctx.runMutation(internal.reminderHelpers._releaseClaim, { id: reminder._id });
           continue;
         }
 
@@ -118,9 +127,11 @@ export const tick = internalAction({
           tokenCache.set(uidKey, token);
         }
         if (!token) {
-          // User hasn't configured a Telegram bot yet — leave pending.
+          // User hasn't configured a Telegram bot yet — leave pending so
+          // a future tick (after they wire it up) picks it up.
           console.warn("[reminderDispatch] skipping", reminder._id, "no telegram-bot secret for user", uidKey);
           skipped++;
+          await ctx.runMutation(internal.reminderHelpers._releaseClaim, { id: reminder._id });
           continue;
         }
 
@@ -132,6 +143,15 @@ export const tick = internalAction({
         // user inside one tick. Next tick will retry from scratch.
         if (!tokenCache.has(uidKey)) tokenCache.set(uidKey, null);
         console.error("[reminderDispatch] failed to send reminder", reminder._id, "user", uidKey, err);
+        // Release so the row goes back to pending — otherwise it gets
+        // stuck in `sending` and never delivers. Best-effort; if the
+        // release itself fails we accept the row staying claimed for one
+        // cron cycle's worth of recovery time.
+        try {
+          await ctx.runMutation(internal.reminderHelpers._releaseClaim, { id: reminder._id });
+        } catch (releaseErr) {
+          console.error("[reminderDispatch] release failed for", reminder._id, releaseErr);
+        }
       }
     }
 

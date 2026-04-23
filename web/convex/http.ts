@@ -2363,7 +2363,7 @@ registerRoutes(http, components.stripe, {
       const subscription = event.data.object as Stripe.Subscription;
       const metadata = subscription.metadata;
       const userSubject = metadata?.userId;
-      const planType = metadata?.planType as "dashboard" | "byok" | "basic" | "standard" | "premium" | undefined;
+      const planType = metadata?.planType as "dashboard" | "byok" | "basic" | "standard" | "pro" | "premium" | undefined;
       if (!userSubject || !planType) return;
       const docId = userSubject.split("|")[0] as Id<"users">;
       const priceId = subscription.items.data[0]?.price?.id ?? "";

@@ -361,7 +361,7 @@ export default function PersonalizePage() {
         topGoals: finalAnswers.topGoals as string[] | undefined,
         focusAreas: finalAnswers.focusAreas as string[] | undefined,
         communicationTone: finalAnswers.communicationTone as string | undefined,
-        biggestChallenge: finalAnswers.biggestChallenge as string | undefined,
+        biggestChallenge: finalAnswers.biggestChallenge as string[] | string | undefined,
         accountabilityStyle: finalAnswers.accountabilityStyle as string | undefined,
         setupCompleted: true,
       });

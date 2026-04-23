@@ -167,6 +167,7 @@ const planTypeValidator = v.union(
   v.literal("byok"),
   v.literal("basic"),
   v.literal("standard"),
+  v.literal("pro"),
   v.literal("premium"),
 );
 
