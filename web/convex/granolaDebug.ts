@@ -5,10 +5,52 @@
 "use node";
 
 import { action } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { readByokSecret } from "./k8s";
 
 const GRANOLA_API = "https://public-api.granola.ai";
+
+// Lists meetings the sync says still need a detail fetch. Lets us verify
+// the detail-pass query is returning what we expect.
+export const inspectDetailQueue = action({
+  args: {},
+  handler: async (ctx): Promise<unknown> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const candidates = await ctx.runQuery(internal.meetings._listNeedingDetail, {
+      userId,
+      limit: 100,
+    });
+    return { count: (candidates as unknown[]).length, sample: (candidates as unknown[]).slice(0, 5) };
+  },
+});
+
+// Forces a single detail fetch for the FIRST candidate so we can confirm
+// the action wiring works end to end without waiting for the cron.
+export const fetchOneDetail = action({
+  args: {},
+  handler: async (ctx): Promise<unknown> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const apiKey = await readByokSecret(userId, "granola");
+    if (!apiKey) return { ok: false, reason: "no-key" };
+    const candidates = (await ctx.runQuery(internal.meetings._listNeedingDetail, {
+      userId,
+      limit: 1,
+    })) as Array<{ granolaId: string }>;
+    if (!candidates.length) return { ok: false, reason: "queue-empty" };
+    const first = candidates[0];
+    const url = `${GRANOLA_API}/v1/notes/${encodeURIComponent(first.granolaId)}?include=transcript`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+    return {
+      ok: res.ok,
+      status: res.status,
+      granolaId: first.granolaId,
+      bodyHead: (await res.text()).slice(0, 300),
+    };
+  },
+});
 
 export const dumpFirstNote = action({
   args: {},
