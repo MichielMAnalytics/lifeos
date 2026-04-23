@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import {
-  type Meeting,
+  type MeetingPreview,
   formatMeetingTime,
   formatDuration,
   initialsFor,
@@ -19,9 +19,9 @@ import {
 } from '@/lib/meeting-utils';
 import { MeetingPeek } from '@/components/meeting-peek';
 
-export function MeetingsCards({ meetings }: { meetings?: Meeting[] } = {}) {
+export function MeetingsCards({ meetings }: { meetings?: MeetingPreview[] } = {}) {
   const queried = useQuery(api.meetings.list, meetings ? 'skip' : { limit: 50 });
-  const [openId, setOpenId] = useState<Meeting['_id'] | null>(null);
+  const [openId, setOpenId] = useState<MeetingPreview['_id'] | null>(null);
   const data = meetings ?? queried;
 
   if (data === undefined) return <SkeletonCards />;

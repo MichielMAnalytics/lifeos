@@ -6,18 +6,19 @@
 // note in Granola) — the next sync would re-create the row, so this
 // is "hide for now" rather than "destroy".
 
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { SidePeek } from '@/components/side-peek';
 import {
   type Meeting,
+  type MeetingPreview,
   formatMeetingTime,
   formatDuration,
   initialsFor,
 } from '@/lib/meeting-utils';
 
 interface MeetingPeekProps {
-  meeting: Meeting;
+  meeting: MeetingPreview | Meeting;
   onClose: () => void;
   // Inspiration chooser passes mock data; it sets allowDelete={false} so
   // the delete button doesn't fire a real mutation against a fake `_id`.
@@ -25,15 +26,28 @@ interface MeetingPeekProps {
   allowDelete?: boolean;
 }
 
+function hasTranscript(meeting: MeetingPreview | Meeting): meeting is Meeting {
+  return 'transcript' in meeting;
+}
+
 export function MeetingPeek({ meeting, onClose, allowDelete = true }: MeetingPeekProps) {
   const remove = useMutation(api.meetings.remove);
+  // Skip the live `meetings.get` lookup for mock IDs from the inspiration
+  // chooser — those aren't real Convex docs and the query would throw.
+  const isMockId = String(meeting._id).startsWith('mock_');
+  const fullMeeting = useQuery(
+    api.meetings.get,
+    isMockId ? 'skip' : { id: meeting._id },
+  );
+  const resolvedMeeting = fullMeeting ?? meeting;
+  const transcript = hasTranscript(resolvedMeeting) ? resolvedMeeting.transcript : undefined;
 
   const handleDelete = async () => {
     await remove({ id: meeting._id });
     onClose();
   };
 
-  const duration = formatDuration(meeting.startedAt, meeting.endedAt);
+  const duration = formatDuration(resolvedMeeting.startedAt, resolvedMeeting.endedAt);
 
   return (
     <SidePeek
@@ -44,14 +58,14 @@ export function MeetingPeek({ meeting, onClose, allowDelete = true }: MeetingPee
     >
       <div className="px-6 py-5 space-y-6">
         <header className="space-y-2">
-          <h1 className="text-xl font-bold text-text leading-tight">{meeting.title}</h1>
+          <h1 className="text-xl font-bold text-text leading-tight">{resolvedMeeting.title}</h1>
           <p className="text-xs text-text-muted/80 tabular-nums">
-            {formatMeetingTime(meeting.startedAt)}
+            {formatMeetingTime(resolvedMeeting.startedAt)}
             {duration && <span className="ml-1.5 text-text-muted/60">· {duration}</span>}
           </p>
-          {meeting.granolaUrl && (
+          {resolvedMeeting.granolaUrl && (
             <a
-              href={meeting.granolaUrl}
+              href={resolvedMeeting.granolaUrl}
               target="_blank"
               rel="noreferrer"
               className="inline-block text-[11px] text-accent hover:underline"
@@ -61,13 +75,13 @@ export function MeetingPeek({ meeting, onClose, allowDelete = true }: MeetingPee
           )}
         </header>
 
-        {meeting.attendees && meeting.attendees.length > 0 && (
+        {resolvedMeeting.attendees && resolvedMeeting.attendees.length > 0 && (
           <section className="space-y-2">
             <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted/80">
               Attendees
             </h2>
             <div className="flex flex-wrap gap-2">
-              {meeting.attendees.map((a) => (
+              {resolvedMeeting.attendees.map((a) => (
                 <span
                   key={a}
                   className="inline-flex items-center gap-1.5 rounded-full border border-border bg-bg-subtle px-2.5 py-1 text-xs text-text"
@@ -82,34 +96,34 @@ export function MeetingPeek({ meeting, onClose, allowDelete = true }: MeetingPee
           </section>
         )}
 
-        {meeting.summary && (
+        {resolvedMeeting.summary && (
           <section className="space-y-2">
             <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted/80">
               Summary
             </h2>
             <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
-              {meeting.summary}
+              {resolvedMeeting.summary}
             </p>
           </section>
         )}
 
-        {meeting.transcript && (
+        {transcript && (
           <section className="space-y-2">
             <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted/80">
               Transcript
-              {meeting.transcriptTruncated && (
+              {resolvedMeeting.transcriptTruncated && (
                 <span className="ml-2 text-warning normal-case font-normal">
                   · truncated
                 </span>
               )}
             </h2>
             <pre className="text-xs text-text-muted leading-relaxed whitespace-pre-wrap font-sans bg-bg-subtle border border-border rounded-lg px-3 py-3 max-h-[60vh] overflow-y-auto">
-              {meeting.transcript}
+              {transcript}
             </pre>
           </section>
         )}
 
-        {!meeting.summary && !meeting.transcript && (
+        {!resolvedMeeting.summary && !transcript && (
           <p className="text-sm text-text-muted/80 italic">
             No summary or transcript yet — Granola may still be processing this note.
           </p>

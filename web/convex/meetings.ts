@@ -26,11 +26,25 @@ export const list = query({
 
     const limit = Math.min(Math.max(args.limit ?? 50, 1), 200);
 
-    return await ctx.db
+    const rows = await ctx.db
       .query("meetings")
       .withIndex("by_userId_startedAt", (q) => q.eq("userId", userId))
       .order("desc")
       .take(limit);
+    return rows.map((meeting) => ({
+      _id: meeting._id,
+      _creationTime: meeting._creationTime,
+      userId: meeting.userId,
+      granolaId: meeting.granolaId,
+      title: meeting.title,
+      summary: meeting.summary,
+      transcriptTruncated: meeting.transcriptTruncated,
+      attendees: meeting.attendees,
+      startedAt: meeting.startedAt,
+      endedAt: meeting.endedAt,
+      granolaUrl: meeting.granolaUrl,
+      syncedAt: meeting.syncedAt,
+    }));
   },
 });
 

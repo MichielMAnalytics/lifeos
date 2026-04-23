@@ -6,18 +6,33 @@
 import type { Doc } from '@/lib/convex-api';
 
 export type Meeting = Doc<'meetings'>;
+export type MeetingPreview = Pick<
+  Meeting,
+  | '_id'
+  | '_creationTime'
+  | 'userId'
+  | 'granolaId'
+  | 'title'
+  | 'summary'
+  | 'transcriptTruncated'
+  | 'attendees'
+  | 'startedAt'
+  | 'endedAt'
+  | 'granolaUrl'
+  | 'syncedAt'
+>;
 
 const MS_PER_DAY = 86_400_000;
 
 export interface MeetingBuckets {
-  today: Meeting[];
-  thisWeek: Meeting[];
-  lastWeek: Meeting[];
-  older: Meeting[];
+  today: MeetingPreview[];
+  thisWeek: MeetingPreview[];
+  lastWeek: MeetingPreview[];
+  older: MeetingPreview[];
 }
 
 /** Bucket meetings into the 4 kanban columns relative to `now` (Monday-based weeks). */
-export function bucketByWeek(meetings: Meeting[], now = Date.now()): MeetingBuckets {
+export function bucketByWeek(meetings: MeetingPreview[], now = Date.now()): MeetingBuckets {
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
 

@@ -43,7 +43,12 @@ const shortMonthLabel = new Intl.DateTimeFormat('en-US', {
 });
 
 function currentYearMonth(): string {
-  return new Date().toISOString().slice(0, 7);
+  // Build YYYY-MM from local date parts, not from `toISOString()`. The UTC
+  // path showed the wrong month around midnight in non-UTC timezones (e.g.
+  // a user in Asia/Jakarta opening the app at 01:00 local would have seen
+  // last month's summary because UTC was still on the prior day).
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 function shiftYearMonth(yearMonth: string, delta: number): string {

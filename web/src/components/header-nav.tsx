@@ -26,6 +26,7 @@ const allPages: Record<string, { label: string }> = {
   schedules: { label: 'Schedules' },
   meetings: { label: 'Meetings' },
   finance: { label: 'Finance' },
+  health: { label: 'Health' },
 };
 
 /* ── SVG icon components ─────────────────────────────────── */
