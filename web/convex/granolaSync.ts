@@ -48,15 +48,41 @@ interface GranolaOwner {
   email?: string;
 }
 
+interface GranolaCalendarEvent {
+  calendar_event_id?: string;
+  event_title?: string;
+  scheduled_start_time?: string; // ISO with TZ
+  scheduled_end_time?: string;
+  organiser?: string;
+  invitees?: Array<{ email?: string; name?: string }>;
+}
+
+interface GranolaFolder {
+  id?: string;
+  name?: string;
+}
+
 interface GranolaNote {
   id: string;
+  object?: string;
   title?: string;
-  summary?: string;
+  // Detail-only fields (return only on /v1/notes/{id}, not list):
+  summary_text?: string;
+  summary_markdown?: string;
   transcript?: GranolaTranscriptSegment[];
-  owner?: GranolaOwner;
   attendees?: GranolaOwner[];
-  start_time?: string;     // ISO
-  end_time?: string;       // ISO
+  calendar_event?: GranolaCalendarEvent | null;
+  folder_membership?: GranolaFolder[];
+  web_url?: string;
+  // Common fields:
+  owner?: GranolaOwner;
+  created_at?: string;     // ISO
+  updated_at?: string;     // ISO
+  // Legacy field names kept for back-compat with prior types — Granola's
+  // actual API uses `summary_text`, `web_url`, `calendar_event.scheduled_*`.
+  summary?: string;
+  start_time?: string;
+  end_time?: string;
   url?: string;
 }
 
@@ -247,18 +273,106 @@ async function syncOneUser(
     return { ok: false, reason };
   }
 
+  // ── Detail pass ──
+  // The list endpoint only returns metadata. To get summary, transcript,
+  // attendees, and folder_membership we need a per-note GET. Rate-limit-
+  // friendly cap of 30 detail fetches per sync (5 req/s sustained = 6s of
+  // budget) — older notes get backfilled across subsequent syncs. Newest
+  // notes win (we order by startedAt desc). Skip any note that already has
+  // detail AND hasn't been updated upstream since we fetched it.
+  const DETAIL_CAP_PER_SYNC = 30;
+  let detailFetched = 0;
+  let detailFailed = 0;
+  try {
+    const candidates = (await ctx.runQuery(
+      internal.meetings._listNeedingDetail,
+      { userId, limit: DETAIL_CAP_PER_SYNC },
+    )) as Array<{ granolaId: string; granolaUpdatedAt?: number }>;
+
+    for (const c of candidates) {
+      const detailRes = await fetchGranolaNoteDetail(apiKey, c.granolaId);
+      if (!detailRes.ok) {
+        detailFailed++;
+        if (detailRes.reason === "rate-limited") break; // back off rest of tick
+        continue;
+      }
+      const upsert = mapNoteToUpsert(userId, detailRes.note, { isDetail: true });
+      if (!upsert) {
+        detailFailed++;
+        continue;
+      }
+      try {
+        await ctx.runMutation(internal.meetings._upsertFromGranola, upsert);
+        detailFetched++;
+      } catch (err) {
+        console.error("[granolaSync] detail upsert failed for", c.granolaId, err);
+        detailFailed++;
+      }
+    }
+  } catch (err) {
+    console.warn("[granolaSync] detail pass failed", err);
+  }
+
   // Partial success: tell the user explicitly so they aren't surprised when
   // older meetings keep showing up across multiple ticks.
   const errorTag = stoppedEarly
     ? `partial-${MAX_PAGES * 50}-of-many`
     : skippedBadNotes > 0
       ? `partial-${skippedBadNotes}-skipped`
-      : undefined;
+      : detailFailed > 0
+        ? `partial-${detailFailed}-detail-failed`
+        : undefined;
   await ctx.runMutation(internal.granolaHelpers._markSyncResult, {
     userId,
     error: errorTag,
   });
   return { ok: true, created, updated };
+  void detailFetched;
+}
+
+// ── Single-note detail fetch ───────────────────────
+// Uses `?include=transcript` to get the rich payload (summary_text,
+// transcript[], attendees[], calendar_event, folder_membership).
+
+type DetailResult =
+  | { ok: true; note: GranolaNote }
+  | { ok: false; reason: string };
+
+async function fetchGranolaNoteDetail(
+  apiKey: string,
+  noteId: string,
+): Promise<DetailResult> {
+  const url = `${GRANOLA_API}/v1/notes/${encodeURIComponent(noteId)}?include=transcript`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err instanceof Error && err.name === "AbortError") {
+      return { ok: false, reason: "timeout" };
+    }
+    return { ok: false, reason: err instanceof Error ? err.message : "network-error" };
+  }
+  clearTimeout(timeout);
+  if (res.status === 404) return { ok: false, reason: "not-found" };
+  if (res.status === 429) return { ok: false, reason: "rate-limited" };
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error("[granolaSync] detail fetch failed", noteId, res.status, body.slice(0, 200));
+    return { ok: false, reason: `granola-${res.status}` };
+  }
+  let data: GranolaNote;
+  try {
+    data = (await res.json()) as GranolaNote;
+  } catch {
+    return { ok: false, reason: "bad-response" };
+  }
+  return { ok: true, note: data };
 }
 
 // ── Granola HTTP wire format ─────────────────────────
@@ -326,7 +440,7 @@ async function fetchGranolaNotes(
   };
 }
 
-function mapNoteToUpsert(userId: Id<"users">, note: GranolaNote) {
+function mapNoteToUpsert(userId: Id<"users">, note: GranolaNote, options?: { isDetail?: boolean }) {
   // Validate the only field we cannot synthesize. Granola schema drift or a
   // malformed page should skip this note rather than crash the whole sync.
   if (!note || typeof note.id !== "string" || note.id.trim().length === 0) {
@@ -334,27 +448,73 @@ function mapNoteToUpsert(userId: Id<"users">, note: GranolaNote) {
     return null;
   }
 
+  const isDetail = !!options?.isDetail;
   const attendees = collectAttendees(note);
+  const folders = collectFolders(note);
+
+  // Title fallback chain: explicit `title` → calendar event title → derived
+  // from attendee names → bare "Meeting · {date}".
+  const calTitle = note.calendar_event?.event_title?.trim();
+  const explicitTitle = typeof note.title === "string" ? note.title.trim() : "";
+  const derivedTitle = attendees.length > 0
+    ? `Meeting with ${attendees.slice(0, 2).join(", ")}${attendees.length > 2 ? ` +${attendees.length - 2}` : ""}`
+    : "";
+  const startIso = note.calendar_event?.scheduled_start_time ?? note.created_at;
+  const dateLabel = startIso ? new Date(startIso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+  const title = (explicitTitle || calTitle || derivedTitle || `Meeting · ${dateLabel}` || "Untitled meeting").slice(0, 500);
+
+  // Summary — prefer plain text, fall back to markdown, then legacy `summary`.
+  const rawSummary = note.summary_text || note.summary_markdown || note.summary || "";
+  const summary = typeof rawSummary === "string" && rawSummary.trim()
+    ? rawSummary.slice(0, 50_000)
+    : undefined;
+
+  // Transcript joined to a speaker-prefixed string, byte-truncated to fit
+  // Convex's 1MB doc limit.
   const { value: safeTranscript, truncated } = truncateUtf8(
     joinTranscript(note.transcript),
     TRANSCRIPT_MAX_BYTES,
   );
 
+  // Started/ended come from the calendar event when present; otherwise we
+  // fall back to `created_at` (rough but better than nothing).
+  const startedAt =
+    parseIso(note.calendar_event?.scheduled_start_time) ??
+    parseIso(note.start_time) ??
+    parseIso(note.created_at);
+  const endedAt =
+    parseIso(note.calendar_event?.scheduled_end_time) ??
+    parseIso(note.end_time);
+
   return {
     userId,
     granolaId: note.id,
-    title: (typeof note.title === "string" && note.title.trim()
-      ? note.title
-      : "Untitled meeting"
-    ).slice(0, 500),
-    summary: typeof note.summary === "string" ? note.summary.slice(0, 50_000) : undefined,
+    title,
+    summary,
     transcript: safeTranscript || undefined,
     transcriptTruncated: truncated || undefined,
     attendees: attendees.length > 0 ? attendees : undefined,
-    startedAt: parseIso(note.start_time),
-    endedAt: parseIso(note.end_time),
-    granolaUrl: typeof note.url === "string" ? note.url : undefined,
+    folders: folders.length > 0 ? folders : undefined,
+    startedAt,
+    endedAt,
+    granolaUrl: note.web_url || note.url || undefined,
+    granolaUpdatedAt: parseIso(note.updated_at),
+    detailFetched: isDetail,
   };
+}
+
+function collectFolders(note: GranolaNote): string[] {
+  if (!Array.isArray(note.folder_membership)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const f of note.folder_membership) {
+    const name = f?.name?.trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    out.push(name.slice(0, 100));
+    if (out.length >= 20) break;
+  }
+  return out;
 }
 
 // UTF-8 byte-aware truncation. Convex caps documents at ~1MB UTF-8, so we

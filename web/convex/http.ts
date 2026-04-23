@@ -3194,6 +3194,10 @@ http.route({
     const result = await ctx.runQuery(internal.meetings._list, {
       userId,
       limit: Number.isFinite(limit) ? limit : undefined,
+      attendee: url.searchParams.get("attendee") ?? undefined,
+      folder: url.searchParams.get("folder") ?? undefined,
+      tag: url.searchParams.get("tag") ?? undefined,
+      search: url.searchParams.get("search") ?? undefined,
     });
     return json(result);
   }),

@@ -16,11 +16,72 @@ export type MeetingPreview = Pick<
   | 'summary'
   | 'transcriptTruncated'
   | 'attendees'
+  | 'folders'
+  | 'tags'
   | 'startedAt'
   | 'endedAt'
   | 'granolaUrl'
+  | 'detailFetchedAt'
   | 'syncedAt'
 >;
+
+/** "Tue, Apr 21" — Granola's date header style. */
+export function formatDateHeader(epochMs: number): string {
+  const d = new Date(epochMs);
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+/** "3:00 PM" — Granola's time-of-day style. */
+export function formatTimeOfDay(epochMs: number | undefined): string {
+  if (!epochMs) return '';
+  const d = new Date(epochMs);
+  let h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+/** Group meetings by calendar day (descending), Granola-style date headers. */
+export function groupByDay<T extends { startedAt?: number; _creationTime: number }>(
+  meetings: T[],
+): Array<{ key: string; label: string; items: T[] }> {
+  const groups = new Map<string, { label: string; items: T[]; sortKey: number }>();
+  for (const m of meetings) {
+    const ts = m.startedAt ?? m._creationTime;
+    const d = new Date(ts);
+    const dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (!groups.has(dayKey)) {
+      groups.set(dayKey, {
+        label: formatDateHeader(ts),
+        items: [],
+        sortKey: new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(),
+      });
+    }
+    groups.get(dayKey)!.items.push(m);
+  }
+  return Array.from(groups.entries())
+    .sort((a, b) => b[1].sortKey - a[1].sortKey)
+    .map(([key, { label, items }]) => ({ key, label, items }));
+}
+
+/** Compact attendee list — strips emails to bare names, comma-joined. */
+export function formatAttendees(attendees: string[] | undefined, max = 3): string {
+  if (!attendees || attendees.length === 0) return '';
+  const names = attendees
+    .map((a) => {
+      // "Name Surname (email@x.com)" → "Name Surname"
+      // "name@x.com" → "name"
+      const stripped = a.replace(/\s*\(.*\)\s*$/, '');
+      if (stripped.includes('@')) return stripped.split('@')[0].split('.')[0];
+      return stripped;
+    })
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (names.length <= max) return names.join(', ');
+  return `${names.slice(0, max).join(', ')} +${names.length - max}`;
+}
 
 const MS_PER_DAY = 86_400_000;
 

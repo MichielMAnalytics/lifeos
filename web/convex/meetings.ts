@@ -15,23 +15,68 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Doc, Id } from "./_generated/dataModel";
 
 // ── list ──────────────────────────────────────────────
+//
+// Returns lightweight previews (no transcript). The peek lazy-loads the
+// full doc via `meetings.get`. Optional filters narrow the list:
+//   `attendee` — case-insensitive substring match against any attendee
+//   `folder`   — case-insensitive exact match against any folder
+//   `tag`      — case-insensitive exact match against any user tag
+//   `search`   — case-insensitive substring match across title + summary
+//   `from/to`  — epoch ms bounds on startedAt
+//
+// Filters are applied in JS after the index-narrowed read because Convex
+// doesn't have a multi-attribute filter operator that handles arrays.
 
 export const list = query({
   args: {
     limit: v.optional(v.float64()),
+    attendee: v.optional(v.string()),
+    folder: v.optional(v.string()),
+    tag: v.optional(v.string()),
+    search: v.optional(v.string()),
+    from: v.optional(v.float64()),
+    to: v.optional(v.float64()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
     const limit = Math.min(Math.max(args.limit ?? 50, 1), 200);
+    const fetchSize = args.attendee || args.folder || args.tag || args.search || args.from || args.to
+      ? Math.min(limit * 5, 500)
+      : limit;
 
     const rows = await ctx.db
       .query("meetings")
       .withIndex("by_userId_startedAt", (q) => q.eq("userId", userId))
       .order("desc")
-      .take(limit);
-    return rows.map((meeting) => ({
+      .take(fetchSize);
+
+    const attendeeNeedle = args.attendee?.toLowerCase().trim();
+    const folderNeedle = args.folder?.toLowerCase().trim();
+    const tagNeedle = args.tag?.toLowerCase().trim();
+    const searchNeedle = args.search?.toLowerCase().trim();
+
+    const filtered = rows.filter((m) => {
+      if (args.from !== undefined && (m.startedAt ?? 0) < args.from) return false;
+      if (args.to !== undefined && (m.startedAt ?? 0) > args.to) return false;
+      if (attendeeNeedle && !m.attendees?.some((a) => a.toLowerCase().includes(attendeeNeedle))) {
+        return false;
+      }
+      if (folderNeedle && !m.folders?.some((f) => f.toLowerCase() === folderNeedle)) {
+        return false;
+      }
+      if (tagNeedle && !m.tags?.some((t) => t.toLowerCase() === tagNeedle)) {
+        return false;
+      }
+      if (searchNeedle) {
+        const haystack = `${m.title} ${m.summary ?? ""}`.toLowerCase();
+        if (!haystack.includes(searchNeedle)) return false;
+      }
+      return true;
+    });
+
+    return filtered.slice(0, limit).map((meeting) => ({
       _id: meeting._id,
       _creationTime: meeting._creationTime,
       userId: meeting.userId,
@@ -40,11 +85,89 @@ export const list = query({
       summary: meeting.summary,
       transcriptTruncated: meeting.transcriptTruncated,
       attendees: meeting.attendees,
+      folders: meeting.folders,
+      tags: meeting.tags,
       startedAt: meeting.startedAt,
       endedAt: meeting.endedAt,
       granolaUrl: meeting.granolaUrl,
+      detailFetchedAt: meeting.detailFetchedAt,
       syncedAt: meeting.syncedAt,
     }));
+  },
+});
+
+// ── setTags (public) ─────────────────────────────────
+// User-managed tags on a meeting. Granola sync never touches these.
+
+export const setTags = mutation({
+  args: {
+    id: v.id("meetings"),
+    tags: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== userId) throw new Error("Meeting not found");
+
+    const cleaned = args.tags
+      .map((t) => t.trim().slice(0, 60))
+      .filter((t) => t.length > 0);
+    const dedup = Array.from(new Set(cleaned)).slice(0, 30);
+
+    await ctx.db.patch(args.id, { tags: dedup });
+    const after = await ctx.db.get(args.id);
+    await ctx.db.insert("mutationLog", {
+      userId, action: "update", tableName: "meetings",
+      recordId: args.id, beforeData: existing, afterData: after,
+    });
+    return after;
+  },
+});
+
+// ── listFolders + listTags (public) ──────────────────
+// Faceted picker support — UIs and the CLI use these to populate filter
+// dropdowns without scanning the user's full meeting history client-side.
+
+export const listFolders = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const rows = await ctx.db
+      .query("meetings")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .take(2000);
+    const counts = new Map<string, number>();
+    for (const m of rows) {
+      for (const f of m.folders ?? []) {
+        counts.set(f, (counts.get(f) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  },
+});
+
+export const listTags = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const rows = await ctx.db
+      .query("meetings")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .take(2000);
+    const counts = new Map<string, number>();
+    for (const m of rows) {
+      for (const t of m.tags ?? []) {
+        counts.set(t, (counts.get(t) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
   },
 });
 
@@ -98,15 +221,37 @@ export const _list = internalQuery({
   args: {
     userId: v.id("users"),
     limit: v.optional(v.float64()),
+    attendee: v.optional(v.string()),
+    folder: v.optional(v.string()),
+    tag: v.optional(v.string()),
+    search: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const limit = Math.min(Math.max(args.limit ?? 50, 1), 200);
-    const results = await ctx.db
+    const fetchSize = args.attendee || args.folder || args.tag || args.search
+      ? Math.min(limit * 5, 500)
+      : limit;
+    const rows = await ctx.db
       .query("meetings")
       .withIndex("by_userId_startedAt", (q) => q.eq("userId", args.userId))
       .order("desc")
-      .take(limit);
-    return { data: results, count: results.length };
+      .take(fetchSize);
+    const attendeeNeedle = args.attendee?.toLowerCase().trim();
+    const folderNeedle = args.folder?.toLowerCase().trim();
+    const tagNeedle = args.tag?.toLowerCase().trim();
+    const searchNeedle = args.search?.toLowerCase().trim();
+    const filtered = rows.filter((m) => {
+      if (attendeeNeedle && !m.attendees?.some((a) => a.toLowerCase().includes(attendeeNeedle))) return false;
+      if (folderNeedle && !m.folders?.some((f) => f.toLowerCase() === folderNeedle)) return false;
+      if (tagNeedle && !m.tags?.some((t) => t.toLowerCase() === tagNeedle)) return false;
+      if (searchNeedle) {
+        const haystack = `${m.title} ${m.summary ?? ""}`.toLowerCase();
+        if (!haystack.includes(searchNeedle)) return false;
+      }
+      return true;
+    });
+    const data = filtered.slice(0, limit);
+    return { data, count: data.length };
   },
 });
 
@@ -119,6 +264,32 @@ export const _get = internalQuery({
     const meeting = await ctx.db.get(args.id);
     if (!meeting || meeting.userId !== args.userId) return null;
     return meeting;
+  },
+});
+
+// Returns meetings that still need a detail fetch from Granola — either
+// they've never had one (`detailFetchedAt` missing), or Granola updated
+// them after our last fetch. Newest-first so a fresh sync prioritises
+// recent meetings the user is most likely to look at.
+export const _listNeedingDetail = internalQuery({
+  args: { userId: v.id("users"), limit: v.optional(v.float64()) },
+  handler: async (ctx, args) => {
+    const limit = Math.min(Math.max(args.limit ?? 30, 1), 100);
+    const all = await ctx.db
+      .query("meetings")
+      .withIndex("by_userId_startedAt", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(500);
+    const out: Array<{ granolaId: string; granolaUpdatedAt?: number }> = [];
+    for (const m of all) {
+      const fetched = m.detailFetchedAt ?? 0;
+      const upstream = m.granolaUpdatedAt ?? 0;
+      if (fetched === 0 || upstream > fetched) {
+        out.push({ granolaId: m.granolaId, granolaUpdatedAt: m.granolaUpdatedAt });
+      }
+      if (out.length >= limit) break;
+    }
+    return out;
   },
 });
 
@@ -149,9 +320,12 @@ export const _upsertFromGranola = internalMutation({
     transcript: v.optional(v.string()),
     transcriptTruncated: v.optional(v.boolean()),
     attendees: v.optional(v.array(v.string())),
+    folders: v.optional(v.array(v.string())),
     startedAt: v.optional(v.float64()),
     endedAt: v.optional(v.float64()),
     granolaUrl: v.optional(v.string()),
+    granolaUpdatedAt: v.optional(v.float64()),
+    detailFetched: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<{ id: Id<"meetings">; created: boolean }> => {
     const existing = await ctx.db
@@ -162,17 +336,34 @@ export const _upsertFromGranola = internalMutation({
       .unique();
 
     const now = Date.now();
+    // From a LIST pass we only have metadata. Preserve any summary /
+    // transcript / attendees / folders we already pulled in a prior detail
+    // fetch so a re-sync doesn't blank them. From a DETAIL pass we trust
+    // the new values as authoritative and overwrite.
+    const isDetail = args.detailFetched === true;
+    const summary = isDetail ? args.summary : (args.summary ?? existing?.summary);
+    const transcript = isDetail ? args.transcript : (args.transcript ?? existing?.transcript);
+    const transcriptTruncated = isDetail
+      ? args.transcriptTruncated
+      : (args.transcriptTruncated ?? existing?.transcriptTruncated);
+    const attendees = isDetail ? args.attendees : (args.attendees ?? existing?.attendees);
+    const folders = isDetail ? args.folders : (args.folders ?? existing?.folders);
+
     const payload = {
       userId: args.userId,
       granolaId: args.granolaId,
       title: args.title,
-      summary: args.summary,
-      transcript: args.transcript,
-      transcriptTruncated: args.transcriptTruncated,
-      attendees: args.attendees,
+      summary,
+      transcript,
+      transcriptTruncated,
+      attendees,
+      folders,
+      tags: existing?.tags, // user-managed; never overwritten by Granola
       startedAt: args.startedAt,
       endedAt: args.endedAt,
       granolaUrl: args.granolaUrl,
+      granolaUpdatedAt: args.granolaUpdatedAt ?? existing?.granolaUpdatedAt,
+      detailFetchedAt: isDetail ? now : existing?.detailFetchedAt,
       syncedAt: now,
     };
 

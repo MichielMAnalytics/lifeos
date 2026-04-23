@@ -18,11 +18,19 @@ meetingCommand
   .command('list')
   .description('List recent meetings (latest first)')
   .option('-l, --limit <n>', 'How many meetings to fetch (default 50)')
-  .action(async (opts: { limit?: string }) => {
+  .option('-a, --attendee <name>', 'Filter to meetings with an attendee whose name/email contains this text')
+  .option('-f, --folder <name>', 'Filter to meetings in this Granola folder (exact match, case-insensitive)')
+  .option('-t, --tag <name>', 'Filter to meetings with this user tag (exact match, case-insensitive)')
+  .option('-q, --search <query>', 'Full-text search across meeting title + summary')
+  .action(async (opts: { limit?: string; attendee?: string; folder?: string; tag?: string; search?: string }) => {
     try {
       const client = createClient();
       const params: Record<string, string> = {};
       if (opts.limit) params.limit = opts.limit;
+      if (opts.attendee) params.attendee = opts.attendee;
+      if (opts.folder) params.folder = opts.folder;
+      if (opts.tag) params.tag = opts.tag;
+      if (opts.search) params.search = opts.search;
 
       const res = await client.get<ApiListResponse<Meeting>>('/api/v1/meetings', params);
 
@@ -32,17 +40,22 @@ meetingCommand
       }
 
       if (res.data.length === 0) {
-        console.log('No meetings yet — connect Granola in Settings → Integrations.');
+        if (opts.attendee || opts.folder || opts.tag || opts.search) {
+          console.log('No meetings match those filters.');
+        } else {
+          console.log('No meetings yet — connect Granola in Settings → Integrations.');
+        }
         return;
       }
 
       const rows = res.data.map((m) => [
         shortId(m),
-        m.title.slice(0, 60),
+        m.title.slice(0, 50),
         formatDate(epochToIso(m.startedAt ?? m.started_at)),
         String(m.attendees?.length ?? 0),
+        ((m as { folders?: string[] }).folders?.[0] ?? '—').slice(0, 18),
       ]);
-      printTable(['ID', 'Title', 'When', 'People'], rows);
+      printTable(['ID', 'Title', 'When', 'People', 'Folder'], rows);
     } catch (err) {
       printError(err instanceof Error ? err.message : String(err));
       process.exitCode = 1;

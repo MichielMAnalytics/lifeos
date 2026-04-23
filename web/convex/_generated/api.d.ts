@@ -36,6 +36,7 @@ import type * as fxRates from "../fxRates.js";
 import type * as gatewayBridge from "../gatewayBridge.js";
 import type * as goals from "../goals.js";
 import type * as granola from "../granola.js";
+import type * as granolaDebug from "../granolaDebug.js";
 import type * as granolaHelpers from "../granolaHelpers.js";
 import type * as granolaSync from "../granolaSync.js";
 import type * as http from "../http.js";
@@ -108,6 +109,7 @@ declare const fullApi: ApiFromModules<{
   gatewayBridge: typeof gatewayBridge;
   goals: typeof goals;
   granola: typeof granola;
+  granolaDebug: typeof granolaDebug;
   granolaHelpers: typeof granolaHelpers;
   granolaSync: typeof granolaSync;
   http: typeof http;

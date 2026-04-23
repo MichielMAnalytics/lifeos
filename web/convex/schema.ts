@@ -316,13 +316,23 @@ export default defineSchema({
     userId: v.id("users"),
     granolaId: v.string(),                 // "not_xxx" from Granola
     title: v.string(),
-    summary: v.optional(v.string()),       // AI-generated overview
+    summary: v.optional(v.string()),       // AI-generated overview (Granola's `summary_text`)
     transcript: v.optional(v.string()),    // pre-joined, speaker-prefixed
     transcriptTruncated: v.optional(v.boolean()),
     attendees: v.optional(v.array(v.string())),
     startedAt: v.optional(v.float64()),    // epoch ms — when the meeting happened
     endedAt: v.optional(v.float64()),
     granolaUrl: v.optional(v.string()),
+    // Folders the note belongs to in Granola, plus any user-added LifeOS tags.
+    // Granola's `folder_membership[]` may contain multiple folders for one note.
+    folders: v.optional(v.array(v.string())),
+    tags: v.optional(v.array(v.string())),
+    // Detail-fetch tracking — list returns metadata only; detail (with
+    // transcript/summary/attendees/calendar_event) is a per-note GET.
+    // We stamp `detailFetchedAt` so a re-sync can skip already-detailed
+    // notes that haven't been updated upstream.
+    detailFetchedAt: v.optional(v.float64()),
+    granolaUpdatedAt: v.optional(v.float64()), // epoch ms from Granola's `updated_at`
     syncedAt: v.float64(),
   })
     .index("by_userId", ["userId"])
