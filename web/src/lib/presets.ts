@@ -13,7 +13,7 @@ export interface PagePreset {
 }
 
 export type PresetKey = string;
-export type PageKey = "life-coach" | "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "schedules" | "health" | "meetings";
+export type PageKey = "life-coach" | "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "schedules" | "health" | "meetings" | "finance";
 
 // ═══════════════════════════════════════════════════════════
 // Every persona appears on every page.
@@ -695,6 +695,69 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
     },
   },
 
+  // ── FINANCE ─────────────────────────────────────────────
+  // Four candidate layouts the user picks from in /finance/inspiration.
+  // The "default" is the inbox-first layout — that's the fastest path to
+  // value (categorise the backlog so the rest is meaningful). Other
+  // personas reuse one of the four (no need to invent fresh layouts per
+  // persona). Section IDs map to the four `finance-*` components.
+  finance: {
+    default: {
+      name: "Inbox first",
+      description: "Triage queue at the top, monthly summary below",
+      sections: [
+        { id: "finance-inbox", label: "Inbox", span: "full" },
+        { id: "finance-monthly-summary", label: "This month", span: "full" },
+      ],
+    },
+    solopreneur: {
+      name: "Reports first",
+      description: "Monthly summary in the hero slot, transactions below",
+      sections: [
+        { id: "finance-monthly-summary", label: "This month", span: "full" },
+        { id: "finance-transactions", label: "All transactions", span: "full" },
+      ],
+    },
+    "content-creator": {
+      name: "Inbox first",
+      description: "Triage queue at the top, monthly summary below",
+      sections: [
+        { id: "finance-inbox", label: "Inbox", span: "full" },
+        { id: "finance-monthly-summary", label: "This month", span: "full" },
+      ],
+    },
+    developer: {
+      name: "Ledger",
+      description: "Dense transactions table with filters, no chrome",
+      sections: [
+        { id: "finance-transactions", label: "Transactions", span: "full" },
+      ],
+    },
+    executive: {
+      name: "Reports first",
+      description: "Monthly summary hero + transactions ledger",
+      sections: [
+        { id: "finance-monthly-summary", label: "This month", span: "full" },
+        { id: "finance-transactions", label: "All transactions", span: "full" },
+      ],
+    },
+    minimalist: {
+      name: "Summary only",
+      description: "Just this month's numbers",
+      sections: [
+        { id: "finance-monthly-summary", label: "This month", span: "full" },
+      ],
+    },
+    journaler: {
+      name: "Inbox first",
+      description: "Triage queue + monthly summary",
+      sections: [
+        { id: "finance-inbox", label: "Inbox", span: "full" },
+        { id: "finance-monthly-summary", label: "This month", span: "full" },
+      ],
+    },
+  },
+
   // ── HEALTH ──────────────────────────────────────────────
   health: {
     default: {
@@ -769,7 +832,7 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
 export const ALL_PRESET_KEYS = ["default", "solopreneur", "content-creator", "developer", "executive", "minimalist", "journaler"];
 
 export const DEFAULT_NAV_ORDER: PageKey[] = [
-  "life-coach", "today", "tasks", "journal", "projects", "goals", "ideas", "thoughts", "resources", "meetings", "reviews", "schedules", "health",
+  "life-coach", "today", "tasks", "journal", "projects", "goals", "ideas", "thoughts", "resources", "meetings", "reviews", "schedules", "health", "finance",
 ];
 
 export function getPreset(page: PageKey, presetKey: string): PagePreset {

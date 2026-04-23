@@ -223,6 +223,89 @@ export default defineSchema({
     // This index lets us scan only the pending tail instead of the full table.
     .index("by_status_scheduledAt", ["status", "scheduledAt"]),
 
+  // ── Finance: categories ────────────────────────────
+  // Per-user taxonomy. Seeded with the 13 defaults (Food & Dining,
+  // Transport, …) on first finance interaction. `isIncome` flips the sign
+  // convention used in reports — categories like Salary roll up as income,
+  // everything else as spend.
+  financeCategories: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    color: v.string(),         // hex, "#aabbcc"
+    isIncome: v.boolean(),
+    isDefault: v.optional(v.boolean()),
+    updatedAt: v.float64(),
+  }).index("by_userId", ["userId"]),
+
+  // ── Finance: statements ────────────────────────────
+  // One row per CSV upload. `parsedCount` is rows successfully imported
+  // (after dedup — duplicates against earlier uploads aren't counted).
+  financeStatements: defineTable({
+    userId: v.id("users"),
+    source: v.string(),            // "revolut" | "wio" | "generic"
+    filename: v.string(),
+    accountLabel: v.optional(v.string()),
+    uploadedAt: v.float64(),
+    parsedCount: v.float64(),
+    skippedCount: v.float64(),
+  }).index("by_userId", ["userId"]),
+
+  // ── Finance: transactions ──────────────────────────
+  // Signed amounts in the original currency (negative = debit/spend).
+  // `amountUsd` is the cached USD conversion at the transaction date,
+  // populated at import time via the fxRates table. `externalId` is a
+  // deterministic hash of source-specific stable fields so re-uploads
+  // dedupe (Revolut: date|desc|amount|currency|fee, WIO: ref number).
+  financeTransactions: defineTable({
+    userId: v.id("users"),
+    statementId: v.optional(v.id("financeStatements")),
+    externalId: v.string(),
+    date: v.string(),              // "YYYY-MM-DD"
+    description: v.string(),
+    descriptionRaw: v.optional(v.string()),
+    merchantRaw: v.optional(v.string()),
+    amount: v.float64(),           // signed, original currency
+    currency: v.string(),
+    amountUsd: v.optional(v.float64()),
+    fee: v.optional(v.float64()),
+    direction: v.optional(v.string()),  // "debit" | "credit"
+    categoryId: v.optional(v.id("financeCategories")),
+    status: v.string(),            // "uncategorized" | "categorized" | "excluded"
+    source: v.string(),            // "revolut" | "wio" | "generic"
+    isIncome: v.boolean(),         // mirror of resolved category, cached
+    suggestedCategoryId: v.optional(v.id("financeCategories")),
+    suggestionConfidence: v.optional(v.float64()),
+    suggestionSource: v.optional(v.string()), // "memory" | "llm"
+    updatedAt: v.float64(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_status", ["userId", "status"])
+    .index("by_userId_date", ["userId", "date"])
+    .index("by_userId_externalId", ["userId", "externalId"]),
+
+  // ── Finance: merchant memory ───────────────────────
+  // Learning table: when a user categorises a merchant the mapping is
+  // stamped here so future transactions for the same merchant get an
+  // instant suggestion (no LLM call needed).
+  merchantCategoryMemory: defineTable({
+    userId: v.id("users"),
+    merchantKey: v.string(),       // lowercased + collapsed-whitespace
+    categoryId: v.id("financeCategories"),
+    usageCount: v.float64(),
+    lastUsedAt: v.float64(),
+  }).index("by_userId_merchantKey", ["userId", "merchantKey"]),
+
+  // ── Finance: FX rates ──────────────────────────────
+  // Cached daily rates (currency → USD) from Frankfurter (ECB). Lookup is
+  // (date, currency); values are immutable for a given date so no upsert
+  // on conflict is needed — only insert.
+  fxRates: defineTable({
+    date: v.string(),              // "YYYY-MM-DD"
+    currency: v.string(),
+    rateToUsd: v.float64(),
+    source: v.string(),            // "frankfurter" | "manual" | …
+  }).index("by_date_currency", ["date", "currency"]),
+
   // ── Meetings ───────────────────────────────────────
   // Synced from Granola via the Personal API. The transcript is stored as a
   // pre-joined string (speaker-prefixed) instead of an array of segments —

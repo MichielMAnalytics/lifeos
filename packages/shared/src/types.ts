@@ -247,6 +247,11 @@ export interface FinanceCategory {
   id: string;
   _id?: string;
   name: string;
+  color?: string;
+  isIncome?: boolean;
+  is_income?: boolean;
+  isDefault?: boolean;
+  is_default?: boolean;
   parent_id?: string | null;
   parentId?: string | null;
 }
@@ -254,16 +259,47 @@ export interface FinanceCategory {
 export interface FinanceTransaction {
   id: string;
   _id?: string;
+  externalId?: string;
+  external_id?: string;
   date: string;
+  description?: string;
+  merchantRaw?: string | null;
+  merchant_raw?: string | null;
   amount: number;
   currency: string;
+  amountUsd?: number | null;
+  amount_usd?: number | null;
   category_id?: string | null;
   categoryId?: string | null;
-  merchant: string | null;
-  notes: string | null;
+  status?: string;
   source: string | null;
+  isIncome?: boolean;
+  is_income?: boolean;
+  suggestedCategoryId?: string | null;
+  suggested_category_id?: string | null;
+  suggestionConfidence?: number | null;
+  suggestion_confidence?: number | null;
+  suggestionSource?: string | null;
+  suggestion_source?: string | null;
+  merchant?: string | null;
+  notes?: string | null;
   created_at?: string;
   createdAt?: string;
+}
+
+export interface FinanceStatement {
+  id: string;
+  _id?: string;
+  source: string;
+  filename: string;
+  accountLabel?: string | null;
+  account_label?: string | null;
+  uploadedAt?: number;
+  uploaded_at?: number;
+  parsedCount: number;
+  parsed_count?: number;
+  skippedCount: number;
+  skipped_count?: number;
 }
 
 export interface NetWorthSnapshot {

@@ -1,13 +1,9 @@
 'use client';
 
-// Meetings — layout chooser. Renders all 4 layout candidates side-by-side
-// with mock data so you can pick the one that fits how you actually use
-// your meetings. Clicking "Use this layout" writes the choice to
-// `dashboardConfig.pagePresets.meetings` and routes back to /meetings.
-//
-// We pass mock meetings explicitly into each layout so the previews don't
-// depend on the user's Granola connection state — you can audition
-// layouts before you've synced anything.
+// Finance — layout chooser. Same shape as /meetings/inspiration: render
+// each of the four candidates side-by-side with mock data so the user can
+// audition before committing. Selecting a layout writes
+// `dashboardConfig.pagePresets.finance` and routes back to /finance.
 //
 // **Dev-only.** This page is a designer's tool for choosing the production
 // layout — it 404s in production builds. Once a layout is committed via
@@ -19,45 +15,67 @@ import { useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { useDashboardConfig } from '@/lib/dashboard-config';
-import { mockMeetings } from '@/lib/meeting-utils';
-import { MeetingsTimeline } from '@/components/sections/meetings-timeline';
-import { MeetingsKanban } from '@/components/sections/meetings-kanban';
-import { MeetingsList } from '@/components/sections/meetings-list';
-import { MeetingsCards } from '@/components/sections/meetings-cards';
+import { FinanceInbox } from '@/components/sections/finance-inbox';
+import { FinanceMonthlySummary } from '@/components/sections/finance-monthly-summary';
+import { FinanceTransactions } from '@/components/sections/finance-transactions';
+import { FinanceUploads } from '@/components/sections/finance-uploads';
+import { mockFinanceData } from '@/lib/finance-mock';
 import { cn } from '@/lib/utils';
 
-const CANDIDATES = [
+interface Candidate {
+  presetKey: string;
+  name: string;
+  tagline: string;
+  when: string;
+  render: (mock: ReturnType<typeof mockFinanceData>) => React.ReactNode;
+}
+
+const CANDIDATES: Candidate[] = [
   {
     presetKey: 'default',
-    name: 'Timeline',
-    tagline: 'Reverse-chronological cards with summary previews.',
-    when: 'Best when you want to read what happened, not just count meetings.',
-    Component: MeetingsTimeline,
+    name: 'Inbox first',
+    tagline: 'Triage queue at the top, monthly summary below.',
+    when: 'Best when there\'s a backlog of uncategorised rows after each upload.',
+    render: (m) => (
+      <div className="space-y-4">
+        <FinanceInbox transactions={m.uncategorized} categories={m.categories} />
+        <FinanceMonthlySummary summary={m.summary} categories={m.categories} />
+      </div>
+    ),
   },
   {
     presetKey: 'executive',
-    name: 'Kanban',
-    tagline: 'Buckets by week — Today / This week / Last week.',
-    when: 'Best when meetings cluster around weekly cycles.',
-    Component: MeetingsKanban,
+    name: 'Reports first',
+    tagline: 'Monthly summary in the hero slot, transactions below.',
+    when: 'Best when the backlog is small and you mostly want to see "where did the money go?".',
+    render: (m) => (
+      <div className="space-y-4">
+        <FinanceMonthlySummary summary={m.summary} categories={m.categories} />
+        <FinanceTransactions transactions={m.allTransactions} categories={m.categories} />
+      </div>
+    ),
   },
   {
     presetKey: 'developer',
-    name: 'Compact',
-    tagline: 'Dense rows, fast scan.',
-    when: 'Best when you have many meetings and care more about counts than narrative.',
-    Component: MeetingsList,
+    name: 'Ledger',
+    tagline: 'Dense transactions table with filters, no chrome.',
+    when: 'Best when you want raw scrolling speed across hundreds of rows.',
+    render: (m) => (
+      <FinanceTransactions transactions={m.allTransactions} categories={m.categories} />
+    ),
   },
   {
-    presetKey: 'solopreneur',
-    name: 'Cards',
-    tagline: 'Magazine-style with the latest meeting in a hero card.',
-    when: 'Best when one or two meetings carry weight per day.',
-    Component: MeetingsCards,
+    presetKey: 'minimalist',
+    name: 'Summary only',
+    tagline: 'Just this month\'s numbers — nothing else.',
+    when: 'Best when you only want to know "am I overspending this month?".',
+    render: (m) => (
+      <FinanceMonthlySummary summary={m.summary} categories={m.categories} />
+    ),
   },
-] as const;
+];
 
-export default function MeetingsInspirationPage() {
+export default function FinanceInspirationPage() {
   // Dev-only — production users get a 404 instead of seeing the chooser.
   // The chosen layout is hard-coded into `presets.ts`; end users get that
   // as the default and don't need (or want) the picker UI.
@@ -67,16 +85,14 @@ export default function MeetingsInspirationPage() {
   const { config, setPagePreset } = useDashboardConfig();
   const [pending, setPending] = useState<string | null>(null);
 
-  const meetings = useMemo(() => mockMeetings(), []);
-  const activePreset = config.pagePresets.meetings ?? 'default';
+  const mock = useMemo(() => mockFinanceData(), []);
+  const activePreset = config.pagePresets.finance ?? 'default';
 
   const handleUse = async (presetKey: string) => {
     setPending(presetKey);
     try {
-      // Await the mutation so the destination /meetings page renders the
-      // chosen layout on first paint — no flash of the previous preset.
-      await setPagePreset('meetings', presetKey);
-      router.push('/meetings');
+      await setPagePreset('finance', presetKey);
+      router.push('/finance');
     } finally {
       setPending(null);
     }
@@ -86,17 +102,19 @@ export default function MeetingsInspirationPage() {
     <div className="animate-fade-in">
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text">Choose a meetings layout</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-text">Choose a finance layout</h1>
           <p className="text-sm text-text-muted mt-1">
-            Each preview uses mock data so you can audition layouts before syncing
-            from Granola. Pick one — you can always change later from this page.
+            Each preview uses mock data so you can audition layouts before
+            uploading a CSV. Pick one — you can always change later from this
+            page. Uploads happen on the main /finance page no matter which
+            layout you pick.
           </p>
         </div>
         <Link
-          href="/meetings"
+          href="/finance"
           className="text-[11px] font-semibold uppercase tracking-wide px-3 py-1.5 rounded-md border border-border text-text-muted hover:text-text hover:border-accent/40 transition-colors shrink-0"
         >
-          Back to /meetings
+          Back to /finance
         </Link>
       </div>
 
@@ -139,13 +157,20 @@ export default function MeetingsInspirationPage() {
                   {isActive ? 'In use' : isPending ? 'Saving…' : 'Use this layout'}
                 </button>
               </header>
-              <div className="p-4 bg-bg">
-                <c.Component meetings={meetings} />
-              </div>
+              <div className="p-4 bg-bg">{c.render(mock)}</div>
             </section>
           );
         })}
       </div>
+
+      {/* The uploads section isn't part of the layout choice — it's always
+          on /finance. Show a small preview here for completeness. */}
+      <section className="mt-8">
+        <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted/80 mb-3">
+          Always-on: uploads
+        </h2>
+        <FinanceUploads statements={mock.statements} />
+      </section>
     </div>
   );
 }

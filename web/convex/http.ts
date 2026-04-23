@@ -3275,4 +3275,176 @@ http.route({
   }),
 });
 
+// ── Finance ──────────────────────────────────────────
+// CLI surface: list/show/categorize transactions, list categories, list
+// statements, upload CSV, trigger AI suggestions. The dashboard talks
+// directly to Convex via React hooks — these routes exist so the agent
+// (via `lifeos finance ...`) can read and act on the same data.
+
+http.route({
+  path: "/api/v1/finance/transactions",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/finance/transactions",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const limitParam = url.searchParams.get("limit");
+    const limit = limitParam ? Number(limitParam) : undefined;
+    const result = await ctx.runQuery(internal.financeTransactions._list, {
+      userId,
+      status: url.searchParams.get("status") ?? undefined,
+      limit: Number.isFinite(limit) ? limit : undefined,
+    });
+    return json(result);
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/finance/transactions/",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/finance/transactions/",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/finance/transactions");
+    const action = extractAction(url, "/api/v1/finance/transactions");
+    if (!rawId || !action) return err("Missing id or action", 400);
+    if (rawId.length < 32) return err("Provide a full transaction id", 400);
+    const txnId = rawId as Id<"financeTransactions">;
+
+    if (action === "categorize") {
+      const body = await parseBody<{ categoryId?: string }>(request);
+      if (!body.categoryId || (body.categoryId as string).length < 32) {
+        return err("Provide a full categoryId", 400);
+      }
+      try {
+        const result = await ctx.runMutation(internal.financeTransactions._categorize, {
+          userId,
+          id: txnId,
+          categoryId: body.categoryId as Id<"financeCategories">,
+        });
+        if (!result) return err("Transaction or category not found", 404);
+        return json({ data: result });
+      } catch (e: unknown) {
+        return err(e instanceof Error ? e.message : "Categorize failed", 400);
+      }
+    }
+    return err(`Unknown action: ${action}`, 400);
+  }),
+});
+
+http.route({
+  path: "/api/v1/finance/categories",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/finance/categories",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runQuery(internal.financeCategories._list, { userId });
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/api/v1/finance/categories/seed",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/finance/categories/seed",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runMutation(internal.financeCategories._seedDefaults, { userId });
+    return json({ data: result });
+  }),
+});
+
+http.route({
+  path: "/api/v1/finance/statements",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/finance/statements",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runQuery(internal.financeStatements._list, { userId });
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/api/v1/finance/import",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/finance/import",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody<{
+      csvText?: string;
+      filename?: string;
+      source?: string;
+      accountLabel?: string;
+    }>(request);
+    if (!body.csvText || !body.filename) {
+      return err("csvText and filename are required", 400);
+    }
+    // Internal version takes userId — public action requires Convex Auth
+    // which we don't have on the API-key auth path.
+    const apiResult = await ctx.runAction(internal.financeImport._importCsvForUser, {
+      userId,
+      csvText: body.csvText,
+      filename: body.filename,
+      source: body.source,
+      accountLabel: body.accountLabel,
+    });
+    return json({ data: apiResult });
+  }),
+});
+
+http.route({
+  path: "/api/v1/finance/suggest",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/finance/suggest",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runAction(internal.financeAi._suggestForUser, { userId });
+    return json({ data: result });
+  }),
+});
+
 export default http;

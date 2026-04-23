@@ -15,6 +15,7 @@ import { ideaCommand, thoughtCommand, winCommand, resourceCommand } from './comm
 import { reviewCommand } from './commands/review.js';
 import { reminderCommand } from './commands/reminder.js';
 import { meetingCommand } from './commands/meeting.js';
+import { financeCommand } from './commands/finance.js';
 import { searchCommand } from './commands/search.js';
 import { undoCommand } from './commands/undo.js';
 import { triggerCommand } from './commands/trigger.js';
@@ -115,6 +116,7 @@ program.addCommand(resourceCommand);
 program.addCommand(reviewCommand);
 program.addCommand(reminderCommand);
 program.addCommand(meetingCommand);
+program.addCommand(financeCommand);
 program.addCommand(searchCommand);
 program.addCommand(undoCommand);
 program.addCommand(triggerCommand);

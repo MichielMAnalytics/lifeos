@@ -181,6 +181,17 @@ export function MarkMeetings({ className }: { className?: string }) {
   );
 }
 
+// Finance — stacked coin outline (database / coin glyph)
+export function MarkFinance({ className }: { className?: string }) {
+  return (
+    <M className={className}>
+      <ellipse cx="8" cy="5" rx="6" ry="2.5" />
+      <path d="M2 5 L2 11 C2 12.4 4.7 13.5 8 13.5 C11.3 13.5 14 12.4 14 11 L14 5" />
+      <path d="M2 8 C2 9.4 4.7 10.5 8 10.5 C11.3 10.5 14 9.4 14 8" />
+    </M>
+  );
+}
+
 // Health — heartbeat pulse line
 export function MarkHealth({ className }: { className?: string }) {
   return (
@@ -213,6 +224,7 @@ export const NAV_MARKS: Record<string, React.ComponentType<{ className?: string 
   resources: MarkResources,
   schedules: MarkCalendar,
   meetings: MarkMeetings,
+  finance: MarkFinance,
   'life-coach': MarkAiAgent,
   health: MarkHealth,
   settings: MarkSettings,

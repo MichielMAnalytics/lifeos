@@ -61,6 +61,10 @@ import { MeetingsKanban } from './sections/meetings-kanban';
 import { MeetingsList } from './sections/meetings-list';
 import { MeetingsCards } from './sections/meetings-cards';
 import { GranolaSetup } from './sections/granola-setup';
+import { FinanceInbox } from './sections/finance-inbox';
+import { FinanceMonthlySummary } from './sections/finance-monthly-summary';
+import { FinanceTransactions } from './sections/finance-transactions';
+import { FinanceUploads } from './sections/finance-uploads';
 
 const SECTION_MAP: Record<string, React.ComponentType> = {
   // Today page sections
@@ -148,6 +152,12 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'meetings-list': MeetingsList,
   'meetings-cards': MeetingsCards,
   'granola-setup': GranolaSetup,
+
+  // Finance page sections
+  'finance-inbox': FinanceInbox,
+  'finance-monthly-summary': FinanceMonthlySummary,
+  'finance-transactions': FinanceTransactions,
+  'finance-uploads': FinanceUploads,
 };
 
 export function SectionRenderer({ section }: { section: SectionDef }) {
