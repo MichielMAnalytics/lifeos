@@ -927,11 +927,21 @@ http.route({
       delete resolved.p2_task_id;
     }
 
-    const result = await ctx.runMutation(internal.dayPlans._upsert, {
-      userId,
-      planDate: date,
-      ...resolved,
-    });
+    // `?autoCreateTasks=1` routes to the bot variant that materialises
+    // a real tasks row for every `type:"task"` block without a taskId.
+    // Default (no flag) preserves the existing dashboard behaviour.
+    const autoCreate = url.searchParams.get("autoCreateTasks") === "1";
+    const result = autoCreate
+      ? await ctx.runMutation(internal.dayPlans._upsertWithAutoTasks, {
+          userId,
+          planDate: date,
+          ...resolved,
+        })
+      : await ctx.runMutation(internal.dayPlans._upsert, {
+          userId,
+          planDate: date,
+          ...resolved,
+        });
     return json({ data: result });
   }),
 });

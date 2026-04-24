@@ -140,6 +140,11 @@ export default defineSchema({
       label: v.string(),
       type: v.string(),
       taskId: v.optional(v.string()),
+      // Block-level done state for items that aren't backed by a task
+      // (habits like "shower", "wake up"). Task-backed blocks derive
+      // done-ness from `tasks.status === "done"` — don't duplicate it
+      // here.
+      done: v.optional(v.boolean()),
     })),
     overflow: v.array(v.string()),
     mitTaskId: v.optional(v.id("tasks")),

@@ -37,7 +37,18 @@ const blockBg: Record<string, string> = {
   other: 'bg-text-muted/5',
 };
 
-const checkableTypes = new Set(['mit', 'p1', 'p2', 'task']);
+// Block types that never show a checkbox — calendar events are read-only
+// from the calendar provider (you can't "complete" a meeting), same with
+// wake blocks which are just time markers.
+const UNCHECKABLE_TYPES = new Set(['event', 'wake']);
+
+function blockIsCheckable(block: { type: string; taskId?: string }): boolean {
+  if (block.taskId) return true;
+  if (UNCHECKABLE_TYPES.has(block.type)) return false;
+  // Everything else (mit/p1/p2 without a task, habit, break, lunch, task,
+  // other, custom types) is checkable — flips block.done.
+  return true;
+}
 
 // ── Constants ────────────────────────────────────────────
 
@@ -101,13 +112,21 @@ function getDoneField(type: string): 'mitDone' | 'p1Done' | 'p2Done' | null {
   }
 }
 
-function getDoneValue(
-  dayPlan: { mitDone: boolean; p1Done: boolean; p2Done: boolean },
-  type: string,
+/** Derive a block's done-state. Task-backed blocks read from `tasks.status`
+ * (single source of truth), priority blocks still consult the day-plan
+ * flags (back-compat with existing records), and everything else falls
+ * back to the block's own `done` field. */
+function getBlockDone(
+  dayPlan: { mitDone: boolean; p1Done: boolean; p2Done: boolean } | null,
+  block: { type: string; taskId?: string; done?: boolean },
+  taskStatusById: Record<string, string>,
 ): boolean {
-  const field = getDoneField(type);
-  if (!field) return false;
-  return dayPlan[field];
+  if (block.taskId && taskStatusById[block.taskId]) {
+    return taskStatusById[block.taskId] === 'done';
+  }
+  const priorityField = getDoneField(block.type);
+  if (priorityField && dayPlan) return dayPlan[priorityField];
+  return block.done ?? false;
 }
 
 // ── ScheduleBlock type ───────────────────────────────────
@@ -563,6 +582,23 @@ export function DayTimeline({ hideSidebar = false }: { hideSidebar?: boolean } =
   const { date, isToday } = useTodayDate();
   const dayPlan = useQuery(api.dayPlans.getByDate, { date });
   const upsert = useMutation(api.dayPlans.upsert);
+  const completeTask = useMutation(api.tasks.complete);
+  const updateTask = useMutation(api.tasks.update);
+
+  // Batch-fetch every task referenced by a schedule block so the checkbox
+  // reflects live `tasks.status`. Completing here is a mutation on that
+  // same task row — checking in Today therefore updates the Tasks tab.
+  const scheduleTaskIds = (dayPlan?.schedule ?? [])
+    .map((b) => b.taskId)
+    .filter((id): id is string => !!id) as Id<'tasks'>[];
+  const scheduleTasks = useQuery(
+    api.tasks.getMany,
+    scheduleTaskIds.length > 0 ? { ids: scheduleTaskIds } : 'skip',
+  );
+  const taskStatusById: Record<string, string> = {};
+  if (scheduleTasks) {
+    for (const t of scheduleTasks) taskStatusById[t._id] = t.status;
+  }
 
   const todayTasks = useQuery(api.tasks.list, { status: 'todo', due: 'today' });
   const overdueTasks = useQuery(api.tasks.list, { status: 'todo', due: 'overdue' });
@@ -875,10 +911,37 @@ export function DayTimeline({ hideSidebar = false }: { hideSidebar?: boolean } =
     );
   }
 
-  const handleToggle = (type: string) => {
-    const field = getDoneField(type);
-    if (!field || !dayPlan) return;
-    void upsert({ date, [field]: !dayPlan[field] });
+  const handleToggle = (blockIndex: number) => {
+    if (!dayPlan) return;
+    const block = dayPlan.schedule[blockIndex];
+    if (!block) return;
+
+    // Task-backed blocks: flip the underlying task's status. Checking
+    // here therefore completes the task in the Tasks tab too (and any
+    // other view that reads `tasks.status`).
+    if (block.taskId) {
+      const currentStatus = taskStatusById[block.taskId];
+      if (currentStatus === 'done') {
+        void updateTask({ id: block.taskId as Id<'tasks'>, status: 'todo' });
+      } else {
+        void completeTask({ id: block.taskId as Id<'tasks'>});
+      }
+      return;
+    }
+
+    // Priority slot without a linked task — keep using the back-compat
+    // dayPlan flag.
+    const priorityField = getDoneField(block.type);
+    if (priorityField) {
+      void upsert({ date, [priorityField]: !dayPlan[priorityField] });
+      return;
+    }
+
+    // Plain habit / custom block: store done on the block itself.
+    const nextSchedule = dayPlan.schedule.map((b, i) =>
+      i === blockIndex ? { ...b, done: !(b.done ?? false) } : b,
+    );
+    void upsert({ date, schedule: nextSchedule });
   };
 
   // Build the hour labels array
@@ -982,8 +1045,8 @@ export function DayTimeline({ hideSidebar = false }: { hideSidebar?: boolean } =
               {/* Event blocks */}
               <div className="absolute inset-0 px-2">
                 {schedule.map((block, index) => {
-                  const isCheckable = checkableTypes.has(block.type);
-                  const done = dayPlan ? getDoneValue(dayPlan, block.type) : false;
+                  const isCheckable = blockIsCheckable(block);
+                  const done = getBlockDone(dayPlan ?? null, block, taskStatusById);
                   const isBeingResized = resizing?.blockIndex === index;
 
                   return (
@@ -992,7 +1055,7 @@ export function DayTimeline({ hideSidebar = false }: { hideSidebar?: boolean } =
                       block={block}
                       blockIndex={index}
                       done={done}
-                      onToggle={isCheckable ? () => handleToggle(block.type) : null}
+                      onToggle={isCheckable ? () => handleToggle(index) : null}
                       onResizeStart={handleResizeStart}
                       overrideStartMin={isBeingResized ? resizePreview?.startMin : undefined}
                       overrideEndMin={isBeingResized ? resizePreview?.endMin : undefined}

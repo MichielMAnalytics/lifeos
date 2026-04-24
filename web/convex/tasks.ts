@@ -108,6 +108,22 @@ export const get = query({
   },
 });
 
+// Batch-fetch a set of tasks by id. Used by the day-timeline so it can
+// render checkboxes that reflect live `tasks.status` for schedule blocks
+// that link to tasks (checking in Today completes the underlying task,
+// same row the Tasks tab is editing — one source of truth).
+export const getMany = query({
+  args: { ids: v.array(v.id("tasks")) },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const rows = await Promise.all(args.ids.map((id) => ctx.db.get(id)));
+    return rows
+      .filter((r): r is NonNullable<typeof r> => !!r && r.userId === userId)
+      .map((r) => ({ _id: r._id, title: r.title, status: r.status, dueDate: r.dueDate }));
+  },
+});
+
 // ── create ────────────────────────────────────────────
 
 export const create = mutation({

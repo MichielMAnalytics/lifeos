@@ -692,6 +692,8 @@ export function PrioritiesChecklist() {
   const upsert = useMutation(api.dayPlans.upsert);
   const clearPriority = useMutation(api.dayPlans.clearPriority);
   const createTask = useMutation(api.tasks.create);
+  const completeTask = useMutation(api.tasks.complete);
+  const updateTask = useMutation(api.tasks.update);
 
   // Fetch ALL todo tasks for the task picker dropdown
   const allTasks = useQuery(api.tasks.list, { status: 'todo' });
@@ -734,7 +736,23 @@ export function PrioritiesChecklist() {
   }
 
   const handleToggle = (field: 'mitDone' | 'p1Done' | 'p2Done', currentValue: boolean) => {
+    // Flip the day-plan flag for back-compat / confetti tracking.
     void upsert({ date, [field]: !currentValue });
+    // If the slot has a linked task, complete (or reopen) it so the
+    // Tasks tab and any other view reflect the same state. Checking
+    // here behaves identically to ticking the task on the left rail.
+    if (!dayPlan) return;
+    const taskIdField = field.replace('Done', 'TaskId') as
+      | 'mitTaskId'
+      | 'p1TaskId'
+      | 'p2TaskId';
+    const linkedTaskId = dayPlan[taskIdField];
+    if (!linkedTaskId) return;
+    if (currentValue) {
+      void updateTask({ id: linkedTaskId, status: 'todo' });
+    } else {
+      void completeTask({ id: linkedTaskId });
+    }
   };
 
   const handleAssign = (taskIdField: 'mitTaskId' | 'p1TaskId' | 'p2TaskId', taskId: Id<'tasks'>) => {

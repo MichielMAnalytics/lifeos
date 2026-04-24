@@ -10,6 +10,10 @@ const scheduleBlockValidator = v.object({
   label: v.string(),
   type: v.string(),
   taskId: v.optional(v.string()),
+  // Block-level done state for habits / task-less blocks. Task-backed
+  // blocks (type "task" or a priority type with `taskId` set) derive
+  // done from `tasks.status` — don't write to this field.
+  done: v.optional(v.boolean()),
 });
 
 /** Tight YYYY-MM-DD check so we never write garbage like "today" into a
@@ -319,6 +323,86 @@ export const patch = mutation({
   },
 });
 
+/** Walk a schedule array and, for every block marked `type: "task"` that
+ * doesn't carry a taskId yet, materialise a real row in the `tasks`
+ * table (title = block.label, dueDate = planDate, next-in-line position)
+ * and splice the new _id back into the block. Existing task-backed
+ * blocks are left alone.
+ *
+ * Used by the bot-facing path (`upsertWithAutoTasks`) so "day plan a
+ * fresh list from Telegram" lands the items in both the plan timeline
+ * AND the tasks table — no ghost blocks that don't exist as tasks. */
+async function materializeTaskBlocks(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  planDate: string,
+  schedule: ReadonlyArray<{
+    start: string;
+    end: string;
+    label: string;
+    type: string;
+    taskId?: string;
+    done?: boolean;
+  }>,
+): Promise<Array<{
+  start: string;
+  end: string;
+  label: string;
+  type: string;
+  taskId?: string;
+  done?: boolean;
+}>> {
+  const out: Array<{
+    start: string;
+    end: string;
+    label: string;
+    type: string;
+    taskId?: string;
+    done?: boolean;
+  }> = [];
+
+  // Find the next position so new tasks land at the bottom of the todo
+  // list rather than interleaving mid-stream.
+  let nextPosition = 0;
+  const recent = await ctx.db
+    .query("tasks")
+    .withIndex("by_userId_status", (q) =>
+      q.eq("userId", userId).eq("status", "todo"),
+    )
+    .take(500);
+  for (const t of recent) {
+    if (t.position > nextPosition) nextPosition = t.position;
+  }
+  nextPosition += 1000;
+
+  for (const block of schedule) {
+    if (block.type === "task" && !block.taskId && block.label.trim()) {
+      const taskId = await ctx.db.insert("tasks", {
+        userId,
+        title: block.label.trim(),
+        status: "todo",
+        dueDate: DATE_RE.test(planDate) ? planDate : undefined,
+        position: nextPosition,
+        updatedAt: Date.now(),
+      });
+      nextPosition += 1000;
+      const inserted = await ctx.db.get(taskId);
+      await ctx.db.insert("mutationLog", {
+        userId,
+        action: "create",
+        tableName: "tasks",
+        recordId: taskId,
+        beforeData: null,
+        afterData: inserted,
+      });
+      out.push({ ...block, taskId: taskId as unknown as string });
+    } else {
+      out.push(block);
+    }
+  }
+  return out;
+}
+
 // ── Internal functions (for HTTP router) ─────────────
 
 export const _getByDate = internalQuery({
@@ -331,6 +415,82 @@ export const _getByDate = internalQuery({
       )
       .unique();
     return plan;
+  },
+});
+
+/** Bot-facing variant of `_upsert` that auto-creates tasks for any
+ * `type="task"` schedule block lacking a taskId. Used by the Telegram
+ * bot so "plan my day: 10:00 reply to Marcos, 11:00 ship PR" adds both
+ * entries to the plan AND to the tasks table in one call. */
+export const _upsertWithAutoTasks = internalMutation({
+  args: {
+    userId: v.id("users"),
+    planDate: v.string(),
+    wakeTime: v.optional(v.string()),
+    schedule: v.optional(v.array(scheduleBlockValidator)),
+    overflow: v.optional(v.array(v.string())),
+    mitTaskId: v.optional(v.id("tasks")),
+    p1TaskId: v.optional(v.id("tasks")),
+    p2TaskId: v.optional(v.id("tasks")),
+    mitDone: v.optional(v.boolean()),
+    p1Done: v.optional(v.boolean()),
+    p2Done: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const materialized = args.schedule
+      ? await materializeTaskBlocks(
+          ctx,
+          args.userId,
+          args.planDate,
+          args.schedule,
+        )
+      : undefined;
+
+    // Delegate to the existing upsert path once blocks are task-backed.
+    // Inlining the same write logic here would duplicate the mutation-
+    // log / sync-due-dates plumbing; call the internal handler instead.
+    const existing = await ctx.db
+      .query("dayPlans")
+      .withIndex("by_userId_planDate", (q) =>
+        q.eq("userId", args.userId).eq("planDate", args.planDate),
+      )
+      .unique();
+
+    if (existing) {
+      const updates: Record<string, unknown> = {};
+      if (args.wakeTime !== undefined) updates.wakeTime = args.wakeTime;
+      if (materialized !== undefined) updates.schedule = materialized;
+      if (args.overflow !== undefined) updates.overflow = args.overflow;
+      if (args.mitTaskId !== undefined) updates.mitTaskId = args.mitTaskId;
+      if (args.p1TaskId !== undefined) updates.p1TaskId = args.p1TaskId;
+      if (args.p2TaskId !== undefined) updates.p2TaskId = args.p2TaskId;
+      if (args.mitDone !== undefined) updates.mitDone = args.mitDone;
+      if (args.p1Done !== undefined) updates.p1Done = args.p1Done;
+      if (args.p2Done !== undefined) updates.p2Done = args.p2Done;
+      await ctx.db.patch(existing._id, updates);
+      if (materialized) {
+        await syncTaskDueDatesToPlanDate(ctx, args.userId, args.planDate, materialized);
+      }
+      return await ctx.db.get(existing._id);
+    }
+
+    const planId = await ctx.db.insert("dayPlans", {
+      userId: args.userId,
+      planDate: args.planDate,
+      wakeTime: args.wakeTime,
+      schedule: materialized ?? [],
+      overflow: args.overflow ?? [],
+      mitTaskId: args.mitTaskId,
+      p1TaskId: args.p1TaskId,
+      p2TaskId: args.p2TaskId,
+      mitDone: args.mitDone ?? false,
+      p1Done: args.p1Done ?? false,
+      p2Done: args.p2Done ?? false,
+    });
+    if (materialized && materialized.length > 0) {
+      await syncTaskDueDatesToPlanDate(ctx, args.userId, args.planDate, materialized);
+    }
+    return await ctx.db.get(planId);
   },
 });
 
