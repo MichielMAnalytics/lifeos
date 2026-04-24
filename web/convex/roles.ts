@@ -5,32 +5,32 @@
 //     Marketing) that aren't ready for the wider beta.
 //   • user — sees the public tab set.
 //
-// Admin status is derived server-side from the `ADMIN_EMAILS` Convex env
-// var (comma-separated). No DB column for `role` — granting admin is a
-// one-line `npx convex env set ADMIN_EMAILS "..."` and revocation is the
-// same. When the per-user role list outgrows that, swap to a `role`
-// column on `users`.
+// Admin emails are hardcoded below. Originally this read from an
+// ADMIN_EMAILS env var, but Convex V8 isolates cache env values at module
+// load — a long-lived WebSocket subscription pinned an isolate from
+// before the env var was set, so `getMyRole` kept returning isAdmin:false
+// for the logged-in session while CLI invocations (fresh isolates)
+// correctly returned true. Hardcoding bakes the value into the bundle so
+// every invocation reads the same list. To grant admin: edit this list,
+// redeploy.
 
 import { query } from "./_generated/server";
 import { internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { serverEnv } from "./deploymentEnv";
 
 export type Role = "admin" | "user";
 
-function adminEmailSet(): Set<string> {
-  return new Set(
-    (serverEnv.ADMIN_EMAILS ?? "")
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean),
-  );
-}
+// Comma-separated list of admin emails (lowercased). Edit and redeploy
+// to change. Keep small — if this ever grows past ~5 people, move to a
+// DB-backed `admins` table or users.role column.
+const ADMIN_EMAILS: ReadonlySet<string> = new Set([
+  "zumpollekemp@gmail.com",
+]);
 
 export function isAdminEmail(email: string | null | undefined): boolean {
   if (!email) return false;
-  return adminEmailSet().has(email.trim().toLowerCase());
+  return ADMIN_EMAILS.has(email.trim().toLowerCase());
 }
 
 // ── Public — read-only ──────────────────────────────
@@ -39,35 +39,15 @@ export const getMyRole = query({
   args: {},
   handler: async (
     ctx,
-  ): Promise<
-    | {
-        role: Role;
-        isAdmin: boolean;
-        email: string | null;
-        _debug?: { adminEmailsSeen: string | null; emailLc: string };
-      }
-    | null
-  > => {
-    // Return `null` while auth is still resolving so callers show a
-    // loading state instead of flashing the "restricted" page. Once the
-    // Convex client sends the JWT, this re-runs and returns the real
-    // role.
+  ): Promise<{ role: Role; isAdmin: boolean; email: string | null } | null> => {
+    // Return `null` while auth is still resolving so AdminGate shows the
+    // loading skeleton instead of flashing the restricted page.
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
     const user = await ctx.db.get(userId);
     const email = user?.email ?? null;
     const admin = isAdminEmail(email);
-    // TEMP debug: include the env-var value the worker is reading so we
-    // can diagnose why isAdmin comes back false even when email matches.
-    return {
-      role: admin ? "admin" : "user",
-      isAdmin: admin,
-      email,
-      _debug: {
-        adminEmailsSeen: serverEnv.ADMIN_EMAILS ?? null,
-        emailLc: (email ?? "").trim().toLowerCase(),
-      },
-    };
+    return { role: admin ? "admin" : "user", isAdmin: admin, email };
   },
 });
 
