@@ -300,7 +300,10 @@ export const _listNeedingDetail = internalQuery({
     for (const m of all) {
       const fetched = m.detailFetchedAt ?? 0;
       const upstream = m.granolaUpdatedAt ?? 0;
-      if (fetched === 0 || upstream > fetched) {
+      // Backfill case: row was detail-fetched before we started capturing
+      // `summaryMarkdown`, so re-fetch even if upstream hasn't changed.
+      const missingMarkdown = m.summary && !m.summaryMarkdown;
+      if (fetched === 0 || upstream > fetched || missingMarkdown) {
         out.push({ granolaId: m.granolaId, granolaUpdatedAt: m.granolaUpdatedAt });
       }
       if (out.length >= limit) break;
