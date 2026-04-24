@@ -28,11 +28,11 @@ const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo";
 
-// Scope = read-only event data. Narrower than calendar.readonly so the
-// consent screen + verification burden stay minimal. If we later want
-// calendar list metadata we can request incremental consent for
-// calendar.calendarlist.readonly without re-issuing the existing grant.
-const GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events.readonly";
+// Read + write events on the user's calendars. `calendar.events` is the
+// per-event scope (no calendar list / ACL access), narrower than the
+// full `calendar` scope. Lets the bot create / update / delete events
+// from Telegram.
+const GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events";
 const REQUESTED_SCOPES = [
   "openid",
   "email",
@@ -65,42 +65,49 @@ function redirectUri(): string {
 export const getAuthorizeUrl = action({
   args: {},
   handler: async (ctx): Promise<{ url: string }> => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    try {
+      const userId = await getAuthUserId(ctx);
+      if (!userId) throw new Error("Not authenticated");
 
-    // Gate to admins only until the app is verified and the test-user
-    // cap is irrelevant. Mirrors the AdminGate component on the client.
-    const adminOk = await ctx.runQuery(internal.googleAuthHelpers._isAdmin, { userId });
-    if (!adminOk) throw new Error("Admin only");
+      // Gate to admins only until the app is verified and the test-user
+      // cap is irrelevant. Mirrors the AdminGate component on the client.
+      const adminOk = await ctx.runQuery(internal.googleAuthHelpers._isAdmin, { userId });
+      if (!adminOk) throw new Error("Admin only");
 
-    const clientId = serverEnv.GOOGLE_CLIENT_ID;
-    if (!clientId) throw new Error("GOOGLE_CLIENT_ID not configured");
+      const clientId = serverEnv.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        throw new Error(
+          "GOOGLE_CLIENT_ID not configured (worker isolate may have stale env — redeploy convex)",
+        );
+      }
 
-    // 32 bytes of URL-safe randomness. Node's `crypto` is available
-    // because this file runs under "use node".
-    const { randomBytes } = await import("node:crypto");
-    const state = randomBytes(24).toString("base64url");
-    await ctx.runMutation(internal.googleAuthHelpers._saveOAuthState, {
-      userId,
-      state,
-      expiresAt: Date.now() + 10 * 60 * 1000, // 10-minute window to finish consent
-    });
+      // 32 bytes of URL-safe randomness.
+      const { randomBytes } = await import("node:crypto");
+      const state = randomBytes(24).toString("base64url");
+      await ctx.runMutation(internal.googleAuthHelpers._saveOAuthState, {
+        userId,
+        state,
+        expiresAt: Date.now() + 10 * 60 * 1000, // 10-minute window
+      });
 
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri(),
-      response_type: "code",
-      scope: REQUESTED_SCOPES,
-      // access_type=offline + prompt=consent are BOTH required to get a
-      // refresh_token back on every round-trip. Skipping prompt=consent
-      // means subsequent auths from the same user silently skip the
-      // refresh_token and we'd have nothing to refresh with.
-      access_type: "offline",
-      prompt: "consent",
-      include_granted_scopes: "true",
-      state,
-    });
-    return { url: `${AUTHORIZE_URL}?${params.toString()}` };
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri(),
+        response_type: "code",
+        scope: REQUESTED_SCOPES,
+        access_type: "offline",
+        prompt: "consent",
+        include_granted_scopes: "true",
+        state,
+      });
+      return { url: `${AUTHORIZE_URL}?${params.toString()}` };
+    } catch (e) {
+      // Re-throw with a logged message so the request ID has something
+      // useful next to it instead of a bare "Server Error".
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[googleAuth.getAuthorizeUrl] failed:", msg);
+      throw new Error(`getAuthorizeUrl: ${msg}`);
+    }
   },
 });
 

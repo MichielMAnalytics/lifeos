@@ -392,6 +392,37 @@ proxy.all("/:provider/*", async (c) => {
     fullUpstreamUrl = `${upstreamBase}${subPath}${queryString}`;
   }
 
+  // ── Responses-API store/chain reconciliation ──────────
+  // The OpenAI Responses API rejects a `previous_response_id` reference
+  // when the prior response was created with `store: false` — error 404
+  // "Items are not persisted when store is set to false." pi-ai (the
+  // SDK OpenClaw uses) hard-codes `store: false` in its
+  // `openai-responses` provider, then chains every next turn via
+  // `previous_response_id` → 404 on every message after the first.
+  //
+  // Two fixes depending on which OpenAI endpoint we're hitting:
+  //   • Standard `api.openai.com/v1/responses` (BYOK sk-key OR managed)
+  //     — set `store: true` so OpenAI persists the response and the
+  //     chain works. Storage is free, retention is 30 days.
+  //   • `chatgpt.com/backend-api/codex/responses` (Codex OAuth) — that
+  //     endpoint REQUIRES store:false and ignores chaining. Strip the
+  //     previous_response_id so each turn is a fresh, stateless call;
+  //     pi-ai will fall back to inline conversation history.
+  if (provider === "openai" && requestBody) {
+    const path = c.req.path;
+    const isResponsesApi = path.includes("/responses");
+    if (isResponsesApi) {
+      if (isOpenAICodexOAuth) {
+        if (requestBody.previous_response_id) {
+          delete requestBody.previous_response_id;
+        }
+      } else {
+        requestBody.store = true;
+      }
+      requestBodyStr = JSON.stringify(requestBody);
+    }
+  }
+
   // Build upstream headers
   const upstreamHeaders = new Headers();
   // Preserve original Content-Type (critical for multipart boundary tokens)

@@ -86,10 +86,17 @@ async function fetchCustomEnvVars(
   return envVars;
 }
 
+// Bump CONFIG_VERSION when buildOpenClawConfig changes in a way that
+// requires existing pods to roll. K8s won't restart on its own (we use
+// updateStrategy: OnDelete), so users have to call `restart` — but at
+// least new deployments + reconciler runs see the new shape via the
+// hash.
+const CONFIG_VERSION = "2026-04-25-store-true";
+
 function computeConfigHash(selectedModel: string | undefined): string {
   return crypto
     .createHash("sha256")
-    .update(selectedModel ?? "claude")
+    .update(`${CONFIG_VERSION}:${selectedModel ?? "claude"}`)
     .digest("hex")
     .substring(0, 12);
 }
