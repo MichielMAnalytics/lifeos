@@ -243,6 +243,60 @@ export interface Meeting {
   created_at?: string;
 }
 
+export interface UpcomingMeeting {
+  _id: string;
+  id?: string;
+  source: string;
+  externalId?: string | null;
+  title: string;
+  description?: string | null;
+  startedAt: number;
+  endedAt: number;
+  attendees: string[];
+  location?: string | null;
+  htmlLink?: string | null;
+  updatedAt: number;
+}
+
+export interface MeetingPrep {
+  _id: string;
+  id?: string;
+  upcomingMeetingId: string;
+  title: string;
+  agenda?: string | null;
+  notes?: string | null;
+  talkingPoints?: string | null;
+  talkingPointsSource?: string | null;
+  relatedMeetingIds: string[];
+  relatedTaskIds: string[];
+  relatedGoalIds: string[];
+  contextRefreshedAt?: number | null;
+  updatedAt: number;
+}
+
+export interface MeetingPrepView {
+  prep: MeetingPrep;
+  upcoming: UpcomingMeeting | null;
+  relatedMeetings: Array<{
+    _id: string;
+    title: string;
+    startedAt?: number;
+    attendees?: string[];
+    summary?: string;
+  }>;
+  relatedTasks: Array<{
+    _id: string;
+    title: string;
+    status: string;
+  }>;
+  relatedGoals?: Array<{
+    _id: string;
+    title: string;
+    status: string;
+    targetDate?: string;
+  }>;
+}
+
 export interface FinanceCategory {
   id: string;
   _id?: string;

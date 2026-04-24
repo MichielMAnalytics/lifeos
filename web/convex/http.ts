@@ -3279,6 +3279,265 @@ http.route({
   }),
 });
 
+// ── Upcoming meetings ────────────────────────────────
+// Mirror of a calendar event (Google when wired, manual/mock for now).
+// CLI uses these so the agent can answer "what's on my calendar?" and
+// "prep me for my next meeting".
+
+http.route({
+  path: "/api/v1/upcoming-meetings",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/upcoming-meetings",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const limitParam = url.searchParams.get("limit");
+    const limit = limitParam ? Number(limitParam) : undefined;
+    const result = await ctx.runQuery(internal.upcomingMeetings._list, {
+      userId,
+      limit: Number.isFinite(limit) ? limit : undefined,
+    });
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/api/v1/upcoming-meetings/seed-mock",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/upcoming-meetings/seed-mock",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runMutation(internal.upcomingMeetings._seedMock, { userId });
+    return json({ data: result });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/upcoming-meetings/",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/upcoming-meetings/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/upcoming-meetings");
+    if (!rawId || rawId === "seed-mock") return err("Missing id", 400);
+    const id = await ctx.runQuery(internal.resolveId.resolveUpcomingMeeting, {
+      userId,
+      prefix: rawId,
+    });
+    const fullId = (rawId.length >= 32 ? rawId : id) as Id<"upcomingMeetings"> | null;
+    if (!fullId) return err("Upcoming meeting not found", 404);
+    const row = await ctx.runQuery(internal.upcomingMeetings._get, { userId, id: fullId });
+    if (!row) return err("Upcoming meeting not found", 404);
+    return json({ data: row });
+  }),
+});
+
+// ── Meeting preps ────────────────────────────────────
+// One-pager attached to an upcoming meeting. The CLI surface lets the
+// agent answer "what should I prep for the X meeting?" by reading the
+// auto-discovered context + LLM talking points.
+
+http.route({
+  path: "/api/v1/meeting-preps",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/meeting-preps",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const result = await ctx.runQuery(internal.meetingPreps._list, { userId });
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/api/v1/meeting-preps",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const body = await parseBody<{ upcomingMeetingId?: string; upcoming_meeting_id?: string }>(request);
+    const rawUpcomingId = body.upcomingMeetingId ?? body.upcoming_meeting_id;
+    if (!rawUpcomingId) return err("Missing upcomingMeetingId", 400);
+    // Resolve prefix → full id if needed.
+    const id =
+      rawUpcomingId.length >= 32
+        ? (rawUpcomingId as Id<"upcomingMeetings">)
+        : ((await ctx.runQuery(internal.resolveId.resolveUpcomingMeeting, {
+            userId,
+            prefix: rawUpcomingId,
+          })) as Id<"upcomingMeetings"> | null);
+    if (!id) return err("Upcoming meeting not found", 404);
+    try {
+      const result = await ctx.runMutation(internal.meetingPreps._createForUpcoming, {
+        userId,
+        upcomingMeetingId: id,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Create failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/meeting-preps/",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  pathPrefix: "/api/v1/meeting-preps/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/meeting-preps");
+    if (!rawId) return err("Missing prep id", 400);
+    const action = extractAction(url, "/api/v1/meeting-preps");
+    const id = await ctx.runQuery(internal.resolveId.resolveMeetingPrep, {
+      userId,
+      prefix: rawId,
+    });
+    const fullId = (rawId.length >= 32 ? rawId : id) as Id<"meetingPreps"> | null;
+    if (!fullId) return err("Prep not found", 404);
+    if (action === "view") {
+      const view = await ctx.runQuery(internal.meetingPreps._viewWithContext, {
+        userId,
+        id: fullId,
+      });
+      if (!view) return err("Prep not found", 404);
+      return json({ data: view });
+    }
+    const prep = await ctx.runQuery(internal.meetingPreps._get, { userId, id: fullId });
+    if (!prep) return err("Prep not found", 404);
+    return json({ data: prep });
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/meeting-preps/",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/meeting-preps");
+    if (!rawId) return err("Missing prep id", 400);
+    const action = extractAction(url, "/api/v1/meeting-preps");
+    const id = await ctx.runQuery(internal.resolveId.resolveMeetingPrep, {
+      userId,
+      prefix: rawId,
+    });
+    const fullId = (rawId.length >= 32 ? rawId : id) as Id<"meetingPreps"> | null;
+    if (!fullId) return err("Prep not found", 404);
+    try {
+      if (action === "refresh-context") {
+        const result = await ctx.runMutation(internal.meetingPreps._refreshContext, {
+          userId,
+          id: fullId,
+        });
+        return json({ data: result });
+      }
+      if (action === "generate") {
+        const result = await ctx.runAction(internal.meetingPrepGenerator._generate, {
+          userId,
+          id: fullId,
+        });
+        return json({ data: result });
+      }
+      return err("Unknown action", 404);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Action failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/meeting-preps/",
+  method: "PATCH",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/meeting-preps");
+    if (!rawId) return err("Missing prep id", 400);
+    const id = await ctx.runQuery(internal.resolveId.resolveMeetingPrep, {
+      userId,
+      prefix: rawId,
+    });
+    const fullId = (rawId.length >= 32 ? rawId : id) as Id<"meetingPreps"> | null;
+    if (!fullId) return err("Prep not found", 404);
+    const body = await parseBody<{ agenda?: string; notes?: string }>(request);
+    try {
+      const result = await ctx.runMutation(internal.meetingPreps._patch, {
+        userId,
+        id: fullId,
+        agenda: body.agenda,
+        notes: body.notes,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Update failed";
+      return err(message, 400);
+    }
+  }),
+});
+
+http.route({
+  pathPrefix: "/api/v1/meeting-preps/",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+    const url = new URL(request.url);
+    const rawId = extractId(url, "/api/v1/meeting-preps");
+    if (!rawId) return err("Missing prep id", 400);
+    const id = await ctx.runQuery(internal.resolveId.resolveMeetingPrep, {
+      userId,
+      prefix: rawId,
+    });
+    const fullId = (rawId.length >= 32 ? rawId : id) as Id<"meetingPreps"> | null;
+    if (!fullId) return err("Prep not found", 404);
+    try {
+      const result = await ctx.runMutation(internal.meetingPreps._remove, {
+        userId,
+        id: fullId,
+      });
+      return json({ data: result });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Delete failed";
+      return err(message, 400);
+    }
+  }),
+});
+
 // ── Finance ──────────────────────────────────────────
 // CLI surface: list/show/categorize transactions, list categories, list
 // statements, upload CSV, trigger AI suggestions. The dashboard talks

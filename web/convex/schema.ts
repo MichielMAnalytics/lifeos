@@ -340,6 +340,52 @@ export default defineSchema({
     .index("by_userId_startedAt", ["userId", "startedAt"])
     .index("by_userId_granolaId", ["userId", "granolaId"]),
 
+  // ── Upcoming meetings ──────────────────────────────
+  // Mirror of a calendar event from Google (eventually) or a manually-added
+  // entry. While Google Workspace integration is gated, `source: "mock"`
+  // rows seeded via `upcomingMeetings.seedMock` keep the UI useful for
+  // testing. When Google connects, sync just upserts the same shape with
+  // `source: "google"` and `externalId` set to the GCal event id.
+  upcomingMeetings: defineTable({
+    userId: v.id("users"),
+    source: v.string(),                    // "google" | "manual" | "mock"
+    externalId: v.optional(v.string()),    // GCal event id when source="google"
+    title: v.string(),
+    description: v.optional(v.string()),
+    startedAt: v.float64(),                // epoch ms
+    endedAt: v.float64(),
+    attendees: v.array(v.string()),        // names or emails — matches `meetings.attendees` shape
+    location: v.optional(v.string()),
+    htmlLink: v.optional(v.string()),
+    updatedAt: v.float64(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_startedAt", ["userId", "startedAt"])
+    .index("by_userId_externalId", ["userId", "externalId"]),
+
+  // ── Meeting preps ──────────────────────────────────
+  // One-pager linked to an upcoming meeting. Auto-discovers past meetings
+  // with overlapping attendees + open tasks mentioning them; the user
+  // edits agenda + notes; an LLM generates suggested talking points from
+  // the gathered context. Each upcoming meeting can have at most one prep.
+  meetingPreps: defineTable({
+    userId: v.id("users"),
+    upcomingMeetingId: v.id("upcomingMeetings"),
+    title: v.string(),                            // copied from upcoming for offline reading
+    agenda: v.optional(v.string()),               // user-editable markdown
+    notes: v.optional(v.string()),                // user-editable scratch
+    talkingPoints: v.optional(v.string()),        // LLM-generated markdown
+    talkingPointsSource: v.optional(v.string()),  // "openai" | "manual" — for future BYOK swap
+    // Auto-discovered context — refreshed on demand via `refreshContext`.
+    relatedMeetingIds: v.array(v.id("meetings")),
+    relatedTaskIds: v.array(v.id("tasks")),
+    relatedGoalIds: v.array(v.id("goals")),
+    contextRefreshedAt: v.optional(v.float64()),
+    updatedAt: v.float64(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_upcomingMeetingId", ["upcomingMeetingId"]),
+
   // ── Workouts ────────────────────────────────────────
   workouts: defineTable({
     userId: v.id("users"),

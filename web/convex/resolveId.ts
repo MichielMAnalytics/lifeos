@@ -185,3 +185,27 @@ export const resolveMeeting = internalQuery({
     return match?._id ?? null;
   },
 });
+
+export const resolveUpcomingMeeting = internalQuery({
+  args: { userId: v.id("users"), prefix: v.string() },
+  handler: async (ctx, { userId, prefix }) => {
+    const docs = await ctx.db
+      .query("upcomingMeetings")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .take(500);
+    const match = docs.find((d) => (d._id as string).startsWith(prefix));
+    return match?._id ?? null;
+  },
+});
+
+export const resolveMeetingPrep = internalQuery({
+  args: { userId: v.id("users"), prefix: v.string() },
+  handler: async (ctx, { userId, prefix }) => {
+    const docs = await ctx.db
+      .query("meetingPreps")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .take(500);
+    const match = docs.find((d) => (d._id as string).startsWith(prefix));
+    return match?._id ?? null;
+  },
+});
