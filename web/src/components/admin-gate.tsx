@@ -19,7 +19,9 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
 
   // Show a faint skeleton until the role lands — keeps the layout from
   // flashing the "Not authorised" message before we know the answer.
-  if (role === undefined) {
+  // `role === undefined` → query still in-flight on the client.
+  // `role === null` → auth token not attached yet (re-runs when it lands).
+  if (role === undefined || role === null) {
     return (
       <div className="animate-fade-in opacity-60">
         <div className="h-7 w-48 bg-bg-subtle rounded mb-3" />

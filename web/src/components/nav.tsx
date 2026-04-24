@@ -46,6 +46,9 @@ export function Nav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { config, isConfigMode, togglePageVisibility, setNavOrder } = useDashboardConfig();
   const myRole = useQuery(api.roles.getMyRole, {});
+  // `undefined` = query loading, `null` = auth token not attached yet.
+  // Default admin tabs to hidden (false) while either is the case; the
+  // query re-runs when auth lands and reveals them.
   const isAdmin = myRole?.isAdmin ?? false;
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);

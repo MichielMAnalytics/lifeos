@@ -37,9 +37,15 @@ export function isAdminEmail(email: string | null | undefined): boolean {
 
 export const getMyRole = query({
   args: {},
-  handler: async (ctx): Promise<{ role: Role; isAdmin: boolean; email: string | null }> => {
+  handler: async (
+    ctx,
+  ): Promise<{ role: Role; isAdmin: boolean; email: string | null } | null> => {
+    // Return `null` while auth is still resolving so callers show a
+    // loading state instead of flashing the "restricted" page. Once the
+    // Convex client sends the JWT, this re-runs and returns the real
+    // role.
     const userId = await getAuthUserId(ctx);
-    if (!userId) return { role: "user", isAdmin: false, email: null };
+    if (!userId) return null;
     const user = await ctx.db.get(userId);
     const email = user?.email ?? null;
     const admin = isAdminEmail(email);
