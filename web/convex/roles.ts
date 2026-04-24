@@ -39,7 +39,15 @@ export const getMyRole = query({
   args: {},
   handler: async (
     ctx,
-  ): Promise<{ role: Role; isAdmin: boolean; email: string | null } | null> => {
+  ): Promise<
+    | {
+        role: Role;
+        isAdmin: boolean;
+        email: string | null;
+        _debug?: { adminEmailsSeen: string | null; emailLc: string };
+      }
+    | null
+  > => {
     // Return `null` while auth is still resolving so callers show a
     // loading state instead of flashing the "restricted" page. Once the
     // Convex client sends the JWT, this re-runs and returns the real
@@ -49,7 +57,17 @@ export const getMyRole = query({
     const user = await ctx.db.get(userId);
     const email = user?.email ?? null;
     const admin = isAdminEmail(email);
-    return { role: admin ? "admin" : "user", isAdmin: admin, email };
+    // TEMP debug: include the env-var value the worker is reading so we
+    // can diagnose why isAdmin comes back false even when email matches.
+    return {
+      role: admin ? "admin" : "user",
+      isAdmin: admin,
+      email,
+      _debug: {
+        adminEmailsSeen: serverEnv.ADMIN_EMAILS ?? null,
+        emailLc: (email ?? "").trim().toLowerCase(),
+      },
+    };
   },
 });
 
