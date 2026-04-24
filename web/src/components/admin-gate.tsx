@@ -40,6 +40,15 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
           This page is in private testing. We'll roll it out to everyone once
           it's stable. If you think you should have access, let us know.
         </p>
+        {/* TEMP debug: surface the role response so we can see why isAdmin
+            is false even when the env var is set correctly. Remove once
+            the admin gate is verified working. */}
+        <details className="text-left text-[10px] text-text-muted/60 mx-auto max-w-md">
+          <summary className="cursor-pointer">Debug info</summary>
+          <pre className="mt-2 p-2 bg-bg-subtle rounded whitespace-pre-wrap break-all">
+            {JSON.stringify(role, null, 2)}
+          </pre>
+        </details>
         <Link
           href="/today"
           className="inline-block text-[11px] font-semibold uppercase tracking-wide px-3 py-1.5 rounded-md border border-border text-text-muted hover:text-text hover:border-accent/40 transition-colors"
