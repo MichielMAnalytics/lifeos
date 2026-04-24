@@ -13,7 +13,12 @@ export interface PagePreset {
 }
 
 export type PresetKey = string;
-export type PageKey = "life-coach" | "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "schedules" | "health" | "meetings" | "finance";
+export type PageKey = "life-coach" | "today" | "tasks" | "projects" | "goals" | "journal" | "ideas" | "thoughts" | "plan" | "reviews" | "resources" | "schedules" | "health" | "meetings" | "finance" | "marketing";
+
+// Pages that are admin-only — invisible in nav for non-admin users and
+// gated server-side. Source of truth for both client (nav.tsx) and server
+// (per-page guards). Add a page key here to gate it; remove to ship.
+export const ADMIN_ONLY_PAGES: PageKey[] = ["meetings", "marketing"];
 
 // ═══════════════════════════════════════════════════════════
 // Every persona appears on every page.
@@ -827,12 +832,56 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
       ],
     },
   },
+
+  // ── MARKETING ──────────────────────────────────────────
+  // Admin-only placeholder for now. The marketing page exposes growth/
+  // distribution work — landing-page experiments, content calendar,
+  // outreach lists. Layouts will get fleshed out once we have the data
+  // model nailed; until then every preset renders the same single
+  // placeholder section.
+  marketing: {
+    default: {
+      name: "Default",
+      description: "Marketing workspace placeholder",
+      sections: [{ id: "marketing-placeholder", label: "Marketing", span: "full" }],
+    },
+    solopreneur: {
+      name: "Default",
+      description: "Marketing workspace placeholder",
+      sections: [{ id: "marketing-placeholder", label: "Marketing", span: "full" }],
+    },
+    "content-creator": {
+      name: "Default",
+      description: "Marketing workspace placeholder",
+      sections: [{ id: "marketing-placeholder", label: "Marketing", span: "full" }],
+    },
+    developer: {
+      name: "Default",
+      description: "Marketing workspace placeholder",
+      sections: [{ id: "marketing-placeholder", label: "Marketing", span: "full" }],
+    },
+    executive: {
+      name: "Default",
+      description: "Marketing workspace placeholder",
+      sections: [{ id: "marketing-placeholder", label: "Marketing", span: "full" }],
+    },
+    minimalist: {
+      name: "Default",
+      description: "Marketing workspace placeholder",
+      sections: [{ id: "marketing-placeholder", label: "Marketing", span: "full" }],
+    },
+    journaler: {
+      name: "Default",
+      description: "Marketing workspace placeholder",
+      sections: [{ id: "marketing-placeholder", label: "Marketing", span: "full" }],
+    },
+  },
 };
 
 export const ALL_PRESET_KEYS = ["default", "solopreneur", "content-creator", "developer", "executive", "minimalist", "journaler"];
 
 export const DEFAULT_NAV_ORDER: PageKey[] = [
-  "life-coach", "today", "tasks", "journal", "projects", "goals", "ideas", "thoughts", "resources", "meetings", "reviews", "schedules", "health", "finance",
+  "life-coach", "today", "tasks", "journal", "projects", "goals", "ideas", "thoughts", "resources", "meetings", "marketing", "reviews", "schedules", "health", "finance",
 ];
 
 export function getPreset(page: PageKey, presetKey: string): PagePreset {

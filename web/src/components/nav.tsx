@@ -8,6 +8,7 @@ import { useAuthActions } from '@convex-dev/auth/react';
 import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
+import { ADMIN_ONLY_PAGES } from '@/lib/presets';
 import { HeaderNav } from './header-nav';
 import { LogoMark } from './theme-logo';
 import { NAV_MARKS } from './nav-marks';
@@ -27,9 +28,12 @@ const allPages: Record<string, { label: string; abbr: string; category?: string 
   reviews: { label: 'Reviews', abbr: 'Re', category: 'Reflect' },
   schedules: { label: 'Schedules', abbr: 'Sc', category: 'Reflect' },
   meetings: { label: 'Meetings', abbr: 'Me', category: 'Capture' },
+  marketing: { label: 'Marketing', abbr: 'Mk', category: 'Work' },
   finance: { label: 'Finance', abbr: 'Fi', category: 'Daily' },
   health: { label: 'Health', abbr: 'He', category: 'Daily' },
 };
+
+const ADMIN_GATE = new Set<string>(ADMIN_ONLY_PAGES);
 
 const CATEGORY_ORDER = ['Daily', 'Work', 'Capture', 'Reflect'];
 
@@ -41,6 +45,8 @@ export function Nav() {
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { config, isConfigMode, togglePageVisibility, setNavOrder } = useDashboardConfig();
+  const myRole = useQuery(api.roles.getMyRole, {});
+  const isAdmin = myRole?.isAdmin ?? false;
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
@@ -76,10 +82,13 @@ export function Nav() {
     localStorage.setItem(STORAGE_KEY, String(next));
   };
 
-  // Build nav links based on config
-  const visiblePages = config.navOrder.filter(p => !config.navHidden.includes(p));
+  // Build nav links based on config + role.
+  // Admin-only pages are stripped before any visibility logic — non-admins
+  // never see them in the sidebar (config mode included).
+  const allowedOrder = config.navOrder.filter((p) => isAdmin || !ADMIN_GATE.has(p));
+  const visiblePages = allowedOrder.filter((p) => !config.navHidden.includes(p));
   const navLinks = isConfigMode
-    ? config.navOrder.map(key => ({
+    ? allowedOrder.map(key => ({
         key,
         href: `/${key}`,
         ...(allPages[key] ?? { label: key, abbr: key.slice(0, 2) }),

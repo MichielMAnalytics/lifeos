@@ -8,6 +8,7 @@ import { useAuthActions } from '@convex-dev/auth/react';
 import { api } from '@/lib/convex-api';
 import { cn } from '@/lib/utils';
 import { useDashboardConfig } from '@/lib/dashboard-config';
+import { ADMIN_ONLY_PAGES } from '@/lib/presets';
 import { LogoMark } from './theme-logo';
 import { NAV_MARKS } from './nav-marks';
 import { SearchTrigger } from './search-modal';
@@ -25,9 +26,12 @@ const allPages: Record<string, { label: string }> = {
   resources: { label: 'Resources' },
   schedules: { label: 'Schedules' },
   meetings: { label: 'Meetings' },
+  marketing: { label: 'Marketing' },
   finance: { label: 'Finance' },
   health: { label: 'Health' },
 };
+
+const ADMIN_GATE = new Set<string>(ADMIN_ONLY_PAGES);
 
 /* ── SVG icon components ─────────────────────────────────── */
 
@@ -90,11 +94,17 @@ export function HeaderNav() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const dragNodeRef = useRef<HTMLDivElement | null>(null);
 
-  const visiblePages = config.navOrder.filter(p => !config.navHidden.includes(p));
+  const myRole = useQuery(api.roles.getMyRole, {});
+  const isAdmin = myRole?.isAdmin ?? false;
+
+  // Admin-only pages stripped before any other filtering — non-admins
+  // never see them in the header nav (config mode included).
+  const allowedOrder = config.navOrder.filter((p) => isAdmin || !ADMIN_GATE.has(p));
+  const visiblePages = allowedOrder.filter(p => !config.navHidden.includes(p));
 
   // In config mode, show ALL pages from navOrder (hidden ones are dimmed).
   // In normal mode, only show visible pages.
-  const displayPages = isConfigMode ? config.navOrder : visiblePages;
+  const displayPages = isConfigMode ? allowedOrder : visiblePages;
 
   /* ── Drag handlers ─────────────────────────────────────── */
 

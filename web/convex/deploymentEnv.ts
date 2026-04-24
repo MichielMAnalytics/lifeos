@@ -30,6 +30,11 @@ const serverEnvSchema = z.object({
   GCP_PROJECT_ID: z.string().optional(),
   LIFEOS_DOMAIN: z.string().default("lifeos.zone"),
   GITHUB_FEEDBACK_TOKEN: z.string().optional(),
+  // Comma-separated email allowlist for the admin role. Admins see every
+  // tab including in-progress ones (e.g. Meetings, Marketing) that aren't
+  // ready for the wider beta. Set via Convex env vars per deployment so we
+  // don't need a DB mutation to grant admin.
+  ADMIN_EMAILS: z.string().default(""),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
