@@ -9,6 +9,7 @@
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { SidePeek } from '@/components/side-peek';
+import { MeetingSummary } from '@/components/meeting-summary-md';
 import {
   type Meeting,
   type MeetingPreview,
@@ -96,16 +97,25 @@ export function MeetingPeek({ meeting, onClose, allowDelete = true }: MeetingPee
           </section>
         )}
 
-        {resolvedMeeting.summary && (
-          <section className="space-y-2">
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted/80">
-              Summary
-            </h2>
-            <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
-              {resolvedMeeting.summary}
-            </p>
-          </section>
-        )}
+        {(() => {
+          // The full Meeting doc has summaryMarkdown; the lazy-load preview
+          // doesn't. Cast through a permissive shape so TS narrows cleanly
+          // without us splitting the rendering across two paths.
+          const summaryMd = (resolvedMeeting as { summaryMarkdown?: string }).summaryMarkdown;
+          if (!resolvedMeeting.summary && !summaryMd) return null;
+          return (
+            <section className="space-y-2">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted/80">
+                Summary
+              </h2>
+              <MeetingSummary
+                markdown={summaryMd}
+                plain={resolvedMeeting.summary ?? undefined}
+                variant="prose"
+              />
+            </section>
+          );
+        })()}
 
         {transcript && (
           <section className="space-y-2">

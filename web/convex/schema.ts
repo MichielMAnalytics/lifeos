@@ -316,7 +316,8 @@ export default defineSchema({
     userId: v.id("users"),
     granolaId: v.string(),                 // "not_xxx" from Granola
     title: v.string(),
-    summary: v.optional(v.string()),       // AI-generated overview (Granola's `summary_text`)
+    summary: v.optional(v.string()),         // AI-generated overview (Granola's `summary_text` — plain)
+    summaryMarkdown: v.optional(v.string()), // markdown variant (Granola's `summary_markdown` — has bullets + headings)
     transcript: v.optional(v.string()),    // pre-joined, speaker-prefixed
     transcriptTruncated: v.optional(v.boolean()),
     attendees: v.optional(v.array(v.string())),

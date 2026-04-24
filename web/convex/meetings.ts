@@ -70,7 +70,15 @@ export const list = query({
         return false;
       }
       if (searchNeedle) {
-        const haystack = `${m.title} ${m.summary ?? ""}`.toLowerCase();
+        // Search across title + both summary variants + attendee names +
+        // folder names so the user can find a meeting by any of those.
+        const haystack = [
+          m.title,
+          m.summary ?? "",
+          m.summaryMarkdown ?? "",
+          (m.attendees ?? []).join(" "),
+          (m.folders ?? []).join(" "),
+        ].join(" ").toLowerCase();
         if (!haystack.includes(searchNeedle)) return false;
       }
       return true;
@@ -245,7 +253,15 @@ export const _list = internalQuery({
       if (folderNeedle && !m.folders?.some((f) => f.toLowerCase() === folderNeedle)) return false;
       if (tagNeedle && !m.tags?.some((t) => t.toLowerCase() === tagNeedle)) return false;
       if (searchNeedle) {
-        const haystack = `${m.title} ${m.summary ?? ""}`.toLowerCase();
+        // Search across title + both summary variants + attendee names +
+        // folder names so the user can find a meeting by any of those.
+        const haystack = [
+          m.title,
+          m.summary ?? "",
+          m.summaryMarkdown ?? "",
+          (m.attendees ?? []).join(" "),
+          (m.folders ?? []).join(" "),
+        ].join(" ").toLowerCase();
         if (!haystack.includes(searchNeedle)) return false;
       }
       return true;
@@ -317,6 +333,7 @@ export const _upsertFromGranola = internalMutation({
     granolaId: v.string(),
     title: v.string(),
     summary: v.optional(v.string()),
+    summaryMarkdown: v.optional(v.string()),
     transcript: v.optional(v.string()),
     transcriptTruncated: v.optional(v.boolean()),
     attendees: v.optional(v.array(v.string())),
@@ -342,6 +359,9 @@ export const _upsertFromGranola = internalMutation({
     // the new values as authoritative and overwrite.
     const isDetail = args.detailFetched === true;
     const summary = isDetail ? args.summary : (args.summary ?? existing?.summary);
+    const summaryMarkdown = isDetail
+      ? args.summaryMarkdown
+      : (args.summaryMarkdown ?? existing?.summaryMarkdown);
     const transcript = isDetail ? args.transcript : (args.transcript ?? existing?.transcript);
     const transcriptTruncated = isDetail
       ? args.transcriptTruncated
@@ -354,6 +374,7 @@ export const _upsertFromGranola = internalMutation({
       granolaId: args.granolaId,
       title: args.title,
       summary,
+      summaryMarkdown,
       transcript,
       transcriptTruncated,
       attendees,

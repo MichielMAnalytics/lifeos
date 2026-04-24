@@ -115,7 +115,10 @@ export function MeetingsTimeline({ meetings }: { meetings?: MeetingPreview[] } =
               <ul className="divide-y divide-border/60">
                 {group.items.map((m) => {
                   const time = formatTimeOfDay(m.startedAt);
-                  const attendees = formatAttendees(m.attendees, 3);
+                  // Hide the attendee row when the only attendee is the user —
+                  // showing "Kemp Zumpolle" alone on every solo meeting is noise.
+                  const hasOthers = (m.attendees?.length ?? 0) > 1;
+                  const attendees = hasOthers ? formatAttendees(m.attendees, 3) : '';
                   const preview = summaryPreview(m.summary, 140);
                   const folderBadge = m.folders?.[0];
                   return (
@@ -131,25 +134,30 @@ export function MeetingsTimeline({ meetings }: { meetings?: MeetingPreview[] } =
                             <h4 className="text-sm font-semibold text-text truncate">
                               {m.title}
                             </h4>
-                            <span className="text-[10px] text-text-muted/80 shrink-0 tabular-nums">
-                              {time || '—'}
-                            </span>
-                          </div>
-                          {(attendees || folderBadge) && (
-                            <div className="flex items-center gap-2 mt-1 text-[11px] text-text-muted/80">
-                              {attendees && <span className="truncate">{attendees}</span>}
+                            <div className="flex items-baseline gap-2 shrink-0">
                               {folderBadge && (
-                                <span className="inline-flex items-center gap-1 shrink-0 text-text-muted/60">
+                                <span
+                                  className="inline-flex items-center gap-1 text-[10px] text-text-muted/70 font-medium"
+                                  title={`Folder: ${folderBadge}`}
+                                >
                                   <FolderGlyph />
                                   {folderBadge}
                                 </span>
                               )}
+                              <span className="text-[10px] text-text-muted/80 tabular-nums">
+                                {time || '—'}
+                              </span>
+                            </div>
+                          </div>
+                          {(attendees || (m.tags && m.tags.length > 0)) && (
+                            <div className="flex items-center gap-2 mt-1 text-[11px] text-text-muted/80">
+                              {attendees && <span className="truncate">{attendees}</span>}
                               {m.tags && m.tags.length > 0 && (
                                 <span className="inline-flex items-center gap-1 shrink-0">
                                   {m.tags.slice(0, 3).map((t) => (
                                     <span
                                       key={t}
-                                      className="text-[9px] uppercase tracking-wider px-1 py-px rounded bg-bg-subtle text-text-muted/80"
+                                      className="text-[9px] uppercase tracking-wider px-1.5 py-px rounded-full border border-accent/30 bg-accent/5 text-accent"
                                     >
                                       {t}
                                     </span>

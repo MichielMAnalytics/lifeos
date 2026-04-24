@@ -506,10 +506,15 @@ function mapNoteToUpsert(userId: Id<"users">, note: GranolaNote, options?: { isD
   const dateLabel = startIso ? new Date(startIso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
   const title = (explicitTitle || calTitle || derivedTitle || `Meeting · ${dateLabel}` || "Untitled meeting").slice(0, 500);
 
-  // Summary — prefer plain text, fall back to markdown, then legacy `summary`.
+  // Summary — capture both plain text + markdown so the UI can pick. The
+  // markdown variant has actual headings and bullets; plain is usually a
+  // wall of text. UI prefers markdown when present.
   const rawSummary = note.summary_text || note.summary_markdown || note.summary || "";
   const summary = typeof rawSummary === "string" && rawSummary.trim()
     ? rawSummary.slice(0, 50_000)
+    : undefined;
+  const summaryMarkdown = typeof note.summary_markdown === "string" && note.summary_markdown.trim()
+    ? note.summary_markdown.slice(0, 80_000)
     : undefined;
 
   // Transcript joined to a speaker-prefixed string, byte-truncated to fit
@@ -534,6 +539,7 @@ function mapNoteToUpsert(userId: Id<"users">, note: GranolaNote, options?: { isD
     granolaId: note.id,
     title,
     summary,
+    summaryMarkdown,
     transcript: safeTranscript || undefined,
     transcriptTruncated: truncated || undefined,
     attendees: attendees.length > 0 ? attendees : undefined,
