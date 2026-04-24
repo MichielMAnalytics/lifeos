@@ -4,11 +4,11 @@
 // instead of the page contents. Pairs with the nav-side filtering in
 // nav.tsx / header-nav.tsx and the ADMIN_ONLY_PAGES list in presets.ts.
 //
-// Server-side: derived from the `ADMIN_EMAILS` Convex env var via
-// `api.roles.getMyRole`. The role check happens client-side here, but
-// the data lives on the server — there's no way to forge admin status
-// by editing local state. Convex queries that call out admin-only data
-// (none yet) should also call `_isAdmin` directly.
+// Admin list lives in convex/roles.ts (hardcoded set of emails). Role is
+// resolved server-side via `api.roles.getMyRole` — the client can't
+// forge admin status by editing local state. Any Convex query that
+// needs to gate data by role should call `internal.roles._isAdmin`
+// directly.
 
 import Link from 'next/link';
 import { useQuery } from 'convex/react';
