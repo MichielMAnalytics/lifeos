@@ -33,6 +33,14 @@ export default defineSchema({
     granolaConnectedAt: v.optional(v.float64()),
     granolaSyncedAt: v.optional(v.float64()),
     granolaSyncError: v.optional(v.string()),
+    // Google Workspace (Calendar) — OAuth tokens live in GCP Secret
+    // Manager as `byok-{userId}-google-calendar` (JSON blob with
+    // access_token / refresh_token / expires_at_ms). These fields are
+    // just metadata for the dashboard to render connection status.
+    googleCalendarConnectedAt: v.optional(v.float64()),
+    googleCalendarEmail: v.optional(v.string()), // which Google account they authorised
+    googleCalendarSyncedAt: v.optional(v.float64()),
+    googleCalendarSyncError: v.optional(v.string()),
   }).index("email", ["email"])
     .index("by_telegramLinkCode", ["telegramLinkCode"]),
 
@@ -367,6 +375,30 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_userId_startedAt", ["userId", "startedAt"])
     .index("by_userId_externalId", ["userId", "externalId"]),
+
+  // ── Google OAuth state (CSRF) ──────────────────────
+  // Short-lived state tokens generated when a user initiates the Google
+  // Calendar OAuth flow, verified on the callback to prevent CSRF. Rows
+  // are deleted on successful exchange and expired rows are cleaned by
+  // the daily cron.
+  googleOAuthStates: defineTable({
+    userId: v.id("users"),
+    state: v.string(),
+    expiresAt: v.float64(),
+  }).index("by_state", ["state"])
+    .index("by_userId", ["userId"]),
+
+  // ── Google Calendar sync cursor ────────────────────
+  // Stores the per-user syncToken so the hourly sync only pulls events
+  // that changed since the last run. `timeMin`/`timeMax` filters aren't
+  // compatible with syncToken, so we drop back to a 30-day window on
+  // full resyncs (token expired or first connect).
+  googleCalendarSyncState: defineTable({
+    userId: v.id("users"),
+    calendarId: v.string(), // "primary" or specific calendar id
+    syncToken: v.optional(v.string()),
+    lastFullSyncAt: v.optional(v.float64()),
+  }).index("by_userId", ["userId"]),
 
   // ── Meeting preps ──────────────────────────────────
   // One-pager linked to an upcoming meeting. Auto-discovers past meetings

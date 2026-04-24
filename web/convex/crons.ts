@@ -25,4 +25,25 @@ crons.interval(
   {},
 );
 
+// Google Calendar sync — every 15 minutes. Most syncs are incremental
+// (syncToken path) so the per-user request count is 1 GET unless the
+// user has a lot of changes, keeping us well inside the 500-req-per-
+// 100s per-user quota.
+crons.interval(
+  "sync google calendar events",
+  { minutes: 15 },
+  internal.googleCalendar._syncAllConnected,
+  {},
+);
+
+// Daily cleanup of expired OAuth state tokens. The window is 10 min at
+// creation so this is only a safety net for rows left behind by users
+// who abandoned the consent screen.
+crons.interval(
+  "purge expired google oauth states",
+  { hours: 24 },
+  internal.googleAuthHelpers._purgeExpiredOAuthStates,
+  {},
+);
+
 export default crons;

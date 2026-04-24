@@ -224,6 +224,107 @@ export const _get = internalQuery({
   },
 });
 
+/** Upsert an upcoming meeting from an external source (Google Calendar).
+ * Match by (userId, externalId) so repeated syncs of the same event
+ * don't create duplicates. `status === "cancelled"` deletes the row —
+ * Google's incremental sync returns cancelled events as tombstones. */
+export const _upsertFromGoogle = internalMutation({
+  args: {
+    userId: v.id("users"),
+    externalId: v.string(),
+    cancelled: v.boolean(),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    startedAt: v.optional(v.float64()),
+    endedAt: v.optional(v.float64()),
+    attendees: v.optional(v.array(v.string())),
+    location: v.optional(v.string()),
+    htmlLink: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("upcomingMeetings")
+      .withIndex("by_userId_externalId", (q) =>
+        q.eq("userId", args.userId).eq("externalId", args.externalId),
+      )
+      .unique();
+
+    if (args.cancelled) {
+      if (existing) await ctx.db.delete(existing._id);
+      return { action: "deleted" as const };
+    }
+
+    // Cancelled=false but we don't have the full payload (unusual);
+    // treat as a no-op rather than writing garbage.
+    if (
+      !args.title ||
+      args.startedAt === undefined ||
+      args.endedAt === undefined
+    ) {
+      return { action: "skipped" as const };
+    }
+
+    const patch = {
+      source: "google",
+      title: args.title,
+      description: args.description,
+      startedAt: args.startedAt,
+      endedAt: args.endedAt,
+      attendees: args.attendees ?? [],
+      location: args.location,
+      htmlLink: args.htmlLink,
+      updatedAt: Date.now(),
+    };
+
+    if (existing) {
+      await ctx.db.patch(existing._id, patch);
+      return { action: "updated" as const };
+    }
+
+    await ctx.db.insert("upcomingMeetings", {
+      userId: args.userId,
+      externalId: args.externalId,
+      ...patch,
+    });
+    return { action: "inserted" as const };
+  },
+});
+
+/** Mark-and-sweep for Google-sourced events inside a [windowStart,
+ * windowEnd] slice. Called after a full resync so rows the user has
+ * since deleted in Google (but we hadn't heard about because our
+ * syncToken was gone) get cleaned up. Only touches `source:"google"`
+ * rows so Granola / manual entries are safe. */
+export const _pruneStaleGoogleEvents = internalMutation({
+  args: {
+    userId: v.id("users"),
+    seenExternalIds: v.array(v.string()),
+    windowStart: v.float64(),
+    windowEnd: v.float64(),
+  },
+  handler: async (ctx, args) => {
+    const seen = new Set(args.seenExternalIds);
+    const rows = await ctx.db
+      .query("upcomingMeetings")
+      .withIndex("by_userId_startedAt", (q) => q.eq("userId", args.userId))
+      .take(1000);
+    let deleted = 0;
+    for (const r of rows) {
+      if (r.source !== "google") continue;
+      if (!r.externalId) continue;
+      // Keep events already past (endedAt < windowStart) and anything
+      // outside the sync window on the far side — we only swept what
+      // the latest list returned.
+      if (r.endedAt < args.windowStart) continue;
+      if (r.startedAt > args.windowEnd) continue;
+      if (seen.has(r.externalId)) continue;
+      await ctx.db.delete(r._id);
+      deleted++;
+    }
+    return { deleted };
+  },
+});
+
 // Internal twin of `seedMock` so the HTTP layer can call it without an
 // auth session. Same logic as the public mutation above.
 export const _seedMock = internalMutation({

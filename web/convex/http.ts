@@ -3884,4 +3884,63 @@ http.route({
   }),
 });
 
+// ── Google Calendar OAuth callback ──────────────────
+// Google redirects the user's browser here after they grant consent on
+// accounts.google.com. We consume the one-shot state token to look up
+// the user, then hand off to _completeOAuth which exchanges the code
+// for tokens and stashes them in Secret Manager. Finally we redirect
+// back to the LifeOS settings page so the UI can refresh status.
+
+http.route({
+  path: "/oauth/google/callback",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    const oauthError = url.searchParams.get("error");
+    const siteUrl = serverEnv.SITE_URL.replace(/\/$/, "");
+
+    const redirectBack = (status: "connected" | "error", detail?: string) => {
+      const target = new URL(`${siteUrl}/settings`);
+      target.searchParams.set("google", status);
+      if (detail) target.searchParams.set("detail", detail);
+      return Response.redirect(target.toString(), 302);
+    };
+
+    if (oauthError) {
+      return redirectBack("error", oauthError);
+    }
+    if (!code || !state) {
+      return redirectBack("error", "missing-params");
+    }
+
+    const match = (await ctx.runMutation(
+      internal.googleAuthHelpers._consumeOAuthState,
+      { state },
+    )) as { userId: Id<"users"> } | null;
+    if (!match) {
+      return redirectBack("error", "invalid-state");
+    }
+
+    try {
+      await ctx.runAction(internal.googleAuth._completeOAuth, {
+        userId: match.userId,
+        code,
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "exchange-failed";
+      return redirectBack("error", msg.slice(0, 80));
+    }
+
+    // Kick off a background sync so the upcoming meetings list is
+    // warm by the time the user lands back in Settings. Not awaited.
+    await ctx.scheduler.runAfter(0, internal.googleCalendar._syncUser, {
+      userId: match.userId,
+    });
+
+    return redirectBack("connected");
+  }),
+});
+
 export default http;

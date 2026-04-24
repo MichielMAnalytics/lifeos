@@ -30,6 +30,14 @@ const serverEnvSchema = z.object({
   GCP_PROJECT_ID: z.string().optional(),
   LIFEOS_DOMAIN: z.string().default("lifeos.zone"),
   GITHUB_FEEDBACK_TOKEN: z.string().optional(),
+  // Google Workspace OAuth (Calendar integration). Client created in
+  // GCP console → "Google Auth Platform" → "Clients". Secret is only
+  // ever read inside actions — never imported at module top-level of a
+  // query/mutation — so an older isolate's cached `""` would silently
+  // fall through to a 400 from Google's token endpoint rather than
+  // succeeding with stale credentials.
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

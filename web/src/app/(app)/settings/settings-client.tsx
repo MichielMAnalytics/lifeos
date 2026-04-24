@@ -20,6 +20,7 @@ import { useDashboardConfig } from '@/lib/dashboard-config';
 import { capture, EVENTS } from '@/lib/analytics';
 import { TelegramSetup } from '@/components/sections/telegram-setup';
 import { GranolaSetup } from '@/components/sections/granola-setup';
+import { GoogleCalendarSetup } from '@/components/sections/google-calendar-setup';
 
 /* ================================================================== */
 /*  Types                                                              */
@@ -1334,6 +1335,16 @@ const INTEGRATION_GROUPS: { title: string; items: IntegrationDef[] }[] = [
   },
 ];
 
+/** Renders children only if the caller's role is admin. Integrations
+ * that are still in private testing (Meetings, Google Calendar) hide
+ * here for non-admins the same way the whole tab hides them in the
+ * sidebar. */
+function AdminOnlyIntegration({ children }: { children: React.ReactNode }) {
+  const role = useQuery(api.roles.getMyRole, {});
+  if (!role?.isAdmin) return null;
+  return <>{children}</>;
+}
+
 function IntegrationsTab() {
   return (
     <div className="space-y-8">
@@ -1357,6 +1368,16 @@ function IntegrationsTab() {
         </h2>
         <GranolaSetup />
       </div>
+
+      {/* Google Calendar — admin-only until the app is verified */}
+      <AdminOnlyIntegration>
+        <div>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted/80 mb-3">
+            Calendar — Google
+          </h2>
+          <GoogleCalendarSetup />
+        </div>
+      </AdminOnlyIntegration>
 
 
       {INTEGRATION_GROUPS.map((group) => (
