@@ -360,14 +360,22 @@ function OpenAICredentialSection({
       </div>
 
       {openaiAuthMethod === "api_key" ? (
-        <SecretInput
-          storedLength={settings?.openaiAuthMethod !== "chatgpt_oauth" ? settings?.openaiKeyLength : undefined}
-          placeholder="sk-..."
-          value={openaiKey}
-          onChange={setOpenaiKey}
-          onDelete={settings?.openaiAuthMethod !== "chatgpt_oauth" && settings?.openaiKeyLength ? () => togglePendingDelete("openai") : undefined}
-          pendingDelete={pendingDeletes.has("openai")}
-        />
+        <div className="space-y-2">
+          <SecretInput
+            storedLength={settings?.openaiAuthMethod !== "chatgpt_oauth" ? settings?.openaiKeyLength : undefined}
+            placeholder="sk-..."
+            value={openaiKey}
+            onChange={setOpenaiKey}
+            onDelete={settings?.openaiAuthMethod !== "chatgpt_oauth" && settings?.openaiKeyLength ? () => togglePendingDelete("openai") : undefined}
+            pendingDelete={pendingDeletes.has("openai")}
+          />
+          {/* Priority Processing — only takes effect on the API path. */}
+          <p className="text-[9px] text-text-muted leading-relaxed">
+            Pay per token. If your OpenAI account has Pro/Enterprise tier,
+            requests use Priority Processing (faster). Plus/free tier API keys
+            run on the standard queue.
+          </p>
+        </div>
       ) : (
         <div className="space-y-2">
           {isConnected && deviceFlowStatus === "idle" ? (
@@ -410,6 +418,8 @@ function OpenAICredentialSection({
               )}
               <p className="text-[9px] text-text-muted leading-relaxed">
                 Uses your ChatGPT Plus, Pro, or Team subscription. No API costs.
+                Note: Pro's Priority Processing only applies to the API Key path,
+                not OAuth — switch to API Key if you need the priority lane.
               </p>
             </div>
           ) : deviceFlowStatus === "initiating" ? (
