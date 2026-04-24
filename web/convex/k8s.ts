@@ -163,6 +163,8 @@ export const MODEL_REF_MAP: Record<string, string> = {
   claude: "anthropic/claude-opus-4-6",
   "claude-sonnet": "anthropic/claude-sonnet-4-6",
   "claude-haiku": "anthropic/claude-haiku-4-5-20251001",
+  "gpt-5.5": "openai/gpt-5.5",
+  "gpt-5.5-pro": "openai/gpt-5.5-pro",
   gpt: "openai/gpt-5.4-2026-03-05",
   "gpt-5.2": "openai/gpt-5.2",
   "gpt-mini": "openai/gpt-5-mini-2025-08-07",
@@ -230,6 +232,8 @@ function buildOpenClawConfig(
           headers: { "X-Pod-Secret": podSecretEnvRef },
           request: { allowPrivateNetwork: true },
           models: [
+            { id: "gpt-5.5", name: "GPT 5.5", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
+            { id: "gpt-5.5-pro", name: "GPT 5.5 Pro", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
             { id: "gpt-5.4-2026-03-05", name: "GPT 5.4", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
             { id: "gpt-5.2", name: "GPT 5.2", contextWindow: 1000000, maxTokens: 32000, input: ["text", "image"] },
             { id: "gpt-5-mini-2025-08-07", name: "GPT-5 Mini", contextWindow: 400000, maxTokens: 16384, input: ["text", "image"] },

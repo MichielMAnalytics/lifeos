@@ -17,6 +17,8 @@ export const MODELS = [
   { id: "claude", label: "Claude Opus 4.6", icon: "/claude-icon.png" },
   { id: "claude-sonnet", label: "Claude Sonnet 4.6", icon: "/claude-icon.png" },
   { id: "claude-haiku", label: "Claude Haiku 4.5", icon: "/claude-icon.png" },
+  { id: "gpt-5.5", label: "GPT-5.5", icon: "/openai-icon.png", iconClass: "dark:invert" },
+  { id: "gpt-5.5-pro", label: "GPT-5.5 Pro", icon: "/openai-icon.png", iconClass: "dark:invert", byokOnly: true },
   { id: "gpt", label: "GPT-5.4", icon: "/openai-icon.png", iconClass: "dark:invert" },
   { id: "gpt-5.2", label: "GPT-5.2", icon: "/openai-icon.png", iconClass: "dark:invert" },
   { id: "gpt-mini", label: "GPT-5 Mini", icon: "/openai-icon.png", iconClass: "dark:invert" },
