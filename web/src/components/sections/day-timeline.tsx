@@ -37,17 +37,15 @@ const blockBg: Record<string, string> = {
   other: 'bg-text-muted/5',
 };
 
-// Block types that never show a checkbox — calendar events are read-only
-// from the calendar provider (you can't "complete" a meeting), same with
-// wake blocks which are just time markers.
-const UNCHECKABLE_TYPES = new Set(['event', 'wake']);
-
+/** Only task-backed blocks get a checkbox — habits, events, and routine
+ * time markers (wake, break, lunch) are passive items on the timeline,
+ * not something you "complete". Priority slots (mit/p1/p2) remain
+ * checkable so the existing day-plan Top 3 stays clickable even when the
+ * slot has no task attached yet. */
 function blockIsCheckable(block: { type: string; taskId?: string }): boolean {
   if (block.taskId) return true;
-  if (UNCHECKABLE_TYPES.has(block.type)) return false;
-  // Everything else (mit/p1/p2 without a task, habit, break, lunch, task,
-  // other, custom types) is checkable — flips block.done.
-  return true;
+  if (block.type === 'mit' || block.type === 'p1' || block.type === 'p2') return true;
+  return false;
 }
 
 // ── Constants ────────────────────────────────────────────
