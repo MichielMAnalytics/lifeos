@@ -77,7 +77,7 @@ export const getAuthorizeUrl = action({
       const clientId = serverEnv.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
       if (!clientId) {
         throw new Error(
-          "GOOGLE_CLIENT_ID not configured (worker isolate may have stale env — redeploy convex)",
+          "GOOGLE_CLIENT_ID not configured on this Convex deployment — set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET in the Convex dashboard environment variables",
         );
       }
 
