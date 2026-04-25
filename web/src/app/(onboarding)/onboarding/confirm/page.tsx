@@ -52,6 +52,15 @@ function TrustSignal() {
   );
 }
 
+function CheckoutError({ error }: { error: string | null }) {
+  if (!error) return null;
+  return (
+    <p className="mt-3 max-w-sm text-center text-xs text-red-500" role="alert">
+      {error}
+    </p>
+  );
+}
+
 function CtaButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
   return (
     <button
@@ -142,10 +151,11 @@ function PricingCard({ title, subtitle, afterTrialPrice, annual, onToggleAnnual,
 
 // ── Core confirm UI (shared by dev + live) ──
 
-function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout: (planType: string, annual: boolean) => void; isDevMode: boolean }) {
+function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout: (planType: string, annual: boolean) => Promise<void>; isDevMode: boolean }) {
   const [selectedPlanType, setSelectedPlanType] = useState<string>('standard');
   const [annual, setAnnual] = useState(() => getPrefBilling() === 'annual');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [path, setPath] = useState<string | null>(null);
 
   useEffect(() => {
@@ -168,13 +178,23 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
       ? fmtPrice(Math.round(plan.annualPriceEuroCents / 12))
       : fmtPrice(plan.priceEuroCents);
 
-  function handleCheckout() {
+  async function handleCheckout() {
     if (isDevMode) {
       window.location.href = onboardingPath('/onboarding/personalize');
       return;
     }
+    setError(null);
     setLoading(true);
-    onCheckout(selectedPlanType, annual);
+    try {
+      await onCheckout(selectedPlanType, annual);
+      // Live path redirects to Stripe on success — reaching here means no redirect happened.
+      setError("Couldn't start checkout. Please try again or contact support.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg.replace(/^Uncaught Error:\s*/i, '').trim());
+    } finally {
+      setLoading(false);
+    }
   }
 
   const backPath = isOwnAgent ? '/onboarding/plans' : '/onboarding/channels';
@@ -206,6 +226,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
               loading={loading}
               onCheckout={handleCheckout}
             />
+            <CheckoutError error={error} />
           </div>
 
           <TrustSignal />
@@ -241,6 +262,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
               loading={loading}
               onCheckout={handleCheckout}
             />
+            <CheckoutError error={error} />
           </div>
 
           <TrustSignal />
@@ -326,6 +348,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
         </div>
 
         <CtaButton loading={loading} onClick={handleCheckout} />
+        <CheckoutError error={error} />
         <p className="mt-2 text-[10px] text-text-muted/70 text-center">Cancel anytime.</p>
 
         <TrustSignal />
@@ -341,7 +364,9 @@ function DevConfirmPage() {
     <ConfirmUI
       plans={MOCK_PLANS}
       isDevMode={true}
-      onCheckout={() => window.location.href = onboardingPath('/onboarding/personalize')}
+      onCheckout={async () => {
+        window.location.href = onboardingPath('/onboarding/personalize');
+      }}
     />
   );
 }
@@ -399,9 +424,14 @@ function LiveConfirmPage() {
       clearPrefs();
       const priceId = annual && plan.annualPriceId ? plan.annualPriceId : plan.priceId;
       const result = await createCheckout({ priceId });
-      if (result.url) window.location.href = result.url;
+      if (result.url) {
+        window.location.href = result.url;
+        return;
+      }
+      throw new Error('Stripe returned no checkout URL.');
     } catch (err) {
       console.error('Checkout error:', err);
+      throw err;
     }
   }
 
