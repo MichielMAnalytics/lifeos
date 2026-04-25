@@ -164,7 +164,6 @@ export const MODEL_REF_MAP: Record<string, string> = {
   "claude-sonnet": "anthropic/claude-sonnet-4-6",
   "claude-haiku": "anthropic/claude-haiku-4-5-20251001",
   "gpt-5.5": "openai/gpt-5.5",
-  "gpt-5.5-pro": "openai/gpt-5.5-pro",
   gpt: "openai/gpt-5.4-2026-03-05",
   "gpt-5.2": "openai/gpt-5.2",
   "gpt-mini": "openai/gpt-5-mini-2025-08-07",
@@ -231,22 +230,19 @@ function buildOpenClawConfig(
           api: "openai-responses",
           headers: { "X-Pod-Secret": podSecretEnvRef },
           request: { allowPrivateNetwork: true },
-          // Tell pi-ai's openai-responses provider that this proxied
-          // baseUrl supports `store: true`. Without this, pi-ai
-          // hard-codes `store: false` on every Responses API call —
-          // and then chains the next turn via `previous_response_id`,
-          // which OpenAI rejects with 404 "Items are not persisted
-          // when store is set to false". See openclaw#16803, #55266.
-          // Our gateway also re-asserts `store: true` server-side as
-          // belt-and-braces (ai-gateway proxy.ts).
-          compat: { supportsStore: true },
+          // NOTE: `compat: { supportsStore: true }` would be the correct
+          // OpenClaw-side fix for the pi-ai store:false default, but
+          // pi-ai's config validator (as of 2026.4.22) rejects the key
+          // and crashes the pod at boot. Until openclaw PR #55266 lands,
+          // the fix lives in our ai-gateway proxy: it forces store:true
+          // on every Responses-API request server-side, which works
+          // regardless of what pi-ai sends.
           models: [
-            { id: "gpt-5.5", name: "GPT 5.5", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"], compat: { supportsStore: true } },
-            { id: "gpt-5.5-pro", name: "GPT 5.5 Pro", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"], compat: { supportsStore: true } },
-            { id: "gpt-5.4-2026-03-05", name: "GPT 5.4", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"], compat: { supportsStore: true } },
-            { id: "gpt-5.2", name: "GPT 5.2", contextWindow: 1000000, maxTokens: 32000, input: ["text", "image"], compat: { supportsStore: true } },
-            { id: "gpt-5-mini-2025-08-07", name: "GPT-5 Mini", contextWindow: 400000, maxTokens: 16384, input: ["text", "image"], compat: { supportsStore: true } },
-            { id: "gpt-5-nano-2025-08-07", name: "GPT-5 Nano", contextWindow: 128000, maxTokens: 16384, input: ["text", "image"], compat: { supportsStore: true } },
+            { id: "gpt-5.5", name: "GPT 5.5", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
+            { id: "gpt-5.4-2026-03-05", name: "GPT 5.4", contextWindow: 1048576, maxTokens: 32000, input: ["text", "image"] },
+            { id: "gpt-5.2", name: "GPT 5.2", contextWindow: 1000000, maxTokens: 32000, input: ["text", "image"] },
+            { id: "gpt-5-mini-2025-08-07", name: "GPT-5 Mini", contextWindow: 400000, maxTokens: 16384, input: ["text", "image"] },
+            { id: "gpt-5-nano-2025-08-07", name: "GPT-5 Nano", contextWindow: 128000, maxTokens: 16384, input: ["text", "image"] },
           ],
         },
         kimi: {
