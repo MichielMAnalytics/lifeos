@@ -11,6 +11,113 @@ import type { AppEnv } from "../types.js";
 const proxy = new Hono<AppEnv>();
 
 /**
+ * Make a Responses-API request body safe to send to an endpoint that
+ * mandates `store: false` (e.g. Codex OAuth at chatgpt.com/backend-api/codex
+ * /responses) by stripping stored-item references that pi-ai replays in
+ * `input[]`:
+ *
+ *   • Reasoning items (`type: "reasoning"`, `id: "rs_..."`) are dropped
+ *     entirely. Pi-ai replays them on every turn without
+ *     `encrypted_content`, so OpenAI tries to resolve them server-side
+ *     and 404s ("Item with id 'rs_...' not found") because store:false
+ *     never persisted them.
+ *
+ *   • Function-call items (`type: "function_call"`) keep their content
+ *     but lose their `id` field if it starts with `fc_`. OpenAI's
+ *     Responses API tracks fc_* / rs_* pairing — once we drop the
+ *     paired rs_* item, the orphaned fc_* `id` can fail the same
+ *     server-side lookup. Mirrors pi-ai's own cross-provider pattern:
+ *     https://github.com/badlogic/pi-mono/blob/main/packages/ai/src/providers/openai-responses-shared.ts#L268-L278
+ *
+ * `call_id` (the input/output link), `arguments`, `name`, and
+ * function_call_output items are left intact, so tool-call semantics
+ * survive — only the server-stored item references are cleared.
+ *
+ * Exported for tests.
+ */
+export function stripStoredItemReferences(body: Record<string, unknown>): void {
+  if (!Array.isArray(body.input)) return;
+  const filtered = (body.input as Record<string, unknown>[]).filter(
+    (item) => item?.type !== "reasoning",
+  );
+  body.input = filtered.map((item) => {
+    if (
+      item?.type === "function_call" &&
+      typeof item.id === "string" &&
+      (item.id as string).startsWith("fc_")
+    ) {
+      const { id: _id, ...rest } = item;
+      return rest;
+    }
+    return item;
+  });
+}
+
+/**
+ * Apply all Codex-OAuth-specific transformations to a Responses-API
+ * request body in place. Codex's endpoint at chatgpt.com/backend-api
+ * /codex/responses is a constrained variant of OpenAI's Responses
+ * API:
+ *
+ *   • mandates `store: false` and `stream: true`
+ *   • requires `instructions`
+ *   • requires `input` as an array of items (not a bare string)
+ *   • only accepts base model IDs (no date suffixes)
+ *   • rejects several fields the standard Responses API accepts
+ *
+ * Plus the pi-ai store reconciliation: see stripStoredItemReferences.
+ *
+ * Exported for tests.
+ */
+export function prepareCodexRequestBody(body: Record<string, unknown>): void {
+  body.store = false;
+  body.stream = true;
+  if (!body.instructions) {
+    body.instructions = "You are a helpful assistant.";
+  }
+  if (typeof body.input === "string") {
+    body.input = [{ role: "user", content: body.input }];
+  }
+  stripStoredItemReferences(body);
+  if (typeof body.model === "string") {
+    const CODEX_MODEL_MAP: Record<string, string> = {
+      "gpt-5.4-2026-03-05": "gpt-5.4",
+      "gpt-5-mini-2025-08-07": "gpt-5-mini",
+      "gpt-5-nano-2025-08-07": "gpt-5-nano",
+    };
+    body.model = CODEX_MODEL_MAP[body.model] ?? body.model;
+  }
+  delete body.max_output_tokens;
+  delete body.max_tokens;
+  delete body.service_tier;
+  delete body.prompt_cache_key;
+  delete body.prompt_cache_retention;
+}
+
+/**
+ * Apply the non-Codex Responses-API store policy in place: when a
+ * request hits `/v1/responses` on the standard `api.openai.com`
+ * endpoint (BYOK sk-key OR managed), force `store: true` so reasoning
+ * items pi-ai later replays in `input[]` can be resolved server-side.
+ * Free, 30d retention.
+ *
+ * Codex OAuth is excluded — that endpoint mandates store:false and is
+ * handled separately via prepareCodexRequestBody.
+ *
+ * Exported for tests.
+ */
+export function applyResponsesStorePolicy(
+  body: Record<string, unknown>,
+  opts: { provider: string; isCodexOAuth: boolean; path: string },
+): boolean {
+  if (opts.provider !== "openai") return false;
+  if (opts.isCodexOAuth) return false;
+  if (!opts.path.includes("/responses")) return false;
+  body.store = true;
+  return true;
+}
+
+/**
  * Gemini 3 models require a `thought_signature` on every functionCall part.
  * OpenClaw (and most OpenAI-compatible clients) don't preserve the
  * `extra_content.google.thought_signature` field across turns, which causes
@@ -360,31 +467,7 @@ proxy.all("/:provider/*", async (c) => {
     // The Codex endpoint only supports the Responses API at this fixed path
     fullUpstreamUrl = `https://chatgpt.com/backend-api/codex/responses${queryString}`;
     if (requestBody) {
-      requestBody.store = false;
-      requestBody.stream = true;
-      // Codex requires an instructions field
-      if (!requestBody.instructions) {
-        requestBody.instructions = "You are a helpful assistant.";
-      }
-      // Codex requires input as array
-      if (typeof requestBody.input === "string") {
-        requestBody.input = [{ role: "user", content: requestBody.input }];
-      }
-      // Codex only accepts base model IDs (no date suffixes)
-      if (typeof requestBody.model === "string") {
-        const CODEX_MODEL_MAP: Record<string, string> = {
-          "gpt-5.4-2026-03-05": "gpt-5.4",
-          "gpt-5-mini-2025-08-07": "gpt-5-mini",
-          "gpt-5-nano-2025-08-07": "gpt-5-nano",
-        };
-        requestBody.model = CODEX_MODEL_MAP[requestBody.model] ?? requestBody.model;
-      }
-      // Strip fields unsupported by Codex endpoint
-      delete requestBody.max_output_tokens;
-      delete requestBody.max_tokens;
-      delete requestBody.service_tier;
-      delete requestBody.prompt_cache_key;
-      delete requestBody.prompt_cache_retention;
+      prepareCodexRequestBody(requestBody);
       requestBodyStr = JSON.stringify(requestBody);
     }
   } else {
@@ -392,35 +475,18 @@ proxy.all("/:provider/*", async (c) => {
     fullUpstreamUrl = `${upstreamBase}${subPath}${queryString}`;
   }
 
-  // ── Responses-API store/chain reconciliation ──────────
-  // The OpenAI Responses API rejects a `previous_response_id` reference
-  // when the prior response was created with `store: false` — error 404
-  // "Items are not persisted when store is set to false." pi-ai (the
-  // SDK OpenClaw uses) hard-codes `store: false` in its
-  // `openai-responses` provider, then chains every next turn via
-  // `previous_response_id` → 404 on every message after the first.
-  //
-  // Two fixes depending on which OpenAI endpoint we're hitting:
-  //   • Standard `api.openai.com/v1/responses` (BYOK sk-key OR managed)
-  //     — set `store: true` so OpenAI persists the response and the
-  //     chain works. Storage is free, retention is 30 days.
-  //   • `chatgpt.com/backend-api/codex/responses` (Codex OAuth) — that
-  //     endpoint REQUIRES store:false and ignores chaining. Strip the
-  //     previous_response_id so each turn is a fresh, stateless call;
-  //     pi-ai will fall back to inline conversation history.
-  if (provider === "openai" && requestBody) {
-    const path = c.req.path;
-    const isResponsesApi = path.includes("/responses");
-    if (isResponsesApi) {
-      if (isOpenAICodexOAuth) {
-        if (requestBody.previous_response_id) {
-          delete requestBody.previous_response_id;
-        }
-      } else {
-        requestBody.store = true;
-      }
-      requestBodyStr = JSON.stringify(requestBody);
-    }
+  // Force store:true on the standard OpenAI Responses API (BYOK sk-key
+  // + managed) so pi-ai's replayed rs_* items resolve server-side on
+  // the next turn. Codex OAuth is handled separately above.
+  if (
+    requestBody &&
+    applyResponsesStorePolicy(requestBody, {
+      provider,
+      isCodexOAuth: isOpenAICodexOAuth,
+      path: c.req.path,
+    })
+  ) {
+    requestBodyStr = JSON.stringify(requestBody);
   }
 
   // Build upstream headers
