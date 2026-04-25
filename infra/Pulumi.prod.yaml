@@ -5,7 +5,9 @@ config:
   lifeos:domain: lifeos.zone
   lifeos:openclawImageTag: latest
   lifeos:convexSiteUrl: https://charming-squid-23.eu-west-1.convex.site
-  lifeos:gatewayImageName: europe-west3-docker.pkg.dev/lifeos-prod-491301/lifeos-prod/ai-gateway:gw-fix-1c619ae
+  # Pinned by digest, not tag, so a future rebuild can't silently overwrite this image.
+  # Tag at build time was `gw-fix-1c619ae` (commit 1c619ae of MichielMAnalytics/lifeos).
+  lifeos:gatewayImageName: europe-west3-docker.pkg.dev/lifeos-prod-491301/lifeos-prod/ai-gateway@sha256:3f32758f5b327ec5366059f349c6eb12f4ac5f24cd15f1821282ef9b91099f33
   lifeos:backends:
     - id: "default"
       convexSiteUrl: "https://charming-squid-23.eu-west-1.convex.site"
