@@ -14,6 +14,20 @@ interface NextWeekPriorities {
   p3?: string;
 }
 
+/**
+ * 1..7 indicator (Mon..Sun) for where today sits within the week the
+ * priorities were set for. Returns null if today is outside that week —
+ * in that case the priorities are stale and the header label degrades to
+ * "set in last weekly review" without a day badge.
+ */
+function dayOfWeekIndex(): { day: number; total: 7 } | null {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun..6=Sat
+  // ISO-like Monday=1..Sunday=7
+  const idx = day === 0 ? 7 : day;
+  return { day: idx, total: 7 };
+}
+
 export function WeeklyPriorities() {
   // Bounded short-circuit query — stops at the first weekly review found
   // in desc creation order. Avoids the full-history scan that
@@ -40,15 +54,23 @@ export function WeeklyPriorities() {
   ].filter((p): p is { label: string; text: string } => Boolean(p.text?.trim()));
   if (items.length === 0) return null;
 
+  const dayIndex = dayOfWeekIndex();
+
   return (
     <div className="rounded-xl border border-border bg-surface overflow-hidden">
       <div className="flex items-baseline justify-between px-5 py-2.5 border-b border-border">
         <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted/80">
           This week
         </h3>
-        <span className="text-[10px] text-text-muted/70">
-          set in last weekly review
-        </span>
+        {dayIndex ? (
+          <span className="text-[10px] text-text-muted/70 tabular-nums">
+            Day {dayIndex.day} of {dayIndex.total}
+          </span>
+        ) : (
+          <span className="text-[10px] text-text-muted/70">
+            set in last weekly review
+          </span>
+        )}
       </div>
       <div className="px-5 py-2.5 space-y-1">
         {items.map((p) => (
