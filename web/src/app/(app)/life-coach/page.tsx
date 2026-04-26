@@ -280,6 +280,13 @@ function PlusIcon() {
 function MessageRow({ message }: { message: ChatMessage }) {
   const isUser = message.role === 'user';
 
+  // An assistant message with no content AND no tool_calls would render as
+  // a bare avatar + timestamp. Skip it. (User-side messages can have empty
+  // content if they're image-only — handled below.)
+  if (!isUser && !message.content.trim() && (!message.tool_calls || message.tool_calls.length === 0)) {
+    return null;
+  }
+
   if (isUser) {
     return (
       <div className="flex justify-end max-w-3xl mx-auto px-4">
@@ -436,6 +443,10 @@ export default function LifeCoachPage() {
                   timestamp: (msg.timestamp as number) ?? Date.now(),
                 };
               })
+              // Drop empty messages (e.g. assistant turns whose only content was
+              // tool_calls — the history mapper doesn't carry tool_calls, so
+              // they would render as a bare avatar + timestamp).
+              .filter((m) => m.content.trim().length > 0)
               .filter((m) => !isHeartbeatMessage(m.content)),
           );
         }
