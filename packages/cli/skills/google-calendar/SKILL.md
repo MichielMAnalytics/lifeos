@@ -16,7 +16,7 @@ The pod is started with two env vars set by LifeOS at provisioning time:
 - `LIFEOS_API_URL` — base URL, e.g. `https://charming-squid-23.convex.site`
 - `LIFEOS_API_KEY` — per-user Bearer token
 
-A copy is also written to `/mnt/data/.lifeos/config.json` as `{ "api_url": "...", "api_key": "..." }` for tools that prefer reading a file. **Use the env vars first**, fall back to the file if env vars are missing.
+A copy is also written by the init container to the user's home dir as `~/.lifeos/config.json` (resolved as `/home/node/.lifeos/config.json` inside the running container — the PVC is mounted at `/home/node`, not `/mnt/data`, despite the init container writing to `/mnt/data` against its own mount). The file is `{ "api_url": "...", "api_key": "..." }`. **Use the env vars first**, fall back to the file if env vars are missing.
 
 If neither exists, LifeOS hasn't provisioned this pod yet — tell the user "Calendar isn't connected to LifeOS in this workspace. Reconnect at app.lifeos.zone/settings."
 
@@ -33,11 +33,15 @@ Returns one of:
 // 200 — use access_token directly with Google Calendar API
 { "access_token": "ya29...", "expires_at_ms": 1777200000000 }
 
-// 409 — Calendar is disconnected on the dashboard
+// 409 — Calendar is disconnected on the dashboard. User action required.
 { "error": "calendar_disconnected", "reason": "invalid_grant" | "not_connected",
   "reconnect_url": "https://app.lifeos.zone/settings" }
 
-// 503 — server-side misconfiguration; retry later
+// 502 — transient Google refresh failure (5xx, network). Retry with backoff.
+{ "error": "transient_upstream", "retry": true }
+
+// 503 — server-side misconfiguration. NOT the user's fault. Don't ask them
+// to reconnect; tell them to ping support.
 { "error": "no_credentials" }
 ```
 
@@ -58,6 +62,18 @@ Means the per-user `LIFEOS_API_KEY` is wrong or revoked. Tell the user:
 > Something is off with my LifeOS connection — the API key seems wrong. Tell Kemp / Michiel; you don't need to do anything yourself.
 
 Don't ask the user for a new key — you should never accept calendar tokens by hand from the user.
+
+## On 502 (transient_upstream)
+
+Google's token endpoint had a hiccup. Don't tell the user to reconnect. Just retry with backoff: 1s, 3s, 9s. If three retries all fail, surface a one-liner:
+
+> Google had a hiccup refreshing the calendar token. Try again in a minute.
+
+## On 503 (no_credentials)
+
+Server-side misconfig (LifeOS missing GOOGLE_CLIENT_ID/SECRET). NOT the user's fault. Don't ask them to reconnect — that won't fix it. Surface:
+
+> LifeOS is missing the Google OAuth credentials on the server. Ping Kemp / Michiel.
 
 ## Calendar API calls (after you have access_token)
 

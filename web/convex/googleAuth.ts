@@ -296,24 +296,47 @@ export { isAdminEmail };
 //
 // Returns:
 //   { ok: true,  access_token, expires_at_ms }
-//   { ok: false, reason: "not_connected" | "invalid_grant" | "no_credentials" }
+//   { ok: false, reason:
+//       "not_connected"   — user has never connected Calendar in dashboard
+//       "invalid_grant"   — refresh token revoked / expired (user action required)
+//       "no_credentials"  — server misconfigured (GOOGLE_CLIENT_ID/SECRET missing)
+//       "transient"       — Google refresh failed (5xx, network, etc.); retry
+//   }
 export const _getAccessTokenForBot = internalAction({
   args: { userId: v.id("users") },
   handler: async (
-    _ctx,
+    ctx,
     args,
   ): Promise<
     | { ok: true; access_token: string; expires_at_ms: number }
-    | { ok: false; reason: "not_connected" | "invalid_grant" | "no_credentials" }
+    | { ok: false; reason: "not_connected" | "invalid_grant" | "no_credentials" | "transient" }
   > => {
-    const result = await getValidAccessToken(args.userId);
-    if (result === "invalid_grant") return { ok: false, reason: "invalid_grant" };
-    if (result === null) return { ok: false, reason: "not_connected" };
-
-    // We only know expiry by re-reading the secret. Cheap (one Secret
-    // Manager hit) and avoids changing getValidAccessToken's signature.
+    // Distinguish "no secret stored" (not_connected) from "secret stored
+    // but refresh failed". Without this check, both collapse to the same
+    // null return from getValidAccessToken().
     const raw = await readByokSecret(args.userId, SECRET_PROVIDER);
     if (!raw) return { ok: false, reason: "not_connected" };
+
+    // Server misconfiguration check before attempting refresh.
+    if (!serverEnv.GOOGLE_CLIENT_ID || !serverEnv.GOOGLE_CLIENT_SECRET) {
+      return { ok: false, reason: "no_credentials" };
+    }
+
+    const result = await getValidAccessToken(args.userId);
+    if (result === "invalid_grant") {
+      // Tombstoning happens inside getValidAccessToken; also clear
+      // user-facing "connected" metadata so the dashboard reflects
+      // disconnected state immediately instead of waiting for the
+      // calendar-sync cron to discover it.
+      await ctx.runMutation(internal.googleAuthHelpers._markDisconnected, {
+        userId: args.userId,
+      });
+      return { ok: false, reason: "invalid_grant" };
+    }
+    // After we already confirmed the secret existed AND env is present,
+    // a null result here means a transient refresh failure.
+    if (result === null) return { ok: false, reason: "transient" };
+
     try {
       const blob = JSON.parse(raw) as GoogleTokenBlob;
       return {

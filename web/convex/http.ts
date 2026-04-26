@@ -3979,17 +3979,26 @@ http.route({
     );
 
     if (!result.ok) {
-      if (result.reason === "invalid_grant" || result.reason === "not_connected") {
-        return json(
-          {
-            error: "calendar_disconnected",
-            reason: result.reason,
-            reconnect_url: "https://app.lifeos.zone/settings",
-          },
-          409,
-        );
+      // Map each reason to a distinct status so callers can act correctly:
+      //   409 — user must reconnect (genuine disconnected state)
+      //   503 — server-side configuration problem (NOT user's fault)
+      //   502 — transient upstream (Google) failure; caller should retry
+      switch (result.reason) {
+        case "not_connected":
+        case "invalid_grant":
+          return json(
+            {
+              error: "calendar_disconnected",
+              reason: result.reason,
+              reconnect_url: "https://app.lifeos.zone/settings",
+            },
+            409,
+          );
+        case "no_credentials":
+          return json({ error: "no_credentials" }, 503);
+        case "transient":
+          return json({ error: "transient_upstream", retry: true }, 502);
       }
-      return json({ error: result.reason }, 503);
     }
 
     return json({
