@@ -1,0 +1,86 @@
+---
+name: google-calendar
+description: "Read or write the user's Google Calendar via the LifeOS broker endpoint. Use any time the user asks to read events, check schedule, add/move/cancel a calendar event, prepare for a meeting, or anything that touches Google Calendar. NEVER read or write any local google-token.json — auth is centralised in LifeOS."
+user-invocable: false
+metadata: { "openclaw": { "emoji": "📅", "requires": { "bins": [] } } }
+---
+
+# Google Calendar (via LifeOS broker)
+
+You access the user's Google Calendar by getting a fresh access token from LifeOS on every call. **Never read, write, or trust a local `google-token.json` file.** That file (if present in the workspace) is stale by definition — the source of truth is LifeOS Secret Manager, and the dashboard reconnect flow propagates here automatically.
+
+## Where the LifeOS connection comes from
+
+The pod is started with two env vars set by LifeOS at provisioning time:
+
+- `LIFEOS_API_URL` — base URL, e.g. `https://charming-squid-23.convex.site`
+- `LIFEOS_API_KEY` — per-user Bearer token
+
+A copy is also written to `/mnt/data/.lifeos/config.json` as `{ "api_url": "...", "api_key": "..." }` for tools that prefer reading a file. **Use the env vars first**, fall back to the file if env vars are missing.
+
+If neither exists, LifeOS hasn't provisioned this pod yet — tell the user "Calendar isn't connected to LifeOS in this workspace. Reconnect at app.lifeos.zone/settings."
+
+## The one call that gets you a token
+
+```bash
+curl -sS -H "Authorization: Bearer $LIFEOS_API_KEY" \
+  "$LIFEOS_API_URL/api/v1/google-calendar/access-token"
+```
+
+Returns one of:
+
+```json
+// 200 — use access_token directly with Google Calendar API
+{ "access_token": "ya29...", "expires_at_ms": 1777200000000 }
+
+// 409 — Calendar is disconnected on the dashboard
+{ "error": "calendar_disconnected", "reason": "invalid_grant" | "not_connected",
+  "reconnect_url": "https://app.lifeos.zone/settings" }
+
+// 503 — server-side misconfiguration; retry later
+{ "error": "no_credentials" }
+```
+
+Cache the access token in memory until `expires_at_ms - 60_000` ms before re-fetching. Never persist it.
+
+## On 409
+
+Don't loop. Tell the user verbatim:
+
+> Your Google Calendar isn't connected. Reconnect at app.lifeos.zone/settings — once you do, I'll have access automatically (no need to send me anything).
+
+Then stop trying calendar tools until they confirm.
+
+## On 401 from the broker (LifeOS auth bad)
+
+Means the per-user `LIFEOS_API_KEY` is wrong or revoked. Tell the user:
+
+> Something is off with my LifeOS connection — the API key seems wrong. Tell Kemp / Michiel; you don't need to do anything yourself.
+
+Don't ask the user for a new key — you should never accept calendar tokens by hand from the user.
+
+## Calendar API calls (after you have access_token)
+
+Use the standard Google Calendar v3 REST API with `Authorization: Bearer <access_token>`. Common endpoints:
+
+- `GET https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=...&timeMax=...&singleEvents=true&orderBy=startTime`
+- `POST https://www.googleapis.com/calendar/v3/calendars/primary/events` (create — gate on user approval)
+- `PATCH https://www.googleapis.com/calendar/v3/calendars/primary/events/{id}` (update — gate on user approval)
+- `DELETE https://www.googleapis.com/calendar/v3/calendars/primary/events/{id}` (delete — gate on user approval)
+
+Default `calendarId` is `"primary"`.
+
+## Wipe stale tokens
+
+If you find a `google-token.json` lying around in the workspace (`/home/node/.openclaw/workspace/google-token.json` or similar), delete it. Don't read it. It's a leftover from a previous self-bootstrapped flow and will go stale.
+
+## What NOT to do
+
+- Don't ask the user for OAuth client IDs, refresh tokens, or any kind of credential file. The LifeOS dashboard handles all of that.
+- Don't write any token, refresh_token, or client secret to disk inside the pod.
+- Don't use a different OAuth client than the one LifeOS owns — there isn't one.
+- Don't tell the user to "paste a token here" or similar. Calendar auth is a one-click dashboard flow.
+
+## Approval
+
+Calendar reads are low-risk. Creating, updating, or deleting events is mid-risk and requires explicit user approval before the API call (per the Operator AI approval framework).
