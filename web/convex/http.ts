@@ -3943,4 +3943,60 @@ http.route({
   }),
 });
 
+// ════════════════════════════════════════════════════════
+// GOOGLE CALENDAR — bot-facing access-token broker
+// ════════════════════════════════════════════════════════
+//
+// Lets external bots/scripts (Baal, custom MCP servers, agent skills)
+// drop their own google-token.json caching and just call this endpoint
+// before each Google Calendar request. The refresh_token never leaves
+// our Secret Manager — we hand out short-lived access tokens only.
+//
+// Auth: standard LifeOS API key (Bearer). Returns:
+//   200 { access_token, expires_at_ms }
+//   401 { error: "Unauthorized" }                — bad/missing API key
+//   409 { error: "calendar_disconnected", reconnect_url }
+//                                                — needs re-auth in dashboard
+//   503 { error: "no_credentials" }              — server misconfigured
+//                                                  (GOOGLE_CLIENT_ID missing)
+
+http.route({
+  path: "/api/v1/google-calendar/access-token",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/api/v1/google-calendar/access-token",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const userId = await authenticate(ctx, request);
+    if (!userId) return err("Unauthorized", 401);
+
+    const result = await ctx.runAction(
+      internal.googleAuth._getAccessTokenForBot,
+      { userId },
+    );
+
+    if (!result.ok) {
+      if (result.reason === "invalid_grant" || result.reason === "not_connected") {
+        return json(
+          {
+            error: "calendar_disconnected",
+            reason: result.reason,
+            reconnect_url: "https://app.lifeos.zone/settings",
+          },
+          409,
+        );
+      }
+      return json({ error: result.reason }, 503);
+    }
+
+    return json({
+      access_token: result.access_token,
+      expires_at_ms: result.expires_at_ms,
+    });
+  }),
+});
+
 export default http;

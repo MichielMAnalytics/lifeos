@@ -287,3 +287,42 @@ export async function getValidAccessToken(
 
 // Re-export for admin gate checks elsewhere
 export { isAdminEmail };
+
+// HTTP-exposed accessor: returns a fresh access token (auto-refreshing if
+// needed) for the authenticated LifeOS user. Lets external bots/scripts
+// (Baal, agent skills, MCP servers) drop their own google-token.json
+// caching and just call LifeOS each time. The refresh_token never leaves
+// our Secret Manager.
+//
+// Returns:
+//   { ok: true,  access_token, expires_at_ms }
+//   { ok: false, reason: "not_connected" | "invalid_grant" | "no_credentials" }
+export const _getAccessTokenForBot = internalAction({
+  args: { userId: v.id("users") },
+  handler: async (
+    _ctx,
+    args,
+  ): Promise<
+    | { ok: true; access_token: string; expires_at_ms: number }
+    | { ok: false; reason: "not_connected" | "invalid_grant" | "no_credentials" }
+  > => {
+    const result = await getValidAccessToken(args.userId);
+    if (result === "invalid_grant") return { ok: false, reason: "invalid_grant" };
+    if (result === null) return { ok: false, reason: "not_connected" };
+
+    // We only know expiry by re-reading the secret. Cheap (one Secret
+    // Manager hit) and avoids changing getValidAccessToken's signature.
+    const raw = await readByokSecret(args.userId, SECRET_PROVIDER);
+    if (!raw) return { ok: false, reason: "not_connected" };
+    try {
+      const blob = JSON.parse(raw) as GoogleTokenBlob;
+      return {
+        ok: true,
+        access_token: result,
+        expires_at_ms: blob.expires_at_ms,
+      };
+    } catch {
+      return { ok: false, reason: "no_credentials" };
+    }
+  },
+});
