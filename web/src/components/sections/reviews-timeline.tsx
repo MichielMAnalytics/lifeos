@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from 'convex/react';
+import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
 import { SidePeek } from '@/components/side-peek';
@@ -14,6 +14,15 @@ const reviewTypeLabel: Record<string, string> = {
   weekly: 'Weekly',
   monthly: 'Monthly',
   quarterly: 'Quarterly',
+};
+
+// Type-coloured chips so weekly / monthly / quarterly are visually distinct
+// at a glance in the history list.
+const reviewTypeChip: Record<string, string> = {
+  daily:     'bg-text-muted/15 text-text-muted',
+  weekly:    'bg-accent/15 text-accent',
+  monthly:   'bg-blue-500/15 text-blue-500 dark:text-blue-400',
+  quarterly: 'bg-orange-500/15 text-orange-500 dark:text-orange-400',
 };
 
 function extractHighlights(content: Record<string, unknown>): string | null {
@@ -430,7 +439,21 @@ function ReviewDetailModal({
 
 export function ReviewsTimeline() {
   const reviews = useQuery(api.reviews.list, {});
+  const removeReview = useMutation(api.reviews.remove);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Review | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    try {
+      await removeReview({ id: confirmDelete._id });
+      setConfirmDelete(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   if (!reviews) return (
     <div className="space-y-3">
@@ -468,19 +491,23 @@ export function ReviewsTimeline() {
             const periodStart = review.periodStart;
             const periodEnd = review.periodEnd;
 
+            const chipClass = reviewTypeChip[reviewType] ?? reviewTypeChip.daily;
+
             return (
-              <div key={review._id}>
+              <div key={review._id} className="relative group/row">
                 <button
                   onClick={() => setSelectedReview(review)}
-                  className="w-full text-left px-6 py-5 hover:bg-surface-hover transition-colors"
+                  className="w-full text-left px-6 py-5 pr-14 hover:bg-surface-hover transition-colors"
                 >
                   {/* Top row */}
                   <div className="flex items-center justify-between gap-4 mb-2">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <span className="text-xs text-text-muted tabular-nums">
                         {String(idx + 1).padStart(2, '0')}
                       </span>
-                      <span className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                      <span
+                        className={`text-[10px] font-semibold uppercase tracking-[0.14em] px-2 py-0.5 rounded ${chipClass}`}
+                      >
                         {typeLabel}
                       </span>
                       <span className="text-sm text-text">
@@ -499,10 +526,27 @@ export function ReviewsTimeline() {
 
                   {/* Content preview */}
                   {highlights && (
-                    <p className="text-sm text-text-muted leading-relaxed pl-16">
+                    <p className="text-sm text-text-muted leading-relaxed pl-12">
                       {highlights}
                     </p>
                   )}
+                </button>
+
+                {/* Delete (icon, hover-revealed) */}
+                <button
+                  type="button"
+                  aria-label="Delete review"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete(review);
+                  }}
+                  className="absolute top-1/2 right-4 -translate-y-1/2 opacity-0 group-hover/row:opacity-100 transition-opacity p-2 rounded hover:bg-danger/10 text-text-muted hover:text-danger"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                  </svg>
                 </button>
               </div>
             );
@@ -516,6 +560,42 @@ export function ReviewsTimeline() {
           review={selectedReview}
           onClose={() => setSelectedReview(null)}
         />
+      )}
+
+      {/* Delete confirm */}
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => !deleting && setConfirmDelete(null)}
+        >
+          <div
+            className="bg-bg border border-border rounded-xl shadow-2xl p-6 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold text-text mb-2">Delete this review?</h3>
+            <p className="text-sm text-text-muted mb-5">
+              {(reviewTypeLabel[confirmDelete.reviewType] ?? confirmDelete.reviewType)}{' '}
+              {formatDate(confirmDelete.periodStart)}{' '}—{' '}
+              {formatDate(confirmDelete.periodEnd)}. This is permanent.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-surface-hover disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-danger text-white hover:opacity-90 disabled:opacity-40"
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

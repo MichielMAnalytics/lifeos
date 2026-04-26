@@ -138,6 +138,14 @@ function previousQuarterRange(): QuarterRange {
   return { start: startOfPrev, end: endOfPrev, label: `Q${qNum} ${startOfPrev.getFullYear()}` };
 }
 
+function nextQuarterRange(): QuarterRange {
+  const cur = currentQuarterRange();
+  const startOfNext = new Date(cur.start.getFullYear(), cur.start.getMonth() + 3, 1);
+  const endOfNext = new Date(cur.start.getFullYear(), cur.start.getMonth() + 6, 0);
+  const qNum = Math.floor(startOfNext.getMonth() / 3) + 1;
+  return { start: startOfNext, end: endOfNext, label: `Q${qNum} ${startOfNext.getFullYear()}` };
+}
+
 // ── Component ────────────────────────────────────────
 
 type ActiveForm =
@@ -204,20 +212,47 @@ export function ReviewsSchedule() {
     const prevMonth = build('monthly', pm.label, `Monthly Review · ${pm.label}`, pm.start, pm.end);
     if (!prevMonth.completed && prevMonth.endDate < today) built.push(prevMonth);
 
-    // Quarterly (Moving Future)
+    // Quarterly (Moving Future) — planning the UPCOMING quarter, made
+    // BEFORE that quarter starts. Surface starts ~3 weeks before the
+    // next quarter begins; due date = the day the next quarter begins.
+    // E.g. "Moving Future · Q3 2026" appears around June 10, due July 1.
+    const nq = nextQuarterRange();
+    const nextQuarterStart = nq.start;
+    const showFrom = new Date(nextQuarterStart);
+    showFrom.setDate(showFrom.getDate() - 21); // 3-week heads-up
+    if (today >= showFrom) {
+      // Period rows for "Moving Future" are stored against the upcoming
+      // quarter's range so saved reviews link to the quarter being planned.
+      // Due date is the first day of that quarter — overdue once we're
+      // already inside the new quarter without a plan.
+      built.push(
+        build('quarterly', nq.label, `Moving Future · ${nq.label}`, nq.start, nextQuarterStart),
+      );
+    }
+
+    // Also surface the CURRENT quarter's plan if it's still missing — the
+    // user is already inside Q-N without a Moving Future review for it.
     const cq = currentQuarterRange();
-    built.push(
-      build('quarterly', cq.label, `Moving Future · ${cq.label}`, cq.start, cq.end),
+    const currentPlan = build(
+      'quarterly',
+      cq.label,
+      `Moving Future · ${cq.label}`,
+      cq.start,
+      cq.start, // due date = quarter start (already passed)
     );
+    if (!currentPlan.completed) built.push(currentPlan);
+
+    // Previous quarter's plan — only if user never made one and it's the
+    // most recent miss to call out (older quarters are cruft to be deleted).
     const pq = previousQuarterRange();
-    const prevQuarter = build(
+    const prevQuarterPlan = build(
       'quarterly',
       pq.label,
       `Moving Future · ${pq.label}`,
       pq.start,
-      pq.end,
+      pq.start,
     );
-    if (!prevQuarter.completed && prevQuarter.endDate < today) built.push(prevQuarter);
+    if (!prevQuarterPlan.completed) built.push(prevQuarterPlan);
 
     return built;
   }, [reviews]);
