@@ -64,15 +64,21 @@ If the response is unclear or only covers part of what you asked (e.g., they onl
 
 ## Step 4 — Parse the transcript into the review schema
 
-Mentally extract:
+The dashboard form (`web/src/components/sections/weekly-review-form.tsx`) renders the **Review → Reflect → Plan** structure. Your output must match the same `content` shape so a review you save renders identically to one filled in from the dashboard:
 
-- **highlights**: short bullet phrases summarising what went well. Pull from explicit "the win this week was X" mentions plus things they said worked. Up to ~5 items.
-- **challenges**: a single paragraph (1-3 sentences) of what was hard. Their words; tighten if rambling.
-- **goalUpdates**: for each active goal, a one-line status note IF they explicitly mentioned it. Skip goals they didn't talk about (don't fabricate progress).
-- **nextWeekPriorities**: `{ p1, p2, p3 }` — three short imperative phrases. The most important first. If they only gave you 1 or 2, fill the rest with `""` and ask if they want a P3 (one short follow-up, no pressure).
-- **score**: 1-10, integer. Infer from tone/explicit number. If unclear, ask one short follow-up.
+- **reflection**: an object with three short text fields:
+  - `worked` — what paid off this week (1-2 sentences, their words tightened)
+  - `didnt` — the drag, the miss, the avoided thing (1-2 sentences)
+  - `lesson` — one thing to carry forward (1 short sentence)
+- **nextWeekPriorities**: `{ p1, p2, p3 }` — three short imperative phrases, most important first. If they only gave you 1 or 2, fill the rest with `""` and ask one short follow-up for P3 (no pressure).
+- **score**: 1-10 integer. Infer from tone/explicit number. If unclear, ask one short follow-up.
 
-Also include the raw transcript at `content.transcript` so the dashboard can show the unedited voice if the user wants to see it.
+Also include:
+- `content.transcript` — the raw voice transcript verbatim
+- `content.previousPriorities` — copy of the last review's `nextWeekPriorities` (for context when re-rendering historical reviews)
+- `content.winsCount` — count of wins logged this week (you already pulled this in step 1)
+
+**Don't** include `highlights`, `challenges`, or `goalUpdates`. Those were the old form fields — they're gone. Reflection captures everything that used to live there.
 
 ## Step 5 — Save the review
 
@@ -90,10 +96,14 @@ curl -sS -X POST "$LIFEOS_API_URL/api/v1/reviews" \
     "periodEnd":   "<YYYY-MM-DD Sunday>",
     "score":       <int>,
     "content": {
-      "highlights": ["...", "..."],
-      "challenges": "...",
-      "goalUpdates": [{"goalId": "...", "title": "...", "notes": "..."}],
+      "reflection": {
+        "worked": "...",
+        "didnt":  "...",
+        "lesson": "..."
+      },
       "nextWeekPriorities": {"p1": "...", "p2": "...", "p3": "..."},
+      "previousPriorities": {"p1": "...", "p2": "...", "p3": "..."},
+      "winsCount": <int>,
       "transcript": "<the user voice transcript verbatim>"
     }
   }'
