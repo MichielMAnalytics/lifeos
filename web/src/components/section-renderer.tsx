@@ -50,6 +50,8 @@ import { CalendarWeekly } from './sections/calendar-weekly';
 import { RemindersUpcoming } from './sections/reminders-upcoming';
 import { TelegramSetup } from './sections/telegram-setup';
 import { WeeklyPriorities } from './sections/weekly-priorities';
+import { Horizon } from './sections/horizon';
+import { Routines } from './sections/routines';
 import { WorkoutLog } from './sections/workout-log';
 import { ActiveProgramme } from './sections/active-programme';
 import { HealthSummary } from './sections/health-summary';
@@ -85,6 +87,8 @@ const SECTION_MAP: Record<string, React.ComponentType> = {
   'task-status-bar': TaskStatusBar,
   'today-shell': TodayShell,
   'weekly-priorities': WeeklyPriorities,
+  'horizon': Horizon,
+  'routines': Routines,
 
   // Tasks page sections
   'tasks-bucketed': TasksBucketed,

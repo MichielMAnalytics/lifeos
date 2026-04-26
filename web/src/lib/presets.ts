@@ -428,8 +428,9 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
   plan: {
     default: {
       name: "Default",
-      description: "Day and week at a glance",
+      description: "Horizon cascade with day and week",
       sections: [
+        { id: "horizon", label: "Horizon", span: "full" },
         { id: "day-plan", label: "Day Plan", span: "half" },
         { id: "weekly-plan", label: "Weekly Plan", span: "half" },
       ],
@@ -598,10 +599,11 @@ export const PAGE_PRESETS: Record<PageKey, Record<PresetKey, PagePreset>> = {
   schedules: {
     default: {
       name: "Default",
-      description: "Weekly calendar with reminders",
+      description: "Weekly calendar, reminders, and routines",
       sections: [
         { id: "calendar-weekly", label: "Weekly View", span: "full" },
-        { id: "reminders-upcoming", label: "Reminders", span: "full" },
+        { id: "reminders-upcoming", label: "Reminders", span: "half" },
+        { id: "routines", label: "Routines", span: "half" },
       ],
     },
     solopreneur: {

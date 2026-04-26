@@ -46,4 +46,17 @@ crons.interval(
   {},
 );
 
+// Weekly-review Sunday prompt. Fires every Sunday at 10:00 UTC =
+// 18:00 Asia/Makassar (Bali) where the primary user lives. Per-user-tz
+// scheduling is a future enhancement; for now anyone elsewhere will
+// just get the prompt at a fixed UTC time. The dispatcher itself is
+// idempotent (skips users who got a prompt within the last 6 days)
+// so a manual re-run is safe.
+crons.weekly(
+  "weekly review prompt",
+  { dayOfWeek: "sunday", hourUTC: 10, minuteUTC: 0 },
+  internal.weeklyReviewDispatch.tick,
+  {},
+);
+
 export default crons;

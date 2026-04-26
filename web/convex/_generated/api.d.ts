@@ -80,6 +80,8 @@ import type * as upcomingMeetings from "../upcomingMeetings.js";
 import type * as userProfile from "../userProfile.js";
 import type * as visionBoard from "../visionBoard.js";
 import type * as weeklyPlans from "../weeklyPlans.js";
+import type * as weeklyReviewDispatch from "../weeklyReviewDispatch.js";
+import type * as weeklyReviewHelpers from "../weeklyReviewHelpers.js";
 import type * as wins from "../wins.js";
 import type * as workouts from "../workouts.js";
 
@@ -162,6 +164,8 @@ declare const fullApi: ApiFromModules<{
   userProfile: typeof userProfile;
   visionBoard: typeof visionBoard;
   weeklyPlans: typeof weeklyPlans;
+  weeklyReviewDispatch: typeof weeklyReviewDispatch;
+  weeklyReviewHelpers: typeof weeklyReviewHelpers;
   wins: typeof wins;
   workouts: typeof workouts;
 }>;

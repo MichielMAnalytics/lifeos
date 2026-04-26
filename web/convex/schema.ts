@@ -41,6 +41,10 @@ export default defineSchema({
     googleCalendarEmail: v.optional(v.string()), // which Google account they authorised
     googleCalendarSyncedAt: v.optional(v.float64()),
     googleCalendarSyncError: v.optional(v.string()),
+    // Last time the weekly-review Telegram prompt was sent. Used to
+    // dedupe if/when the cron switches from once-per-week to per-tz
+    // hourly polling — the row carries forward week to week.
+    weeklyReviewPromptedAt: v.optional(v.float64()),
   }).index("email", ["email"])
     .index("by_telegramLinkCode", ["telegramLinkCode"]),
 
