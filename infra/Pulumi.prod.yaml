@@ -3,6 +3,8 @@ config:
   gcp:region: europe-west3
   lifeos:dnsProvider: cloudDns
   lifeos:domain: lifeos.zone
+  lifeos:additionalDomains:
+    - lifeai.so
   lifeos:openclawImageTag: latest
   lifeos:convexSiteUrl: https://charming-squid-23.eu-west-1.convex.site
   # Pinned by digest, not tag, so a future rebuild can't silently overwrite this image.

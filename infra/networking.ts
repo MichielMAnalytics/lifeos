@@ -10,6 +10,12 @@ export function createNetworking(
   const config = new pulumi.Config("lifeos");
   const gcpConfig = new pulumi.Config("gcp");
   const domain = config.require("domain");
+  // Optional secondary domains served by the same ingress with the same
+  // wildcard cert (e.g. brand rename rolling out alongside the original).
+  // The DNS-01 solver, Cloud DNS managed zones, and the wildcard cert
+  // SANs all extend to cover them. Empty by default.
+  const additionalDomains = config.getObject<string[]>("additionalDomains") ?? [];
+  const allDomains = [domain, ...additionalDomains];
   const gcpProject = gcpConfig.require("project");
   const dnsZoneProject = config.get("dnsZoneProject") ?? gcpProject;
   const dnsProvider = config.get("dnsProvider") ?? "cloudDns";
@@ -133,7 +139,7 @@ export function createNetworking(
   const dns01Solver = dnsProvider === "godaddy"
     ? {
         selector: {
-          dnsZones: [domain],
+          dnsZones: allDomains,
         },
         dns01: {
           webhook: {
@@ -152,7 +158,7 @@ export function createNetworking(
       }
     : {
         selector: {
-          dnsZones: [domain],
+          dnsZones: allDomains,
         },
         dns01: {
           cloudDNS: {
@@ -189,7 +195,9 @@ export function createNetworking(
     },
   }, { provider, dependsOn: [certManager, ...godaddyWebhookDeps] });
 
-  // Wildcard certificate for *.{domain}
+  // Wildcard certificate covering every served domain. Single cert + secret
+  // means nginx-ingress's default-ssl-certificate keeps working unchanged
+  // when a second hostname is added.
   const wildcardCert = new k8s.apiextensions.CustomResource("wildcard-cert", {
     apiVersion: "cert-manager.io/v1",
     kind: "Certificate",
@@ -203,10 +211,7 @@ export function createNetworking(
         name: "letsencrypt-prod",
         kind: "ClusterIssuer",
       },
-      dnsNames: [
-        domain,
-        `*.${domain}`,
-      ],
+      dnsNames: allDomains.flatMap((d) => [d, `*.${d}`]),
     },
   }, { provider, dependsOn: [letsEncryptIssuer] });
 
@@ -217,32 +222,46 @@ export function createNetworking(
     s => s?.loadBalancer?.ingress?.[0]?.ip ?? "",
   );
 
-  // Cloud DNS managed zone (only when using Cloud DNS provider)
-  let dnsZone: gcp.dns.ManagedZone | undefined;
+  // Cloud DNS managed zones (only when using Cloud DNS provider). The
+  // primary zone keeps its historical resource name and zone name for
+  // state continuity; additional domains get a zone per domain.
+  const dnsZones: Record<string, gcp.dns.ManagedZone> = {};
   if (dnsProvider === "cloudDns") {
-    dnsZone = new gcp.dns.ManagedZone("lifeos-zone", {
-      name: "lifeos-zone",
-      dnsName: `${domain}.`,
-      description: "Claw Now DNS zone",
-    });
+    for (const d of allDomains) {
+      const isPrimary = d === domain;
+      const resourceName = isPrimary ? "lifeos-zone" : `${d.replace(/\./g, "-")}-zone`;
+      const zoneName = isPrimary ? "lifeos-zone" : d.replace(/\./g, "-");
+      const zone = new gcp.dns.ManagedZone(resourceName, {
+        name: zoneName,
+        dnsName: `${d}.`,
+        description: isPrimary ? "Claw Now DNS zone" : `Public DNS zone for ${d}`,
+      });
+      dnsZones[d] = zone;
 
-    // A record for root domain
-    new gcp.dns.RecordSet("lifeos-a-record", {
-      name: `${domain}.`,
-      type: "A",
-      ttl: 300,
-      managedZone: dnsZone.name,
-      rrdatas: [ingressIp],
-    });
+      // A record for root domain
+      new gcp.dns.RecordSet(
+        isPrimary ? "lifeos-a-record" : `${d.replace(/\./g, "-")}-a-record`,
+        {
+          name: `${d}.`,
+          type: "A",
+          ttl: 300,
+          managedZone: zone.name,
+          rrdatas: [ingressIp],
+        },
+      );
 
-    // Wildcard A record
-    new gcp.dns.RecordSet("lifeos-wildcard-a-record", {
-      name: `*.${domain}.`,
-      type: "A",
-      ttl: 300,
-      managedZone: dnsZone.name,
-      rrdatas: [ingressIp],
-    });
+      // Wildcard A record
+      new gcp.dns.RecordSet(
+        isPrimary ? "lifeos-wildcard-a-record" : `${d.replace(/\./g, "-")}-wildcard-a-record`,
+        {
+          name: `*.${d}.`,
+          type: "A",
+          ttl: 300,
+          managedZone: zone.name,
+          rrdatas: [ingressIp],
+        },
+      );
+    }
   }
 
   return {
@@ -250,7 +269,9 @@ export function createNetworking(
     certManager,
     letsEncryptIssuer,
     wildcardCert,
-    dnsZone,
+    // Backward-compatible primary-zone export.
+    dnsZone: dnsZones[domain],
+    dnsZones,
     ingressIp,
   };
 }
