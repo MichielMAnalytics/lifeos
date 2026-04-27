@@ -246,7 +246,7 @@ export const deploy = action({
         OWNER_EMAIL: ownerEmail,
         GATEWAY_TOKEN: gatewayToken,
         LIFEOS_API_KEY: apiKeyResult.key,
-        LIFEOS_API_URL: serverEnv.CONVEX_SITE_URL ?? "",
+        LIFEOS_API_URL: serverEnv.LIFEOS_BROKER_URL ?? serverEnv.CONVEX_SITE_URL ?? "",
         OPENAI_API_KEY: serverEnv.OPENAI_API_KEY ?? "",
       });
 
@@ -782,7 +782,7 @@ export const rolloutPatch = internalAction({
           OWNER_EMAIL: ownerEmail ?? "",
           GATEWAY_TOKEN: depRecord.gatewayToken,
           LIFEOS_API_KEY: apiKeyResult.key,
-          LIFEOS_API_URL: serverEnv.CONVEX_SITE_URL ?? "",
+          LIFEOS_API_URL: serverEnv.LIFEOS_BROKER_URL ?? serverEnv.CONVEX_SITE_URL ?? "",
           OPENAI_API_KEY: serverEnv.OPENAI_API_KEY ?? "",
         });
 

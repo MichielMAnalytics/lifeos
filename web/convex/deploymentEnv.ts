@@ -2,6 +2,12 @@ import { z } from "zod";
 
 const serverEnvSchema = z.object({
   CONVEX_SITE_URL: z.url(),
+  // Override for the URL pods use to call the LifeOS broker. On prod,
+  // CONVEX_SITE_URL resolves to a system hostname that does not serve HTTP
+  // actions; setting LIFEOS_BROKER_URL to the public HTTP-actions hostname
+  // forces pods to use it. Leave unset everywhere else — fallback uses
+  // CONVEX_SITE_URL, which is correct for dev and self-hosted.
+  LIFEOS_BROKER_URL: z.url().optional(),
   STRIPE_PRICE_10: z.string().optional(),
   STRIPE_PRICE_25: z.string().optional(),
   STRIPE_PRICE_50: z.string().optional(),
