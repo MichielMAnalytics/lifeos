@@ -309,6 +309,7 @@ export function ReviewsSchedule() {
               weekStart={activeForm.start}
               weekEnd={activeForm.end}
               onSaved={clearForm}
+              onCancel={clearForm}
             />
           )}
           {activeForm.type === 'monthly' && (
