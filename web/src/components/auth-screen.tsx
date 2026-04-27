@@ -39,7 +39,7 @@ export function AuthScreen({ mode }: { mode: 'login' | 'signup' }) {
         {/* Title */}
         <h1 className="text-3xl font-light tracking-tight text-text leading-snug">
           {isLogin ? (
-            <>Welcome back to <span className="font-semibold">LifeOS</span></>
+            <>Welcome back to <span className="font-semibold">LifeAI</span></>
           ) : (
             <>Your personal<br /><span className="font-semibold">Life Operating System</span></>
           )}

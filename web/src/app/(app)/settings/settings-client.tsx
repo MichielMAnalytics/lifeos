@@ -1059,7 +1059,7 @@ function ApiKeysTab({ apiKeys }: { apiKeys: ApiKeyEntry[] }) {
         <div className="border border-border divide-y divide-border">
           <div className="px-5 py-3">
             <p className="text-xs font-medium text-text">CLI Setup</p>
-            <p className="text-xs text-text-muted mt-1">Connect the LifeOS CLI to your terminal.</p>
+            <p className="text-xs text-text-muted mt-1">Connect the CLI to your terminal.</p>
           </div>
           <div className="p-5 space-y-3">
             <CliStep step={1} title="Install globally">
@@ -1125,7 +1125,7 @@ function AppearanceTab() {
 
   return (
     <div className="space-y-6">
-      <TabHeader title="Appearance" subtitle="Customize the look and feel of your LifeOS home" />
+      <TabHeader title="Appearance" subtitle="Customize the look and feel of your LifeAI home" />
 
       {/* Theme */}
       <div className="border border-border p-5 space-y-4">
@@ -1293,7 +1293,7 @@ const INTEGRATION_GROUPS: { title: string; items: IntegrationDef[] }[] = [
       {
         name: 'Tasks',
         status: 'needs-michiel',
-        description: 'Sync Google Tasks with LifeOS tasks.',
+        description: 'Sync Google Tasks with LifeAI tasks.',
         blocker: 'Needs Google OAuth client + Tasks API scope.',
       },
       {
@@ -1350,7 +1350,7 @@ function IntegrationsTab() {
     <div className="space-y-8">
       <TabHeader
         title="Integrations"
-        subtitle="Connect LifeOS to the tools you already use."
+        subtitle="Connect LifeAI to the tools you already use."
       />
 
       {/* Telegram — wireable; rendered with the live setup card */}

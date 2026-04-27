@@ -1,6 +1,10 @@
-# LifeOS
+# LifeAI
 
-Personal Life Operating System -- a single-user productivity platform for managing tasks, goals, projects, journals, day plans, weekly plans, ideas, thoughts, wins, resources, reminders, and reviews. Built as a monorepo with a Convex real-time backend, a Next.js 15 dashboard, and a CLI.
+A single-user productivity platform for managing tasks, goals, projects, journals, day plans, weekly plans, ideas, thoughts, wins, resources, reminders, and reviews. Built as a monorepo with a Convex real-time backend, a Next.js 15 dashboard, and a CLI.
+
+(Formerly LifeOS / Helpful AI. Internal code identifiers — `@lifeos/shared`, `lifeos` CLI binary, `lifeos_sk_` API keys, `LIFEOS_SECRET` — still use the old name and are not being renamed yet.)
+
+The business / commercial side lives in `../operatorai/`. Code and product live here.
 
 ## Naming & Terminology
 
@@ -8,7 +12,7 @@ Use these terms consistently across all user-facing text:
 
 | Use | Don't use |
 |-----|-----------|
-| **LifeOS home** | "dashboard" (internal/code references are fine, but never user-facing) |
+| **LifeAI home** | "dashboard" (internal/code references are fine, but never user-facing) |
 | **Life Coach** | "AI Life Coach", "AI Agent", "AI assistant" |
 | **home** (when referring to the main app) | "dashboard" |
 
@@ -52,7 +56,7 @@ bun run test             # Run tests across all packages
 ## Architecture
 
 ```
-lifeos/                          # bun monorepo
+lifeai/                          # bun monorepo
   convex/                        # Convex backend -- schema, queries, mutations, HTTP API
     schema.ts                    # Data model (all tables)
     http.ts                      # HTTP router -- REST API for CLI and external integrations

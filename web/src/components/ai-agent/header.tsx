@@ -160,7 +160,7 @@ function UserMenu() {
                   <p className="text-[10px] text-text-muted mt-1">
                     Want to switch tiers?{" "}
                     <a
-                      href="mailto:support@lifeos.zone?subject=%5BLifeOS%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A"
+                      href="mailto:support@lifeos.zone?subject=%5BLifeAI%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A"
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
@@ -266,8 +266,8 @@ export function Header() {
   return (
     <header className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
       <div className="flex items-center gap-2">
-        <a href="https://lifeos.zone" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold tracking-tight text-text hover:opacity-80 transition-opacity">
-          Life<span className="text-accent">OS</span>
+        <a href="https://lifeai.so" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold tracking-tight text-text hover:opacity-80 transition-opacity">
+          Life<span className="text-accent">AI</span>
         </a>
       </div>
       <Authenticated>
@@ -278,7 +278,7 @@ export function Header() {
           <UserMenu />
         </Authenticated>
         <Unauthenticated>
-          <a href="mailto:support@lifeos.zone?subject=%5BLifeOS%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A" className="text-text-muted text-xs hover:text-text transition-colors">
+          <a href="mailto:support@lifeos.zone?subject=%5BLifeAI%5D%20Support%20request&body=Hi!%20I%20need%20help%20with%3A%0A%0A" className="text-text-muted text-xs hover:text-text transition-colors">
             Contact Support
           </a>
         </Unauthenticated>

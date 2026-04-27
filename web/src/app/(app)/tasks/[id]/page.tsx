@@ -86,7 +86,7 @@ export default function TaskDetailPage() {
     return (
       <div className="mx-auto max-w-2xl py-8 px-6">
         <Breadcrumb items={[
-          { label: 'LifeOS', href: '/today' },
+          { label: 'LifeAI', href: '/today' },
           { label: 'Tasks', href: '/tasks' },
           { label: 'Not found' },
         ]} />
@@ -102,7 +102,7 @@ export default function TaskDetailPage() {
   return (
     <div className="mx-auto max-w-2xl py-8 px-6">
       <Breadcrumb items={[
-        { label: 'LifeOS', href: '/today' },
+        { label: 'LifeAI', href: '/today' },
         { label: 'Tasks', href: '/tasks' },
         { label: titleValue || task.title },
       ]} />

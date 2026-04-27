@@ -144,7 +144,7 @@ function SetupChooserInner() {
         </div>
       )}
 
-      {/* LifeOS logo */}
+      {/* LifeAI logo */}
       <div className="fixed top-5 left-1/2 -translate-x-1/2 z-40">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" width="28" height="39" className="opacity-30">
           <rect x="22" y="20" width="56" height="70" fill="none" stroke="var(--color-text)" strokeWidth="5" strokeLinejoin="miter" />
@@ -168,7 +168,7 @@ function SetupChooserInner() {
                 <img src="https://avatars.githubusercontent.com/u/135761097?v=4" alt="Michiel" className="w-9 h-9 rounded-full object-cover" />
               </div>
               <p className="text-xs text-text-muted leading-relaxed italic">
-                &quot;We really appreciate you giving LifeOS a try. We built this for ourselves first, and we&apos;re excited to build it with you.&quot;
+                &quot;We really appreciate you giving LifeAI a try. We built this for ourselves first, and we&apos;re excited to build it with you.&quot;
               </p>
               <p className="mt-2 text-[10px] text-text-muted/50">Kemp & Michiel, founders</p>
             </div>

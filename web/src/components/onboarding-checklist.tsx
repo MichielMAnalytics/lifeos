@@ -153,7 +153,7 @@ export function OnboardingChecklist() {
       {/* Header */}
       <div className="px-5 pt-4 pb-3 flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold text-text">Get started with LifeOS</p>
+          <p className="text-sm font-semibold text-text">Get started with LifeAI</p>
           <p className="text-[11px] text-text-muted/70 mt-0.5">{doneCount} of {totalCount} completed</p>
         </div>
         <button

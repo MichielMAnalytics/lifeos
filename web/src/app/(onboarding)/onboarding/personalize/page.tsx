@@ -59,7 +59,7 @@ function PersonalizeInner() {
           Which sounds most <span className="font-semibold">like you</span>?
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-text-muted">
-          We&apos;ll set up your LifeOS home based on your answer. You can always change this later.
+          We&apos;ll set up your LifeAI home based on your answer. You can always change this later.
         </p>
 
         <div className="mt-10 grid grid-cols-2 gap-3 w-full">

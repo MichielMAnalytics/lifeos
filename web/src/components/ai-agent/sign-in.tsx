@@ -22,17 +22,17 @@ export function SignInCard() {
         <CardContent className="pt-10 pb-8 px-8">
           <div className="flex flex-col items-center text-center">
             {/* Logo mark */}
-            <a href="https://lifeos.zone" className="mb-8 transition-transform duration-150 hover:scale-110 active:scale-95">
+            <a href="https://lifeai.so" className="mb-8 transition-transform duration-150 hover:scale-110 active:scale-95">
               <img
                 src="/icon-white.svg"
-                alt="LifeOS"
+                alt="LifeAI"
                 className="size-9"
               />
             </a>
 
             {/* Title */}
             <h2 className="text-sm font-medium text-text tracking-tight mb-1 font-heading">
-              Sign in to Life<span className="text-accent/70">OS</span>
+              Sign in to Life<span className="text-accent/70">AI</span>
             </h2>
             <p className="text-[11px] text-text-muted/70 mb-6">
               Welcome back. Please sign in to continue.
@@ -70,7 +70,7 @@ export function SignInCard() {
       {/* Footer */}
       <div className="mt-6 text-center">
         <p className="text-[10px] text-text-muted/70 tracking-wide uppercase">
-          Secured by LifeOS
+          Secured by LifeAI
         </p>
       </div>
     </div>

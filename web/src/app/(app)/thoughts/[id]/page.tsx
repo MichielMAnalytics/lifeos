@@ -28,7 +28,7 @@ export default function ThoughtDetailPage() {
     return (
       <div className="mx-auto max-w-2xl py-8 px-6">
         <Breadcrumb items={[
-          { label: 'LifeOS', href: '/today' },
+          { label: 'LifeAI', href: '/today' },
           { label: 'Thoughts', href: '/thoughts' },
           { label: 'Not found' },
         ]} />
@@ -40,7 +40,7 @@ export default function ThoughtDetailPage() {
   return (
     <div className="mx-auto max-w-2xl py-8 px-6">
       <Breadcrumb items={[
-        { label: 'LifeOS', href: '/today' },
+        { label: 'LifeAI', href: '/today' },
         { label: 'Thoughts', href: '/thoughts' },
         { label: thought.title || thought.content.slice(0, 40) },
       ]} />

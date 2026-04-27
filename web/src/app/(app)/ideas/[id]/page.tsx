@@ -69,7 +69,7 @@ export default function IdeaDetailPage() {
     return (
       <div className="mx-auto max-w-2xl py-8 px-6">
         <Breadcrumb items={[
-          { label: 'LifeOS', href: '/today' },
+          { label: 'LifeAI', href: '/today' },
           { label: 'Ideas', href: '/ideas' },
           { label: 'Not found' },
         ]} />
@@ -81,7 +81,7 @@ export default function IdeaDetailPage() {
   return (
     <div className="mx-auto max-w-2xl py-8 px-6">
       <Breadcrumb items={[
-        { label: 'LifeOS', href: '/today' },
+        { label: 'LifeAI', href: '/today' },
         { label: 'Ideas', href: '/ideas' },
         { label: contentValue.slice(0, 40) || 'Idea' },
       ]} />

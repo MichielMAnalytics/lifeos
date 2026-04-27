@@ -7,7 +7,7 @@ import './globals.css';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'LifeOS',
+  title: 'LifeAI',
   description: 'Personal Life Operating System',
   icons: {
     icon: [

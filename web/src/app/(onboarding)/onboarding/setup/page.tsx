@@ -159,7 +159,7 @@ function LiveSetupPage() {
             </div>
 
             <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
-              Welcome to <span className="font-semibold">LifeOS</span>
+              Welcome to <span className="font-semibold">LifeAI</span>
             </h1>
 
             <p className="mt-4 text-sm leading-relaxed text-text-muted/70 max-w-sm">

@@ -53,7 +53,7 @@ export function StepContainer({ children, onBack, backHref }: { children: React.
           )}
         </div>
       )}
-      {/* LifeOS logo — top center */}
+      {/* LifeAI logo — top center */}
       <div className="fixed top-5 left-1/2 -translate-x-1/2 z-40">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" width="28" height="39" className="opacity-30">
           <rect x="22" y="20" width="56" height="70" fill="none" stroke="var(--color-text)" strokeWidth="5" strokeLinejoin="miter" />

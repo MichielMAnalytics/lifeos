@@ -35,7 +35,7 @@ const TESTIMONIALS = [
   { name: "Priya", role: "Freelance Developer", quote: "The AI agent on Telegram ", highlight: "checks in on my goals while I sleep", quoteTail: ". I wake up to a briefing, not a blank page.", color: "#f59e0b" },
   { name: "Thomas", role: "CTO, 4-person startup", quote: "Seven persona presets means ", highlight: "I flip between founder mode and deep-work mode", quoteTail: " in one click. Huge productivity boost.", color: "#10b981" },
   { name: "Lena", role: "Product Manager", quote: "Not technical at all. Signed in with Google, picked the minimalist theme, and ", highlight: "had my whole week planned before coffee was ready", quoteTail: ".", color: "#ec4899" },
-  { name: "Daniel", role: "Security Consultant", quote: "Finally a life OS that ", highlight: "keeps data private and encrypted by default", quoteTail: ". No shared databases, no snooping.", color: "#8b5cf6" },
+  { name: "Daniel", role: "Security Consultant", quote: "Finally a life AI that ", highlight: "keeps data private and encrypted by default", quoteTail: ". No shared databases, no snooping.", color: "#8b5cf6" },
   { name: "Sofia", role: "Agency Owner", quote: "Tasks, goals, journal, reviews -- ", highlight: "all in one place with real-time sync", quoteTail: ". I stopped context-switching between 5 apps.", color: "#06b6d4" },
 ];
 
@@ -95,7 +95,7 @@ type ProviderValues = Record<string, string>;
 
 const FIXED_PROVIDERS: { id: string; name: string; highlight?: boolean; values: ProviderValues }[] = [
   { id: "selfhost", name: "Self-host", values: { setup: "4\u20136 hours", secret_mgmt: ".env files", encryption: "no", isolation: "no", patching: "Manual", access: "no", audit: "no", byok: "yes", integrations: "All (manual setup)", price: "$0 + your time" } },
-  { id: "azin", name: "LifeOS", highlight: true, values: { setup: "120 seconds", secret_mgmt: "Secret Manager + CMEK", encryption: "yes", isolation: "yes", patching: "Automatic (GKE)", access: "Google OAuth", audit: "yes", byok: "yes", integrations: "All channels + full UI", price: "From \u20AC30" } },
+  { id: "azin", name: "LifeAI", highlight: true, values: { setup: "120 seconds", secret_mgmt: "Secret Manager + CMEK", encryption: "yes", isolation: "yes", patching: "Automatic (GKE)", access: "Google OAuth", audit: "yes", byok: "yes", integrations: "All channels + full UI", price: "From \u20AC30" } },
 ];
 
 const OPTIONAL_PROVIDERS: { id: string; name: string; values: ProviderValues }[] = [
@@ -120,7 +120,7 @@ const FAQ_ITEMS = [
   {
     question: "How are my API keys handled?",
     answer: "Your API keys are stored in Google Cloud Secret Manager -- Google's enterprise-grade secret vault. Keys are never injected as environment variables, never logged, and the agent runtime never sees them directly. The AI gateway retrieves them per-request via a secure internal API.",
-    link: { text: "Read our security architecture", href: "https://lifeos.zone/blog/security-architecture" },
+    link: { text: "Read our security architecture", href: "https://lifeai.so/blog/security-architecture" },
   },
   {
     question: "Can I use my own API key?",
@@ -129,7 +129,7 @@ const FAQ_ITEMS = [
   {
     question: "How is my instance isolated from other users?",
     answer: "Every user gets their own dedicated Kubernetes pod -- not a shared container, not a multi-tenant process. Network policies enforce default-deny ingress. Your pod has its own encrypted storage volume, its own TLS certificate, and its own set of secrets. There is no shared state between pods.",
-    link: { text: "See isolation details", href: "https://lifeos.zone/blog/security-architecture" },
+    link: { text: "See isolation details", href: "https://lifeai.so/blog/security-architecture" },
   },
   {
     question: "What happens when the AI agent updates?",
@@ -331,12 +331,12 @@ function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
           >
-            <img src="/icon-white.svg" alt="LifeOS" className="size-12 mb-5" />
+            <img src="/icon-white.svg" alt="LifeAI" className="size-12 mb-5" />
 
             <div className="flex items-center gap-4 mb-1">
-              <a href="https://lifeos.zone" target="_blank" rel="noopener noreferrer" className="text-2xl font-medium tracking-[-0.02em] font-heading hover:opacity-80 transition-opacity">
+              <a href="https://lifeai.so" target="_blank" rel="noopener noreferrer" className="text-2xl font-medium tracking-[-0.02em] font-heading hover:opacity-80 transition-opacity">
                 <span className="text-text">Life</span>
-                <span className="text-accent">OS</span>
+                <span className="text-accent">AI</span>
               </a>
             </div>
 
@@ -397,9 +397,9 @@ function HeroSection() {
             <div className="relative z-10 bg-surface rounded-lg p-6">
               {/* Card header */}
               <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-text/8">
-                <img src="/icon-white.svg" alt="LifeOS" className="size-5" />
+                <img src="/icon-white.svg" alt="LifeAI" className="size-5" />
                 <div className="flex flex-col flex-1">
-                  <span className="text-sm font-medium text-text">Get started with LifeOS</span>
+                  <span className="text-sm font-medium text-text">Get started with LifeAI</span>
                   <span className="text-[10px] text-text-muted font-heading">Dashboard + optional AI agent</span>
                 </div>
                 <a
@@ -518,7 +518,7 @@ function VideoSection() {
       >
         <iframe
           src="https://www.youtube.com/embed/hgwFs6z0iS8?rel=0&modestbranding=1&color=white"
-          title="LifeOS demo"
+          title="LifeAI demo"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           className="w-full h-full"
@@ -750,7 +750,7 @@ function ComparisonSection() {
           badge="Compare"
           title="Not all hosting is equal."
           titleMuted="See what you actually get."
-          blogLink={{ text: "Deep dive \u2192", href: "https://lifeos.zone/blog/lifeos-vs-shared-ai-platforms" }}
+          blogLink={{ text: "Deep dive \u2192", href: "https://lifeai.so/blog/lifeai-vs-shared-ai-platforms" }}
         />
 
         {/* Compare with... button */}
@@ -893,7 +893,7 @@ function SecuritySection() {
             accessible only by its owner. No shared containers. No shared memory. No shared risk.
           </p>
           <a
-            href="https://lifeos.zone/blog/sandbox-your-ai-agents"
+            href="https://lifeai.so/blog/sandbox-your-ai-agents"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block text-sm text-accent hover:text-accent/80 transition-colors mt-3"
@@ -1162,7 +1162,7 @@ function CTASection() {
               <span className="text-text-muted">1 minute, one Google sign-in.</span>
             </h2>
             <p className="mt-5 text-sm lg:text-base text-text-muted leading-relaxed max-w-lg">
-              LifeOS gives you a real-time productivity dashboard, encrypted storage, and an optional AI agent.
+              LifeAI gives you a real-time productivity dashboard, encrypted storage, and an optional AI agent.
               Sign in with Google and start organizing your life -- we handle the rest.
             </p>
           </div>
@@ -1177,11 +1177,11 @@ function CTASection() {
               }}
               className="inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-bg text-sm font-medium px-8 py-4 rounded-md transition-all duration-150 active:scale-[0.99] cursor-pointer"
             >
-              Get Started with LifeOS
+              Get Started with LifeAI
               <ChevronRight className="w-4 h-4" />
             </button>
             <a
-              href="mailto:support@lifeos.zone?subject=LifeOS"
+              href="mailto:support@lifeos.zone?subject=LifeAI"
               className="inline-flex items-center justify-center ring-1 ring-text/10 text-sm px-8 py-4 rounded-md text-text hover:ring-text/20 transition-all duration-150 active:scale-[0.99]"
             >
               Contact us
@@ -1202,16 +1202,16 @@ function Footer() {
     <footer className="border-t border-text/[0.08] py-8 px-6 lg:px-12">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <img src="/icon-white.svg" alt="LifeOS" className="size-5" />
+          <img src="/icon-white.svg" alt="LifeAI" className="size-5" />
           <span className="text-xs text-text-muted font-heading">
-            Life<span className="text-text">OS</span>
+            Life<span className="text-text">AI</span>
           </span>
         </div>
         <div className="flex items-center gap-6 text-[11px] text-text-muted font-heading">
           <a href="https://github.com/lifeos-zone/lifeos" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors">
             GitHub
           </a>
-          <a href="https://lifeos.zone/blog" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors">
+          <a href="https://lifeai.so/blog" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors">
             Blog
           </a>
           <a href="mailto:support@lifeos.zone" className="hover:text-text transition-colors">

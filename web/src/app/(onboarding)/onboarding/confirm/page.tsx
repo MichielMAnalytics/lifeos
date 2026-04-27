@@ -216,7 +216,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
 
           <div className="mt-8">
             <PricingCard
-              title="LifeOS Home"
+              title="LifeAI Home"
               subtitle="Plan, track, and reflect"
 
               afterTrialPrice={afterTrialPrice(dashboardPlan)}
@@ -299,7 +299,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
             {/* Platform line */}
             <div className="flex justify-between items-start gap-4">
               <div className="min-w-0">
-                <span className="text-text font-medium text-xs block">LifeOS + LifeCoach</span>
+                <span className="text-text font-medium text-xs block">LifeAI + LifeCoach</span>
                 <span className="text-[10px] text-text-muted/70">Goals, tasks, journals, coaching, channels</span>
               </div>
               <span className="text-text font-medium shrink-0">{'\u20AC'}{platformPrice}</span>

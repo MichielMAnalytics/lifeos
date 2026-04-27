@@ -131,7 +131,7 @@ export function TelegramSetup() {
             <ul className="text-xs text-text-muted leading-relaxed list-disc list-inside space-y-1 ml-1">
               <li>
                 <strong className="text-text">Automatic:</strong> the next time you message your bot,
-                ask it to <em>“link my chat to LifeOS”</em>. Your agent (which has the LifeOS CLI)
+                ask it to <em>“link my chat to LifeAI”</em>. Your agent (which has the CLI)
                 will run <code className="text-text bg-bg-subtle px-1 rounded">lifeos profile set-telegram-chat-id &lt;chat&gt;</code>.
               </li>
               <li>

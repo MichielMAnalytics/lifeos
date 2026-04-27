@@ -714,7 +714,7 @@ function ComparisonTable() {
       <div className="border border-accent/20 bg-accent-glow p-5 space-y-2">
         <p className="text-xs font-bold text-text">Recommendation</p>
         <p className="text-xs text-text-muted leading-relaxed">
-          <strong className="text-text">Option A (Sidebar Tabs)</strong> is the strongest choice for LifeOS.
+          <strong className="text-text">Option A (Sidebar Tabs)</strong> is the strongest choice for LifeAI.
           You already have 5 sections that will likely grow (e.g. Notifications, Integrations, Data Export).
           The sidebar pattern matches Linear and Supabase — products your audience knows.
           It also gives Billing its own proper home instead of being buried in a dropdown.

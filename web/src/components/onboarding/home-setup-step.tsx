@@ -54,11 +54,11 @@ export function HomeSetupStep() {
           </div>
 
           <h1 className="text-3xl font-light tracking-tight text-text sm:text-4xl">
-            Welcome to <span className="font-semibold">LifeOS</span>
+            Welcome to <span className="font-semibold">LifeAI</span>
           </h1>
 
           <p className="mt-4 text-sm leading-relaxed text-text-muted/70 max-w-sm">
-            Let&apos;s connect LifeOS with your AI assistant.
+            Let&apos;s connect LifeAI with your AI assistant.
             It only takes a minute.
           </p>
 
@@ -82,12 +82,12 @@ export function HomeSetupStep() {
         <div className="flex flex-col items-center text-center w-full animate-fade-in">
           <FixedBackButton onClick={() => setSetupStep(0)} />
           <h1 className="text-2xl font-light tracking-tight text-text">
-            Install the <span className="font-semibold">LifeOS CLI</span>
+            Install the <span className="font-semibold">CLI</span>
           </h1>
 
           <p className="mt-3 text-sm text-text-muted max-w-sm">
             The CLI lets you capture tasks, ideas, and journal entries from your terminal
-            — and connects your AI assistant to LifeOS.
+            — and connects your AI assistant to LifeAI.
           </p>
 
           <div className="mt-10 w-full max-w-md space-y-6 text-left">
@@ -161,14 +161,14 @@ export function HomeSetupStep() {
           </h1>
 
           <p className="mt-3 text-sm text-text-muted max-w-sm">
-            The LifeOS skill was installed with the CLI. Open your coding agent and run:
+            The skill was installed with the CLI. Open your coding agent and run:
           </p>
 
           <div className="mt-8 w-full max-w-md text-left space-y-6">
             <CodeBlock>/lifeos-init</CodeBlock>
 
             <p className="text-xs text-text-muted/80 text-center">
-              Your assistant will walk you through connecting to your LifeOS data,
+              Your assistant will walk you through connecting to your LifeAI data,
               setting up routines, and creating your first goals.
             </p>
 
@@ -184,7 +184,7 @@ export function HomeSetupStep() {
               onClick={() => { localStorage.setItem('lifeos-setup-complete', 'true'); window.location.href = '/today'; }}
               className="rounded-full bg-accent px-8 py-3 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
             >
-              Enter LifeOS
+              Enter LifeAI
             </button>
           </div>
         </div>

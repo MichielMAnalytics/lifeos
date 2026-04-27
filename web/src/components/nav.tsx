@@ -147,7 +147,7 @@ export function Nav() {
             <>
               <div className="flex items-center gap-2.5">
                 <LogoMark size={24} className="opacity-80" />
-                <span className="text-sm font-semibold text-text tracking-tight">LifeOS</span>
+                <span className="text-sm font-semibold text-text tracking-tight">LifeAI</span>
               </div>
               {forMobile ? (
                 <button

@@ -165,7 +165,7 @@ export default function ConnectPage() {
     <div className="relative min-h-screen w-full overflow-hidden bg-bg">
       <SoftGlow />
 
-      {/* LifeOS logo */}
+      {/* LifeAI logo */}
       <div className="fixed top-5 left-1/2 -translate-x-1/2 z-40">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" width="28" height="39" className="opacity-30">
           <rect x="22" y="20" width="56" height="70" fill="none" stroke="var(--color-text)" strokeWidth="5" strokeLinejoin="miter" />
@@ -318,7 +318,7 @@ export default function ConnectPage() {
           </div>
         </div>
 
-          {/* Right side — chat mockup (matches lifeos.zone) */}
+          {/* Right side — chat mockup (matches lifeai.so) */}
           <div className="hidden lg:block w-80 shrink-0 sticky top-16">
             <div className="rounded-2xl border border-border/30 bg-[#e8ddd3] overflow-hidden shadow-lg">
               {/* Header */}
@@ -333,7 +333,7 @@ export default function ConnectPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <p className="text-white text-xs font-medium">LifeOS Coach</p>
+                    <p className="text-white text-xs font-medium">Life Coach</p>
                     <span className="text-[8px] bg-white/20 text-white/80 px-1.5 py-0.5 rounded-full font-medium">bot</span>
                   </div>
                   <p className="text-white/60 text-[9px]">last seen recently</p>

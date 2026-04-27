@@ -71,7 +71,7 @@ const testimonials = [
     avatar: "/user-1-james.webp",
   },
   {
-    quote: "I tried self-hosting an AI agent for a week. LifeOS replaced all of that with one click.",
+    quote: "I tried self-hosting an AI agent for a week. LifeAI replaced all of that with one click.",
     highlight: "one click",
     name: "Edwin",
     role: "Software Engineer",
@@ -201,7 +201,7 @@ function HowItWorks() {
 const faqs = [
   {
     q: "Why pay for the AI agent add-on?",
-    a: "Running an AI agent properly requires infrastructure: Kubernetes, TLS, secrets management, vulnerability patching, and regular updates. LifeOS gives you all of that — pod isolation, encrypted storage, secret management, automatic updates — in 60 seconds. You pay for the infrastructure and ops so you can focus on using the agent, not babysitting it.",
+    a: "Running an AI agent properly requires infrastructure: Kubernetes, TLS, secrets management, vulnerability patching, and regular updates. LifeAI gives you all of that — pod isolation, encrypted storage, secret management, automatic updates — in 60 seconds. You pay for the infrastructure and ops so you can focus on using the agent, not babysitting it.",
   },
   {
     q: "What happens to my unused credits?",
@@ -217,7 +217,7 @@ const faqs = [
   },
   {
     q: "What do I get that I can't get self-hosting?",
-    a: "Automatic security patching, zero-downtime updates on every release, enterprise secret management via Google Cloud KMS with 90-day key rotation, per-pod network isolation, built-in rate limiting, a full web UI — all without writing a single line of config. Self-hosting gives you the agent. LifeOS gives you the agent plus production-grade infrastructure around it.",
+    a: "Automatic security patching, zero-downtime updates on every release, enterprise secret management via Google Cloud KMS with 90-day key rotation, per-pod network isolation, built-in rate limiting, a full web UI — all without writing a single line of config. Self-hosting gives you the agent. LifeAI gives you the agent plus production-grade infrastructure around it.",
   },
 ];
 

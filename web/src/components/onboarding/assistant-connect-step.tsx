@@ -29,7 +29,7 @@ function AssistantInstructions({ type, apiKey }: { type: AssistantType; apiKey: 
     case 'claude-code':
       return (
         <div className="space-y-4">
-          <p className="text-xs text-text-muted/80">Add the LifeOS MCP server:</p>
+          <p className="text-xs text-text-muted/80">Add the MCP server:</p>
           <CodeBlock>{`claude mcp add lifeos -- npx lifeos-mcp --api-key ${key}`}</CodeBlock>
         </div>
       );
@@ -88,7 +88,7 @@ export function AssistantConnectStep({ apiKey, onDone }: { apiKey: string | null
       </h1>
 
       <p className="mt-3 text-sm text-text-muted max-w-sm">
-        Let your AI assistant read and write to your LifeOS data.
+        Let your AI assistant read and write to your LifeAI data.
         Select the one(s) you use.
       </p>
 
@@ -138,7 +138,7 @@ export function AssistantConnectStep({ apiKey, onDone }: { apiKey: string | null
           onClick={onDone}
           className="rounded-full bg-accent px-8 py-3 text-sm font-medium text-bg transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.97]"
         >
-          Enter LifeOS
+          Enter LifeAI
         </button>
       </div>
     </>

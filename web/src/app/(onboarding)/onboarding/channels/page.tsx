@@ -63,7 +63,7 @@ function ChatMockup() {
           </svg>
         </div>
         <div>
-          <p className="text-white text-xs font-medium">LifeOS Coach</p>
+          <p className="text-white text-xs font-medium">Life Coach</p>
           <p className="text-white/60 text-[9px]">online</p>
         </div>
       </div>

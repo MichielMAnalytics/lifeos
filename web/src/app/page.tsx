@@ -40,7 +40,7 @@ export default function Home() {
         <div className="min-h-screen flex flex-col items-center justify-center">
           <img
             src="/logo-only-white.svg"
-            alt="LifeOS"
+            alt="LifeAI"
             width={40}
             height={40}
             className="animate-pulse opacity-40"
