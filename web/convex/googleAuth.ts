@@ -52,11 +52,16 @@ interface GoogleTokenBlob {
 }
 
 function redirectUri(): string {
-  // `CONVEX_SITE_URL` is the HTTP-action domain for the current
-  // deployment (…convex.site). Our callback handler is registered at
-  // /oauth/google/callback. Redirect URI MUST match one of the entries
-  // registered on the OAuth client in GCP console.
-  return `${serverEnv.CONVEX_SITE_URL.replace(/\/$/, "")}/oauth/google/callback`;
+  // Prefer LIFEOS_BROKER_URL when set. On prod, CONVEX_SITE_URL resolves
+  // to the system hostname (…confident-frog-601.eu-west-1.convex.site)
+  // which does NOT serve HTTP actions — so the callback would 404 and
+  // OAuth flow would break. LIFEOS_BROKER_URL points at the public
+  // HTTP-actions hostname and is what we want here. CONVEX_SITE_URL
+  // remains the correct fallback for dev / self-hosted (no override).
+  // Whichever URL ends up here MUST be whitelisted on the OAuth client
+  // in GCP console (Auth Platform → Clients).
+  const base = serverEnv.LIFEOS_BROKER_URL ?? serverEnv.CONVEX_SITE_URL;
+  return `${base.replace(/\/$/, "")}/oauth/google/callback`;
 }
 
 /** Mint the URL the user's browser gets redirected to. Returns the URL +

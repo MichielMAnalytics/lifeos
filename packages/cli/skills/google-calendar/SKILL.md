@@ -13,10 +13,12 @@ You access the user's Google Calendar by getting a fresh access token from LifeO
 
 The pod is started with two env vars set by LifeOS at provisioning time:
 
-- `LIFEOS_API_URL` — base URL, e.g. `https://charming-squid-23.convex.site`
-- `LIFEOS_API_KEY` — per-user Bearer token
+- `LIFEOS_API_URL` — base URL. **Always read from `$LIFEOS_API_URL` at runtime. Never hardcode this URL into a script, config file, or workspace file. The host changes per environment (dev / prod / self-hosted) and per region, so any literal you bake in will break elsewhere.**
+- `LIFEOS_API_KEY` — per-user Bearer token. Same rule: read from `$LIFEOS_API_KEY` at runtime, never hardcode.
 
 A copy is also written by the init container to the user's home dir as `~/.lifeos/config.json` (resolved as `/home/node/.lifeos/config.json` inside the running container — the PVC is mounted at `/home/node`, not `/mnt/data`, despite the init container writing to `/mnt/data` against its own mount). The file is `{ "api_url": "...", "api_key": "..." }`. **Use the env vars first**, fall back to the file if env vars are missing.
+
+When you write helper scripts that call the broker, take the URL and key as arguments or read them from `process.env` at call time — never copy them into a `google-calendar-config.json`-style cache. If you've already written one, delete it.
 
 If neither exists, LifeOS hasn't provisioned this pod yet — tell the user "Calendar isn't connected to LifeOS in this workspace. Reconnect at app.lifeos.zone/settings."
 

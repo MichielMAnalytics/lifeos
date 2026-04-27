@@ -419,23 +419,23 @@ export const restart = action({
     );
     if (!dep) throw new Error("Deployment not in desired state");
 
-    const resourceName = `claw-${dep.subdomain}`;
-
-    // Patch StatefulSet with latest spec (ensures config changes take effect)
-    const settings = await ctx.runQuery(internal.deploymentSettings.getUserSettings, { userId });
-    const selectedModel = settings?.selectedModel ?? "claude-sonnet";
-    await patchStatefulSet(resourceName, dep.configHash, selectedModel, `${resourceName}-init`, {
-      telegram: !!settings?.telegramBotTokenLength,
-      discord: !!settings?.discordBotTokenLength,
+    // Delegate to rolloutPatch so the init secret + StatefulSet template both
+    // get rebuilt against current env (LIFEOS_BROKER_URL, OPENCLAW_IMAGE_TAG,
+    // etc). A pure deletePod kept stale values baked into the init secret
+    // and let pods come back with old broker URLs / image tags.
+    //
+    // rolloutPatch catches per-deployment failures into a result object
+    // instead of throwing, so we must surface them ourselves — otherwise a
+    // failed restart would look successful to the caller.
+    const result = await ctx.runAction(internal.deploymentActions.rolloutPatch, {
+      subdomain: dep.subdomain,
     });
-
-    // Delete the pod; the StatefulSet controller recreates it with updated spec (PVC preserved)
-    await deletePod(resourceName);
-
-    await ctx.runMutation(
-      internal.deploymentQueries.updateDeploymentStatus,
-      { deploymentId: depId, status: "provisioning" },
-    );
+    if (result.errors.length > 0) {
+      throw new Error(`Restart failed: ${result.errors.map((e) => e.error).join("; ")}`);
+    }
+    if (result.patched !== 1) {
+      throw new Error(`Restart did not patch the deployment (patched=${result.patched})`);
+    }
 
     return null;
   },
