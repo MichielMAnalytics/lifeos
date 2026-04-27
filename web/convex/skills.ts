@@ -63,6 +63,34 @@ Going to Granola for every question is slow (network), wastes the user's API quo
 ## Why this exists
 Two specific failures we want to be structurally impossible: (a) telling the user "your next meeting is in 28 minutes" when it's actually 88, (b) saying "today" while looking at yesterday's UTC date.`,
   },
+  {
+    name: "food-logging",
+    summary: "When the user logs a meal with multiple ingredients, log each ingredient as a separate food entry — never roll them up into one row.",
+    triggers: ["ate", "eating", "had for", "log food", "logged", "lunch", "dinner", "breakfast", "snack", "meal"],
+    body: `# food-logging
+
+## When to use
+Any time the user mentions food they ate or want to log — "had X for lunch", "log breakfast: A, B, C", "I ate Y".
+
+## Rule
+**One \`lifeos food log\` call per ingredient.** Never combine multiple foods into a single entry.
+
+If the user says *"100g ground beef, 3 eggs, 2 toast for breakfast"*, that's three separate calls, not one.
+
+## Procedure
+1. Parse the meal into individual ingredients.
+2. For each ingredient, estimate macros (calories, protein, carbs, fat) per the stated quantity. If the user didn't give a quantity, use a sensible default (e.g. 1 egg = 70kcal/6P/0C/5F) and put the assumed quantity in \`--quantity\`.
+3. Make one CLI call per ingredient with the same \`--meal\` and \`--date\`:
+   \`\`\`bash
+   lifeos food log "ground beef" --meal breakfast --quantity 100g --calories 250 --protein 26 --carbs 0 --fat 17
+   lifeos food log "egg" --meal breakfast --quantity "3 eggs" --calories 210 --protein 18 --carbs 0 --fat 15
+   lifeos food log "toast" --meal breakfast --quantity "2 slices" --calories 160 --protein 6 --carbs 30 --fat 2
+   \`\`\`
+4. After all entries are saved, summarise the meal totals back to the user in one short line.
+
+## Why this exists
+The user views their food diary as a spreadsheet — one row per ingredient, with kcal/P/C/F per row. Rolled-up entries ("100g ground beef, 3 eggs, 2 toast" with combined macros in one row) are unreadable and can't be corrected per-item.`,
+  },
 ];
 
 // ── list ──────────────────────────────────────────────
