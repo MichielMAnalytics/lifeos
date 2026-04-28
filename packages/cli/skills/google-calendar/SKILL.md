@@ -18,22 +18,40 @@ The pod is started with two env vars set by LifeOS at provisioning time:
 
 A copy is also written by the init container to the user's home dir as `~/.lifeos/config.json` (resolved as `/home/node/.lifeos/config.json` inside the running container — the PVC is mounted at `/home/node`, not `/mnt/data`, despite the init container writing to `/mnt/data` against its own mount). The file is `{ "api_url": "...", "api_key": "..." }`. **Use the env vars first**, fall back to the file if env vars are missing.
 
-When you write helper scripts that call the broker, read BOTH `api_url` and `api_key` from one of these sources at runtime:
+### Helper script rules (these are not suggestions)
 
-1. `process.env.LIFEOS_API_URL` and `process.env.LIFEOS_API_KEY` (preferred — they're injected into the pod env)
-2. `/home/node/.lifeos/config.json` (fields: `api_url`, `api_key`)
+If you write a Node helper for calendar operations, you MUST follow these rules. Bots in this codebase have repeatedly violated them, leading to broken calendar writes.
 
-Never hardcode the broker URL. Never construct it from a half-remembered example. The host varies per environment and changes when the deployment moves regions. Build the full token endpoint by appending `/api/v1/google-calendar/access-token` to whichever `api_url` you read.
+**DO NOT** write a `loadConfig()` fallback that includes a hardcoded URL like `'https://charming-squid-23.convex.site/api/v1/google-calendar/access-token'`. That URL is wrong on prod (missing the region segment), and "looks right" only because earlier versions of this skill had it as an example. The cost of getting this wrong is silent 404s on every calendar call.
 
-Example fallback (Node):
+**DO NOT** write a config object that mixes a literal `tokenUrl` with a runtime-read `api_key`. Either both come from env / config.json, or it's broken.
+
+**DO** read both `api_url` and `api_key` from `process.env` (preferred) or `/home/node/.lifeos/config.json` at runtime. Build the token URL by appending `/api/v1/google-calendar/access-token` to whichever `api_url` you read.
+
+**Mandatory helper template** — copy this exact pattern, do not improvise:
 
 ```js
-const apiUrl = process.env.LIFEOS_API_URL ?? JSON.parse(require('fs').readFileSync('/home/node/.lifeos/config.json', 'utf8')).api_url;
-const apiKey = process.env.LIFEOS_API_KEY ?? JSON.parse(require('fs').readFileSync('/home/node/.lifeos/config.json', 'utf8')).api_key;
-const tokenUrl = `${apiUrl.replace(/\/$/, '')}/api/v1/google-calendar/access-token`;
+const fs = require('fs');
+function loadBrokerConfig() {
+  let apiUrl = process.env.LIFEOS_API_URL;
+  let apiKey = process.env.LIFEOS_API_KEY;
+  if (!apiUrl || !apiKey) {
+    const cfg = JSON.parse(fs.readFileSync('/home/node/.lifeos/config.json', 'utf8'));
+    apiUrl = apiUrl || cfg.api_url;
+    apiKey = apiKey || cfg.api_key;
+  }
+  if (!apiUrl || !apiKey) {
+    throw new Error('LifeOS broker not configured: LIFEOS_API_URL/LIFEOS_API_KEY missing and ~/.lifeos/config.json unavailable');
+  }
+  return {
+    calendarId: 'primary',
+    tokenUrl: `${apiUrl.replace(/\/$/, '')}/api/v1/google-calendar/access-token`,
+    tokenAuthHeader: `Bearer ${apiKey}`,
+  };
+}
 ```
 
-If you've already written a `google-calendar-config.json` cache anywhere, delete it.
+If you've already written a `google-calendar-config.json` cache anywhere, delete it. If you find a helper script in `scripts/` whose `tokenUrl` does NOT come from `process.env.LIFEOS_API_URL` or `~/.lifeos/config.json` at runtime, rewrite it to use the template above before running it.
 
 If neither exists, LifeOS hasn't provisioned this pod yet — tell the user "Calendar isn't connected to LifeOS in this workspace. Reconnect at app.lifeos.zone/settings."
 
