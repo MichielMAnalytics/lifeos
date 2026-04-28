@@ -151,7 +151,7 @@ export default function ChannelsPage() {
           </h1>
 
           <p className="mt-4 text-sm leading-relaxed text-text-muted">
-            Chat with your LifeCoach on Telegram or Discord.
+            Chat with your Life Coach on Telegram or Discord.
             <br />
             <span className="text-text-muted">You can always add these later.</span>
           </p>
@@ -232,7 +232,7 @@ export default function ChannelsPage() {
         <div className="hidden lg:block w-72 shrink-0 sticky top-24">
           <ChatMockup />
           <p className="mt-3 text-[11px] text-text-muted/70 text-center">
-            Capture tasks, ideas & voice notes — your LifeCoach handles it all
+            Capture tasks, ideas & voice notes — your Life Coach handles it all
           </p>
         </div>
       </div>

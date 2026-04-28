@@ -342,8 +342,16 @@ export const _getAccessTokenForBot = internalAction({
     // a null result here means a transient refresh failure.
     if (result === null) return { ok: false, reason: "transient" };
 
+    // Re-read the secret post-refresh: getValidAccessToken may have
+    // refreshed the token and written a new blob with a new expires_at_ms.
+    // Reading the pre-refresh `raw` blob would return a stale expiry
+    // alongside a fresh access token, which a strict bot client would
+    // misinterpret as already-expired and bounce.
+    const fresh = await readByokSecret(args.userId, SECRET_PROVIDER);
+    if (!fresh) return { ok: false, reason: "transient" };
+
     try {
-      const blob = JSON.parse(raw) as GoogleTokenBlob;
+      const blob = JSON.parse(fresh) as GoogleTokenBlob;
       return {
         ok: true,
         access_token: result,

@@ -409,7 +409,7 @@ export default function ConnectPage() {
               </div>
             </div>
             <p className="mt-3 text-[11px] text-text-muted/50 text-center">
-              Telegram / WhatsApp LifeCoach
+              Telegram / WhatsApp Life Coach
             </p>
           </div>
         </div>

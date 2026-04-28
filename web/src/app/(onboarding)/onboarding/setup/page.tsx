@@ -25,7 +25,7 @@ function DevSetupPage() {
           Setup complete <span className="text-text-muted/70">(dev preview)</span>
         </h1>
         <p className="mt-3 text-sm text-text-muted">
-          In production, this would deploy your LifeCoach or show CLI setup.
+          In production, this would deploy your Life Coach or show CLI setup.
         </p>
         <div className="mt-6 rounded-xl border border-border/40 bg-surface/30 px-6 py-4 text-left text-xs text-text-muted font-mono w-full max-w-sm">
           <p>path: {state.path ?? 'not set'}</p>
@@ -114,7 +114,7 @@ function LiveSetupPage() {
               <img src="/openclaw-icon.png" alt="" className="absolute inset-0 m-auto h-7 w-7 rounded-sm" />
             </div>
             <h1 className="text-2xl font-light tracking-tight text-text">
-              Setting up your <span className="font-semibold">LifeCoach</span>
+              Setting up your <span className="font-semibold">Life Coach</span>
             </h1>
             <p className="mt-3 text-sm text-text-muted">
               This usually takes a couple of minutes.
@@ -124,7 +124,7 @@ function LiveSetupPage() {
                 ? 'Creating your environment...'
                 : deployment?.status === 'starting'
                   ? 'Installing tools and starting up...'
-                  : 'Setting up your LifeCoach...'}
+                  : 'Setting up your Life Coach...'}
             </p>
           </div>
         ) : deployComplete ? (
@@ -135,16 +135,16 @@ function LiveSetupPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-light tracking-tight text-text">
-              Your LifeCoach is <span className="font-semibold">live</span>
+              Your Life Coach is <span className="font-semibold">live</span>
             </h1>
             <p className="mt-3 text-sm text-text-muted">
-              Say hello — your LifeCoach is ready to help you get organized.
+              Say hello — your Life Coach is ready to help you get organized.
             </p>
             <button
               onClick={() => { localStorage.setItem('lifeos-setup-complete', 'true'); window.location.href = '/life-coach'; }}
               className="mt-8 rounded-lg bg-accent px-8 py-3 text-sm font-medium text-bg transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
             >
-              Meet your LifeCoach
+              Meet your Life Coach
             </button>
           </div>
         ) : (
@@ -163,7 +163,7 @@ function LiveSetupPage() {
             </h1>
 
             <p className="mt-4 text-sm leading-relaxed text-text-muted/70 max-w-sm">
-              Your subscription is active. Let&apos;s deploy your LifeCoach.
+              Your subscription is active. Let&apos;s deploy your Life Coach.
             </p>
 
             <button
@@ -176,7 +176,7 @@ function LiveSetupPage() {
               }}
               className="mt-8 rounded-lg bg-accent px-10 py-3 text-sm font-medium text-bg transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
             >
-              Deploy my LifeCoach
+              Deploy my Life Coach
             </button>
           </div>
         )}

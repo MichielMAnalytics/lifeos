@@ -79,8 +79,8 @@ If the user says *"100g ground beef, 3 eggs, 2 toast for breakfast"*, that's thr
 
 ## Procedure
 1. Parse the meal into individual ingredients.
-2. For each ingredient, estimate macros (calories, protein, carbs, fat) per the stated quantity. If the user didn't give a quantity, use a sensible default (e.g. 1 egg = 70kcal/6P/0C/5F) and put the assumed quantity in \`--quantity\`.
-3. Make one CLI call per ingredient with the same \`--meal\` and \`--date\`:
+2. For each ingredient, estimate macros (calories, protein, carbs, fat) for the stated quantity using common nutrition references or obvious package defaults. If the user didn't give a quantity, make a clearly labeled assumption and put that assumed quantity in \`--quantity\`.
+3. Make one CLI call per ingredient with the same \`--meal\` and \`--date\`. Example only — actual macros depend on the product and preparation:
    \`\`\`bash
    lifeos food log "ground beef" --meal breakfast --quantity 100g --calories 250 --protein 26 --carbs 0 --fat 17
    lifeos food log "egg" --meal breakfast --quantity "3 eggs" --calories 210 --protein 18 --carbs 0 --fat 15

@@ -258,7 +258,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
               afterTrialPrice={afterTrialPrice(byokPlan)}
               annual={annual}
               onToggleAnnual={setAnnual}
-              features={['LifeCoach hosting & updates', 'No AI markup — use your own subscription', 'All presets & themes', 'Telegram & Discord channels']}
+              features={['Life Coach hosting & updates', 'No AI markup — use your own subscription', 'All presets & themes', 'Telegram & Discord channels']}
               loading={loading}
               onCheckout={handleCheckout}
             />
@@ -299,7 +299,7 @@ function ConfirmUI({ plans, onCheckout, isDevMode }: { plans: Plan[]; onCheckout
             {/* Platform line */}
             <div className="flex justify-between items-start gap-4">
               <div className="min-w-0">
-                <span className="text-text font-medium text-xs block">LifeAI + LifeCoach</span>
+                <span className="text-text font-medium text-xs block">LifeAI + Life Coach</span>
                 <span className="text-[10px] text-text-muted/70">Goals, tasks, journals, coaching, channels</span>
               </div>
               <span className="text-text font-medium shrink-0">{'\u20AC'}{platformPrice}</span>

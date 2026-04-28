@@ -431,10 +431,16 @@ export const restart = action({
       subdomain: dep.subdomain,
     });
     if (result.errors.length > 0) {
-      throw new Error(`Restart failed: ${result.errors.map((e) => e.error).join("; ")}`);
+      throw new Error(
+        `Restart failed for ${dep.subdomain}: ${result.errors
+          .map((e) => `${e.subdomain}: ${e.error}`)
+          .join("; ")}`,
+      );
     }
     if (result.patched !== 1) {
-      throw new Error(`Restart did not patch the deployment (patched=${result.patched})`);
+      throw new Error(
+        `Restart did not patch ${dep.subdomain} (patched=${result.patched})`,
+      );
     }
 
     return null;

@@ -107,6 +107,12 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    if (
+      args.score !== undefined &&
+      (!Number.isInteger(args.score) || args.score < 1 || args.score > 10)
+    ) {
+      throw new Error("Review score must be an integer from 1 to 10");
+    }
 
     const reviewId = await ctx.db.insert("reviews", {
       userId,

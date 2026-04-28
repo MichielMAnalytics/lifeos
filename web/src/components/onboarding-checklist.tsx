@@ -17,9 +17,9 @@ interface ChecklistItem {
 const ITEMS: ChecklistItem[] = [
   {
     id: 'coach',
-    label: 'Say hello to your LifeCoach',
+    label: 'Say hello to your Life Coach',
     message: 'Hey! What can you help me with?',
-    linkLabel: 'Open LifeCoach',
+    linkLabel: 'Open Life Coach',
     linkHref: '/life-coach',
   },
   {
@@ -45,7 +45,7 @@ const ITEMS: ChecklistItem[] = [
   {
     id: 'voice',
     label: 'Send a voice note',
-    tip: 'Tap the mic in Telegram or Discord — your LifeCoach transcribes it automatically',
+    tip: 'Tap the mic in Telegram or Discord — your Life Coach transcribes it automatically',
   },
 ];
 

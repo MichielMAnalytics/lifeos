@@ -18,7 +18,22 @@ The pod is started with two env vars set by LifeOS at provisioning time:
 
 A copy is also written by the init container to the user's home dir as `~/.lifeos/config.json` (resolved as `/home/node/.lifeos/config.json` inside the running container — the PVC is mounted at `/home/node`, not `/mnt/data`, despite the init container writing to `/mnt/data` against its own mount). The file is `{ "api_url": "...", "api_key": "..." }`. **Use the env vars first**, fall back to the file if env vars are missing.
 
-When you write helper scripts that call the broker, take the URL and key as arguments or read them from `process.env` at call time — never copy them into a `google-calendar-config.json`-style cache. If you've already written one, delete it.
+When you write helper scripts that call the broker, read BOTH `api_url` and `api_key` from one of these sources at runtime:
+
+1. `process.env.LIFEOS_API_URL` and `process.env.LIFEOS_API_KEY` (preferred — they're injected into the pod env)
+2. `/home/node/.lifeos/config.json` (fields: `api_url`, `api_key`)
+
+Never hardcode the broker URL. Never construct it from a half-remembered example. The host varies per environment and changes when the deployment moves regions. Build the full token endpoint by appending `/api/v1/google-calendar/access-token` to whichever `api_url` you read.
+
+Example fallback (Node):
+
+```js
+const apiUrl = process.env.LIFEOS_API_URL ?? JSON.parse(require('fs').readFileSync('/home/node/.lifeos/config.json', 'utf8')).api_url;
+const apiKey = process.env.LIFEOS_API_KEY ?? JSON.parse(require('fs').readFileSync('/home/node/.lifeos/config.json', 'utf8')).api_key;
+const tokenUrl = `${apiUrl.replace(/\/$/, '')}/api/v1/google-calendar/access-token`;
+```
+
+If you've already written a `google-calendar-config.json` cache anywhere, delete it.
 
 If neither exists, LifeOS hasn't provisioned this pod yet — tell the user "Calendar isn't connected to LifeOS in this workspace. Reconnect at app.lifeos.zone/settings."
 

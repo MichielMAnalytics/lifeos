@@ -49,7 +49,7 @@ export function AuthScreen({ mode }: { mode: 'login' | 'signup' }) {
           <p className="mt-4 text-sm leading-relaxed text-text-muted">
             Goals. Plans. Journals. Reviews.
             <br />
-            All in one calm, focused space — with an AI LifeCoach to keep you on track.
+            All in one calm, focused space — with a Life Coach to keep you on track.
           </p>
         )}
 
