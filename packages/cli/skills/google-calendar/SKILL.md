@@ -18,42 +18,24 @@ The pod is started with two env vars set by LifeOS at provisioning time:
 
 A copy is also written by the init container to the user's home dir as `~/.lifeos/config.json` (resolved as `/home/node/.lifeos/config.json` inside the running container — the PVC is mounted at `/home/node`, not `/mnt/data`, despite the init container writing to `/mnt/data` against its own mount). The file is `{ "api_url": "...", "api_key": "..." }`. **Use the env vars first**, fall back to the file if env vars are missing.
 
-### Helper script rules (these are not suggestions)
+### Helper script rules
 
-If you write a Node helper for calendar operations, you MUST follow these rules. Bots in this codebase have repeatedly violated them, leading to broken calendar writes.
+The pod has a canonical broker-config helper planted by the LifeOS init container at `scripts/lifeos-broker.js`. ALWAYS use it. It reads `api_url` and `api_key` from `process.env` first, falls back to `/home/node/.lifeos/config.json`, and returns a ready-made config object with the correct `tokenUrl`.
 
-**DO NOT** write a `loadConfig()` fallback that includes a hardcoded URL like `'https://charming-squid-23.convex.site/api/v1/google-calendar/access-token'`. That URL is wrong on prod (missing the region segment), and "looks right" only because earlier versions of this skill had it as an example. The cost of getting this wrong is silent 404s on every calendar call.
-
-**DO NOT** write a config object that mixes a literal `tokenUrl` with a runtime-read `api_key`. Either both come from env / config.json, or it's broken.
-
-**DO** read both `api_url` and `api_key` from `process.env` (preferred) or `/home/node/.lifeos/config.json` at runtime. Build the token URL by appending `/api/v1/google-calendar/access-token` to whichever `api_url` you read.
-
-**Mandatory helper template** — copy this exact pattern, do not improvise:
+**DO** require it from any per-task script:
 
 ```js
-const fs = require('fs');
-function loadBrokerConfig() {
-  let apiUrl = process.env.LIFEOS_API_URL;
-  let apiKey = process.env.LIFEOS_API_KEY;
-  if (!apiUrl || !apiKey) {
-    const cfg = JSON.parse(fs.readFileSync('/home/node/.lifeos/config.json', 'utf8'));
-    apiUrl = apiUrl || cfg.api_url;
-    apiKey = apiKey || cfg.api_key;
-  }
-  if (!apiUrl || !apiKey) {
-    throw new Error('LifeOS broker not configured: LIFEOS_API_URL/LIFEOS_API_KEY missing and ~/.lifeos/config.json unavailable');
-  }
-  return {
-    calendarId: 'primary',
-    tokenUrl: `${apiUrl.replace(/\/$/, '')}/api/v1/google-calendar/access-token`,
-    tokenAuthHeader: `Bearer ${apiKey}`,
-  };
-}
+const { loadBrokerConfig } = require('./lifeos-broker');
+const cfg = loadBrokerConfig();              // calendarId defaults to 'primary'
+const cfg2 = loadBrokerConfig({ calendarId: 'work@example.com' });
+// cfg.tokenUrl, cfg.tokenAuthHeader, cfg.apiUrl, cfg.apiKey are all set.
 ```
 
-If you've already written a `google-calendar-config.json` cache anywhere, delete it. If you find a helper script in `scripts/` whose `tokenUrl` does NOT come from `process.env.LIFEOS_API_URL` or `~/.lifeos/config.json` at runtime, rewrite it to use the template above before running it.
+**DO NOT** build a `tokenUrl` string yourself. The host is environment-specific (it varies per region and per deployment) and any literal you bake in will silently 404 in another environment. If you find yourself typing `https://...convex.site` into a config object, stop and import the helper instead.
 
-If neither exists, LifeOS hasn't provisioned this pod yet — tell the user "Calendar isn't connected to LifeOS in this workspace. Reconnect at app.lifeos.zone/settings."
+**DO NOT** write your own `lifeos-broker.js`, `google-calendar-config.json`, or any sibling helper that constructs broker URLs. The init container will overwrite the canonical helper on next boot regardless.
+
+If `scripts/lifeos-broker.js` doesn't exist or the env vars are missing, the pod hasn't been re-provisioned yet. Tell the user "Calendar isn't connected to LifeOS in this workspace. Reconnect at app.lifeos.zone/settings, or restart the pod from the dashboard." Do not work around it by writing your own.
 
 ## The one call that gets you a token
 
