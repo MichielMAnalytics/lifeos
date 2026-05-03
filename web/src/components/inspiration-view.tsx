@@ -70,8 +70,17 @@ export function InspirationView({ data }: { data: InspirationData }) {
   const [filter, setFilter] = useState<string>('all');
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const hydrated = useRef(false);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Marks the state as user-touched. Without this the very first autosave
+  // would post empty/stale localStorage state and clobber the picks file.
+  const dirty = useRef(false);
+  // Single-flight save: if a save is in progress, store the latest state
+  // here and replay it after the in-flight one settles. Stops a slow earlier
+  // request from overwriting newer edits when its response arrives last.
+  const inflight = useRef<Promise<unknown> | null>(null);
+  const pendingState = useRef<State | null>(null);
 
   useEffect(() => {
     setState(loadState());
@@ -87,38 +96,69 @@ export function InspirationView({ data }: { data: InspirationData }) {
     }
   }, [state]);
 
-  const persist = useCallback(
-    async (next: State) => {
+  const runSave = useCallback(
+    async (target: State) => {
       const picks = data.ideas.map((i) => ({
         id: i.id,
         title: i.title,
         category: i.category,
-        picked: !!next.picks[i.id],
-        note: next.notes[i.id] ?? '',
+        picked: !!target.picks[i.id],
+        note: target.notes[i.id] ?? '',
       }));
       const res = await fetch('/api/inspiration/picks', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ source: SOURCE, picks }),
       });
-      if (!res.ok) throw new Error(`status ${res.status}`);
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text ? `${res.status}: ${text.slice(0, 120)}` : `status ${res.status}`);
+      }
       return (await res.json()) as { ok: boolean; file: string; picked: number };
     },
     [data.ideas],
   );
 
-  // Auto-save (debounced) on every state change after hydration.
-  useEffect(() => {
-    if (!hydrated.current) return;
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = setTimeout(() => {
+  const persist = useCallback(
+    (target: State): Promise<unknown> => {
+      // If a save is already in flight, just remember the latest state.
+      // The current run will re-trigger with the pending state on settle.
+      if (inflight.current) {
+        pendingState.current = target;
+        return inflight.current;
+      }
       setSaveState('saving');
-      persist(state)
+      setSaveError(null);
+      const run = runSave(target)
         .then(() => {
           setSaveState('saved');
           setLastSavedAt(new Date().toISOString());
         })
-        .catch(() => setSaveState('error'));
+        .catch((err: unknown) => {
+          setSaveState('error');
+          setSaveError(err instanceof Error ? err.message : 'unknown error');
+        })
+        .finally(() => {
+          inflight.current = null;
+          if (pendingState.current) {
+            const next = pendingState.current;
+            pendingState.current = null;
+            void persist(next);
+          }
+        });
+      inflight.current = run;
+      return run;
+    },
+    [runSave],
+  );
+
+  // Auto-save (debounced) — only after a user-initiated change so we never
+  // overwrite the picks file with a freshly-loaded empty state.
+  useEffect(() => {
+    if (!hydrated.current || !dirty.current) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      void persist(state);
     }, 800);
     return () => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -147,33 +187,42 @@ export function InspirationView({ data }: { data: InspirationData }) {
     [data.ideas, state.picks],
   );
 
-  const togglePick = (id: string) =>
+  const markDirty = () => {
+    dirty.current = true;
+  };
+
+  const togglePick = (id: string) => {
+    markDirty();
     setState((s) => ({ ...s, picks: { ...s.picks, [id]: !s.picks[id] } }));
+  };
 
-  const setNote = (id: string, value: string) =>
+  const setNote = (id: string, value: string) => {
+    markDirty();
     setState((s) => ({ ...s, notes: { ...s.notes, [id]: value } }));
+  };
 
-  const selectAllInView = () =>
+  const selectAllInView = () => {
+    markDirty();
     setState((s) => {
       const picks = { ...s.picks };
       for (const i of visible) picks[i.id] = true;
       return { ...s, picks };
     });
+  };
 
   const clearAll = () => {
     if (!confirm('Clear all picks and notes?')) return;
+    markDirty();
     setState(EMPTY);
   };
 
-  const saveNow = async () => {
-    setSaveState('saving');
-    try {
-      await persist(state);
-      setSaveState('saved');
-      setLastSavedAt(new Date().toISOString());
-    } catch {
-      setSaveState('error');
+  const saveNow = () => {
+    markDirty();
+    if (autoSaveTimer.current) {
+      clearTimeout(autoSaveTimer.current);
+      autoSaveTimer.current = null;
     }
+    void persist(state);
   };
 
   return (
@@ -188,7 +237,12 @@ export function InspirationView({ data }: { data: InspirationData }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <SaveStatus state={saveState} lastSavedAt={lastSavedAt} pickedCount={pickedCount} />
+          <SaveStatus
+            state={saveState}
+            lastSavedAt={lastSavedAt}
+            pickedCount={pickedCount}
+            error={saveError}
+          />
           <Button variant="ghost" size="sm" onClick={selectAllInView} disabled={visible.length === 0}>
             Select all
           </Button>
@@ -250,10 +304,12 @@ function SaveStatus({
   state,
   lastSavedAt,
   pickedCount,
+  error,
 }: {
   state: SaveState;
   lastSavedAt: string | null;
   pickedCount: number;
+  error: string | null;
 }) {
   let text: string;
   let tone: string;
@@ -263,7 +319,7 @@ function SaveStatus({
       tone = 'text-text-muted';
       break;
     case 'error':
-      text = 'Save failed';
+      text = error ? `Save failed — ${error}` : 'Save failed';
       tone = 'text-danger';
       break;
     case 'saved':
@@ -274,7 +330,11 @@ function SaveStatus({
       text = `${pickedCount} picked`;
       tone = 'text-text-muted';
   }
-  return <span className={cn('hidden text-xs sm:inline', tone)}>{text}</span>;
+  return (
+    <span className={cn('text-xs', tone)} role={state === 'error' ? 'alert' : undefined}>
+      {text}
+    </span>
+  );
 }
 
 function IdeaTile({
@@ -291,11 +351,22 @@ function IdeaTile({
   onNote: (v: string) => void;
 }) {
   const Icon = iconFor(idea.category);
+  const titleId = `idea-title-${idea.id}`;
   return (
     <div
       onClick={onToggle}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
+      role="button"
+      aria-pressed={picked}
+      aria-labelledby={titleId}
+      tabIndex={0}
       className={cn(
-        'flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-transparent transition-all',
+        'flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-transparent transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
         picked
           ? 'border-accent ring-2 ring-accent/30'
           : 'border-border hover:border-text-muted/30',
@@ -316,6 +387,7 @@ function IdeaTile({
           checked={picked}
           onChange={onToggle}
           onClick={(e) => e.stopPropagation()}
+          aria-labelledby={titleId}
           className="mt-0.5 h-4 w-4 cursor-pointer accent-accent"
         />
       </div>
@@ -325,7 +397,9 @@ function IdeaTile({
           <Icon size={16} />
         </div>
         <div className="min-w-0">
-          <h3 className="text-[14px] font-semibold leading-snug text-text">{idea.title}</h3>
+          <h3 id={titleId} className="text-[14px] font-semibold leading-snug text-text">
+            {idea.title}
+          </h3>
           <p className="mt-1 text-[12.5px] leading-relaxed text-text-muted">{idea.description}</p>
         </div>
       </div>
