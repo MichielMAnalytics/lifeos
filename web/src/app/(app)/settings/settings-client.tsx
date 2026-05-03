@@ -5,6 +5,7 @@ import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import type { Id } from '@/lib/convex-api';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { DeploymentDashboard } from '@/components/ai-agent/deployment-dashboard';
 import { ModelSwitcher } from '@/components/ai-agent/model-switcher';
@@ -162,6 +163,13 @@ function TimezoneSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  // Re-render every 30s so offset/local-time labels stay live without
+  // burning a full per-second tick (minute precision is enough here).
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -192,9 +200,11 @@ function TimezoneSelect({
     );
     return tzList.map((tz) => ({ tz, ...getTimezoneInfo(tz) }))
       .sort((a, b) => a.offsetMinutes - b.offsetMinutes);
-  }, [search]);
+    // tick: keep this list's per-row currentTime in sync with the wall clock
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, tick]);
 
-  const currentInfo = getTimezoneInfo(value);
+  const currentInfo = useMemo(() => getTimezoneInfo(value), [value, tick]);
   const displayLabel = value ? `${value.replace(/_/g, ' ')} (${currentInfo.offset})` : 'Select timezone...';
 
   return (
@@ -257,14 +267,22 @@ function TimezoneSelect({
 /*  Main Component                                                     */
 /* ================================================================== */
 
+const VALID_TABS: SettingsTab[] = ['account', 'billing', 'life-coach', 'integrations', 'api-keys', 'appearance'];
+
+function isSettingsTab(value: string): value is SettingsTab {
+  return (VALID_TABS as string[]).includes(value);
+}
+
 export function SettingsClient({
   user,
   initialApiKeys,
+  tab,
 }: {
   user: User | null;
   initialApiKeys: ApiKeyEntry[];
+  tab?: string;
 }) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('account');
+  const router = useRouter();
   const subscription = useQuery(api.stripe.getMySubscription);
 
   const showLifeCoach = subscription !== undefined && subscription !== null && subscription.planType !== 'dashboard';
@@ -278,60 +296,69 @@ export function SettingsClient({
     { id: 'appearance', label: 'Appearance', icon: PaletteIcon },
   ];
 
-  const tabIds = tabs.map(t => t.id);
+  const allowedIds = tabs.map((t) => t.id);
+  // Resolve the active tab from URL. Unknown / disallowed tabs (e.g. life-coach
+  // when not subscribed) bounce to /settings/account.
+  const requested = (tab ?? 'account').toLowerCase();
+  const activeTab: SettingsTab = isSettingsTab(requested) && allowedIds.includes(requested)
+    ? requested
+    : 'account';
+
   useEffect(() => {
-    if (!tabIds.includes(activeTab)) {
-      setActiveTab('account');
+    if (requested !== activeTab) {
+      router.replace(`/settings/${activeTab}`);
     }
-  }, [tabIds.join(','), activeTab]);
+  }, [requested, activeTab, router]);
 
   return (
     <div className="max-w-none animate-fade-in">
       <div className="flex min-h-[calc(100vh-120px)]">
-        {/* Sidebar */}
+        {/* Sidebar — each entry is a real route now */}
         <div className="hidden md:block w-48 flex-shrink-0 border-r border-border py-6 pr-2 space-y-0.5">
           <p className="text-[11px] uppercase tracking-[0.08em] text-text-muted px-3 py-2 font-medium">
             Settings
           </p>
           {tabs.map((t) => {
             const Icon = t.icon;
+            const active = activeTab === t.id;
             return (
-              <button
+              <Link
                 key={t.id}
-                onClick={() => setActiveTab(t.id)}
+                href={`/settings/${t.id}`}
+                aria-current={active ? 'page' : undefined}
                 className={cn(
                   'w-full flex items-center gap-2.5 px-3 py-2 text-xs transition-colors cursor-pointer',
-                  activeTab === t.id
+                  active
                     ? 'text-text bg-surface-hover font-medium'
                     : 'text-text-muted hover:text-text hover:bg-surface-hover/50',
                 )}
               >
-                <Icon active={activeTab === t.id} />
+                <Icon active={active} />
                 {t.label}
-              </button>
+              </Link>
             );
           })}
         </div>
 
         {/* Mobile tab bar */}
         <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-bg border-b border-border flex overflow-x-auto">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={cn(
-                'px-4 py-3 text-xs whitespace-nowrap transition-colors cursor-pointer relative flex-shrink-0',
-                activeTab === t.id
-                  ? 'text-text font-medium'
-                  : 'text-text-muted',
-              )}
-            >
-              {t.label}
-              {activeTab === t.id && (
-                <div className="absolute bottom-0 left-4 right-4 h-px bg-text" />
-              )}
-            </button>
-          ))}
+          {tabs.map((t) => {
+            const active = activeTab === t.id;
+            return (
+              <Link
+                key={t.id}
+                href={`/settings/${t.id}`}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'px-4 py-3 text-xs whitespace-nowrap transition-colors cursor-pointer relative flex-shrink-0',
+                  active ? 'text-text font-medium' : 'text-text-muted',
+                )}
+              >
+                {t.label}
+                {active && <div className="absolute bottom-0 left-4 right-4 h-px bg-text" />}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Content */}

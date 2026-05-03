@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useGateway } from '@/lib/gateway';
 import { cn } from '@/lib/utils';
+import { ActionCard, parseAssistantContent } from '@/components/life-coach-action-cards';
 
 /**
  * Phase 2 / Section 17C — floating Life Coach orb.
@@ -279,22 +280,46 @@ export function LifeCoachOrb() {
                 </p>
               </div>
             )}
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={cn(
-                  'max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed',
-                  msg.role === 'user'
-                    ? 'ml-auto bg-accent text-white rounded-br-sm'
-                    : 'mr-auto bg-bg-subtle text-text border border-border-subtle rounded-bl-sm',
-                )}
-              >
-                {msg.content}
-                {isStreaming && streamMessageIdRef.current === msg.id && (
-                  <span className="inline-block w-1.5 h-3.5 bg-current opacity-60 ml-0.5 animate-pulse rounded-sm" />
-                )}
-              </div>
-            ))}
+            {messages.map((msg) => {
+              const isStreamingMsg = isStreaming && streamMessageIdRef.current === msg.id;
+              if (msg.role === 'user') {
+                return (
+                  <div
+                    key={msg.id}
+                    className="ml-auto max-w-[85%] rounded-xl rounded-br-sm bg-accent px-3 py-2 text-sm leading-relaxed text-white"
+                  >
+                    {msg.content}
+                  </div>
+                );
+              }
+              // Assistant: split into prose + action proposals. While the
+              // message is still streaming we don't try to render half-formed
+              // [[action]] blocks — wait for the final to keep the cards from
+              // flickering in/out.
+              const segments = isStreamingMsg
+                ? [{ kind: 'text' as const, text: msg.content }]
+                : parseAssistantContent(msg.content);
+              return (
+                <div key={msg.id} className="space-y-2">
+                  {segments.map((seg, i) => {
+                    if (seg.kind === 'action') {
+                      return <ActionCard key={`a-${i}`} proposal={seg.proposal} />;
+                    }
+                    return (
+                      <div
+                        key={`t-${i}`}
+                        className="mr-auto max-w-[85%] rounded-xl rounded-bl-sm border border-border-subtle bg-bg-subtle px-3 py-2 text-sm leading-relaxed text-text"
+                      >
+                        {seg.text}
+                        {isStreamingMsg && i === segments.length - 1 && (
+                          <span className="ml-0.5 inline-block h-3.5 w-1.5 animate-pulse rounded-sm bg-current opacity-60" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
             {/* Typing bubble while waiting for the first delta. Once a stream
                 message is created above, the inline cursor takes over. */}
             {isStreaming && streamMessageIdRef.current === null && (

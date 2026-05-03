@@ -317,6 +317,29 @@ body {
 .stagger-children > *:nth-child(9) { animation-delay: 400ms; }
 .stagger-children > *:nth-child(10) { animation-delay: 450ms; }
 
+/* Page-shell entrance: a slightly larger slide-up, smoother cubic-bezier
+   easing, and a touch more travel than fade-in so the page lands rather
+   than appears. Pairs with the per-section stagger inside PageShell. */
+@keyframes pageEntry {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-page-entry {
+  animation: pageEntry 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-entry,
+  .animate-fade-in,
+  .animate-slide-in,
+  .animate-scale-in,
+  .animate-slide-in-right,
+  .stagger-children > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

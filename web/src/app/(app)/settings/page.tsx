@@ -1,24 +1,16 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useQuery } from 'convex/react';
-import { api } from '@/lib/convex-api';
-import { SettingsClient } from './settings-client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { LoadingScreen } from '@/components/loading-screen';
 
-function SettingsInner() {
-  const user = useQuery(api.authHelpers.getMe, {});
-  const apiKeys = useQuery(api.authHelpers.listApiKeys, {});
-
-  const resolvedUser = user === undefined ? null : user;
-  const resolvedApiKeys = apiKeys === undefined ? [] : apiKeys ?? [];
-
-  return <SettingsClient user={resolvedUser} initialApiKeys={resolvedApiKeys} />;
-}
-
-export default function SettingsPage() {
-  return (
-    <Suspense>
-      <SettingsInner />
-    </Suspense>
-  );
+// /settings is now a dispatcher — each tab has its own URL
+// (/settings/account, /settings/billing, …). Keep this redirect so old
+// bookmarks and deep-links still land somewhere sensible.
+export default function SettingsIndex() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/settings/account');
+  }, [router]);
+  return <LoadingScreen />;
 }

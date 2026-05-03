@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const actionabilityOrder: Record<string, number> = {
   high: 0,
@@ -58,10 +59,11 @@ export function IdeasPipeline() {
         </Link>
       </div>
       {top5.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
-          <p className="text-sm text-text-muted">No ideas captured yet</p>
-          <p className="text-xs text-text-muted mt-1">Use quick capture to add one</p>
-        </div>
+        <EmptyState
+          icon={<span className="text-2xl" aria-hidden>💡</span>}
+          title="No ideas captured yet"
+          description="Use quick capture to add one"
+        />
       ) : (
         <div className="divide-y divide-border">
           {top5.map((idea, i: number) => {

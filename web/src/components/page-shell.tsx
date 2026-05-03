@@ -20,9 +20,12 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
   const allPresets = getPresetsForPage(page);
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-page-entry">
       {/* Page header with Add button + Edit Layout pill (Section 14C) */}
-      <div className="flex items-center justify-between mb-6">
+      <div
+        className="flex items-center justify-between mb-6 animate-fade-in"
+        style={{ animationDelay: '0ms', animationFillMode: 'both' }}
+      >
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-text">{title}</h1>
           {subtitle && <p className="text-sm text-text-muted mt-0.5">{subtitle}</p>}
@@ -40,13 +43,13 @@ export function PageShell({ page, title, subtitle, children }: PageShellProps) {
         <PresetSelector page={page} presets={allPresets} activePreset={preset} />
       )}
 
-      {/* Sections grid */}
+      {/* Sections grid — staggered after the page header lands */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {preset.sections.map((section, index) => (
           <div
             key={section.id}
             className={`animate-fade-in transition-[border-color,box-shadow,background-color] duration-200 ease-out ${section.span === 'full' ? 'lg:col-span-2' : ''}`}
-            style={{ animationDelay: `${index * 40}ms`, animationFillMode: 'both' }}
+            style={{ animationDelay: `${80 + index * 60}ms`, animationFillMode: 'both' }}
           >
             <SectionRenderer section={section} />
           </div>

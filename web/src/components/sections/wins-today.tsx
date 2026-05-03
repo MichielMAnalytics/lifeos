@@ -2,6 +2,7 @@
 
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex-api';
+import { EmptyState } from '@/components/ui/empty-state';
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -23,10 +24,11 @@ export function WinsToday() {
         </h2>
       </div>
       {wins.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
-          <p className="text-sm text-text-muted">No wins recorded today</p>
-          <p className="text-xs text-text-muted mt-1">Use quick capture to log a win</p>
-        </div>
+        <EmptyState
+          icon={<span className="text-2xl" aria-hidden>🏆</span>}
+          title="No wins recorded today"
+          description="Use quick capture to log a win"
+        />
       ) : (
         <div className="divide-y divide-border">
           {wins.map((win, i: number) => (

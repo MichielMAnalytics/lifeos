@@ -5,6 +5,7 @@ import { api } from '@/lib/convex-api';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import { Skeleton, SkeletonRow } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export function TasksFlat() {
   const tasks = useQuery(api.tasks.list, { status: 'todo' });
@@ -31,10 +32,11 @@ export function TasksFlat() {
       </div>
 
       {tasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-sm text-text-muted">No tasks</p>
-          <p className="text-xs text-text-muted mt-1">Nothing on the list right now</p>
-        </div>
+        <EmptyState
+          icon={<span className="text-2xl" aria-hidden>✅</span>}
+          title="No tasks"
+          description="Nothing on the list right now"
+        />
       ) : (
         <div className="divide-y divide-border">
           {tasks.map((task, i: number) => (

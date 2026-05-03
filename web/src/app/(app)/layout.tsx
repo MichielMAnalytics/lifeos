@@ -13,6 +13,7 @@ import { GlobalUndo } from '@/components/global-undo';
 import { LifeCoachOrb } from '@/components/life-coach-orb';
 import { SetupHints } from '@/components/setup-hints';
 import { TimeFormatProvider } from '@/components/time-format-provider';
+import { ToastProvider } from '@/components/toast';
 
 function RedirectToLogin() {
   const router = useRouter();
@@ -59,13 +60,15 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   // Normal app
   return (
     <GatewayProvider>
-      <GlobalUndo />
-      <div className="flex w-full min-h-screen">
-        <Nav />
-        <MainContent>{children}</MainContent>
-      </div>
-      <LifeCoachOrb />
-      <SetupHints />
+      <ToastProvider>
+        <GlobalUndo />
+        <div className="flex w-full min-h-screen">
+          <Nav />
+          <MainContent>{children}</MainContent>
+        </div>
+        <LifeCoachOrb />
+        <SetupHints />
+      </ToastProvider>
     </GatewayProvider>
   );
 }
