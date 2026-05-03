@@ -1,16 +1,29 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Layout,
+  Zap,
+  Sparkles,
+  Wrench,
+  Plug,
+  Code2,
+  Brain,
+  type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { InspirationData, InspirationIdea } from '@/lib/inspiration-types';
 
 const STORAGE_KEY = 'lifeos-inspiration:operatorai';
+const SOURCE = 'operatorai';
 
 type State = {
   picks: Record<string, boolean>;
   notes: Record<string, string>;
 };
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 const EMPTY: State = { picks: {}, notes: {} };
 
@@ -38,10 +51,27 @@ function formatRelative(iso: string): string {
   return `${days}d ago`;
 }
 
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  UI: Layout,
+  Performance: Zap,
+  Feature: Sparkles,
+  Refactor: Wrench,
+  Integration: Plug,
+  DX: Code2,
+  AI: Brain,
+};
+
+function iconFor(category: string): LucideIcon {
+  return CATEGORY_ICON[category] ?? Sparkles;
+}
+
 export function InspirationView({ data }: { data: InspirationData }) {
   const [state, setState] = useState<State>(EMPTY);
   const [filter, setFilter] = useState<string>('all');
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const hydrated = useRef(false);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setState(loadState());
@@ -56,6 +86,44 @@ export function InspirationView({ data }: { data: InspirationData }) {
       /* ignore */
     }
   }, [state]);
+
+  const persist = useCallback(
+    async (next: State) => {
+      const picks = data.ideas.map((i) => ({
+        id: i.id,
+        title: i.title,
+        category: i.category,
+        picked: !!next.picks[i.id],
+        note: next.notes[i.id] ?? '',
+      }));
+      const res = await fetch('/api/inspiration/picks', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ source: SOURCE, picks }),
+      });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      return (await res.json()) as { ok: boolean; file: string; picked: number };
+    },
+    [data.ideas],
+  );
+
+  // Auto-save (debounced) on every state change after hydration.
+  useEffect(() => {
+    if (!hydrated.current) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      setSaveState('saving');
+      persist(state)
+        .then(() => {
+          setSaveState('saved');
+          setLastSavedAt(new Date().toISOString());
+        })
+        .catch(() => setSaveState('error'));
+    }, 800);
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, [state, persist]);
 
   const categories = useMemo(() => {
     const seen = new Set<string>();
@@ -97,20 +165,14 @@ export function InspirationView({ data }: { data: InspirationData }) {
     setState(EMPTY);
   };
 
-  const copyPicks = async () => {
-    const picked = data.ideas.filter((i) => state.picks[i.id]);
-    if (picked.length === 0) return;
-    const md = picked
-      .map((i) => {
-        const note = state.notes[i.id]?.trim();
-        return note ? `- **${i.title}** — ${note}` : `- **${i.title}**`;
-      })
-      .join('\n');
+  const saveNow = async () => {
+    setSaveState('saving');
     try {
-      await navigator.clipboard.writeText(md);
-      alert(`Copied ${picked.length} picks to clipboard.`);
+      await persist(state);
+      setSaveState('saved');
+      setLastSavedAt(new Date().toISOString());
     } catch {
-      /* ignore */
+      setSaveState('error');
     }
   };
 
@@ -126,15 +188,15 @@ export function InspirationView({ data }: { data: InspirationData }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-text-muted hidden sm:inline">{pickedCount} picked</span>
+          <SaveStatus state={saveState} lastSavedAt={lastSavedAt} pickedCount={pickedCount} />
           <Button variant="ghost" size="sm" onClick={selectAllInView} disabled={visible.length === 0}>
             Select all
           </Button>
           <Button variant="ghost" size="sm" onClick={clearAll}>
             Clear
           </Button>
-          <Button variant="secondary" size="sm" onClick={copyPicks} disabled={pickedCount === 0}>
-            Copy picks
+          <Button size="sm" onClick={saveNow}>
+            Save picks
           </Button>
         </div>
       </div>
@@ -184,6 +246,37 @@ export function InspirationView({ data }: { data: InspirationData }) {
   );
 }
 
+function SaveStatus({
+  state,
+  lastSavedAt,
+  pickedCount,
+}: {
+  state: SaveState;
+  lastSavedAt: string | null;
+  pickedCount: number;
+}) {
+  let text: string;
+  let tone: string;
+  switch (state) {
+    case 'saving':
+      text = 'Saving…';
+      tone = 'text-text-muted';
+      break;
+    case 'error':
+      text = 'Save failed';
+      tone = 'text-danger';
+      break;
+    case 'saved':
+      text = lastSavedAt ? `Saved · ${pickedCount} picked` : `${pickedCount} picked`;
+      tone = 'text-text-muted';
+      break;
+    default:
+      text = `${pickedCount} picked`;
+      tone = 'text-text-muted';
+  }
+  return <span className={cn('hidden text-xs sm:inline', tone)}>{text}</span>;
+}
+
 function IdeaTile({
   idea,
   picked,
@@ -197,11 +290,12 @@ function IdeaTile({
   onToggle: () => void;
   onNote: (v: string) => void;
 }) {
+  const Icon = iconFor(idea.category);
   return (
     <div
       onClick={onToggle}
       className={cn(
-        'cursor-pointer overflow-hidden rounded-lg border bg-transparent transition-all',
+        'flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-transparent transition-all',
         picked
           ? 'border-accent ring-2 ring-accent/30'
           : 'border-border hover:border-text-muted/30',
@@ -226,23 +320,36 @@ function IdeaTile({
         />
       </div>
 
-      <div className="px-4 pb-3">
-        <h3 className="text-[14px] font-semibold leading-snug text-text">{idea.title}</h3>
-        <p className="mt-1 text-[12.5px] leading-relaxed text-text-muted">{idea.description}</p>
-        {idea.lifeai_relevance && (
-          <p className="mt-2 text-[12px] leading-relaxed text-text/80">
-            <span className="text-text-muted">For lifeai: </span>
-            {idea.lifeai_relevance}
-          </p>
-        )}
-        {idea.rationale && (
-          <p className="mt-1.5 text-[11.5px] leading-relaxed text-text-muted/80 italic">
-            {idea.rationale}
-          </p>
-        )}
+      <div className="flex items-start gap-3 px-4 pb-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent/10 text-accent">
+          <Icon size={16} />
+        </div>
+        <div className="min-w-0">
+          <h3 className="text-[14px] font-semibold leading-snug text-text">{idea.title}</h3>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-text-muted">{idea.description}</p>
+        </div>
       </div>
 
-      <div className="px-4 pb-3 pt-1" onClick={(e) => e.stopPropagation()}>
+      {/* Mini visual sketch — category-specific, intentionally low-fi */}
+      <div className="mx-4 mb-3 rounded-md border border-border/80 bg-bg p-3" onClick={(e) => e.stopPropagation()}>
+        <CategorySketch category={idea.category} />
+      </div>
+
+      {(idea.lifeai_relevance || idea.rationale) && (
+        <div className="px-4 pb-3 text-[12px] leading-relaxed">
+          {idea.lifeai_relevance && (
+            <p className="text-text/80">
+              <span className="text-text-muted">For lifeai: </span>
+              {idea.lifeai_relevance}
+            </p>
+          )}
+          {idea.rationale && (
+            <p className="mt-1.5 italic text-text-muted/80">{idea.rationale}</p>
+          )}
+        </div>
+      )}
+
+      <div className="mt-auto px-4 pb-4 pt-1" onClick={(e) => e.stopPropagation()}>
         <input
           type="text"
           value={note}
@@ -256,4 +363,109 @@ function IdeaTile({
       </div>
     </div>
   );
+}
+
+// Sketches are deliberately abstract — they exist as a visual anchor and
+// rough vibe-check, not a spec. One per category, chosen for the kind of
+// surface area the category usually changes.
+function CategorySketch({ category }: { category: string }) {
+  switch (category) {
+    case 'UI':
+      return (
+        <div className="space-y-2">
+          <div className="flex gap-1.5">
+            <span className="h-2 w-12 rounded-full bg-accent/50" />
+            <span className="h-2 w-8 rounded-full bg-text-muted/30" />
+            <span className="h-2 w-10 rounded-full bg-text-muted/30" />
+          </div>
+          <div className="flex gap-2">
+            <span className="h-6 w-full rounded bg-surface" />
+            <span className="h-6 w-12 shrink-0 rounded bg-accent/40" />
+          </div>
+          <div className="h-2 w-3/4 rounded bg-text-muted/20" />
+        </div>
+      );
+    case 'Performance':
+      return (
+        <div className="flex h-14 items-end gap-1">
+          {[40, 70, 30, 90, 55, 80, 45, 65].map((h, i) => (
+            <span
+              key={i}
+              className={cn('w-3 rounded-sm', i % 2 === 0 ? 'bg-accent/50' : 'bg-text-muted/30')}
+              style={{ height: `${h}%` }}
+            />
+          ))}
+        </div>
+      );
+    case 'Feature':
+      return (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full border border-accent/60" />
+            <span className="h-2 w-2/3 rounded bg-text-muted/30" />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full border border-text-muted/40" />
+            <span className="h-2 w-1/2 rounded bg-text-muted/20" />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-success/60" />
+            <span className="h-2 w-3/5 rounded bg-text-muted/30" />
+          </div>
+        </div>
+      );
+    case 'Refactor':
+      return (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1.5">
+            <div className="h-1.5 w-full rounded bg-text-muted/30" />
+            <div className="h-1.5 w-4/5 rounded bg-text-muted/20" />
+            <div className="h-1.5 w-2/3 rounded bg-text-muted/20" />
+          </div>
+          <div className="space-y-1.5">
+            <div className="h-1.5 w-full rounded bg-accent/40" />
+            <div className="h-1.5 w-3/4 rounded bg-accent/30" />
+          </div>
+        </div>
+      );
+    case 'Integration':
+      return (
+        <div className="flex items-center justify-between">
+          <span className="h-8 w-8 rounded-md bg-surface" />
+          <span className="mx-2 h-px flex-1 border-t border-dashed border-text-muted/40" />
+          <span className="h-8 w-8 rounded-md bg-accent/30" />
+          <span className="mx-2 h-px flex-1 border-t border-dashed border-text-muted/40" />
+          <span className="h-8 w-8 rounded-md bg-surface" />
+        </div>
+      );
+    case 'DX':
+      return (
+        <div className="rounded bg-surface px-2 py-2 font-mono text-[10px] leading-tight text-text-muted">
+          <span className="text-accent">$</span> bun dev
+          <br />
+          <span className="text-success">✓</span> ready in 1.6s
+          <br />
+          <span className="text-text-muted/60">→</span> http://localhost:4101
+        </div>
+      );
+    case 'AI':
+      return (
+        <div className="space-y-1.5">
+          <div className="ml-auto w-3/4 rounded-md rounded-tr-sm bg-accent/15 px-2 py-1.5">
+            <div className="h-1.5 w-full rounded bg-accent/40" />
+          </div>
+          <div className="w-2/3 rounded-md rounded-tl-sm bg-surface px-2 py-1.5">
+            <div className="h-1.5 w-3/4 rounded bg-text-muted/30" />
+          </div>
+        </div>
+      );
+    default:
+      return (
+        <div className="space-y-1.5">
+          <div className="h-1.5 w-full rounded bg-text-muted/30" />
+          <div className="h-1.5 w-3/4 rounded bg-text-muted/20" />
+          <div className="h-1.5 w-1/2 rounded bg-text-muted/20" />
+        </div>
+      );
+  }
 }
