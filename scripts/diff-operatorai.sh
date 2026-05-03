@@ -117,11 +117,14 @@ echo "$NEW_SHA" > "$CHECKPOINT"
 IDEA_COUNT=$(jq '.ideas | length' "$DATA_FILE")
 echo "✓ Wrote $IDEA_COUNT ideas to $DATA_FILE"
 
-if [[ -n "${TELEGRAM_BOT_TOKEN:-}" && -n "${TELEGRAM_CHAT_ID:-}" ]]; then
+# Notification — uses claude -p so the existing telegram MCP credentials are
+# reused (no bot token needed in the script env). Skip with --no-ping.
+if [[ "${1:-}" != "--no-ping" ]] && command -v claude >/dev/null 2>&1; then
   VM=$(hostname)
   URL="https://${VM}.boxd.sh/inspiration/operatorai"
-  curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-    --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-    --data-urlencode "text=${IDEA_COUNT} new operatorai ideas to review: ${URL}" \
-    >/dev/null && echo "✓ Telegram pinged"
+  CHAT_ID="${TELEGRAM_CHAT_ID:-7844913375}"
+  PING_PROMPT="Send exactly this Telegram reply to chat_id ${CHAT_ID}, format text, no markdown, no preface, no follow-up: \"${IDEA_COUNT} new operatorai ideas ready: ${URL}\""
+  claude -p --dangerously-skip-permissions "$PING_PROMPT" </dev/null >/dev/null 2>&1 \
+    && echo "✓ Telegram pinged" \
+    || echo "(skipped Telegram ping)"
 fi
