@@ -32,12 +32,80 @@ export type ActionProposal =
 
 const ACTION_RE = /\[\[action\]\]\s*([\s\S]*?)\s*\[\[\/action\]\]/g;
 
+// Hard cap on the JSON payload inside a single [[action]] block. The
+// content is model-generated and runs through JSON.parse on every render of
+// a message, so a giant blob would jank the chat UI even though convex
+// validators catch the bad data downstream. 4 KB is more than enough for
+// any real proposal.
+const MAX_ACTION_BYTES = 4 * 1024;
+
 export type ParsedSegment =
   | { kind: 'text'; text: string }
   | { kind: 'action'; proposal: ActionProposal; raw: string };
 
+function isString(x: unknown): x is string {
+  return typeof x === 'string' && x.length > 0;
+}
+function isFiniteNumber(x: unknown): x is number {
+  return typeof x === 'number' && Number.isFinite(x);
+}
+
+// Strict allowlist validator. Keeps the model honest — anything that isn't a
+// known action with the exact required fields is dropped, not rendered as a
+// confirmable card.
+function validateProposal(input: unknown): ActionProposal | null {
+  if (!input || typeof input !== 'object') return null;
+  const obj = input as Record<string, unknown>;
+  switch (obj.type) {
+    case 'create_task':
+      if (!isString(obj.title)) return null;
+      return {
+        type: 'create_task',
+        title: obj.title,
+        dueDate: isString(obj.dueDate) ? obj.dueDate : undefined,
+        notes: isString(obj.notes) ? obj.notes : undefined,
+      };
+    case 'create_idea':
+      if (!isString(obj.content)) return null;
+      return {
+        type: 'create_idea',
+        content: obj.content,
+        actionability: obj.actionability === 'high' || obj.actionability === 'medium' || obj.actionability === 'low'
+          ? obj.actionability
+          : undefined,
+      };
+    case 'create_win':
+      if (!isString(obj.content)) return null;
+      return {
+        type: 'create_win',
+        content: obj.content,
+        entryDate: isString(obj.entryDate) ? obj.entryDate : undefined,
+      };
+    case 'create_reminder':
+      if (!isString(obj.title) || !isFiniteNumber(obj.scheduledAt)) return null;
+      return {
+        type: 'create_reminder',
+        title: obj.title,
+        scheduledAt: obj.scheduledAt,
+        body: isString(obj.body) ? obj.body : undefined,
+      };
+    case 'snooze_reminder':
+      if (!isString(obj.reminderId)) return null;
+      return {
+        type: 'snooze_reminder',
+        reminderId: obj.reminderId,
+        minutes: isFiniteNumber(obj.minutes) ? obj.minutes : undefined,
+      };
+    case 'complete_task':
+      if (!isString(obj.taskId)) return null;
+      return { type: 'complete_task', taskId: obj.taskId };
+    default:
+      return null;
+  }
+}
+
 // Splits a chat message into prose segments and action proposals.
-// Malformed JSON inside an action block is dropped silently — the user has
+// Oversized or malformed action blocks are dropped silently — the user has
 // already seen the surrounding prose, and a half-typed proposal is noise.
 export function parseAssistantContent(text: string): ParsedSegment[] {
   const segments: ParsedSegment[] = [];
@@ -49,13 +117,16 @@ export function parseAssistantContent(text: string): ParsedSegment[] {
       const before = text.slice(lastIndex, match.index).trim();
       if (before) segments.push({ kind: 'text', text: before });
     }
-    try {
-      const proposal = JSON.parse(match[1]) as ActionProposal;
-      if (proposal && typeof proposal === 'object' && typeof proposal.type === 'string') {
-        segments.push({ kind: 'action', proposal, raw: match[0] });
+    const payload = match[1];
+    if (payload.length <= MAX_ACTION_BYTES) {
+      try {
+        const proposal = validateProposal(JSON.parse(payload));
+        if (proposal) {
+          segments.push({ kind: 'action', proposal, raw: match[0] });
+        }
+      } catch {
+        /* drop malformed blocks */
       }
-    } catch {
-      /* drop malformed blocks */
     }
     lastIndex = match.index + match[0].length;
   }
@@ -97,7 +168,7 @@ function summarise(proposal: ActionProposal): string {
       return `${proposal.title} — ${when}`;
     }
     case 'snooze_reminder':
-      return `Reminder ${proposal.reminderId.slice(0, 6)}… for ${proposal.minutes ?? 60}m`;
+      return `Reminder ${proposal.reminderId.slice(0, 6)}… for ${proposal.minutes ?? 30}m`;
     case 'complete_task':
       return `Task ${proposal.taskId.slice(0, 6)}…`;
     default:
@@ -152,7 +223,7 @@ export function ActionCard({ proposal }: { proposal: ActionProposal }) {
         case 'snooze_reminder':
           await snoozeReminder({
             id: proposal.reminderId as Id<'reminders'>,
-            minutes: proposal.minutes ?? 60,
+            minutes: proposal.minutes ?? 30,
           });
           break;
         case 'complete_task':
@@ -198,39 +269,39 @@ export function ActionCard({ proposal }: { proposal: ActionProposal }) {
           )}
         </div>
       </div>
-      <div className="mt-2 flex items-center justify-end gap-1.5">
+      <div className="mt-2 flex items-center justify-end gap-2">
         {state === 'pending' && (
           <>
             <button
               type="button"
               onClick={reject}
-              className="rounded-md px-2 py-1 text-[11px] text-text-muted hover:bg-surface-hover hover:text-text transition-colors"
+              className="min-h-[28px] min-w-[56px] rounded-md px-3 py-1.5 text-xs text-text-muted hover:bg-surface-hover hover:text-text transition-colors"
             >
               Skip
             </button>
             <button
               type="button"
               onClick={confirm}
-              className="rounded-md bg-accent px-2.5 py-1 text-[11px] font-medium text-white hover:bg-accent-hover transition-colors"
+              className="min-h-[28px] min-w-[72px] rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-hover transition-colors"
             >
               Confirm
             </button>
           </>
         )}
         {state === 'confirming' && (
-          <span className="text-[11px] text-text-muted">Working…</span>
+          <span className="text-xs text-text-muted">Working…</span>
         )}
         {state === 'done' && (
-          <span className="text-[11px] text-success">Done</span>
+          <span className="text-xs text-success">Done</span>
         )}
         {state === 'rejected' && (
-          <span className="text-[11px] text-text-muted">Skipped</span>
+          <span className="text-xs text-text-muted">Skipped</span>
         )}
         {state === 'error' && (
           <button
             type="button"
             onClick={confirm}
-            className="rounded-md border border-border px-2 py-1 text-[11px] text-text hover:bg-surface-hover transition-colors"
+            className="min-h-[28px] min-w-[60px] rounded-md border border-border px-3 py-1.5 text-xs text-text hover:bg-surface-hover transition-colors"
           >
             Retry
           </button>

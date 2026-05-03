@@ -297,18 +297,23 @@ export function SettingsClient({
   ];
 
   const allowedIds = tabs.map((t) => t.id);
-  // Resolve the active tab from URL. Unknown / disallowed tabs (e.g. life-coach
-  // when not subscribed) bounce to /settings/account.
+  // Resolve the active tab from URL. Unknown / disallowed tabs bounce to
+  // /settings/account — but only after the subscription query has resolved,
+  // because otherwise a cold load of /settings/life-coach gets bounced before
+  // we even know whether the user is eligible for that tab.
+  const subscriptionLoading = subscription === undefined;
   const requested = (tab ?? 'account').toLowerCase();
-  const activeTab: SettingsTab = isSettingsTab(requested) && allowedIds.includes(requested)
+  const isKnownTab = isSettingsTab(requested);
+  const activeTab: SettingsTab = isKnownTab && (allowedIds.includes(requested) || (requested === 'life-coach' && subscriptionLoading))
     ? requested
     : 'account';
 
   useEffect(() => {
+    if (subscriptionLoading) return;
     if (requested !== activeTab) {
       router.replace(`/settings/${activeTab}`);
     }
-  }, [requested, activeTab, router]);
+  }, [requested, activeTab, router, subscriptionLoading]);
 
   return (
     <div className="max-w-none animate-fade-in">

@@ -246,6 +246,7 @@ export function LifeCoachOrb() {
                 }}
                 className="p-1.5 rounded-md text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
                 title="Open full chat"
+                aria-label="Open full chat"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 3 21 3 21 9" />

@@ -7,6 +7,7 @@ import { useGateway } from '@/lib/gateway';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ActionCard, parseAssistantContent } from '@/components/life-coach-action-cards';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -311,6 +312,9 @@ function MessageRow({ message }: { message: ChatMessage }) {
     );
   }
 
+  // Assistant message: split prose vs structured action proposals so the
+  // full /life-coach view stays in sync with the orb's confirm/skip cards.
+  const segments = parseAssistantContent(message.content);
   return (
     <div className="flex items-start gap-3 max-w-3xl mx-auto px-4">
       <div className="shrink-0 mt-1">
@@ -322,10 +326,20 @@ function MessageRow({ message }: { message: ChatMessage }) {
           className="rounded-full"
         />
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm leading-relaxed text-text whitespace-pre-wrap break-words">
-          {renderContent(message.content)}
-        </div>
+      <div className="min-w-0 flex-1 space-y-2">
+        {segments.map((seg, i) => {
+          if (seg.kind === 'action') {
+            return <ActionCard key={`a-${i}`} proposal={seg.proposal} />;
+          }
+          return (
+            <div
+              key={`t-${i}`}
+              className="text-sm leading-relaxed text-text whitespace-pre-wrap break-words"
+            >
+              {renderContent(seg.text)}
+            </div>
+          );
+        })}
 
         {message.tool_calls && message.tool_calls.length > 0 && (
           <div className="mt-2 space-y-1.5">
