@@ -146,7 +146,7 @@ export function HeaderNav() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-bg">
+    <header style={{ fontFamily: '"Inter", -apple-system, system-ui, sans-serif' }} className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-bg">
       {/* ── Primary row: logo + nav + actions ─────────────── */}
       <div className="flex h-14 items-center px-6 gap-1">
         {/* Logo */}

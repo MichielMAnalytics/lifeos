@@ -39,6 +39,10 @@ const CATEGORY_ORDER = ['Daily', 'Work', 'Capture', 'Reflect'];
 
 const STORAGE_KEY = 'lifeos-nav-expanded';
 
+// Sidebar always uses Inter regardless of the user's chosen body font, to
+// match the operatorai dashboard look. Inter is already preloaded in layout.tsx.
+const NAV_FONT_STYLE = { fontFamily: '"Inter", -apple-system, system-ui, sans-serif' } as const;
+
 export function Nav() {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(true);
@@ -336,7 +340,7 @@ export function Nav() {
             className="absolute inset-0 bg-black/40 animate-fade-in"
             onClick={() => setMobileOpen(false)}
           />
-          <nav className="absolute inset-y-0 left-0 w-72 bg-bg border-r border-border/60 flex flex-col animate-slide-in">
+          <nav style={NAV_FONT_STYLE} className="absolute inset-y-0 left-0 w-72 bg-bg border-r border-border/60 flex flex-col animate-slide-in">
             {renderNavContent(true)}
           </nav>
         </div>
@@ -346,6 +350,7 @@ export function Nav() {
       <nav
         onMouseEnter={() => { if (!expanded) setHovered(true); }}
         onMouseLeave={() => setHovered(false)}
+        style={NAV_FONT_STYLE}
         className={cn(
           'fixed inset-y-0 left-0 z-40 hidden md:flex flex-col border-r border-border/60 bg-bg transition-all duration-200',
           showExpanded ? 'w-60' : 'w-14',

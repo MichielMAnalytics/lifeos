@@ -55,6 +55,19 @@ function shortDate(dateStr: string | undefined | null): string {
   return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Strips a leading "Scheduled: HH:MM[-HH:MM]" line that the bot sometimes
+// writes into task.notes when it should have used the day plan instead.
+// Returns the cleaned notes (or undefined if nothing remains) and the
+// inline-parsed time, so callers can render it as a proper bottom tag.
+const SCHEDULED_NOTES_RE = /^\s*scheduled\s*:\s*(\d{1,2}:\d{2}(?:\s?[ap]m?)?(?:\s*-\s*\d{1,2}:\d{2}(?:\s?[ap]m?)?)?)\s*\n?/i;
+function parseNotesSchedule(notes: string | undefined | null): { display?: string; time?: string } {
+  if (!notes) return {};
+  const m = notes.match(SCHEDULED_NOTES_RE);
+  if (!m) return { display: notes };
+  const rest = notes.slice(m[0].length).trim();
+  return { display: rest.length > 0 ? rest : undefined, time: m[1].trim() };
+}
+
 function columnHeaderDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
   const day = d.getDate();
@@ -283,6 +296,10 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, schedu
 
   const dueDate = task.dueDate ?? null;
   const isOverdue = dueDate && dueDate < todayISO();
+
+  const { display: notesDisplay, time: notesScheduledTime } = parseNotesSchedule(task.notes);
+  // Day plan time wins; the parsed notes-time is a fallback only on the today bucket.
+  const effectiveScheduledTime = scheduledTime ?? (bucketKey === 'today' ? notesScheduledTime : undefined);
 
   const hoverActions: HoverAction[] = [
     {
@@ -542,12 +559,12 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, schedu
                 {task.title}
               </p>
             )}
-            {task.notes && (
-              <p className="text-xs text-text-muted mt-0.5 truncate leading-snug">{task.notes}</p>
+            {notesDisplay && (
+              <p className="text-xs text-text-muted mt-0.5 truncate leading-snug">{notesDisplay}</p>
             )}
 
             {/* Date badge — hidden when the task is on the day plan (FR-1) */}
-            {showDate && !scheduledTime && (
+            {showDate && !effectiveScheduledTime && (
               <DateBadge
                 dueDate={dueDate}
                 isOverdue={!!isOverdue}
@@ -564,16 +581,16 @@ function TaskCard({ task, showDate = true, bucketKey, isSelected = false, schedu
         </div>
 
         {/* Day plan time tag — bottom-right corner (FR-1) */}
-        {scheduledTime && (
+        {effectiveScheduledTime && (
           <span
             className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent tabular-nums pointer-events-none"
-            title={`Scheduled in today's day plan at ${scheduledTime}`}
+            title={`Scheduled today at ${effectiveScheduledTime}`}
           >
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
-            {scheduledTime}
+            {effectiveScheduledTime}
           </span>
         )}
       </div>
