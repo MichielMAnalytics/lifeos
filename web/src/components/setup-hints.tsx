@@ -20,7 +20,7 @@ const ALL_HINTS: Hint[] = [
     id: 'connect-telegram',
     message: 'Talk to your Life Coach on Telegram too.',
     cta: 'Set up Telegram',
-    href: '/settings?tab=integrations',
+    href: '/settings/integrations',
   },
   {
     id: 'customize-dashboard',
@@ -32,7 +32,7 @@ const ALL_HINTS: Hint[] = [
     id: 'connect-calendar',
     message: 'Connect Google Calendar to see events in your plan.',
     cta: 'Integrations',
-    href: '/settings?tab=integrations',
+    href: '/settings/integrations',
   },
   {
     id: 'set-mit',
