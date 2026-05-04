@@ -279,7 +279,8 @@ export function Nav() {
           )}
         </div>
 
-        {/* Bottom */}
+        {/* Bottom — Search → Settings → Profile.
+            Trash moved into the profile dropdown so the rail breathes. */}
         <div className="shrink-0 border-t border-border/40 px-2.5 py-3">
           {/* Search trigger */}
           <div
@@ -295,21 +296,29 @@ export function Nav() {
             )}
           </div>
 
-          {/* Trash link */}
-          <Link
-            href="/trash"
-            className={cn(
-              'group relative flex items-center transition-all duration-150 w-full text-text-muted hover:text-text',
-              navExpanded ? 'h-[34px] px-2.5 gap-2.5 rounded-lg hover:bg-surface-hover' : 'h-[34px] justify-center w-10 mx-auto rounded-lg hover:bg-surface-hover',
-            )}
-            title={navExpanded ? undefined : 'Trash'}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-60">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-            {navExpanded && <span className="text-[13px] font-medium">Trash</span>}
-          </Link>
+          {/* Settings — direct link, active for any /settings/* route */}
+          {(() => {
+            const isSettingsActive = pathname === '/settings' || pathname?.startsWith('/settings/');
+            return (
+              <Link
+                href="/settings"
+                className={cn(
+                  'group relative flex items-center transition-all duration-150 w-full',
+                  navExpanded ? 'h-[34px] px-2.5 gap-2.5 rounded-lg' : 'h-[34px] justify-center w-10 mx-auto rounded-lg',
+                  isSettingsActive
+                    ? 'before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[3px] before:rounded-full before:bg-accent bg-surface-hover/50 text-text'
+                    : 'text-text-muted hover:bg-surface-hover hover:text-text',
+                )}
+                title={navExpanded ? undefined : 'Settings'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-70">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                {navExpanded && <span className="text-[13px] font-medium">Settings</span>}
+              </Link>
+            );
+          })()}
 
           {/* Profile + menu */}
           <ProfileBadge expanded={navExpanded} />
@@ -642,19 +651,19 @@ function ProfileBadge({ expanded }: { expanded: boolean }) {
 
           <div className="my-1 border-t border-border/40" />
 
+          {/* Settings now lives as a top-level rail entry — keep Trash in this
+              menu so the bottom rail stays uncluttered. */}
           <Link
-            href="/settings"
+            href="/trash"
             onClick={() => setMenuOpen(false)}
             className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-text hover:bg-surface-hover transition-colors rounded-lg mx-1"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
             </svg>
-            Settings
+            Trash
           </Link>
-          {/* "Configure layout" entry removed — now lives as the Edit pill in
-              the page header (Section 14C). Esc also exits config mode. */}
           <div className="my-1 border-t border-border/40" />
           <button
             onClick={() => { setMenuOpen(false); void signOut(); }}
