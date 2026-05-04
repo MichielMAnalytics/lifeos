@@ -260,14 +260,21 @@ api "/api/v1/goals?status=active" \\
 `;
 
 function buildHeartbeatSeedCommand(): string {
-  // Both startup-command sites run this between mergeScript and gateway start.
-  // Heredocs survive a join(' && ') because each `if ... fi` block is a single
-  // compound statement.
+  // Both startup-command sites run this between mergeScript and gateway
+  // start. base64-encode each file body so the resulting one-liner survives
+  // .join(' && ') — heredocs would have their terminator glued to the next
+  // command on the same line by the join, breaking the heredoc closure.
+  const md = Buffer.from(HEARTBEAT_MD).toString("base64");
+  const sh = Buffer.from(HEARTBEAT_CHECK_SH).toString("base64");
+  const HB_PATH = "/home/node/.openclaw/workspace/HEARTBEAT.md";
+  const SH_PATH = "/home/node/.openclaw/workspace/scripts/heartbeat-lifeos-check.sh";
   return [
     `mkdir -p /home/node/.openclaw/workspace/scripts`,
-    `if [ ! -f /home/node/.openclaw/workspace/HEARTBEAT.md ]; then cat > /home/node/.openclaw/workspace/HEARTBEAT.md <<'__OPC_HB_MD__'\n${HEARTBEAT_MD}__OPC_HB_MD__\nfi`,
-    `cat > /home/node/.openclaw/workspace/scripts/heartbeat-lifeos-check.sh <<'__OPC_HB_SH__'\n${HEARTBEAT_CHECK_SH}__OPC_HB_SH__`,
-    `chmod +x /home/node/.openclaw/workspace/scripts/heartbeat-lifeos-check.sh`,
+    // Only seed HEARTBEAT.md when absent so manual edits survive a pod boot.
+    `[ -f ${HB_PATH} ] || (echo ${md} | base64 -d > ${HB_PATH})`,
+    // Helper script is platform-owned; always overwrite.
+    `echo ${sh} | base64 -d > ${SH_PATH}`,
+    `chmod +x ${SH_PATH}`,
   ].join(" && ");
 }
 
@@ -402,9 +409,13 @@ function buildOpenClawConfig(
             start: "08:00",
             end: "22:30",
           },
+          // Apostrophes here would land inside the `echo '<json>'` line at
+          // pod-start (see startupCommand below) and break shell quoting,
+          // since the whole platform config is single-quoted. Keep this
+          // prose apostrophe-free.
           prompt: [
             "Read /home/node/.openclaw/workspace/HEARTBEAT.md.",
-            "Check LifeOS tasks, goals, today's plan, and recent context.",
+            "Check LifeOS tasks, active goals, the day plan, and recent context.",
             "Surface only high-leverage nudges.",
             "If nothing needs attention, reply HEARTBEAT_OK.",
           ].join("\n"),
