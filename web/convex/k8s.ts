@@ -180,6 +180,97 @@ export const MODEL_REF_MAP: Record<string, string> = {
   "qwen-235b": "qwen-vertex/qwen/qwen3-235b-a22b-instruct-2507-maas",
 };
 
+// Heartbeat workspace files. The agents.defaults.heartbeat config (below)
+// expects HEARTBEAT.md at this path and a helper script under scripts/.
+// Seeded into the pod's persistent /home/node volume on each boot:
+//   - HEARTBEAT.md is only written if absent so user edits survive.
+//   - heartbeat-lifeos-check.sh is always overwritten (platform-owned, idempotent).
+const HEARTBEAT_MD = `# Heartbeat — do a real LifeOS check before replying
+
+You are running as a heartbeat agent. Before replying anything, run the
+helper script and look at its output:
+
+\`\`\`
+bash /home/node/.openclaw/workspace/scripts/heartbeat-lifeos-check.sh
+\`\`\`
+
+Then look for high-leverage nudges only:
+
+- Any tasks overdue (yesterday or earlier).
+- Any tasks due today or tomorrow with no notes / no obvious progress.
+- Active goals not touched in more than 7 days.
+- Today's plan: is MIT / P1 / P2 set? Are MIT / P1 already done?
+- Conflicts or unscheduled blocks in the next 6 hours, if visible.
+
+Send at most ONE short, specific nudge per heartbeat. Reference the actual
+title or id you saw, never a placeholder. Good shape:
+
+- "3 tasks overdue from last week — want me to triage?"
+- "MIT not set for today. Based on goal X, the obvious one is Y. Confirm?"
+- "Goal 'ship batch 2' hasn't moved in 9 days — still active?"
+
+If everything looks fine, reply exactly: HEARTBEAT_OK
+
+Do not invent issues. Do not nudge for things below the threshold above.
+Never mutate data — the helper script is read-only and so are you.
+`;
+
+const HEARTBEAT_CHECK_SH = `#!/usr/bin/env bash
+# Read-only LifeOS status snapshot for the heartbeat agent. Never mutates.
+# Uses LIFEOS_API_URL + LIFEOS_API_KEY env vars set by the pod.
+set -uo pipefail
+
+api() {
+  curl -sf -H "Authorization: Bearer \${LIFEOS_API_KEY}" \\
+    "\${LIFEOS_API_URL}\$1" 2>/dev/null
+}
+
+today=\$(date -u +%Y-%m-%d)
+echo "## Today: \$today"
+
+echo
+echo "### Overdue tasks"
+api "/api/v1/tasks?status=todo&due=overdue" \\
+  | jq -c '.[] | {id, title, dueDate}' 2>/dev/null \\
+  || echo "(none or api error)"
+
+echo
+echo "### Tasks due today"
+api "/api/v1/tasks?status=todo&due=today" \\
+  | jq -c '.[] | {id, title}' 2>/dev/null \\
+  || echo "(none or api error)"
+
+echo
+echo "### Tasks due tomorrow"
+api "/api/v1/tasks?status=todo&due=tomorrow" \\
+  | jq -c '.[] | {id, title}' 2>/dev/null \\
+  || echo "(none or api error)"
+
+echo
+echo "### Today's day plan"
+api "/api/v1/day-plans/\$today" \\
+  | jq '{wakeTime, mitTaskId, p1TaskId, p2TaskId, mitDone, p1Done, p2Done}' 2>/dev/null \\
+  || echo "(no plan or api error)"
+
+echo
+echo "### Active goals (most recent first)"
+api "/api/v1/goals?status=active" \\
+  | jq -c '.[] | {id, title, targetDate, _creationTime}' 2>/dev/null \\
+  || echo "(none or api error)"
+`;
+
+function buildHeartbeatSeedCommand(): string {
+  // Both startup-command sites run this between mergeScript and gateway start.
+  // Heredocs survive a join(' && ') because each `if ... fi` block is a single
+  // compound statement.
+  return [
+    `mkdir -p /home/node/.openclaw/workspace/scripts`,
+    `if [ ! -f /home/node/.openclaw/workspace/HEARTBEAT.md ]; then cat > /home/node/.openclaw/workspace/HEARTBEAT.md <<'__OPC_HB_MD__'\n${HEARTBEAT_MD}__OPC_HB_MD__\nfi`,
+    `cat > /home/node/.openclaw/workspace/scripts/heartbeat-lifeos-check.sh <<'__OPC_HB_SH__'\n${HEARTBEAT_CHECK_SH}__OPC_HB_SH__`,
+    `chmod +x /home/node/.openclaw/workspace/scripts/heartbeat-lifeos-check.sh`,
+  ].join(" && ");
+}
+
 function buildOpenClawConfig(
   gatewayUrl: string,
   podSecretEnvRef: string,
@@ -296,6 +387,28 @@ function buildOpenClawConfig(
     agents: {
       defaults: {
         model: { primary: selectedModelRef },
+        // Heartbeat: nudge the user about overdue tasks / neglected goals /
+        // stale priorities every few hours during waking hours. The agent
+        // prompt forces a real LifeOS check before replying — passive
+        // HEARTBEAT.md alone returns HEARTBEAT_OK too easily.
+        heartbeat: {
+          every: "4h",
+          target: "last",
+          directPolicy: "allow",
+          lightContext: false,
+          isolatedSession: false,
+          activeHours: {
+            timezone: "Asia/Makassar",
+            start: "08:00",
+            end: "22:30",
+          },
+          prompt: [
+            "Read /home/node/.openclaw/workspace/HEARTBEAT.md.",
+            "Check LifeOS tasks, goals, today's plan, and recent context.",
+            "Surface only high-leverage nudges.",
+            "If nothing needs attention, reply HEARTBEAT_OK.",
+          ].join("\n"),
+        },
       },
     },
     tools: {
@@ -513,6 +626,7 @@ fs.writeFileSync(cf, JSON.stringify(c));
                     `rm -f ~/.openclaw/identity/device-auth.json`,
                     `echo '${configTemplate}' | sed "s/__POD_SECRET__/$POD_SECRET/g; s/__GATEWAY_TOKEN__/$OPENCLAW_GATEWAY_TOKEN/g; s/__OPENAI_API_KEY__/$OPENAI_API_KEY/g" > ~/.openclaw/lifeos-platform.json`,
                     mergeScript,
+                    buildHeartbeatSeedCommand(),
                     `test -f ~/.openclaw/devices/pending.json || echo '${JSON.stringify({ silent: true })}' > ~/.openclaw/devices/pending.json`,
                   ].join(" && ")
                   + ` && node --disable-warning=ExperimentalWarning openclaw.mjs gateway --allow-unconfigured --bind lan &`
@@ -902,6 +1016,7 @@ fs.writeFileSync(cf, JSON.stringify(c));
       `rm -f ~/.openclaw/identity/device-auth.json`,
       `echo '${configTemplate}' | sed "s/__POD_SECRET__/$POD_SECRET/g; s/__GATEWAY_TOKEN__/$OPENCLAW_GATEWAY_TOKEN/g; s/__OPENAI_API_KEY__/$OPENAI_API_KEY/g" > ~/.openclaw/lifeos-platform.json`,
       mergeScript,
+      buildHeartbeatSeedCommand(),
       `test -f ~/.openclaw/devices/pending.json || echo '${JSON.stringify({ silent: true })}' > ~/.openclaw/devices/pending.json`,
     ].join(" && ")
     + ` && node openclaw.mjs gateway --allow-unconfigured --bind lan &`
