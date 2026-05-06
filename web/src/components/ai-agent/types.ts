@@ -15,7 +15,13 @@ export const CHANNELS = [
 
 // `provider` is the column the Settings model picker groups on. Order
 // inside each provider is the order rendered. Drop a model from this
-// list (and from MODEL_REF_MAP / buildOpenClawConfig) to retire it.
+// list to retire it from the UI. The platform pod (k8s.ts /
+// buildOpenClawConfig) still configures Moonshot/Google/MiniMax/Qwen
+// providers internally, so any user-selected model that's no longer
+// here gets MODEL_REF_MAP's "claude" fallback on next pod restart —
+// they don't crash, they just default back. We can drop those provider
+// blocks from the platform config too in a follow-up once we're sure
+// nobody's still pinned to one.
 export const MODELS = [
   // ── Anthropic ──
   { id: "claude", label: "Opus 4.6", provider: "Anthropic", icon: "/claude-icon.png" },
@@ -27,28 +33,10 @@ export const MODELS = [
   { id: "gpt-5.2", label: "GPT-5.2", provider: "OpenAI", icon: "/openai-icon.png", iconClass: "dark:invert" },
   { id: "gpt-mini", label: "GPT-5 Mini", provider: "OpenAI", icon: "/openai-icon.png", iconClass: "dark:invert" },
   { id: "gpt-nano", label: "GPT-5 Nano", provider: "OpenAI", icon: "/openai-icon.png", iconClass: "dark:invert" },
-  // ── Moonshot (Kimi) ──
-  { id: "kimi-k2", label: "K2 Thinking", provider: "Moonshot", icon: "/kimi-icon.png" },
-  { id: "kimi-k2.5", label: "K2.5", provider: "Moonshot", icon: "/kimi-icon.png", byokOnly: true },
-  { id: "kimi-k2-thinking-turbo", label: "K2 Thinking Turbo", provider: "Moonshot", icon: "/kimi-icon.png", byokOnly: true },
-  { id: "kimi-k2-turbo", label: "K2 Turbo", provider: "Moonshot", icon: "/kimi-icon.png", byokOnly: true },
-  // ── Google ──
-  { id: "gemini-pro", label: "Gemini 3.1 Pro", provider: "Google", icon: "/gemini-icon.png" },
-  { id: "gemini-flash", label: "Gemini 3 Flash", provider: "Google", icon: "/gemini-icon.png" },
-  // ── MiniMax ──
-  { id: "minimax-m2.1", label: "M2.1", provider: "MiniMax", icon: "/minimax-icon.png" },
-  { id: "minimax-m2.5", label: "M2.5", provider: "MiniMax", icon: "/minimax-icon.png", byokOnly: true },
-  // ── Alibaba (Qwen) ──
-  { id: "qwen-coder", label: "Qwen3 Coder 480B", provider: "Alibaba", icon: "/qwen-icon.png", platformOnly: true },
-  { id: "qwen-235b", label: "Qwen3 235B", provider: "Alibaba", icon: "/qwen-icon.png", platformOnly: true },
 ];
 
 // Render order — keep in sync with the providers used above.
 export const MODEL_PROVIDER_ORDER = [
   "Anthropic",
   "OpenAI",
-  "Moonshot",
-  "Google",
-  "MiniMax",
-  "Alibaba",
 ] as const;

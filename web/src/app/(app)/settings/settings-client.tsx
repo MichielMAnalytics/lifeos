@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { DeploymentDashboard } from '@/components/ai-agent/deployment-dashboard';
 import { ModelSwitcher } from '@/components/ai-agent/model-switcher';
 import { ChannelConfig } from '@/components/ai-agent/channel-config';
-import { ApiKeys as ByokApiKeys } from '@/components/ai-agent/api-keys-byok';
 import { InstanceTools } from '@/components/ai-agent/instance-tools';
 import { ConfigCard } from '@/components/ai-agent/config-card';
 import { PaymentStatus } from '@/components/ai-agent/payment-status';
@@ -829,6 +828,94 @@ function BillingTab() {
 /*  Tab: Life Coach                                                    */
 /* ================================================================== */
 
+// Quick-glance usage on the Life Coach tab. Shows wallet balance and the
+// plan's monthly allowance. Lifeai pools subscription credits + top-ups
+// into a single `balance.amount` cents pot, so we can't truthfully split
+// "subscription tokens left" from "top-up tokens left" without per-period
+// spend tracking. Until that backend lands, the bar shows balance vs
+// monthly allowance as a rough indicator and the deep-link to Billing
+// gives the full breakdown.
+function LifeCoachUsageCard() {
+  const subscription = useQuery(api.stripe.getMySubscription);
+  const balance = useQuery(api.stripe.getBalance);
+
+  if (subscription === undefined || balance === undefined) {
+    return (
+      <div className="border border-border">
+        <div className="px-5 py-3 border-b border-border">
+          <p className="text-xs font-medium text-text">Usage</p>
+        </div>
+        <div className="p-4">
+          <p className="text-xs text-text-muted animate-pulse">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const planLabels: Record<string, string> = {
+    dashboard: 'Home',
+    byok: 'BYOK',
+    basic: 'Basic',
+    standard: 'Standard',
+    pro: 'Pro',
+    premium: 'Premium',
+  };
+  const planLabel = subscription ? (planLabels[subscription.planType] ?? subscription.planType) : 'No plan';
+  const balanceEur = (balance ?? 0) / 100;
+  const includedEur = subscription ? subscription.includedCreditsCents / 100 : 0;
+  const renewsAt = subscription?.currentPeriodEnd
+    ? new Date(subscription.currentPeriodEnd).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+    : null;
+  // Cap the bar at 100% — once balance grows past the monthly allowance
+  // (top-ups carried over) we still want it to read "full" rather than
+  // overflow visually.
+  const pct = includedEur > 0 ? Math.min(100, Math.max(0, Math.round((balanceEur / includedEur) * 100))) : 0;
+
+  return (
+    <div className="border border-border">
+      <div className="px-5 py-3 border-b border-border flex items-center justify-between">
+        <p className="text-xs font-medium text-text">Usage</p>
+        <Link href="/settings/billing" className="text-[10px] text-text-muted hover:text-text">
+          Billing →
+        </Link>
+      </div>
+      <div className="p-4 space-y-4">
+        <div>
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-[11px] text-text-muted uppercase tracking-wide">Balance remaining</p>
+            <p className="text-sm font-semibold text-text tabular-nums">EUR {balanceEur.toFixed(2)}</p>
+          </div>
+          <p className="text-[10px] text-text-muted mt-1">
+            Combined credits left (subscription + any top-ups). Spend deducts from this pot.
+          </p>
+        </div>
+
+        {subscription && includedEur > 0 && (
+          <div>
+            <div className="flex items-baseline justify-between gap-3 mb-1">
+              <p className="text-[11px] text-text-muted uppercase tracking-wide">{planLabel} plan allowance</p>
+              <p className="text-[11px] text-text-muted tabular-nums">
+                EUR {balanceEur.toFixed(2)} / {includedEur.toFixed(0)}
+              </p>
+            </div>
+            <div className="h-1.5 rounded-full bg-surface overflow-hidden">
+              <div
+                className="h-full bg-accent transition-[width] duration-300"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            {renewsAt && (
+              <p className="text-[10px] text-text-muted mt-1.5">
+                Refills EUR {includedEur.toFixed(0)} on {renewsAt}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function LifeCoachTab() {
   const deployment = useQuery(api.deploymentQueries.getMyDeployment);
   const settings = useQuery(api.deploymentSettings.getMySettings);
@@ -892,6 +979,9 @@ function LifeCoachTab() {
           {/* Model switcher */}
           <ModelSwitcher deploymentStatus={deployment.status} />
 
+          {/* Usage */}
+          <LifeCoachUsageCard />
+
           {/* Channels */}
           <div className="border border-border">
             <div className="px-5 py-3 border-b border-border">
@@ -899,16 +989,6 @@ function LifeCoachTab() {
             </div>
             <div className="p-4">
               <ChannelConfig />
-            </div>
-          </div>
-
-          {/* Model credentials */}
-          <div className="border border-border">
-            <div className="px-5 py-3 border-b border-border">
-              <p className="text-xs font-medium text-text">Model credentials</p>
-            </div>
-            <div className="p-4">
-              <ByokApiKeys deploymentStatus={deployment.status} />
             </div>
           </div>
 

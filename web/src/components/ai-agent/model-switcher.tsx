@@ -21,9 +21,6 @@ type Model = (typeof MODELS)[number];
 interface CredentialState {
   hasAnthropic: boolean;
   hasOpenai: boolean;
-  hasGoogle: boolean;
-  hasMoonshot: boolean;
-  hasMinimax: boolean;
 }
 
 /** Map provider → which credential field gates it. Centralised so the
@@ -32,10 +29,6 @@ function isModelMissingCreds(model: Model, creds: CredentialState): boolean {
   switch (model.provider) {
     case "Anthropic": return !creds.hasAnthropic;
     case "OpenAI": return !creds.hasOpenai;
-    case "Google": return !creds.hasGoogle;
-    case "Moonshot": return !creds.hasMoonshot;
-    case "MiniMax": return !creds.hasMinimax;
-    case "Alibaba": return false; // platform-only, no BYOK gate
     default: return false;
   }
 }
@@ -151,9 +144,6 @@ export function ModelSwitcher({ deploymentStatus }: { deploymentStatus: Deployme
   const creds: CredentialState = {
     hasAnthropic: isByok ? !!settings.anthropicKeyLength : true,
     hasOpenai: isByok ? !!settings.openaiKeyLength : true,
-    hasGoogle: isByok ? !!settings.googleKeyLength : true,
-    hasMoonshot: isByok ? !!settings.moonshotKeyLength : true,
-    hasMinimax: isByok ? !!settings.minimaxKeyLength : true,
   };
 
   const handleSwitch = async (modelId: string) => {
@@ -205,9 +195,6 @@ export function PreDeployModelPicker() {
   const creds: CredentialState = {
     hasAnthropic: isByok ? !!settings.anthropicKeyLength : true,
     hasOpenai: isByok ? !!settings.openaiKeyLength : true,
-    hasGoogle: isByok ? !!settings.googleKeyLength : true,
-    hasMoonshot: isByok ? !!settings.moonshotKeyLength : true,
-    hasMinimax: isByok ? !!settings.minimaxKeyLength : true,
   };
 
   const handleSwitch = async (modelId: string) => {
