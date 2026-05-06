@@ -11,6 +11,7 @@ import { DeploymentDashboard } from '@/components/ai-agent/deployment-dashboard'
 import { ModelSwitcher } from '@/components/ai-agent/model-switcher';
 import { ChannelConfig } from '@/components/ai-agent/channel-config';
 import { InstanceTools } from '@/components/ai-agent/instance-tools';
+import { ChatGptSubscription } from '@/components/ai-agent/chatgpt-subscription';
 import { ConfigCard } from '@/components/ai-agent/config-card';
 import { PaymentStatus } from '@/components/ai-agent/payment-status';
 import { useTheme } from '@/components/theme-provider';
@@ -978,6 +979,9 @@ function LifeCoachTab() {
 
           {/* Model switcher */}
           <ModelSwitcher deploymentStatus={deployment.status} />
+
+          {/* ChatGPT subscription */}
+          <ChatGptSubscription deploymentStatus={deployment.status} />
 
           {/* Usage */}
           <LifeCoachUsageCard />
