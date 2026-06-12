@@ -98,6 +98,8 @@ export const saveSettings = mutation({
       google: "googleKeyLength",
       moonshot: "moonshotKeyLength",
       minimax: "minimaxKeyLength",
+      "telegram-bot": "telegramBotTokenLength",
+      "discord-bot": "discordBotTokenLength",
     };
     if (args.keysToDelete) {
       for (const provider of args.keysToDelete) {

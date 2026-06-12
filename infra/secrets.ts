@@ -16,7 +16,7 @@ export function createSecrets(
     stringData: {
       "jwt-signing-key": config.requireSecret("jwtSigningKey"),
       "gateway-system-key": config.requireSecret("gatewaySystemKey"),
-      "anthropic-api-key": config.requireSecret("anthropicApiKey"),
+      ...(config.getSecret("anthropicApiKey") ? { "anthropic-api-key": config.requireSecret("anthropicApiKey") } : {}),
       ...(config.getSecret("openaiApiKey") ? { "openai-api-key": config.requireSecret("openaiApiKey") } : {}),
       ...(config.getSecret("googleApiKey") ? { "google-api-key": config.requireSecret("googleApiKey") } : {}),
     },

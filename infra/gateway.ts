@@ -83,7 +83,7 @@ export function createGateway(
                 name: "CONVEX_SITE_URL",
                 value: backend.convexSiteUrl,
               },
-              {
+              ...(config.getSecret("anthropicApiKey") ? [{
                 name: "ANTHROPIC_API_KEY",
                 valueFrom: {
                   secretKeyRef: {
@@ -91,7 +91,7 @@ export function createGateway(
                     key: "anthropic-api-key",
                   },
                 },
-              },
+              }] : []),
               // OPENAI_API_KEY — enables Whisper audio transcription proxy (only if secret is provisioned)
               ...(config.getSecret("openaiApiKey") ? [{
                 name: "OPENAI_API_KEY",
